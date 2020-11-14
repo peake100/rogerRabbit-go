@@ -1,0 +1,37 @@
+name: build_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+
+resources:
+  repositories:
+    # Link to your template repository
+    - repository: templates
+      type: github
+      name: illuscio-dev/azure-pipelines-templates
+      endpoint: Github_Read
+
+trigger:
+  batch: true
+  # We are going to only be doing builds for the 'dev' branch. Master will be updated
+  # from dev on successful builds rather than being updated directly.
+  branches:
+    include:
+      - dev
+    exclude:
+      - build_*
+      - v*
+      - master
+
+pr:
+  - dev
+
+variables:
+  # Link to the variables template.
+  - template: V2/variables.yml@templates
+
+jobs:
+  # Link to the pipeline template.
+  - template: V2/main.yml@templates
+    # Template parameters
+    parameters:
+      publishDocs: true
+      language: GO
+      buildType: LIBRARY
