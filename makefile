@@ -17,12 +17,16 @@ test:
 	# happen here to send stdout and stderr to tee separately ( in order to
 	# both save and display them ), but the internet says this is the solution and it
 	# works.
+	-docker pull 'rabbitmq:3.8-management'
+	-docker rm -f rabbittest
+	docker run -d --name rabbittest -p 127.0.0.1:57018:5672/tcp rabbitmq:3.8-management
 	-python3 ./zdevelop/make_scripts/go_make_test.py
 	cat $(FULL_LOG) | go-junit-report > $(JUNIT_REPORT)
 	# Open Reports
 	-xunit-viewer -r $(JUNIT_REPORT) -o $(TEST_REPORT)
 	-go tool cover -html=$(COVERAGE_LOG) -o $(COVERAGE_REPORT)
 	-python3 ./zdevelop/make_scripts/py_open_test_reports.py
+	-docker stop rabbittest
 
 .PHONY: lint
 lint:
@@ -93,3 +97,9 @@ name:
 .PHONY: proto
 proto:
 	python3 ./zdevelop/make_scripts/go_gen_proto.py
+
+.PHONY: testbroker
+testbroker:
+	-docker pull 'rabbitmq:3.8-management'
+	-docker rm -f rabbittest
+	docker run -d --name rabbittest -p 127.0.0.1:57018:5672/tcp rabbitmq:3.8-management
