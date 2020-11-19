@@ -1,4 +1,4 @@
-module github.com/illuscio-dev/rogerRabbit-go
+module github.com/peake100/rogerRabbit-go
 
 go 1.15
 

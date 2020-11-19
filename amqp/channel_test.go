@@ -215,7 +215,6 @@ func (suite *ChannelLifetimeSuite) Test0020_Reestablish_ChannelClose() {
 	suite.NoError(err, "create queue")
 }
 
-
 func (suite *ChannelLifetimeSuite) Test0030_Reestablish_ConnectionClose() {
 	// Cache the current channelConsume
 	currentChan := suite.channelConsume.transportChannel.Channel
@@ -225,11 +224,11 @@ func (suite *ChannelLifetimeSuite) Test0030_Reestablish_ConnectionClose() {
 	suite.connConsume.transportConn.Close()
 
 	// Wait for reestablish
-	waitForReconnect(suite.T(), suite.channelConsume.transportManager, connCount + 1)
+	waitForReconnect(suite.T(), suite.channelConsume.transportManager, connCount+1)
 
 	// try and see if the connection is open 10 times
 	wasOpen := false
-	for i := 0 ; i < 10 ; i++ {
+	for i := 0; i < 10; i++ {
 		suite.channelConsume.transportLock.RLock()
 		wasOpen = !suite.connConsume.transportConn.IsClosed()
 		suite.channelConsume.transportLock.RUnlock()
@@ -241,7 +240,6 @@ func (suite *ChannelLifetimeSuite) Test0030_Reestablish_ConnectionClose() {
 	suite.True(
 		wasOpen, "connection is open",
 	)
-
 
 	suite.NotSame(
 		currentChan,
@@ -366,7 +364,7 @@ func (suite *ChannelMethodsSuite) Test0020_QueueInspect() {
 func (suite *ChannelMethodsSuite) Test0030_QueueInspect_Err() {
 	_, err := suite.channelConsume.QueueInspect("not-a-real-queue")
 	suite.Error(err, "error inspecting queue")
-	suite.EqualError(err, "Exception (404) Reason: \"NOT_FOUND - no queue" +
+	suite.EqualError(err, "Exception (404) Reason: \"NOT_FOUND - no queue"+
 		" 'not-a-real-queue' in vhost '/'\"")
 }
 
@@ -461,7 +459,7 @@ func (suite *ChannelMethodsSuite) Test0070_Consume_Basic() {
 		suite.T().FailNow()
 	}
 
-	for i := 1 ; i <= 10 ; i++ {
+	for i := 1; i <= 10; i++ {
 		suite.NoError(err, "set up consumer")
 
 		message := fmt.Sprintf("test consumer %v", i)
@@ -497,7 +495,7 @@ func (suite *ChannelMethodsSuite) Test0070_Consume_Basic() {
 				string(thisMessage.Body), message, "message %v correct", i,
 			)
 			suite.Equalf(uint64(i), thisMessage.DeliveryTag, "delivery tag")
-		case <- timeout.C:
+		case <-timeout.C:
 			suite.T().Errorf("timeout on consumer receive message %v", i)
 			suite.T().FailNow()
 		}
@@ -514,9 +512,9 @@ func (suite *ChannelMethodsSuite) Test0070_Consume_Basic() {
 	timeout := time.NewTimer(3 * time.Second)
 
 	select {
-	case _, ok := <- messageChannel:
+	case _, ok := <-messageChannel:
 		suite.False(ok, "consumer channelConsume is closed")
-	case <- timeout.C:
+	case <-timeout.C:
 		suite.T().Errorf("timeout on consumer channeel close")
 		suite.T().FailNow()
 	}
@@ -571,7 +569,7 @@ func (suite *ChannelMethodsSuite) Test0080_Consume_OverDisconnect_Channel() {
 		suite.T().FailNow()
 	}
 
-	for i := 1 ; i <= 10 ; i++ {
+	for i := 1; i <= 10; i++ {
 		suite.NoError(err, "set up consumer")
 
 		message := fmt.Sprintf("test consumer %v", i)
@@ -613,16 +611,16 @@ func (suite *ChannelMethodsSuite) Test0080_Consume_OverDisconnect_Channel() {
 				string(thisMessage.Body), message, "message %v correct", i,
 			)
 			suite.Equalf(uint64(i), thisMessage.DeliveryTag, "delivery tag")
-		case <- timeout.C:
+		case <-timeout.C:
 			suite.T().Errorf("timeout on consumer receive message %v", i)
 			suite.T().FailNow()
 		}
 
 		// Force close either the channelConsume or the connection
-		if i % 3 == 0 {
+		if i%3 == 0 {
 			suite.T().Log("closing connection")
 			suite.connConsume.transportConn.Close()
-		} else if i % 2 == 0 {
+		} else if i%2 == 0 {
 			suite.T().Logf("closing channel")
 			suite.channelConsume.transportChannel.Close()
 		}
@@ -637,9 +635,9 @@ func (suite *ChannelMethodsSuite) Test0080_Consume_OverDisconnect_Channel() {
 	timeout := time.NewTimer(3 * time.Second)
 
 	select {
-	case _, ok := <- messageChannel:
+	case _, ok := <-messageChannel:
 		suite.False(ok, "consumer channel is closed")
-	case <- timeout.C:
+	case <-timeout.C:
 		suite.T().Errorf("timeout on consumer channel close")
 		suite.T().FailNow()
 	}
@@ -805,7 +803,7 @@ func (suite *ChannelMethodsSuite) Test0130_QueueDeclare_NoRedeclareAfterDelete()
 	_, err = suite.channelPublish.QueueDelete(
 		queueName, false, false, true,
 	)
-	suite.NoError(err,"delete queue")
+	suite.NoError(err, "delete queue")
 
 	// close the channel manually, forcing a re-connect
 	suite.channelPublish.transportChannel.Channel.Close()
@@ -845,7 +843,7 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Basic() {
 	workersDone.Add(1)
 	go func() {
 		defer workersDone.Done()
-		for i := 0 ; i < publishCount ; i++ {
+		for i := 0; i < publishCount; i++ {
 			err := suite.channelPublish.Publish(
 				"",
 				queueName,
@@ -868,7 +866,7 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Basic() {
 		i := 0
 		for confirmation := range notifyPublish {
 			suite.Equal(
-				uint64(i) + 1, confirmation.DeliveryTag, "delivery tag",
+				uint64(i)+1, confirmation.DeliveryTag, "delivery tag",
 			)
 			suite.True(confirmation.Ack, "server acked")
 			suite.False(confirmation.DisconnectOrphan)
@@ -880,8 +878,8 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Basic() {
 	}()
 
 	select {
-	case <- allReceived:
-	case <- time.NewTimer(5 * time.Second).C:
+	case <-allReceived:
+	case <-time.NewTimer(5 * time.Second).C:
 		suite.T().Error("confirmations timeout")
 	}
 
@@ -889,15 +887,15 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Basic() {
 	suite.NoError(err, "close channel")
 
 	select {
-	case _, ok := <- notifyPublish:
+	case _, ok := <-notifyPublish:
 		suite.False(ok, "confirmation channel closed")
-	case <- time.NewTimer(1 * time.Second).C:
+	case <-time.NewTimer(1 * time.Second).C:
 		suite.T().Error("ack timeout")
 		suite.T().FailNow()
 	}
 }
 
-func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Reconnections() {
+func (suite *ChannelMethodsSuite) Test0150_NotifyPublish_Reconnections() {
 	// Replace channels at the end since we are enabling confirmation mode
 	suite.T().Cleanup(suite.replaceChannels)
 
@@ -920,14 +918,14 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Reconnections() {
 	workersDone.Add(1)
 	go func() {
 		defer workersDone.Done()
-		for i := 0 ; i < publishCount ; i++ {
+		for i := 0; i < publishCount; i++ {
 			err := suite.channelPublish.Publish(
 				"",
 				queueName,
 				true,
 				false,
 				Publishing{
-					Body: []byte(fmt.Sprintf("message %v", i + 1)),
+					Body: []byte(fmt.Sprintf("message %v", i+1)),
 				},
 			)
 			if !suite.NoErrorf(err, "publish %v", i) {
@@ -938,11 +936,11 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Reconnections() {
 
 			// Every second and third publish, wait for our confirmations to line up
 			// and close the channel or connection to force a reconnection
-			if i % 3 == 0 {
+			if i%3 == 0 {
 				suite.T().Log("closing connection")
 				confirmations.Wait()
 				suite.connPublish.transportConn.Close()
-			} else if i % 2 == 0 {
+			} else if i%2 == 0 {
 				suite.T().Log("closing channel")
 				confirmations.Wait()
 				suite.channelPublish.transportChannel.Close()
@@ -959,7 +957,7 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Reconnections() {
 			// Subtract 1 to the confirmation WaitGroup
 			confirmations.Done()
 			suite.Equal(
-				uint64(i) + 1, confirmation.DeliveryTag, "delivery tag",
+				uint64(i)+1, confirmation.DeliveryTag, "delivery tag",
 			)
 			suite.True(confirmation.Ack, "server acked")
 			suite.False(confirmation.DisconnectOrphan)
@@ -971,8 +969,8 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Reconnections() {
 	}()
 
 	select {
-	case <- allReceived:
-	case <- time.NewTimer(5 * time.Second).C:
+	case <-allReceived:
+	case <-time.NewTimer(5 * time.Second).C:
 		suite.T().Error("confirmations timeout")
 	}
 
@@ -980,10 +978,103 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Reconnections() {
 	suite.NoError(err, "close channel")
 
 	select {
-	case _, ok := <- notifyPublish:
+	case _, ok := <-notifyPublish:
 		suite.False(ok, "confirmation channel closed")
-	case <- time.NewTimer(1 * time.Second).C:
+	case <-time.NewTimer(1 * time.Second).C:
 		suite.T().Error("ack timeout")
+		suite.T().FailNow()
+	}
+}
+
+// We're only going to test the basic notify confirms flow since it's built on top of
+// NotifyPublish, and we test that with reconnections anyway.
+func (suite *ChannelMethodsSuite) Test0160_NotifyConfirm() {
+	// Replace channels at the end since we are enabling confirmation mode
+	suite.T().Cleanup(suite.replaceChannels)
+
+	queueName := "notify_confirms_basic"
+	suite.createTestQueue(queueName)
+
+	err := suite.channelPublish.Confirm(false)
+	if !suite.NoError(err, "put into confirmation mode") {
+		suite.T().FailNow()
+	}
+	publishCount := 10
+	ackEvents, nackEvents := make(chan uint64, publishCount),
+		make(chan uint64, publishCount)
+
+	suite.channelPublish.NotifyConfirm(ackEvents, nackEvents)
+
+	confirmations := new(sync.WaitGroup)
+
+	go func() {
+		for i := 0; i < publishCount; i++ {
+			err := suite.channelPublish.Publish(
+				"",
+				queueName,
+				true,
+				false,
+				Publishing{
+					Body: []byte(fmt.Sprintf("message %v", i+1)),
+				},
+			)
+			if !suite.NoErrorf(err, "publish %v", i) {
+				suite.T().FailNow()
+			}
+			// Add 1 to the confirmation WaitGroup
+			confirmations.Add(1)
+		}
+	}()
+
+	received := make([]int, publishCount)
+	receivedConfirm := make(chan struct{}, publishCount)
+
+	go func() {
+		for tag := range ackEvents {
+			received[tag-1] = publishCount
+			receivedConfirm <- struct{}{}
+		}
+	}()
+
+	go func() {
+		for tag := range nackEvents {
+			received[tag-1] = publishCount
+			receivedConfirm <- struct{}{}
+		}
+	}()
+
+	timer := time.NewTimer(5 * time.Second)
+	receivedCount := 0
+	for {
+		select {
+		case <-receivedConfirm:
+			receivedCount++
+		case <-timer.C:
+			suite.T().Error("timeout receiving confirmations")
+			suite.T().FailNow()
+		}
+
+		if receivedCount >= 10 {
+			break
+		}
+	}
+
+	err = suite.channelPublish.Close()
+	suite.NoError(err, "close channel")
+
+	select {
+	case _, ok := <-ackEvents:
+		suite.False(ok, "ack channel closed")
+	case <-time.NewTimer(1 * time.Second).C:
+		suite.T().Error("ack close timeout")
+		suite.T().FailNow()
+	}
+
+	select {
+	case _, ok := <-nackEvents:
+		suite.False(ok, "nack channel closed")
+	case <-time.NewTimer(1 * time.Second).C:
+		suite.T().Error("nack close timeout")
 		suite.T().FailNow()
 	}
 }

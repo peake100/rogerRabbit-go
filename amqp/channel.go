@@ -53,7 +53,7 @@ type transportChannel struct {
 
 	// List of queues that must be declared upon re-establishing the channel. We use a
 	// map so we can remove queues from this list on queue delete.
-	declareQueues     *sync.Map
+	declareQueues *sync.Map
 
 	// Event processors should grab this WaitGroup when they spin up and release it
 	// when they have finished processing all available events after a channel close.
@@ -151,19 +151,17 @@ func (transport *transportChannel) reconnectDeclareQueues() error {
 func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	// Wait for all event processors processing events from the previous channel to be
 	// ready.
-	if transport.logger.Debug().Enabled() {
-		transport.logger.Debug().
-			Str("STATUS", "CONNECTING").
-			Msg("waiting for event relays to finish")
+	logger := transport.logger.With().Str("STATUS", "CONNECTING").Logger()
+	debugEnabled := logger.Debug().Enabled()
+
+	if debugEnabled {
+		logger.Debug().Msg("waiting for event relays to finish")
 	}
 	transport.eventRelaysRunning.Wait()
 
-	if transport.logger.Debug().Enabled() {
-		transport.logger.Debug().
-			Str("STATUS", "CONNECTING").
-			Msg("getting new channel")
+	if debugEnabled {
+		logger.Debug().Msg("getting new channel")
 	}
-
 	channel, err := transport.rogerConn.getStreadwayChannel(ctx)
 	if err != nil {
 		return err
@@ -182,17 +180,13 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 		return err
 	}
 
-	if transport.logger.Debug().Enabled() {
-		transport.logger.Debug().
-			Str("STATUS", "CONNECTING").
-			Msg("updating tag trackers")
+	if debugEnabled {
+		logger.Debug().Msg("updating tag trackers")
 	}
 	transport.reconnectUpdateTagTrackers()
 
-	if transport.logger.Debug().Enabled() {
-		transport.logger.Debug().
-			Str("STATUS", "CONNECTING").
-			Msg("re-declaring queues")
+	if debugEnabled {
+		logger.Debug().Msg("re-declaring queues")
 	}
 	err = transport.reconnectDeclareQueues()
 	if err != nil {
@@ -204,10 +198,8 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	transport.eventRelaysGo.Add(1)
 
 	// Allow the relays to advance to the setup stage.
-	if transport.logger.Debug().Enabled() {
-		transport.logger.Debug().
-			Str("STATUS", "CONNECTING").
-			Msg("advancing event relays to setup")
+	if debugEnabled {
+		logger.Debug().Msg("advancing event relays to setup")
 	}
 	transport.eventRelaysRunSetup.Done()
 
@@ -218,10 +210,8 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	transport.eventRelaysRunSetup.Add(1)
 
 	// Release the relays, allowing them to start processing events on our new channel.
-	if transport.logger.Debug().Enabled() {
-		transport.logger.Debug().
-			Str("STATUS", "CONNECTING").
-			Msg("restarting event relay processing")
+	if debugEnabled {
+		logger.Debug().Msg("restarting event relay processing")
 	}
 	transport.eventRelaysGo.Done()
 
@@ -250,12 +240,12 @@ type Channel struct {
 
 // Store queue declare information for re-establishing queues on disconnect.
 type queueDeclareArgs struct {
-	name string
-	durable bool
+	name       string
+	durable    bool
 	autoDelete bool
-	exclusive bool
-	noWait bool
-	args streadway.Table
+	exclusive  bool
+	noWait     bool
+	args       streadway.Table
 }
 
 /*
@@ -747,16 +737,16 @@ func (channel *Channel) Consume(
 
 	// Create our consumer relay
 	consumerRelay := &ConsumerRelay{
-		ConsumeArgs:       consumeArgs{
-			queue:              queue,
-			consumer:           consumer,
-			autoAck:            autoAck,
-			exclusive:          exclusive,
-			noLocal:            noLocal,
-			noWait:             noWait,
-			args:               args,
+		ConsumeArgs: consumeArgs{
+			queue:     queue,
+			consumer:  consumer,
+			autoAck:   autoAck,
+			exclusive: exclusive,
+			noLocal:   noLocal,
+			noWait:    noWait,
+			args:      args,
 		},
-		CallerDeliveries:  callerDeliveries,
+		CallerDeliveries: callerDeliveries,
 	}
 
 	// Pass it to our relay handler.
@@ -862,4 +852,115 @@ func (channel *Channel) NotifyPublish(confirm chan Confirmation) chan Confirmati
 		close(confirm)
 	}
 	return confirm
+}
+
+// Closes confirmation tag channels for NotifyConfirm and NotifyConfirmOrOrphan.
+func notifyConfirmCloseConfirmChannels(tagChannels ...chan uint64) {
+mainLoop:
+	// Iterate over the channels and close them. We'll need to make sure we don't close
+	// the same channel twice.
+	for i, thisChannel := range tagChannels {
+		// Whenever we get a new channel, compare it against all previously closed
+		// channels. If it is one of our previous channels, advance the main loop
+		for i2 := 0; i2 < i; i2++ {
+			previousChan := tagChannels[i2]
+			if previousChan == thisChannel {
+				continue mainLoop
+			}
+		}
+		close(thisChannel)
+	}
+}
+
+func notifyConfirmHandleAckAndNack(
+	confirmation Confirmation, ack, nack chan uint64, logger zerolog.Logger,
+) {
+	if confirmation.Ack {
+		if logger.Debug().Enabled() {
+			logger.Debug().
+				Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
+				Bool("ACK", confirmation.Ack).
+				Str("CHANNEL", "ACK").
+				Msg("ack confirmation sent")
+		}
+		ack <- confirmation.DeliveryTag
+	} else {
+		if logger.Debug().Enabled() {
+			logger.Debug().
+				Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
+				Bool("ACK", confirmation.Ack).
+				Str("CHANNEL", "NACK").
+				Msg("nack confirmation sent")
+		}
+		nack <- confirmation.DeliveryTag
+	}
+}
+
+/*
+ROGER NOTE: the nack channel will receive both tags that were explicitly nacked by the
+server AND tags that were orphaned due to a connection loss. If you wish to handle
+Orphaned tags separately, use the new method NotifyConfirmOrOrphan.
+
+--
+
+NotifyConfirm calls NotifyPublish and starts a goroutine sending
+ordered Ack and Nack DeliveryTag to the respective channels.
+
+For strict ordering, use NotifyPublish instead.
+*/
+func (channel *Channel) NotifyConfirm(
+	ack, nack chan uint64,
+) (chan uint64, chan uint64) {
+	confirmsEvents := channel.NotifyPublish(make(chan Confirmation, cap(ack)+cap(nack)))
+	logger := channel.logger.With().
+		Str("EVENT_TYPE", "NOTIFY_CONFIRM").
+		Logger()
+
+	go func() {
+		defer notifyConfirmCloseConfirmChannels(ack, nack)
+
+		// range over confirmation events and place them in the ack and nack channels.
+		for confirmation := range confirmsEvents {
+			notifyConfirmHandleAckAndNack(confirmation, ack, nack, logger)
+		}
+	}()
+
+	return ack, nack
+}
+
+/*
+As NotifyConfirm, but with a third queue for delivery tags that were orphaned from
+a disconnect, these tags are routed to the nack channel in NotifyConfirm.
+*/
+func (channel *Channel) NotifyConfirmOrOrphan(
+	ack, nack, orphaned chan uint64,
+) (chan uint64, chan uint64, chan uint64) {
+	confirmsEvents := channel.NotifyPublish(make(chan Confirmation, cap(ack)+cap(nack)))
+	logger := channel.logger.With().
+		Str("EVENT_TYPE", "NOTIFY_CONFIRM_OR_ORPHAN").
+		Logger()
+
+	go func() {
+		// Close channels on exit
+		defer notifyConfirmCloseConfirmChannels(ack, nack, orphaned)
+
+		// range over confirmation events and place them in the ack and nack channels.
+		for confirmation := range confirmsEvents {
+			if confirmation.DisconnectOrphan {
+
+			} else {
+				if logger.Debug().Enabled() {
+					logger.Debug().
+						Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
+						Bool("ACK", confirmation.Ack).
+						Str("CHANNEL", "ORPHANED").
+						Msg("orphaned confirmation sent")
+				}
+				orphaned <- confirmation.DeliveryTag
+				notifyConfirmHandleAckAndNack(confirmation, ack, nack, logger)
+			}
+		}
+	}()
+
+	return ack, nack, orphaned
 }
