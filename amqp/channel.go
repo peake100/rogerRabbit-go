@@ -315,35 +315,34 @@ func (channel *Channel) QueueDeclare(
 	noWait bool,
 	args streadway.Table,
 ) (queue Queue, err error) {
+	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func() error {
 		var opErr error
 		queue, opErr = channel.transportChannel.QueueDeclare(
 			name, durable, autoDelete, exclusive, noWait, args,
 		)
 
-		// We need to remember to re-declare this queue on reconnect
-		if opErr == nil {
-			var argsCopy Table
-			if args != nil {
-				argsCopy = make(Table)
-				for key, value := range args {
-					argsCopy[key] = value
-				}
-			}
-
-			queueArgs := &queueDeclareArgs{
-				name:       name,
-				durable:    durable,
-				autoDelete: autoDelete,
-				exclusive:  exclusive,
-				noWait:     noWait,
-				args:       argsCopy,
-			}
-
-			channel.transportChannel.declareQueues.Store(name, queueArgs)
+		if opErr != nil {
+			return opErr
 		}
 
-		return opErr
+		// We need to remember to re-declare this queue on reconnect
+		queueArgs := &queueDeclareArgs{
+			name:       name,
+			durable:    durable,
+			autoDelete: autoDelete,
+			exclusive:  exclusive,
+			// We are always going to wait on re-declares, but we should save the
+			// noWait value for posterity.
+			noWait:     noWait,
+			// Copy the args so if the user mutates them for a future call we have
+			// an un-changed version of the originals.
+			args:       copyTable(args),
+		}
+
+		channel.transportChannel.declareQueues.Store(name, queueArgs)
+
+		return nil
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -362,6 +361,7 @@ can be used to test for the existence of a queue.
 func (channel *Channel) QueueDeclarePassive(
 	name string, durable, autoDelete, exclusive, noWait bool, args Table,
 ) (queue Queue, err error) {
+	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func() error {
 		var opErr error
 		queue, opErr = channel.transportChannel.QueueDeclarePassive(
@@ -392,6 +392,7 @@ channel will be closed.
 func (channel *Channel) QueueInspect(
 	name string,
 ) (queue Queue, err error) {
+	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func() error {
 		var opErr error
 		queue, opErr = channel.transportChannel.QueueInspect(name)
@@ -449,6 +450,7 @@ closed with an error.
 func (channel *Channel) QueueBind(
 	name, key, exchange string, noWait bool, args Table,
 ) error {
+	// Run an an operation to get automatic retries on channel disconnections.
 	operation := func() error {
 		var opErr error
 		opErr = channel.transportChannel.QueueBind(name, key, exchange, noWait, args)
@@ -468,6 +470,7 @@ unbind the queue from the default exchange.
 
 */
 func (channel *Channel) QueueUnbind(name, key, exchange string, args Table) error {
+	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func() error {
 		var opErr error
 		opErr = channel.transportChannel.QueueUnbind(name, key, exchange, args)
@@ -523,6 +526,7 @@ be closed.
 func (channel *Channel) QueueDelete(
 	name string, ifUnused, ifEmpty, noWait bool,
 ) (count int, err error) {
+	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func() error {
 		var opErr error
 		count, opErr = channel.transportChannel.QueueDelete(
@@ -581,6 +585,7 @@ func (channel *Channel) Publish(
 	immediate bool,
 	msg Publishing,
 ) (err error) {
+	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func() error {
 		opErr := channel.transportChannel.Publish(
 			exchange,
@@ -641,6 +646,7 @@ func (channel *Channel) Get(
 	queue string,
 	autoAck bool,
 ) (msg Delivery, ok bool, err error) {
+	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func() error {
 		var opErr error
 		var msgStreadway streadway.Delivery
@@ -648,13 +654,15 @@ func (channel *Channel) Get(
 			queue,
 			autoAck,
 		)
-		// If there was no error, atomically increment the delivery tag.
-		if opErr == nil {
-			atomic.AddUint64(channel.transportChannel.settings.tagConsumeCount, 1)
-			msg = newDelivery(
-				msgStreadway, channel.transportChannel.settings.tagConsumeOffset,
-			)
+		if opErr != nil {
+			return opErr
 		}
+
+		// If there was no error, atomically increment the delivery tag.
+		atomic.AddUint64(channel.transportChannel.settings.tagConsumeCount, 1)
+		msg = newDelivery(
+			msgStreadway, channel.transportChannel.settings.tagConsumeOffset,
+		)
 		return opErr
 	}
 
@@ -736,7 +744,7 @@ func (channel *Channel) Consume(
 	deliveryChan = callerDeliveries
 
 	// Create our consumer relay
-	consumerRelay := &ConsumerRelay{
+	consumerRelay := &consumeRelay{
 		ConsumeArgs: consumeArgs{
 			queue:     queue,
 			consumer:  consumer,
@@ -814,6 +822,12 @@ but an additional DisconnectOrphan field will be set to `true`. It is possible t
 such messages DID reach the broker, but the Ack messages were lost in the disconnect
 event.
 
+It's also possible that an orphan is caused from a problem with publishing the message
+in the first place. For instance, publishing with the ``immediate`` flag set to false
+if the broker does not support it, or if a queue was not declared correctly. If you are
+getting a lot of orphaned messages, make sure to check what disconnect errors you are
+receiving.
+
 --
 
 NotifyPublish registers a listener for reliable publishing. Receives from this
@@ -854,7 +868,7 @@ func (channel *Channel) NotifyPublish(confirm chan Confirmation) chan Confirmati
 	return confirm
 }
 
-// Closes confirmation tag channels for NotifyConfirm and NotifyConfirmOrOrphan.
+// Closes confirmation tag channels for NotifyConfirm and NotifyConfirmOrOrphaned.
 func notifyConfirmCloseConfirmChannels(tagChannels ...chan uint64) {
 mainLoop:
 	// Iterate over the channels and close them. We'll need to make sure we don't close
@@ -899,7 +913,7 @@ func notifyConfirmHandleAckAndNack(
 /*
 ROGER NOTE: the nack channel will receive both tags that were explicitly nacked by the
 server AND tags that were orphaned due to a connection loss. If you wish to handle
-Orphaned tags separately, use the new method NotifyConfirmOrOrphan.
+Orphaned tags separately, use the new method NotifyConfirmOrOrphaned.
 
 --
 
@@ -932,10 +946,12 @@ func (channel *Channel) NotifyConfirm(
 As NotifyConfirm, but with a third queue for delivery tags that were orphaned from
 a disconnect, these tags are routed to the nack channel in NotifyConfirm.
 */
-func (channel *Channel) NotifyConfirmOrOrphan(
+func (channel *Channel) NotifyConfirmOrOrphaned(
 	ack, nack, orphaned chan uint64,
 ) (chan uint64, chan uint64, chan uint64) {
-	confirmsEvents := channel.NotifyPublish(make(chan Confirmation, cap(ack)+cap(nack)))
+	confirmsEvents := channel.NotifyPublish(
+		make(chan Confirmation, cap(ack)+cap(nack)+cap(orphaned)),
+	)
 	logger := channel.logger.With().
 		Str("EVENT_TYPE", "NOTIFY_CONFIRM_OR_ORPHAN").
 		Logger()
@@ -947,8 +963,6 @@ func (channel *Channel) NotifyConfirmOrOrphan(
 		// range over confirmation events and place them in the ack and nack channels.
 		for confirmation := range confirmsEvents {
 			if confirmation.DisconnectOrphan {
-
-			} else {
 				if logger.Debug().Enabled() {
 					logger.Debug().
 						Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
@@ -957,10 +971,39 @@ func (channel *Channel) NotifyConfirmOrOrphan(
 						Msg("orphaned confirmation sent")
 				}
 				orphaned <- confirmation.DeliveryTag
+			} else {
 				notifyConfirmHandleAckAndNack(confirmation, ack, nack, logger)
 			}
 		}
 	}()
 
 	return ack, nack, orphaned
+}
+
+/*
+ROGER NOTE: Because this channel survives over unexpected server disconnects, it is
+possible that returns in-flight to the client from the broker will be dropped, and
+therefore will be missed. You can subscribe to disconnection events through
+
+--
+
+NotifyReturn registers a listener for basic.return methods.  These can be sent
+from the server when a publish is undeliverable either from the mandatory or
+immediate flags.
+
+A return struct has a copy of the Publishing along with some error
+information about why the publishing failed.
+
+*/
+func (channel *Channel) NotifyReturn(returns chan Return) chan Return {
+	relay := &notifyReturnRelay{
+		CallerReturns: returns,
+	}
+
+	err := channel.setupAndLaunchEventRelay(relay)
+	if err != nil {
+		close(returns)
+		channel.logger.Err(err).Msg("error setting up notify return relay")
+	}
+	return returns
 }

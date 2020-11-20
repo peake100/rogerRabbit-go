@@ -176,7 +176,7 @@ type consumeArgs struct {
 }
 
 // Relays Deliveries across channel disconnects.
-type ConsumerRelay struct {
+type consumeRelay struct {
 	// Arguments to call on Consume
 	ConsumeArgs consumeArgs
 	// Delivery channel to pass deliveries back to the client.
@@ -191,14 +191,14 @@ type ConsumerRelay struct {
 	brokerDeliveries <- chan streadway.Delivery
 }
 
-func (relay *ConsumerRelay) Logger(parent zerolog.Logger) zerolog.Logger {
+func (relay *consumeRelay) Logger(parent zerolog.Logger) zerolog.Logger {
 	return parent.With().
 		Str("EVENT_TYPE", "CONSUME").
 		Str("CONSUMER_QUEUE", relay.ConsumeArgs.queue).
 		Logger()
 }
 
-func (relay *ConsumerRelay) SetupForRelayLeg(
+func (relay *consumeRelay) SetupForRelayLeg(
 	newChannel *streadway.Channel, settings channelSettings,
 ) error {
 	brokerDeliveries, err := newChannel.Consume(
@@ -222,7 +222,7 @@ func (relay *ConsumerRelay) SetupForRelayLeg(
 	return nil
 }
 
-func (relay *ConsumerRelay) RunRelayLeg() (done bool, err error) {
+func (relay *consumeRelay) RunRelayLeg() (done bool, err error) {
 	// Drain consumer events
 	for brokerDelivery := range relay.brokerDeliveries {
 		atomic.AddUint64(relay.deliveryTagCount, 1)
@@ -239,7 +239,7 @@ func (relay *ConsumerRelay) RunRelayLeg() (done bool, err error) {
 	return false, nil
 }
 
-func (relay *ConsumerRelay) Shutdown() error {
+func (relay *consumeRelay) Shutdown() error {
 	close(relay.CallerDeliveries)
 	return nil
 }
@@ -288,7 +288,7 @@ func (relay *notifyPublishRelay) logConfirmation(confirmation Confirmation) {
 		Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
 		Bool("ACK", confirmation.Ack).
 		Bool("ORPHAN", confirmation.DisconnectOrphan).
-		Msg("publish confirmation sent")
+		Msg("publish confirmation event sent")
 }
 
 func (relay *notifyPublishRelay) RunRelayLeg() (done bool, err error) {
@@ -339,5 +339,54 @@ func (relay *notifyPublishRelay) RunRelayLeg() (done bool, err error) {
 
 func (relay *notifyPublishRelay) Shutdown() error {
 	close(relay.CallerConfirmations)
+	return nil
+}
+
+// Relays return notification to the cl
+type notifyReturnRelay struct {
+	// The channel we are relaying returns to from the broker
+	CallerReturns chan <- Return
+
+	// The current broker channel we are pulling from.
+	brokerReturns <- chan Return
+
+	// Logger
+	logger zerolog.Logger
+}
+
+func (relay *notifyReturnRelay) Logger(parent zerolog.Logger) zerolog.Logger {
+	logger := parent.With().Str("EVENT_TYPE", "NOTIFY_RETURN").Logger()
+	relay.logger = logger
+	return relay.logger
+}
+
+func (relay *notifyReturnRelay) SetupForRelayLeg(
+	newChannel *streadway.Channel, settings channelSettings,
+) error {
+	brokerChannel := make(chan Return, cap(relay.CallerReturns))
+	relay.brokerReturns = brokerChannel
+	newChannel.NotifyReturn(brokerChannel)
+	return nil
+}
+
+func (relay *notifyReturnRelay) RunRelayLeg() (done bool, err error) {
+	for thisReturn := range relay.brokerReturns {
+		if relay.logger.Debug().Enabled() {
+			relay.logger.Debug().
+				Str("EXCHANGE", thisReturn.Exchange).
+				Str("ROUTING_KEY", thisReturn.MessageId).
+				Str("MESSAGE_ID", thisReturn.MessageId).
+				Bytes("BODY", thisReturn.Body).
+				Msg("return notification sent")
+		}
+
+		relay.CallerReturns <- thisReturn
+	}
+
+	return false, nil
+}
+
+func (relay *notifyReturnRelay) Shutdown() error {
+	defer close(relay.CallerReturns)
 	return nil
 }

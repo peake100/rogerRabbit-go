@@ -47,7 +47,7 @@ func (suite *ChannelSuiteBase) replaceChannels() {
 
 // Creates a basic test queue on both test channels, and deletes registers them for
 // deletion at the end of the test
-func (suite *ChannelSuiteBase) createTestQueue(name string) {
+func (suite *ChannelSuiteBase) createTestQueue(name string) Queue {
 	_, err := suite.channelPublish.QueueDeclare(
 		name,
 		false,
@@ -68,7 +68,7 @@ func (suite *ChannelSuiteBase) createTestQueue(name string) {
 	}
 	suite.T().Cleanup(cleanup)
 
-	_, err = suite.channelConsume.QueueDeclare(
+	queue, err := suite.channelConsume.QueueDeclare(
 		name,
 		false,
 		false,
@@ -87,6 +87,8 @@ func (suite *ChannelSuiteBase) createTestQueue(name string) {
 		)
 	}
 	suite.T().Cleanup(cleanup)
+
+	return queue
 }
 
 func (suite *ChannelSuiteBase) SetupSuite() {
@@ -1077,6 +1079,174 @@ func (suite *ChannelMethodsSuite) Test0160_NotifyConfirm() {
 		suite.T().Error("nack close timeout")
 		suite.T().FailNow()
 	}
+}
+
+func (suite *ChannelMethodsSuite) Test0170_NotifyReturn() {
+	suite.T().Cleanup(suite.replaceChannels)
+	// We're going to publish to a queue that does not exist. This will cause a
+	// delivery return to occur
+	queueName := "test_notify_return"
+
+	err := suite.channelPublish.Confirm(false)
+	if !suite.NoError(err, "put channel into confirm mode") {
+		suite.T().FailNow()
+	}
+
+	// In order to force returns, we are going to send to a queue that does not exist.
+
+	publishCount := 10
+
+	go func() {
+		for i := 0 ; i < publishCount ; i++	{
+			err := suite.channelPublish.Publish(
+				"",
+				queueName,
+				true,
+				false,
+				Publishing{
+					Body: []byte(fmt.Sprintf("message %v", i)),
+				},
+			)
+			suite.NoError(err, "publish message %v", i)
+		}
+	}()
+
+	returnEvents := suite.channelPublish.NotifyReturn(make(chan Return, publishCount))
+	returnsComplete := make(chan struct{})
+	returns := make([]Return, 0, publishCount)
+	go func() {
+		defer close(returnsComplete)
+
+		returnCount := 0
+		for thisReturn := range returnEvents {
+			returns = append(returns, thisReturn)
+			returnCount++
+			if returnCount >= 10 {
+				return
+			}
+		}
+	}()
+
+	select {
+	case <- returnsComplete:
+	case <-time.NewTimer(5 * time.Second).C:
+		suite.T().Error("returns received timeout")
+		suite.T().FailNow()
+	}
+
+	// close the channel
+	suite.channelPublish.Close()
+
+	_, open := <- returnEvents
+	suite.False(open, "return event channel should be closed.")
+
+	// make sure the returns we got are all of the expected messages.
+mainLoop:
+	for i := 0 ; i < publishCount ; i++ {
+		expectedMessage := fmt.Sprintf("message %v", i)
+		for _, returned := range returns {
+			if string(returned.Body) == expectedMessage {
+				continue mainLoop
+			}
+		}
+		suite.T().Errorf(
+			"did not receive returned message '%v'", expectedMessage,
+		)
+	}
+}
+
+func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
+	suite.T().Cleanup(suite.replaceChannels)
+
+	ackQueueName := "test_confirm_ack"
+	nackQueueName := "test_confirm_nack"
+
+	// Set up the ack queue
+	suite.createTestQueue(ackQueueName)
+
+	publishCount := 10
+
+	err := suite.channelPublish.Confirm(false)
+	if !suite.NoError(err, "put publish chan into confirm mode") {
+		suite.T().FailNow()
+	}
+
+	eventsAck := make(chan uint64, publishCount)
+	eventsNack := make(chan uint64, publishCount)
+	eventsOrphan := make(chan uint64, publishCount)
+
+	suite.channelPublish.NotifyConfirmOrOrphaned(
+		eventsAck, eventsNack, eventsOrphan,
+	)
+
+	published := new(sync.WaitGroup)
+	allPublished := make(chan struct{})
+	receivedCount := 0
+
+	go func() {
+		defer close(allPublished)
+		for i := 0 ; i < publishCount ; i++ {
+			publishType := "ACK"
+			if i % 3 == 0 {
+				publishType = "NACK"
+			} else if i % 2 == 0 {
+				publishType = "ORPHAN"
+			}
+
+			queueName := ackQueueName
+			if i % 3 != 0 && i % 2 != 0 {
+				queueName = nackQueueName
+			}
+
+			published.Wait()
+			published.Add(1)
+			err := suite.channelPublish.Publish(
+				"",
+				queueName,
+				true,
+				// RabbitMQ does not support immediate, this will result in a channel
+				// crash that will cause this message to be orphaned.
+				publishType == "ORPHAN",
+				Publishing{
+					Body: []byte(fmt.Sprintf("message %v", i)),
+				},
+			)
+
+			suite.NoErrorf(err, "publish message %v", i)
+		}
+	}()
+
+	go func() {
+		for _ = range eventsAck {
+			receivedCount++
+			published.Done()
+		}
+	}()
+
+	go func() {
+		for _ = range eventsNack {
+			receivedCount++
+			published.Done()
+		}
+	}()
+
+	go func() {
+		for _ = range eventsOrphan {
+			receivedCount++
+			published.Done()
+		}
+	}()
+
+	select {
+	case <- allPublished:
+	case <- time.NewTimer(5 * time.Second).C:
+	}
+
+	published.Wait()
+
+	suite.Equal(
+		publishCount, receivedCount, "received 10 confirmations",
+	)
 }
 
 func TestChannelMethods(t *testing.T) {
