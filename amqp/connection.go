@@ -2,6 +2,7 @@ package amqp
 
 import (
 	"context"
+	"crypto/tls"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
@@ -65,6 +66,11 @@ func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 }
 
 /*
+ROGER NOTE: Unlike the normal channels, roger channels will automatically reconnect on
+all errors until Channel.Close() is called.
+
+--
+
 Channel opens a unique, concurrent server channelConsume to process the bulk of AMQP
 messages.  Any error from methods on this receiver will render the receiver
 invalid and a new Channel should be opened.
@@ -72,21 +78,29 @@ invalid and a new Channel should be opened.
 */
 func (conn *Connection) Channel() (*Channel, error) {
 	initialPublishCount := uint64(0)
-	initialPublishOffset := uint64(0)
 	initialConsumeCount := uint64(0)
-	initialConsumeOffset := uint64(0)
 
 	transportChan := &transportChannel{
 		Channel:   nil,
 		rogerConn: conn,
 		settings: channelSettings{
+			// Channels start with their flow active
+			flowActive: true,
 			publisherConfirms: false,
 			tagPublishCount:   &initialPublishCount,
-			tagPublishOffset:  &initialPublishOffset,
+			tagPublishOffset:  0,
 			tagConsumeCount:   &initialConsumeCount,
-			tagConsumeOffset:  &initialConsumeOffset,
+			tagConsumeOffset:  0,
 		},
-		declareQueues:            new(sync.Map),
+		flowActiveLock:    new(sync.Mutex),
+		declareQueues:     new(sync.Map),
+		declareExchanges:  new(sync.Map),
+		bindQueues:        nil,
+		bindQueuesLock:    new(sync.Mutex),
+		bindExchanges:     nil,
+		bindExchangesLock: new(sync.Mutex),
+		// Make a decently-buffered acknowledgement channel
+		ackChan:                  make(chan ackInfo, 128),
 		eventRelaysRunning:       new(sync.WaitGroup),
 		eventRelaysRunSetup:      new(sync.WaitGroup),
 		eventRelaysSetupComplete: new(sync.WaitGroup),
@@ -106,12 +120,13 @@ func (conn *Connection) Channel() (*Channel, error) {
 		transportManager: manager,
 	}
 
-	// Try and establish a channelConsume using the connection's context, but returning an
-	// error if the operation fails rather than retrying.
+	// Try and establish a channel using the connection's context.
 	err := rogerChannel.reconnect(conn.ctx, true)
 	if err != nil {
 		return nil, err
 	}
+
+	rogerChannel.start()
 
 	return rogerChannel, nil
 }
@@ -146,10 +161,25 @@ func defaultConfig() *Config {
 	}
 }
 
-// Dials a new robust connection. The initial dial will not retry endlessly, but report
-// an error if it fails. After this method has returned a connection that has made a
-// successful connection, it will be reconnected silently in the background in case
-// of a disconnect.
+// Dial accepts a string in the AMQP URI format and returns a new Connection
+// over TCP using PlainAuth.  Defaults to a server heartbeat interval of 10
+// seconds and sets the handshake deadline to 30 seconds. After handshake,
+// deadlines are cleared.
+//
+// Dial uses the zero value of tls.Config when it encounters an amqps://
+// scheme.  It is equivalent to calling DialTLS(amqp, nil).
+func Dial(url string) (*Connection, error) {
+	// Use the same default config as streadway/amqp.
+	config := defaultConfig()
+
+	// Make our initial connection.
+	return DialConfig(url, *config)
+}
+
+// DialConfig accepts a string in the AMQP URI format and a configuration for
+// the transport and connection setup, returning a new Connection.  Defaults to
+// a server heartbeat interval of 10 seconds and sets the initial read deadline
+// to 30 seconds.
 func DialConfig(url string, config Config) (*Connection, error) {
 	// Create the robust connection object.
 	conn := newConnection(url, &config)
@@ -161,15 +191,15 @@ func DialConfig(url string, config Config) (*Connection, error) {
 	return conn, nil
 }
 
-// Dials a new robust connection. The initial dial will not retry endlessly, but report
-// an error if it fails. After this method has returned a connection that has made a
-// successful connection, it will be reconnected silently in the background in case
-// of a disconnect.
-func Dial(url string) (*Connection, error) {
-	// Use the same default config as streadway/amqp.
+// DialTLS accepts a string in the AMQP URI format and returns a new Connection
+// over TCP using PlainAuth.  Defaults to a server heartbeat interval of 10
+// seconds and sets the initial read deadline to 30 seconds.
+//
+// DialTLS uses the provided tls.Config when encountering an amqps:// scheme.
+func DialTLS(url string, amqps *tls.Config) (*Connection, error) {
 	config := defaultConfig()
+	config.TLSClientConfig = amqps
 
-	// Make our initial connection.
 	return DialConfig(url, *config)
 }
 
@@ -186,7 +216,8 @@ func DialConfigCtx(
 	return conn, nil
 }
 
-// As DialConfigCtx, but with default configuration.
+// As Dial, but endlessly redials the connection until ctx is cancelled. Once
+// returned, cancelling ctx does not affect the connection.
 func DialCtx(
 	ctx context.Context, url string,
 ) (*Connection, error) {
@@ -194,5 +225,16 @@ func DialCtx(
 	config := defaultConfig()
 
 	// Dial the connection.
+	return DialConfigCtx(ctx, url, *config)
+}
+
+// As DialTLS, but endlessly redials the connection until ctx is cancelled. Once
+// returned, cancelling ctx does not affect the connection.
+func DialTLSCtx(
+	ctx context.Context, url string, amqps *tls.Config,
+) (*Connection, error) {
+	config := defaultConfig()
+	config.TLSClientConfig = amqps
+
 	return DialConfigCtx(ctx, url, *config)
 }

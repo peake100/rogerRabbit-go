@@ -2,12 +2,96 @@ package amqp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
 	"sync/atomic"
 )
+
+// Store queue declare information for re-establishing queues on disconnect.
+type queueDeclareArgs struct {
+	name       string
+	durable    bool
+	autoDelete bool
+	exclusive  bool
+	noWait     bool
+	args       Table
+}
+
+// Store queue bind information for re-establishing bindings on disconnect.
+type queueBindArgs struct {
+	name string
+	key string
+	exchange string
+	noWait bool
+	args Table
+}
+
+
+// Store exchange declare information for re-establishing queues on disconnect.
+type exchangeDeclareArgs struct {
+	name string
+	kind string
+	durable bool
+	autoDelete bool
+	internal bool
+	noWait bool
+	args Table
+}
+
+// Store exchange bind information for re-establishing bindings on disconnect.
+type exchangeBindArgs struct {
+	destination string
+	key string
+	source string
+	noWait bool
+	args Table
+}
+
+// Holds current qos settings for the channel so they can be re-instated on reconnect.
+type qosSettings struct {
+	prefetchCount int
+	prefetchSize int
+	global bool
+}
+
+type ackMethod int
+
+const (
+	ack    ackMethod = 0
+	nack   ackMethod = 1
+	reject ackMethod = 2
+)
+
+// Ack command for acknowledge routine.
+type ackInfo struct {
+	// Delivery tag to acknowledge
+	deliveryTag uint64
+	// The method to call when acknowledging
+	method   	ackMethod
+	// Passed to `multiple` arg on ack and nack methods
+	multiple 	bool
+	// Passed to `requeue` arg on nack and reject methods
+	requeue  	bool
+	// Result passed to this channel so it can be returned to the initial caller.
+	resultChan  chan error
+}
+
+func newAckInfo(
+	deliveryTag uint64, method ackMethod, multiple bool, requeue bool,
+) ackInfo {
+	return ackInfo{
+		deliveryTag: deliveryTag,
+		method:      method,
+		multiple:    multiple,
+		requeue:     requeue,
+		// use a buffer as 1 so we don't block the acknowledge routine when it sends a
+		// result
+		resultChan:  make(chan error, 1),
+	}
+}
 
 // This object holds the current settings for our channel. We break this into it's own
 // struct so that we can pass the current settings to methods like
@@ -17,6 +101,14 @@ type channelSettings struct {
 	// Whether the channel is in publisher confirms mode. When true, all re-connected
 	// channels will be put into publisher confirms mode.
 	publisherConfirms bool
+
+	// If not nil, these are the latest qos settings passed to the QoS() method for the
+	// channel, and will be-reapplied to any new channel created due to a disconnection
+	// event.
+	qos *qosSettings
+	// Whether consumer flow to this channel is open. When false, re-established
+	// channels will immediately be put into pause mode.
+	flowActive bool
 
 	// The current delivery tag for this robust connection. Each time a message is
 	// successfully published, this value should be atomically incremented. This tag
@@ -33,11 +125,13 @@ type channelSettings struct {
 	tagPublishCount *uint64
 	// Offset to add to a given tag to get it's actual broker delivery tag for the
 	// current channel.
-	tagPublishOffset *uint64
+	tagPublishOffset uint64
 	// As tagPublishCount, but for delivery tags of delivered messages.
 	tagConsumeCount *uint64
 	// As tagConsumeCount, but for consumption tags.
-	tagConsumeOffset *uint64
+	tagConsumeOffset uint64
+	// The highest ack we have received
+	tagLatestDeliveryAck uint64
 }
 
 // Implements transport for *streadway.Channel.
@@ -50,10 +144,32 @@ type transportChannel struct {
 
 	// Current settings for the channel.
 	settings channelSettings
+	// locks the flow state from being changed until release
+	flowActiveLock *sync.Mutex
 
 	// List of queues that must be declared upon re-establishing the channel. We use a
 	// map so we can remove queues from this list on queue delete.
 	declareQueues *sync.Map
+	// List of exchanges that must be declared upon re-establishing the channel. We use
+	// a map so we can remove exchanges from this list on exchange delete.
+	declareExchanges *sync.Map
+	// List of bindings to re-build on channel re-establishment.
+	bindQueues []*queueBindArgs
+	// Lock that must be acquired to alter bindQueues.
+	bindQueuesLock *sync.Mutex
+	// List of bindings to re-build on channel re-establishment.
+	bindExchanges []*exchangeBindArgs
+	// Lock that must be acquired to alter bindQueues.
+	bindExchangesLock *sync.Mutex
+
+	// We're going to handle all nacks and acks in a goroutine so we can track the
+	// latest without heavy lock contention. This channels will be used to send
+	// them to the processor.
+	//
+	// TODO: It may be faster to have a parking lot channel of ackInfo values we can
+	// 	recycle rather than creating them fresh each time. Should benchmark both
+	//	 approaches
+	ackChan chan ackInfo
 
 	// Event processors should grab this WaitGroup when they spin up and release it
 	// when they have finished processing all available events after a channel close.
@@ -76,9 +192,9 @@ type transportChannel struct {
 	// callers again.
 	eventRelaysSetupComplete *sync.WaitGroup
 	// This WaitGroup will be released when all relays are ready. Event relays will
-	// wait on this group after releasing eventRelaysSetupComplete so that they don't error out
-	// and re-enter the beginning of their lifecycle before eventRelaysRunSetup has
-	// been re-acquired by the transport manager.
+	// wait on this group after releasing eventRelaysSetupComplete so that they don't
+	// error out and re-enter the beginning of their lifecycle before
+	// eventRelaysRunSetup has been re-acquired by the transport manager.
 	eventRelaysGo *sync.WaitGroup
 
 	// Logger for the channel transport
@@ -88,7 +204,115 @@ type transportChannel struct {
 func (transport *transportChannel) cleanup() error {
 	// Release this lock so event processors can close.
 	defer transport.eventRelaysRunSetup.Done()
+	defer close(transport.ackChan)
 	return nil
+}
+
+// Remove a re-connection queue binding when a queue, exchange, or binding is removed.
+func (transport *transportChannel) removeQueueBindings(
+	queueName string,
+	exchangeName string,
+	routingKey string,
+) {
+	removeQueueMatch := false
+	removeExchangeMatch := false
+	removeRouteMatch := false
+
+	if queueName != "" {
+		removeQueueMatch = true
+	}
+	if exchangeName != "" {
+		removeExchangeMatch = true
+	}
+	if routingKey != "" {
+		removeRouteMatch = true
+	}
+
+	transport.bindQueuesLock.Lock()
+	defer transport.bindQueuesLock.Unlock()
+
+	// Rather than creating a new slice, we are going to filter out any matching
+	// bind declarations we find, then constrain the slice to the number if items
+	// we have left.
+	i := 0
+	for _, thisBinding := range transport.bindQueues {
+		// If there is a routing key to match, then the queue and exchange must match
+		// too (so we don't end up removing a binding with the same routing key between
+		// a different queue-exchange pair).
+		if removeRouteMatch &&
+			thisBinding.key == routingKey &&
+			thisBinding.name == queueName &&
+			thisBinding.exchange == exchangeName {
+			// then:
+			continue
+		} else if removeQueueMatch && thisBinding.name == queueName {
+			continue
+		} else if removeExchangeMatch && thisBinding.exchange == exchangeName {
+			continue
+		}
+
+		transport.bindQueues[i] = thisBinding
+		i++
+	}
+
+	transport.bindQueues = transport.bindQueues[0:i]
+}
+
+// Remove a re-connection binding when a binding or exchange is removed.
+func (transport *transportChannel) removeExchangeBindings(
+	destination string,
+	key string,
+	source string,
+	// When a queue is deleted we need to remove any binding where the source or
+	// destination matches
+	destinationOrSource string,
+) {
+	removeDestinationMatch := false
+	removeKeyMatch := false
+	removeSourceMatch := false
+
+	if destination != "" {
+		removeDestinationMatch = true
+	}
+	if key != "" {
+		removeKeyMatch = true
+	}
+	if source != "" {
+		removeSourceMatch = true
+	}
+	if destinationOrSource != "" {
+		removeSourceMatch = true
+		removeDestinationMatch = true
+	}
+
+	transport.bindQueuesLock.Lock()
+	defer transport.bindQueuesLock.Unlock()
+
+	// Rather than creating a new slice, we are going to filter out any matching
+	// bind declarations we find, then constrain the slice to the number if items
+	// we have left.
+	i := 0
+	for _, thisBinding := range transport.bindExchanges {
+		// If there is a routing key to match, then the source and destination exchanges
+		// must match too (so we don't end up removing a binding with the same routing
+		// key between a different set of exchanges).
+		if removeKeyMatch &&
+			thisBinding.key == key &&
+			thisBinding.source == source &&
+			thisBinding.destination == destination {
+			// then:
+			continue
+		} else if removeDestinationMatch && thisBinding.destination == destination {
+			continue
+		} else if removeSourceMatch && thisBinding.source == source {
+			continue
+		}
+
+		transport.bindExchanges[i] = thisBinding
+		i++
+	}
+
+	transport.bindQueues = transport.bindQueues[0:i]
 }
 
 // Sets up a channel with all the settings applied to the last one. This method will
@@ -96,10 +320,24 @@ func (transport *transportChannel) cleanup() error {
 func (transport *transportChannel) reconnectApplyChannelSettings() error {
 	if transport.logger.Debug().Enabled() {
 		transport.logger.Debug().
+			Bool("CONSUMER_FLOW_ACTIVE", transport.settings.flowActive).
 			Bool("CONFIRMS", transport.settings.publisherConfirms).
+			Interface("QOS", transport.settings.qos).
 			Msg("applying channel settings")
 	}
 
+	// If flow was paused, immediately pause it again
+	if !transport.settings.flowActive {
+		transport.flowActiveLock.Lock()
+		defer transport.flowActiveLock.Unlock()
+
+		err := transport.Channel.Flow(transport.settings.flowActive)
+		if err != nil {
+			return fmt.Errorf("error pausing consumer flow: %w", err)
+		}
+	}
+
+	// If in publisher confirms mode, set up the new channel to be so.
 	if transport.settings.publisherConfirms {
 		err := transport.Channel.Confirm(false)
 		if err != nil {
@@ -107,15 +345,21 @@ func (transport *transportChannel) reconnectApplyChannelSettings() error {
 		}
 	}
 
+	// If qos settings were given, apply them.
+	qos := transport.settings.qos
+	if qos != nil {
+		err := transport.Channel.Qos(qos.prefetchCount, qos.prefetchSize, qos.global)
+		if err != nil {
+			return fmt.Errorf("error applying qos settings: %w", err)
+		}
+	}
+
 	return nil
 }
 
 func (transport *transportChannel) reconnectUpdateTagTrackers() {
-	currentPublished := *transport.settings.tagPublishCount
-	currentConsumed := *transport.settings.tagConsumeCount
-
-	transport.settings.tagPublishOffset = &currentPublished
-	transport.settings.tagConsumeOffset = &currentConsumed
+	transport.settings.tagPublishOffset = *transport.settings.tagPublishCount
+	transport.settings.tagConsumeOffset = *transport.settings.tagConsumeCount
 }
 
 func (transport *transportChannel) reconnectDeclareQueues() error {
@@ -146,6 +390,104 @@ func (transport *transportChannel) reconnectDeclareQueues() error {
 	transport.declareQueues.Range(redeclareQueues)
 
 	return err
+}
+
+// Re-declares exchanges during reconnection
+func (transport *transportChannel) reconnectDeclareExchanges() error {
+	var err error
+
+	redeclareExchanges := func(key, value interface{}) bool {
+		thisExchange := value.(*exchangeDeclareArgs)
+		err = transport.Channel.ExchangeDeclare(
+			thisExchange.name,
+			thisExchange.kind,
+			thisExchange.durable,
+			thisExchange.autoDelete,
+			thisExchange.internal,
+			// we are going to wait so this is done synchronously.
+			false,
+			thisExchange.args,
+		)
+		if err != nil {
+			err = fmt.Errorf(
+				"error re-declaring exchange '%v': %w", thisExchange.name, err,
+			)
+			return false
+		}
+
+		return true
+	}
+
+	// Redeclare all queues in the map.
+	transport.declareExchanges.Range(redeclareExchanges)
+
+	return err
+}
+
+// Re-declares queue bindings during reconnection
+func (transport *transportChannel) reconnectBindQueues() error {
+	// We shouldn't meed to lock this resource here, since this method will only be
+	// used when we have a write lock on the transport, and all methods that modify the
+	// binding list must first acquire the same lock for read, but we will put this here
+	// in case that changes in the future.
+	transport.bindQueuesLock.Lock()
+	defer transport.bindQueuesLock.Unlock()
+
+	for _, thisBinding :=  range transport.bindQueues {
+		err := transport.Channel.QueueBind(
+			thisBinding.name,
+			thisBinding.key,
+			thisBinding.exchange,
+			false,
+			thisBinding.args,
+		)
+
+		if err != nil {
+			return fmt.Errorf(
+			"error re-binding queue '%v' to exchange '%v' with routing key" +
+				" '%v': %w",
+				thisBinding.name,
+				thisBinding.exchange,
+				thisBinding.key,
+				err,
+			)
+		}
+	}
+
+	return nil
+}
+
+// Re-declares exchange bindings during reconnection
+func (transport *transportChannel) reconnectBindExchanges() error {
+	// We shouldn't meed to lock this resource here, since this method will only be
+	// used when we have a write lock on the transport, and all methods that modify the
+	// binding list must first acquire the same lock for read, but we will put this here
+	// in case that changes in the future.
+	transport.bindExchangesLock.Lock()
+	defer transport.bindExchangesLock.Unlock()
+
+	for _, thisBinding :=  range transport.bindExchanges {
+		err := transport.Channel.ExchangeBind(
+			thisBinding.destination,
+			thisBinding.key,
+			thisBinding.source,
+			false,
+			thisBinding.args,
+		)
+
+		if err != nil {
+			return fmt.Errorf(
+				"error re-binding source exchange '%v' to destination exchange" +
+					" '%v' with routing key '%v': %w",
+				thisBinding.source,
+				thisBinding.destination,
+				thisBinding.key,
+				err,
+			)
+		}
+	}
+
+	return nil
 }
 
 func (transport *transportChannel) tryReconnect(ctx context.Context) error {
@@ -185,10 +527,35 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	}
 	transport.reconnectUpdateTagTrackers()
 
+	// Recreate queue and exchange topology
 	if debugEnabled {
 		logger.Debug().Msg("re-declaring queues")
 	}
 	err = transport.reconnectDeclareQueues()
+	if err != nil {
+		return err
+	}
+
+	if debugEnabled {
+		logger.Debug().Msg("re-declaring exchanges")
+	}
+	err = transport.reconnectDeclareExchanges()
+	if err != nil {
+		return err
+	}
+
+	if debugEnabled {
+		logger.Debug().Msg("re-binding queues")
+	}
+	err = transport.reconnectBindQueues()
+	if err != nil {
+		return err
+	}
+
+	if debugEnabled {
+		logger.Debug().Msg("re-binding exchanges")
+	}
+	err = transport.reconnectBindExchanges()
 	if err != nil {
 		return err
 	}
@@ -238,15 +605,275 @@ type Channel struct {
 	*transportManager
 }
 
-// Store queue declare information for re-establishing queues on disconnect.
-type queueDeclareArgs struct {
-	name       string
-	durable    bool
-	autoDelete bool
-	exclusive  bool
-	noWait     bool
-	args       streadway.Table
+// Start helper routines.
+func (channel *Channel) start() {
+	go channel.runAcknowledgementRoutine()
 }
+
+// We are going to handle sending acknowledgements in a single goroutine so we can
+// avoid using locks to handle tracking the latest acknowledged tag.
+func (channel *Channel) runAcknowledgementRoutine() {
+	var logger zerolog.Logger
+	// Each loop will put the ack request into this variable
+	var ackReq ackInfo
+	// Each loop will put the tag with offset into this variable
+	var tagWithOffset uint64
+
+	transportChannel := channel.transportChannel
+	settings := transportChannel.settings
+
+	// Wrap the underlying methods in closures with identical signatures so we can
+	// call them generically based on what kind of method we are using.
+	ackMethod := func() error {
+		logger = channel.logger.With().Str("METHOD", "ACK").Logger()
+		return transportChannel.Ack(
+			tagWithOffset,
+			ackReq.multiple,
+		)
+	}
+
+	nackMethod := func() error {
+		logger = channel.logger.With().Str("METHOD", "NACK").Logger()
+		return transportChannel.Nack(
+			tagWithOffset,
+			ackReq.multiple,
+			ackReq.requeue,
+		)
+	}
+
+	rejectMethod := func() error {
+		logger = channel.logger.With().Str("METHOD", "REJECT").Logger()
+		return transportChannel.Reject(
+			tagWithOffset,
+			ackReq.requeue,
+		)
+	}
+
+	var method func() error
+
+	// Only one of these operations will be occurring simultaneously.
+	operation := func() error {
+		var opErr error
+
+		// If there was no error, set the latest delivery tag to this tag on exit.
+		defer func() {
+			if opErr == nil {
+				settings.tagLatestDeliveryAck = ackReq.deliveryTag
+			}
+		}()
+
+		// If this delivery tag is less or equal to our current offset, then all
+		// requested tags are orphans and we can return an error
+		if ackReq.deliveryTag <= settings.tagConsumeOffset {
+			return newErrCantAcknowledgeOrphans(
+				settings.tagLatestDeliveryAck,
+				ackReq.deliveryTag,
+				settings.tagConsumeOffset,
+				ackReq.multiple,
+			)
+		}
+
+		tagWithOffset = ackReq.deliveryTag - settings.tagConsumeOffset
+
+		// Invoke the method and return any errors
+		opErr = method()
+		if opErr != nil {
+			return opErr
+		}
+
+		if logger.Debug().Enabled() {
+			logger.Debug().
+				Uint64("DELIVERY TAG", ackReq.deliveryTag).
+				Bool("MULTIPLE", ackReq.multiple).
+				Bool("REQUEUE", ackReq.requeue).
+				Msg("acknowledgement(s) sent")
+		}
+
+		// If we are acknowledging multiple requests and some of them span into a
+		// previous connection, we need to report an orphaned tag error.
+		if ackReq.method != reject &&
+			ackReq.multiple &&
+			settings.tagLatestDeliveryAck < settings.tagConsumeOffset {
+			// then:
+			return newErrCantAcknowledgeOrphans(
+				settings.tagLatestDeliveryAck,
+				ackReq.deliveryTag,
+				settings.tagConsumeOffset,
+				ackReq.multiple,
+			)
+		}
+
+		return nil
+	}
+
+	// Range over all the acknowledgement requests we receive.
+	for ackReq = range transportChannel.ackChan {
+		// pick the correct underlying channel method to use
+		switch ackReq.method {
+		case ack:
+			method = ackMethod
+		case nack:
+			method = nackMethod
+		case reject:
+			method = rejectMethod
+		default:
+			panic(errors.New("got bad ack request type"))
+		}
+
+		// Do the operation
+		err := channel.retryOperationOnClosed(channel.ctx, operation, true)
+		// Send the result back to the caller
+		ackReq.resultChan <- err
+	}
+}
+
+/*
+ROGER NOTE: Tags will bew continuous, even in the event of a re-connect. The channel
+will take care of matching up caller-facing delivery tags to the current channel's
+underlying tag.
+
+--
+
+Confirm puts this channel into confirm mode so that the client can ensure all
+publishings have successfully been received by the server.  After entering this
+mode, the server will send a basic.ack or basic.nack message with the deliver
+tag set to a 1 based incremental index corresponding to every publishing
+received after the this method returns.
+
+Add a listener to Channel.NotifyPublish to respond to the Confirmations. If
+Channel.NotifyPublish is not called, the Confirmations will be silently
+ignored.
+
+The order of acknowledgments is not bound to the order of deliveries.
+
+Ack and Nack confirmations will arrive at some point in the future.
+
+Unroutable mandatory or immediate messages are acknowledged immediately after
+any Channel.NotifyReturn listeners have been notified.  Other messages are
+acknowledged when all queues that should have the message routed to them have
+either received acknowledgment of delivery or have enqueued the message,
+persisting the message if necessary.
+
+When noWait is true, the client will not wait for a response.  A channel
+exception could occur if the server does not support this method.
+
+*/
+func (channel *Channel) Confirm(noWait bool) error {
+	op := func() error {
+		var opErr error
+		opErr = channel.transportChannel.Confirm(noWait)
+		if opErr != nil {
+			return opErr
+		}
+
+		// remember this setting so we can put re-established channels into confirmation
+		// mode.
+		channel.transportChannel.settings.publisherConfirms = true
+
+		return nil
+	}
+
+	return channel.retryOperationOnClosed(channel.ctx, op, true)
+}
+
+/*
+Qos controls how many messages or how many bytes the server will try to keep on
+the network for consumers before receiving delivery acks.  The intent of Qos is
+to make sure the network buffers stay full between the server and client.
+
+With a prefetch count greater than zero, the server will deliver that many
+messages to consumers before acknowledgments are received.  The server ignores
+this option when consumers are started with noAck because no acknowledgments
+are expected or sent.
+
+With a prefetch size greater than zero, the server will try to keep at least
+that many bytes of deliveries flushed to the network before receiving
+acknowledgments from the consumers.  This option is ignored when consumers are
+started with noAck.
+
+When global is true, these Qos settings apply to all existing and future
+consumers on all channels on the same connection.  When false, the Channel.Qos
+settings will apply to all existing and future consumers on this channel.
+
+Please see the RabbitMQ Consumer Prefetch documentation for an explanation of
+how the global flag is implemented in RabbitMQ, as it differs from the
+AMQP 0.9.1 specification in that global Qos settings are limited in scope to
+channels, not connections (https://www.rabbitmq.com/consumer-prefetch.html).
+
+To get round-robin behavior between consumers consuming from the same queue on
+different connections, set the prefetch count to 1, and the next available
+message on the server will be delivered to the next available consumer.
+
+If your consumer work time is reasonably consistent and not much greater
+than two times your network round trip time, you will see significant
+throughput improvements starting with a prefetch count of 2 or slightly
+greater as described by benchmarks on RabbitMQ.
+
+http://www.rabbitmq.com/blog/2012/04/25/rabbitmq-performance-measurements-part-2/
+*/
+func (channel *Channel) Qos(prefetchCount, prefetchSize int, global bool) error {
+	op := func() error {
+		opErr := channel.transportChannel.Qos(prefetchCount, prefetchSize, global)
+		if opErr != nil {
+			return opErr
+		}
+
+		// remember these settings so we can configure re-established channels the same
+		// way.
+		channel.transportChannel.settings.qos = &qosSettings{
+			prefetchCount: prefetchCount,
+			prefetchSize:  prefetchSize,
+			global:        global,
+		}
+
+		return nil
+	}
+
+	return channel.retryOperationOnClosed(channel.ctx, op, true)
+}
+
+/*
+Flow pauses the delivery of messages to consumers on this channel.  Channels
+are opened with flow control active, to open a channel with paused
+deliveries immediately call this method with `false` after calling
+Connection.Channel.
+
+When active is `false`, this method asks the server to temporarily pause deliveries
+until called again with active as `true`.
+
+Channel.Get methods will not be affected by flow control.
+
+This method is not intended to act as window control.  Use Channel.Qos to limit
+the number of unacknowledged messages or bytes in flight instead.
+
+The server may also send us flow methods to throttle our publishings.  A well
+behaving publishing client should add a listener with Channel.NotifyFlow and
+pause its publishings when `false` is sent on that channel.
+
+Note: RabbitMQ prefers to use TCP push back to control flow for all channels on
+a connection, so under high volume scenarios, it's wise to open separate
+Connections for publishings and deliveries.
+
+*/
+func (channel *Channel) Flow(active bool) error {
+	op := func() error {
+		channel.transportChannel.flowActiveLock.Lock()
+		defer channel.transportChannel.flowActiveLock.Unlock()
+
+		opErr := channel.transportChannel.Flow(active)
+		if opErr != nil {
+			return opErr
+		}
+
+		// Update the setting if there was no error.
+		channel.transportChannel.settings.flowActive = active
+
+		return nil
+	}
+
+	return channel.retryOperationOnClosed(channel.ctx, op, true)
+}
+
 
 /*
 ROGER NOTE: Queues declared with a roger channel will be automatically re-declared
@@ -454,7 +1081,28 @@ func (channel *Channel) QueueBind(
 	operation := func() error {
 		var opErr error
 		opErr = channel.transportChannel.QueueBind(name, key, exchange, noWait, args)
-		return opErr
+
+		if opErr != nil {
+			return opErr
+		}
+
+		bindArgs := &queueBindArgs{
+			name:     name,
+			key:      key,
+			exchange: exchange,
+			noWait:   noWait,
+			// Copy the arg table so if the caller re-uses it we preserve the original
+			// values.
+			args:     copyTable(args),
+		}
+
+		channel.transportChannel.bindQueuesLock.Lock()
+		defer channel.transportChannel.bindQueuesLock.Unlock()
+
+		channel.transportChannel.bindQueues = append(
+			channel.transportChannel.bindQueues, bindArgs,
+		)
+		return nil
 	}
 
 	err := channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -474,7 +1122,18 @@ func (channel *Channel) QueueUnbind(name, key, exchange string, args Table) erro
 	operation := func() error {
 		var opErr error
 		opErr = channel.transportChannel.QueueUnbind(name, key, exchange, args)
-		return opErr
+		if opErr == nil {
+			return opErr
+		}
+
+		// Remove this binding from the list of bindings to re-create on reconnect.
+		channel.transportChannel.removeQueueBindings(
+			name,
+			exchange,
+			key,
+		)
+
+		return nil
 	}
 
 	err := channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -537,12 +1196,287 @@ func (channel *Channel) QueueDelete(
 		}
 
 		channel.transportChannel.declareQueues.Delete(name)
+		// Remove all binding commands associated with this queue from the re-bind on
+		// reconnect list.
+		channel.transportChannel.removeQueueBindings(
+			name,
+			"",
+			"",
+		)
 
 		return nil
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
 	return count, err
+}
+
+/*
+ExchangeDeclare declares an exchange on the server. If the exchange does not
+already exist, the server will create it.  If the exchange exists, the server
+verifies that it is of the provided type, durability and auto-delete flags.
+
+Errors returned from this method will close the channel.
+
+Exchange names starting with "amq." are reserved for pre-declared and
+standardized exchanges. The client MAY declare an exchange starting with
+"amq." if the passive option is set, or the exchange already exists.  Names can
+consist of a non-empty sequence of letters, digits, hyphen, underscore,
+period, or colon.
+
+Each exchange belongs to one of a set of exchange kinds/types implemented by
+the server. The exchange types define the functionality of the exchange - i.e.
+how messages are routed through it. Once an exchange is declared, its type
+cannot be changed.  The common types are "direct", "fanout", "topic" and
+"headers".
+
+Durable and Non-Auto-Deleted exchanges will survive server restarts and remain
+declared when there are no remaining bindings.  This is the best lifetime for
+long-lived exchange configurations like stable routes and default exchanges.
+
+Non-Durable and Auto-Deleted exchanges will be deleted when there are no
+remaining bindings and not restored on server restart.  This lifetime is
+useful for temporary topologies that should not pollute the virtual host on
+failure or after the consumers have completed.
+
+Non-Durable and Non-Auto-deleted exchanges will remain as long as the server is
+running including when there are no remaining bindings.  This is useful for
+temporary topologies that may have long delays between bindings.
+
+Durable and Auto-Deleted exchanges will survive server restarts and will be
+removed before and after server restarts when there are no remaining bindings.
+These exchanges are useful for robust temporary topologies or when you require
+binding durable queues to auto-deleted exchanges.
+
+Note: RabbitMQ declares the default exchange types like 'amq.fanout' as
+durable, so queues that bind to these pre-declared exchanges must also be
+durable.
+
+Exchanges declared as `internal` do not accept accept publishings. Internal
+exchanges are useful when you wish to implement inter-exchange topologies
+that should not be exposed to users of the broker.
+
+When noWait is true, declare without waiting for a confirmation from the server.
+The channel may be closed as a result of an error.  Add a NotifyClose listener
+to respond to any exceptions.
+
+Optional amqp.Table of arguments that are specific to the server's implementation of
+the exchange can be sent for exchange types that require extra parameters.
+*/
+func (channel *Channel) ExchangeDeclare(
+	name, kind string, durable, autoDelete, internal, noWait bool, args Table,
+) (err error) {
+
+	// Run an an operation to get automatic retries on channel dis-connections.
+	operation := func() error {
+		var opErr error
+		opErr = channel.transportChannel.ExchangeDeclare(
+			name, kind, durable, autoDelete, internal, noWait, args,
+		)
+		if opErr != nil {
+			return opErr
+		}
+
+		// Store the args so this exchange can be re-declared on channel
+		// re-establishment.
+		exchangeArgs := &exchangeDeclareArgs{
+			name:       name,
+			kind:       kind,
+			durable:    durable,
+			autoDelete: autoDelete,
+			internal:   internal,
+			// We will always use wait on re-establishments, but preserve the original
+			// setting here for posterity.
+			noWait:     noWait,
+			// Copy the table so if the caller re-uses it we dont have it mutated
+			// between re-declarations.
+			args:       copyTable(args),
+		}
+
+		channel.transportChannel.declareExchanges.Store(name, exchangeArgs)
+
+		return nil
+	}
+
+	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
+	return err
+}
+
+/*
+
+ExchangeDeclarePassive is functionally and parametrically equivalent to
+ExchangeDeclare, except that it sets the "passive" attribute to true. A passive
+exchange is assumed by RabbitMQ to already exist, and attempting to connect to a
+non-existent exchange will cause RabbitMQ to throw an exception. This function
+can be used to detect the existence of an exchange.
+
+*/
+func (channel *Channel) ExchangeDeclarePassive(
+	name, kind string, durable, autoDelete, internal, noWait bool, args Table,
+) (err error) {
+	// Run an an operation to get automatic retries on channel dis-connections.
+	operation := func() error {
+		var opErr error
+		opErr = channel.transportChannel.ExchangeDeclarePassive(
+			name, kind, durable, autoDelete, internal, noWait, args,
+		)
+		if opErr != nil {
+			return opErr
+		}
+
+		return nil
+	}
+
+	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
+	return err
+}
+
+/*
+ExchangeDelete removes the named exchange from the server. When an exchange is
+deleted all queue bindings on the exchange are also deleted.  If this exchange
+does not exist, the channel will be closed with an error.
+
+When ifUnused is true, the server will only delete the exchange if it has no queue
+bindings.  If the exchange has queue bindings the server does not delete it
+but close the channel with an exception instead.  Set this to true if you are
+not the sole owner of the exchange.
+
+When noWait is true, do not wait for a server confirmation that the exchange has
+been deleted.  Failing to delete the channel could close the channel.  Add a
+NotifyClose listener to respond to these channel exceptions.
+*/
+func (channel *Channel) ExchangeDelete(
+	name string, ifUnused, noWait bool,
+) (err error) {
+	// Run an an operation to get automatic retries on channel dis-connections.
+	operation := func() error {
+		var opErr error
+		opErr = channel.transportChannel.ExchangeDelete(name, ifUnused, noWait)
+		if opErr != nil {
+			return opErr
+		}
+
+		// Remove the exchange from the list of exchanges we need to re-declare
+		channel.transportChannel.declareExchanges.Delete(name)
+		// Remove all bindings associated with this exchange from the list of bindings
+		// to re-declare on re-connections.
+		channel.transportChannel.removeQueueBindings("", name, "")
+		channel.transportChannel.removeExchangeBindings(
+			"", "", "", name,
+		)
+
+		return nil
+	}
+
+	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
+	return err
+}
+
+/*
+ExchangeBind binds an exchange to another exchange to create inter-exchange
+routing topologies on the server.  This can decouple the private topology and
+routing exchanges from exchanges intended solely for publishing endpoints.
+
+Binding two exchanges with identical arguments will not create duplicate
+bindings.
+
+Binding one exchange to another with multiple bindings will only deliver a
+message once.  For example if you bind your exchange to `amq.fanout` with two
+different binding keys, only a single message will be delivered to your
+exchange even though multiple bindings will match.
+
+Given a message delivered to the source exchange, the message will be forwarded
+to the destination exchange when the routing key is matched.
+
+  ExchangeBind("sell", "MSFT", "trade", false, nil)
+  ExchangeBind("buy", "AAPL", "trade", false, nil)
+
+  Delivery       Source      Key      Destination
+  example        exchange             exchange
+  -----------------------------------------------
+  key: AAPL  --> trade ----> MSFT     sell
+                       \---> AAPL --> buy
+
+When noWait is true, do not wait for the server to confirm the binding.  If any
+error occurs the channel will be closed.  Add a listener to NotifyClose to
+handle these errors.
+
+Optional arguments specific to the exchanges bound can also be specified.
+*/
+func (channel *Channel) ExchangeBind(
+	destination, key, source string, noWait bool, args Table,
+) (err error) {
+	// Run an an operation to get automatic retries on channel dis-connections.
+	operation := func() error {
+		var opErr error
+		opErr = channel.transportChannel.ExchangeBind(
+			destination, key, source, noWait, args,
+		)
+		if opErr != nil {
+			return opErr
+		}
+
+		// Add this binding to the list of exchange bindings we must re-declare on
+		// re-connection establishment.
+		bindArgs := &exchangeBindArgs{
+			destination: destination,
+			key:         key,
+			source:      source,
+			noWait:      noWait,
+			args:        args,
+		}
+
+		// Store this binding so we can re-bind it if we lose and regain the connection.
+		channel.transportChannel.bindExchangesLock.Lock()
+		defer channel.transportChannel.bindExchangesLock.Unlock()
+
+		channel.transportChannel.bindExchanges = append(
+			channel.transportChannel.bindExchanges, bindArgs,
+		)
+
+		return nil
+	}
+
+	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
+	return err
+}
+
+/*
+ExchangeUnbind unbinds the destination exchange from the source exchange on the
+server by removing the routing key between them.  This is the inverse of
+ExchangeBind.  If the binding does not currently exist, an error will be
+returned.
+
+When noWait is true, do not wait for the server to confirm the deletion of the
+binding.  If any error occurs the channel will be closed.  Add a listener to
+NotifyClose to handle these errors.
+
+Optional arguments that are specific to the type of exchanges bound can also be
+provided.  These must match the same arguments specified in ExchangeBind to
+identify the binding.
+*/
+func (channel *Channel) ExchangeUnbind(
+	destination, key, source string, noWait bool, args Table,
+) (err error) {
+	// Run an an operation to get automatic retries on channel dis-connections.
+	operation := func() error {
+		var opErr error
+		opErr = channel.transportChannel.ExchangeUnbind(
+			destination, key, source, noWait, args,
+		)
+		if opErr != nil {
+			return opErr
+		}
+
+		channel.transportChannel.removeExchangeBindings(
+			destination, key, source, "",
+		)
+
+		return nil
+	}
+
+	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
+	return err
 }
 
 /*
@@ -660,9 +1594,7 @@ func (channel *Channel) Get(
 
 		// If there was no error, atomically increment the delivery tag.
 		atomic.AddUint64(channel.transportChannel.settings.tagConsumeCount, 1)
-		msg = newDelivery(
-			msgStreadway, channel.transportChannel.settings.tagConsumeOffset,
-		)
+		msg = channel.newDelivery(msgStreadway)
 		return opErr
 	}
 
@@ -671,11 +1603,10 @@ func (channel *Channel) Get(
 }
 
 /*
-ROGER NOTE: unlike normal consume channels, this channel's delivery tags will reset
-whenever the underlying connection is re-established. It is on the roadmap to bring
-the behavior completely in line with the normal Consume behavior, where each delivery
-gets an incremented tag, but doing so is depended on handling acks across channel
-re-connects.
+ROGER NOTE: Unlike the normal consume method, re-connections are handled automatically
+on channel errors. Delivery tags will appear un-interrupted to the consumer, and the
+roger channel will track the lineup of caller-facing delivery tags to the delivery
+tags of the current underlying channel.
 
 --
 
@@ -755,6 +1686,7 @@ func (channel *Channel) Consume(
 			args:      args,
 		},
 		CallerDeliveries: callerDeliveries,
+		NewDelivery: channel.newDelivery,
 	}
 
 	// Pass it to our relay handler.
@@ -768,51 +1700,100 @@ func (channel *Channel) Consume(
 }
 
 /*
-Confirm puts this channel into confirm mode so that the client can ensure all
-publishings have successfully been received by the server.  After entering this
-mode, the server will send a basic.ack or basic.nack message with the deliver
-tag set to a 1 based incremental index corresponding to every publishing
-received after the this method returns.
+ROGER NOTE: If a tag (or a tag range when acking multiple tags) is from a previously
+disconnected channel, a ErrCantAcknowledgeOrphans will be returned, which is a new error
+type specific to the Roger implementation.
 
-Add a listener to Channel.NotifyPublish to respond to the Confirmations. If
-Channel.NotifyPublish is not called, the Confirmations will be silently
-ignored.
+When acking multiple tags, it is possible that some of the tags will be from a closed
+underlying channel, and therefore be orphaned, and some will be from the current
+channel, and therefore be successful. In such cases, the ErrCantAcknowledgeOrphans will
+still be returned, and can be checked for which tag ranges could not be acked.
 
-The order of acknowledgments is not bound to the order of deliveries.
+--
 
-Ack and Nack confirmations will arrive at some point in the future.
+Ack acknowledges a delivery by its delivery tag when having been consumed with
+Channel.Consume or Channel.Get.
 
-Unroutable mandatory or immediate messages are acknowledged immediately after
-any Channel.NotifyReturn listeners have been notified.  Other messages are
-acknowledged when all queues that should have the message routed to them have
-either received acknowledgment of delivery or have enqueued the message,
-persisting the message if necessary.
+Ack acknowledges all message received prior to the delivery tag when multiple
+is true.
 
-When noWait is true, the client will not wait for a response.  A channel
-exception could occur if the server does not support this method.
-
+See also Delivery.Ack
 */
-func (channel *Channel) Confirm(noWait bool) error {
-	op := func() error {
-		var opErr error
-		opErr = channel.transportChannel.Confirm(noWait)
-		if opErr != nil {
-			return opErr
-		}
-
-		// If the channel was already in confirms mode, there is nothing more to do
-		if channel.transportChannel.settings.publisherConfirms {
-			return nil
-		}
-
-		// otherwise set the setting to true and create a new context.
-		channel.transportChannel.settings.publisherConfirms = true
-
-		return nil
+func (channel *Channel) Ack(tag uint64, multiple bool) error {
+	if channel.ctx.Err() != nil {
+		return streadway.ErrClosed
 	}
 
-	return channel.retryOperationOnClosed(channel.ctx, op, true)
+	// Send this ack request to the acknowledgement routine
+	ackInfo := newAckInfo(tag, ack, multiple, false)
+	channel.transportChannel.ackChan <- ackInfo
+
+	// Pull the result
+	return <- ackInfo.resultChan
 }
+
+/*
+ROGER NOTE: If a tag (or a tag range when nacking multiple tags) is from a previously
+disconnected channel, a ErrCantAcknowledgeOrphans will be returned, which is a new error
+type specific to the Roger implementation.
+
+When nacking multiple tags, it is possible that some of the tags will be from a closed
+underlying channel, and therefore be orphaned, and some will be from the current
+channel, and therefore be successful. In such cases, the ErrCantAcknowledgeOrphans will
+still be returned, and can be checked for which tag ranges could not be nacked.
+
+--
+
+Nack negatively acknowledges a delivery by its delivery tag.  Prefer this
+method to notify the server that you were not able to process this delivery and
+it must be redelivered or dropped.
+
+See also Delivery.Nack
+*/
+func (channel *Channel) Nack(tag uint64, multiple bool, requeue bool) error {
+	if channel.ctx.Err() != nil {
+		return streadway.ErrClosed
+	}
+
+	// Send this ack request to the acknowledgement routine
+	ackInfo := newAckInfo(tag, nack, multiple, requeue)
+	channel.transportChannel.ackChan <- ackInfo
+
+	// Pull the result
+	return <- ackInfo.resultChan
+}
+
+/*
+ROGER NOTE: If a tag (or a tag range when rejecting multiple tags) is from a previously
+disconnected channel, a ErrCantAcknowledgeOrphans will be returned, which is a new error
+type specific to the Roger implementation.
+
+When nacking multiple tags, it is possible that some of the tags will be from a closed
+underlying channel, and therefore be orphaned, and some will be from the current
+channel, and therefore be successful. In such cases, the ErrCantAcknowledgeOrphans will
+still be returned, and can be checked for which tag ranges could not be rejected.
+
+--
+
+Reject negatively acknowledges a delivery by its delivery tag.  Prefer Nack
+over Reject when communicating with a RabbitMQ server because you can Nack
+multiple messages, reducing the amount of protocol messages to exchange.
+
+See also Delivery.Reject
+*/
+func (channel *Channel) Reject(tag uint64, requeue bool) error {
+	if channel.ctx.Err() != nil {
+		return streadway.ErrClosed
+	}
+
+	// Send this ack request to the acknowledgement routine
+	ackInfo := newAckInfo(tag, reject, false, requeue)
+	channel.transportChannel.ackChan <- ackInfo
+
+	// Pull the result
+	return <- ackInfo.resultChan
+}
+
 
 /*
 ROGER NOTE: It is possible that if a channel is disconnected unexpectedly, there may
@@ -1006,4 +1987,73 @@ func (channel *Channel) NotifyReturn(returns chan Return) chan Return {
 		channel.logger.Err(err).Msg("error setting up notify return relay")
 	}
 	return returns
+}
+
+/*
+NotifyCancel registers a listener for basic.cancel methods.  These can be sent
+from the server when a queue is deleted or when consuming from a mirrored queue
+where the master has just failed (and was moved to another node).
+
+The subscription tag is returned to the listener.
+
+*/
+func (channel *Channel) NotifyCancel(cancellations chan string) chan string {
+	relay := &cancelEventRelay{
+		CallerCancellations: cancellations,
+	}
+
+	err := channel.setupAndLaunchEventRelay(relay)
+	if err != nil {
+		close(cancellations)
+		channel.logger.Err(err).Msg("error setting up notify cancel relay")
+	}
+
+	return cancellations
+}
+
+/*
+NotifyFlow registers a listener for basic.flow methods sent by the server.
+When `false` is sent on one of the listener channels, all publishers should
+pause until a `true` is sent.
+
+The server may ask the producer to pause or restart the flow of Publishings
+sent by on a channel. This is a simple flow-control mechanism that a server can
+use to avoid overflowing its queues or otherwise finding itself receiving more
+messages than it can process. Note that this method is not intended for window
+control. It does not affect contents returned by basic.get-ok methods.
+
+When a new channel is opened, it is active (flow is active). Some
+applications assume that channels are inactive until started. To emulate
+this behavior a client MAY open the channel, then pause it.
+
+Publishers should respond to a flow messages as rapidly as possible and the
+server may disconnect over producing channels that do not respect these
+messages.
+
+basic.flow-ok methods will always be returned to the server regardless of
+the number of listeners there are.
+
+To control the flow of deliveries from the server, use the Channel.Flow()
+method instead.
+
+Note: RabbitMQ will rather use TCP pushback on the network connection instead
+of sending basic.flow.  This means that if a single channel is producing too
+much on the same connection, all channels using that connection will suffer,
+including acknowledgments from deliveries.  Use different Connections if you
+desire to interleave consumers and producers in the same process to avoid your
+basic.ack messages from getting rate limited with your basic.publish messages.
+
+*/
+func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool {
+	relay := &flowRelay{
+		CallerFlow: flowNotifications,
+	}
+
+	err := channel.setupAndLaunchEventRelay(relay)
+	if err != nil {
+		close(flowNotifications)
+		channel.logger.Err(err).Msg("error setting up notify cancel relay")
+	}
+
+	return flowNotifications
 }

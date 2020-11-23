@@ -15,6 +15,25 @@ type Config = streadway.Config
 // by the server.
 type Error = streadway.Error
 
+// Aliases to sentinel errors
+var ErrChannelMax = streadway.ErrChannelMax
+var ErrClosed = streadway.ErrClosed
+var ErrCommandInvalid = streadway.ErrCommandInvalid
+var ErrCredentials = streadway.ErrCredentials
+var ErrFieldType = streadway.ErrFieldType
+var ErrFrame = streadway.ErrFrame
+var ErrSASL = streadway.ErrSASL
+var ErrSyntax = streadway.ErrSyntax
+var ErrUnexpectedFrame = streadway.ErrUnexpectedFrame
+var ErrVhost = streadway.ErrVhost
+
+// Copy over the error codes
+const ChannelError = streadway.ChannelError
+const FrameError = streadway.FrameError
+const InternalError = streadway.InternalError
+const ResourceError = streadway.ResourceError
+const SyntaxError = streadway.SyntaxError
+
 // Publishing captures the client message sent to the server.  The fields
 // outside of the Headers table included in this struct mirror the underlying
 // fields in the content frame.  They use native types for convenience and

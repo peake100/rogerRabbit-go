@@ -182,11 +182,13 @@ type consumeRelay struct {
 	// Delivery channel to pass deliveries back to the client.
 	CallerDeliveries chan <- Delivery
 
+	// The function we'll call to make a new delivery. Will be a method of the channel
+	// that spawned this relay.
+	NewDelivery func(orig streadway.Delivery) Delivery
+
 	// The pointer to the delivery tag count we need to atomically update with each
 	// consume.
 	deliveryTagCount *uint64
-	// The delivery tag offset to add to our deliveries.
-	deliveryTagOffset uint64
 	// The current delivery channel coming from the broker.
 	brokerDeliveries <- chan streadway.Delivery
 }
@@ -217,7 +219,6 @@ func (relay *consumeRelay) SetupForRelayLeg(
 
 	relay.brokerDeliveries = brokerDeliveries
 	relay.deliveryTagCount = settings.tagConsumeCount
-	relay.deliveryTagOffset = *settings.tagConsumeOffset
 
 	return nil
 }
@@ -225,15 +226,11 @@ func (relay *consumeRelay) SetupForRelayLeg(
 func (relay *consumeRelay) RunRelayLeg() (done bool, err error) {
 	// Drain consumer events
 	for brokerDelivery := range relay.brokerDeliveries {
+		// Add one to the delivery tag count
 		atomic.AddUint64(relay.deliveryTagCount, 1)
-		brokerDelivery.DeliveryTag += relay.deliveryTagOffset
 
-		clientDelivery := Delivery{
-			Delivery:  brokerDelivery,
-			tagOffset: relay.deliveryTagOffset,
-		}
-
-		relay.CallerDeliveries <- clientDelivery
+		// Wrap the delivery and send on our way.
+		relay.CallerDeliveries <- relay.NewDelivery(brokerDelivery)
 	}
 
 	return false, nil
@@ -390,3 +387,105 @@ func (relay *notifyReturnRelay) Shutdown() error {
 	defer close(relay.CallerReturns)
 	return nil
 }
+
+type cancelEventRelay struct {
+	// The channel we are relaying returns to from the broker
+	CallerCancellations chan <- string
+
+	// The current broker channel we are pulling from.
+	brokerCancellations <- chan string
+
+	// Logger
+	logger zerolog.Logger
+}
+
+func (relay *cancelEventRelay) Logger(parent zerolog.Logger) zerolog.Logger {
+	logger := parent.With().Str("EVENT_TYPE", "NOTIFY_CANCEL").Logger()
+	relay.logger = logger
+	return relay.logger
+}
+
+func (relay *cancelEventRelay) SetupForRelayLeg(newChannel *streadway.Channel, settings channelSettings) error {
+	brokerChannel := make(chan string, cap(relay.CallerCancellations))
+	relay.brokerCancellations = brokerChannel
+	newChannel.NotifyCancel(brokerChannel)
+	return nil
+}
+
+func (relay *cancelEventRelay) RunRelayLeg() (done bool, err error) {
+	for thisCancellation := range relay.brokerCancellations {
+		if relay.logger.Debug().Enabled() {
+			relay.logger.Debug().
+				Str("CANCELLATION", thisCancellation).
+				Msg("cancel notification sent")
+		}
+
+		relay.CallerCancellations <- thisCancellation
+	}
+
+	return false, nil
+}
+
+func (relay *cancelEventRelay) Shutdown() error {
+	defer close(relay.CallerCancellations)
+	return nil
+}
+
+type flowRelay struct {
+	// The channel we are relaying returns to from the broker
+	CallerFlow chan <- bool
+
+	// The current broker channel we are pulling from.
+	brokerFlow <- chan bool
+
+	// Whether this relay has been setup before.
+	setup bool
+
+	// Logger
+	logger zerolog.Logger
+}
+
+func (relay *flowRelay) Logger(parent zerolog.Logger) zerolog.Logger {
+	logger := parent.With().Str("EVENT_TYPE", "NOTIFY_CANCEL").Logger()
+	relay.logger = logger
+	return relay.logger
+}
+
+func (relay *flowRelay) SetupForRelayLeg(
+	newChannel *streadway.Channel, settings channelSettings,
+) error {
+	if relay.setup {
+		// If we have already setup the relay once, that means we are opening a new
+		// channel, and should send a flow -> true to the caller as a fresh channel
+		// will not have flow turned off yet.
+	} else {
+		relay.CallerFlow <- true
+		relay.setup = true
+	}
+
+	brokerChannel := make(chan bool, cap(relay.CallerFlow))
+	relay.brokerFlow = brokerChannel
+	newChannel.NotifyFlow(brokerChannel)
+
+	return nil
+}
+
+func (relay *flowRelay) RunRelayLeg() (done bool, err error) {
+	for thisFlow := range relay.brokerFlow {
+		if relay.logger.Debug().Enabled() {
+			relay.logger.Debug().
+				Bool("FLOW", thisFlow).
+				Msg("cancel notification sent")
+		}
+
+		relay.CallerFlow <- thisFlow
+	}
+
+	return false, nil
+}
+
+func (relay *flowRelay) Shutdown() error {
+	defer close(relay.CallerFlow)
+	return nil
+}
+

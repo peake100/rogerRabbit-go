@@ -8,11 +8,17 @@ type Delivery struct {
 	tagOffset uint64
 }
 
-func newDelivery(orig streadway.Delivery, tagOffset *uint64) Delivery {
+func (channel *Channel) newDelivery(orig streadway.Delivery) Delivery {
+	tagOffset := channel.transportChannel.settings.tagConsumeOffset
+
 	delivery := Delivery{
 		orig,
-		*tagOffset,
+		tagOffset,
 	}
-	delivery.DeliveryTag += delivery.tagOffset
+	delivery.DeliveryTag += tagOffset
+
+	// Swap out the acknowledger for our robust channel so ack, nack, and reject
+	// methods call our robust channel rather than the underlying one.
+	delivery.Acknowledger = channel
 	return delivery
 }

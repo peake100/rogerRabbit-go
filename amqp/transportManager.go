@@ -6,7 +6,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	streadway "github.com/streadway/amqp"
+	"github.com/stretchr/testify/assert"
 	"sync"
+	"testing"
 )
 
 // The transport interface is a common interface between the *streadway.Connection and
@@ -30,6 +32,56 @@ type transportReconnect interface {
 	cleanup() error
 }
 
+type transportTester struct {
+	t *testing.T
+	manager *transportManager
+}
+
+// Force a disconnect of the channel or connection and waits for a reconnection to
+// occur or ctx to cancel.
+func (tester *transportTester) ForceReconnect(ctx context.Context) {
+	connectionEstablished := make(chan struct{})
+	waitingOnReconnect := make(chan struct{})
+
+	// Launch a goroutine to wait on a reconnect
+	go func() {
+		// Signal that the connection has been re-established
+		defer close(connectionEstablished)
+
+		// Grab the cond lock
+		tester.manager.reconnectCond.L.Lock()
+		defer tester.manager.reconnectCond.L.Unlock()
+
+
+		// Signal to our main function that we have spun up our wait
+		close(waitingOnReconnect)
+		tester.manager.reconnectCond.Wait()
+	}()
+
+	select {
+	case <-waitingOnReconnect:
+	case <-ctx.Done():
+		tester.t.Error(
+			"context cancelled before we could wait on cond: %w", ctx.Err(),
+		)
+		tester.t.FailNow()
+	}
+
+	err := tester.manager.transport.Close()
+	if !assert.NoError(tester.t, err, "close underlying transport") {
+		tester.t.FailNow()
+	}
+
+	select {
+	case <-connectionEstablished:
+	case <-ctx.Done():
+		tester.t.Error(
+			"context cancelled before reconnection occured: %w", ctx.Err(),
+		)
+		tester.t.FailNow()
+	}
+}
+
 // Handles lifetime of underlying transport method, such as reconnections, closures,
 // and connection status subscribers. To be embedded into the Connection and Channel
 // types for free implementation of common methods.
@@ -48,6 +100,8 @@ type transportManager struct {
 	transportLock *sync.RWMutex
 	// This value is incremented every time we re-connect to the broker.
 	reconnectCount uint64
+	// sync.Cond that broadcasts whenever a connection is successfully re-established
+	reconnectCond *sync.Cond
 
 	// List of channels to send a connection established notification to.
 	notificationSubscribersConnect []chan error
@@ -203,7 +257,7 @@ func (manager *transportManager) reconnect(ctx context.Context, retry bool) erro
 		}
 		err := manager.transport.tryReconnect(ctx)
 		if err != nil {
-			manager.logger.Debug()
+			manager.logger.Debug().Err(err).Msg("error re-dialing connection")
 		}
 		// Send a notification to all listeners subscribed to dial events.
 		manager.sendConnectNotifications(err)
@@ -234,6 +288,9 @@ func (manager *transportManager) reconnect(ctx context.Context, retry bool) erro
 		// If there was no error, break out of the loop.
 		break
 	}
+
+	// Broadcast that we have made a successful reconnection to any one-time listeners.
+	manager.reconnectCond.Broadcast()
 
 	// Register a notification channelConsume for the new connection's closure.
 	closeChan := make(chan *streadway.Error, 1)
@@ -370,6 +427,14 @@ func (manager *transportManager) Close() error {
 	return manager.transport.cleanup()
 }
 
+// Test methods for the transport
+func (manager *transportManager) Test(t *testing.T) *transportTester {
+	return &transportTester{
+		t: t,
+		manager: manager,
+	}
+}
+
 func newTransportManager(
 	ctx context.Context,
 	transport transportReconnect,
@@ -379,16 +444,21 @@ func newTransportManager(
 
 	logger := log.Logger.With().Str("TRANSPORT", transportType).Logger()
 
-	return &transportManager{
+	manager := &transportManager{
 		ctx:                              ctx,
 		cancelFunc:                       cancelFunc,
 		transport:                        transport,
 		transportType:                    transportType,
 		transportLock:                    new(sync.RWMutex),
 		reconnectCount:                   0,
+		reconnectCond:                    nil,
 		notificationSubscribersConnect:   nil,
 		notificationSubscriberDisconnect: nil,
 		notificationSubscriberClose:      nil,
-		logger: 						  logger,
+		logger:                           logger,
 	}
+
+	manager.reconnectCond = sync.NewCond(manager.transportLock)
+
+	return manager
 }

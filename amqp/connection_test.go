@@ -167,8 +167,6 @@ func Test0040_Connection_Reconnect(t *testing.T) {
 
 	conn := getTestConnection(t)
 
-	reconnectCount := conn.reconnectCount
-
 	// Reconnect 10 times
 	for i := 0 ; i < 10 ; i++ {
 		// Check that the internal connection is initially open.
@@ -182,17 +180,11 @@ func Test0040_Connection_Reconnect(t *testing.T) {
 
 	    currentConn := conn.transportConn.Connection
 
-		// Force a reconnection by closing the underlying connection
-		err := conn.transportConn.Close()
-		if !assert.NoError(err, "close current connection %v", i) {
-			t.FailNow()
-		}
-
-		waitForReconnect(t, conn.transportManager, reconnectCount + 1)
-
-		// Grab the lock to ensure the tryReconnect occurred.
-		conn.transportLock.RLock()
-		conn.transportLock.RUnlock()
+		func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+			defer cancel()
+			conn.Test(t).ForceReconnect(ctx)
+		}()
 
 		assert.NotSame(
 			currentConn,
@@ -208,8 +200,6 @@ func Test0040_Connection_Reconnect(t *testing.T) {
 		) {
 			t.FailNow()
 		}
-
-		reconnectCount++
 	}
 }
 
