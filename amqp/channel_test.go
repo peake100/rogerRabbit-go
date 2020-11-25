@@ -1768,11 +1768,12 @@ func (suite *ChannelMethodsSuite) Test0310_RejectMessage_Requeue() {
 	suite.Equal(delivery.Body, redelivery.Body, "message is redelivery")
 }
 
-func (suite *ChannelMethodsSuite) Test0320_Acknowledge_Orphan() {
+func (suite *ChannelMethodsSuite) Test0320_Acknowledge_OrphanErr_Single() {
 	type testCase struct {
 		method string
 	}
 
+	// We're going to use a table test to test all three acknowledgement methods
 	testCases := []testCase{
 		{
 			method: "ack",

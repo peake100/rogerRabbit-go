@@ -57,6 +57,7 @@ type qosSettings struct {
 	global bool
 }
 
+// Enum-like for acknowledgement types.
 type ackMethod int
 
 const (
@@ -75,7 +76,7 @@ type ackInfo struct {
 	multiple 	bool
 	// Passed to `requeue` arg on nack and reject methods
 	requeue  	bool
-	// Result passed to this channel so it can be returned to the initial caller.
+	// result passed to this channel so it can be returned to the initial caller.
 	resultChan  chan error
 }
 
@@ -2059,7 +2060,7 @@ func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool {
 	return flowNotifications
 }
 
-// returns error we should pass to transaction panics until they are implemented
+// returns error we should pass to transaction panics until they are implemented.
 func panicTransactionMessage(methodName string) error {
 	return fmt.Errorf(
 		"%v and other transaction methods not implemented, pull requests are" +
