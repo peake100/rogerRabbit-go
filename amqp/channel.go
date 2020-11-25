@@ -2059,7 +2059,7 @@ func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool {
 	return flowNotifications
 }
 
-// Panic
+// returns error we should pass to transaction panics until they are implemented
 func panicTransactionMessage(methodName string) error {
 	return fmt.Errorf(
 		"%v and other transaction methods not implemented, pull requests are" +
@@ -2069,6 +2069,15 @@ func panicTransactionMessage(methodName string) error {
 }
 
 /*
+ROGER NOTE: transactions are not currently implemented, and calling any of the Tx
+methods will result in a panic. The author of this library is not familiar with the
+intricacies of amqp transactions, and how a channel in a transaction state should
+behave over a disconnect.
+
+PRs to add this functionality are welcome.
+
+--
+
 Tx puts the channel into transaction mode on the server.  All publishings and
 acknowledgments following this method will be atomically committed or rolled
 back for a single queue.  Call either Channel.TxCommit or Channel.TxRollback to
@@ -2089,6 +2098,15 @@ func (channel *Channel) Tx() error {
 }
 
 /*
+ROGER NOTE: transactions are not currently implemented, and calling any of the Tx
+methods will result in a panic. The author of this library is not familiar with the
+intricacies of amqp transactions, and how a channel in a transaction state should
+behave over a disconnect.
+
+PRs to add this functionality are welcome.
+
+--
+
 TxCommit atomically commits all publishings and acknowledgments for a single
 queue and immediately start a new transaction.
 
@@ -2100,6 +2118,15 @@ func (channel *Channel) TxCommit() error {
 }
 
 /*
+ROGER NOTE: transactions are not currently implemented, and calling any of the Tx
+methods will result in a panic. The author of this library is not familiar with the
+intricacies of amqp transactions, and how a channel in a transaction state should
+behave over a disconnect.
+
+PRs to add this functionality are welcome.
+
+--
+
 TxRollback atomically rolls back all publishings and acknowledgments for a
 single queue and immediately start a new transaction.
 
