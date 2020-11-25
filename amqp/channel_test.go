@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	streadway "github.com/streadway/amqp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"sync"
 	"testing"
@@ -46,8 +47,11 @@ func (suite *ChannelSuiteBase) replaceChannels() {
 }
 
 // Creates a basic test queue on both test channels, and deletes registers them for
-// deletion at the end of the test
-func (suite *ChannelSuiteBase) createTestQueue(name string) Queue {
+// deletion at the end of the test. The created queue can be optionally bound to an
+// exchange (which should have been previously created with createTestExchange).
+func (suite *ChannelSuiteBase) createTestQueue(
+	name string, exchange string, exchangeKey string,
+) Queue {
 	_, err := suite.channelPublish.QueueDeclare(
 		name,
 		false,
@@ -88,7 +92,137 @@ func (suite *ChannelSuiteBase) createTestQueue(name string) Queue {
 	}
 	suite.T().Cleanup(cleanup)
 
+	if exchange == "" || exchangeKey == "" {
+		return queue
+	}
+
+	err = suite.channelPublish.QueueBind(
+		queue.Name, exchangeKey, exchange, false, nil,
+	)
+	if !suite.NoError(err, "error binding publish queue") {
+		suite.T().FailNow()
+	}
+
+	err = suite.channelConsume.QueueBind(
+		queue.Name, exchangeKey, exchange, false, nil,
+	)
+	if !suite.NoError(err, "error binding consume queue") {
+		suite.T().FailNow()
+	}
+
 	return queue
+}
+
+// Creates a basic test exchange on both test channels, and deletes registers them for
+// deletion at the end of the test
+func (suite *ChannelSuiteBase) createTestExchange(name string, kind string) {
+	err := suite.channelPublish.ExchangeDeclare(
+		name,
+		kind,
+		false,
+		false,
+		false,
+		false,
+		nil,
+	)
+
+	if !suite.NoError(err, "create publish queue") {
+		suite.T().FailNow()
+	}
+
+	cleanup := func() {
+		suite.channelPublish.ExchangeDelete(
+			name, false, false,
+		)
+	}
+	suite.T().Cleanup(cleanup)
+
+	err = suite.channelConsume.ExchangeDeclare(
+		name,
+		kind,
+		false,
+		false,
+		false,
+		false,
+		nil,
+	)
+
+	if !suite.NoError(err, "create consume queue") {
+		suite.T().FailNow()
+	}
+
+	cleanup = func() {
+		suite.channelConsume.ExchangeDelete(
+			name, false, false,
+		)
+	}
+	suite.T().Cleanup(cleanup)
+}
+
+// Published messages on the given exchange and key, waits for confirmations, then
+// returns. Test is failed immediately if any of these steps fails.
+func (suite *ChannelSuiteBase) publishMessages(exchange string, key string, count int) {
+	err := suite.channelPublish.Confirm(false)
+	if !suite.NoError(err, "put publish channel into confirm mode") {
+		suite.T().FailNow()
+	}
+
+	confirmationEvents := make(chan Confirmation, count)
+	suite.channelPublish.NotifyPublish(confirmationEvents)
+
+	go func() {
+		for i := 0 ; i < count ; i++ {
+			err := suite.channelPublish.Publish(
+				exchange,
+				key,
+				true,
+				false,
+				Publishing{
+					Body: []byte(fmt.Sprintf("%v", i)),
+				},
+			)
+
+			if !suite.NoErrorf(err, "publish %v", i) {
+				suite.T().FailNow()
+			}
+		}
+	}()
+
+	allConfirmed := make(chan struct{})
+	go func() {
+		confirmCount := 0
+		for confirmation := range confirmationEvents {
+			if !suite.Truef(confirmation.Ack, "message %v acked", confirmCount) {
+				suite.T().FailNow()
+			}
+			confirmCount++
+			if confirmCount == count {
+				close(allConfirmed)
+			}
+		}
+	}()
+
+	select {
+	case <- allConfirmed:
+	case <- time.NewTimer(100 * time.Millisecond * time.Duration(count)).C:
+		suite.T().Error("publish confirmations timed out")
+		suite.T().FailNow()
+	}
+}
+
+// get a single message, failing the test immediately if there is not a message waiting
+// or the get message fails.
+func (suite *ChannelSuiteBase) getMessage(queueName string, autoAck bool) Delivery {
+	delivery, ok, err := suite.channelConsume.Get(queueName, autoAck)
+	if !suite.NoError(err, "get message") {
+		suite.T().FailNow()
+	}
+
+	if !suite.True(ok, "message was fetched") {
+		suite.T().FailNow()
+	}
+
+	return delivery
 }
 
 func (suite *ChannelSuiteBase) SetupSuite() {
@@ -829,7 +963,7 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Basic() {
 	suite.T().Cleanup(suite.replaceChannels)
 
 	queueName := "notify_publish_basic"
-	suite.createTestQueue(queueName)
+	suite.createTestQueue(queueName, "", "")
 
 	err := suite.channelPublish.Confirm(false)
 	if !suite.NoError(err, "put into confirmation mode") {
@@ -902,7 +1036,7 @@ func (suite *ChannelMethodsSuite) Test0150_NotifyPublish_Reconnections() {
 	suite.T().Cleanup(suite.replaceChannels)
 
 	queueName := "notify_publish_basic"
-	suite.createTestQueue(queueName)
+	suite.createTestQueue(queueName, "", "")
 
 	err := suite.channelPublish.Confirm(false)
 	if !suite.NoError(err, "put into confirmation mode") {
@@ -995,7 +1129,7 @@ func (suite *ChannelMethodsSuite) Test0160_NotifyConfirm() {
 	suite.T().Cleanup(suite.replaceChannels)
 
 	queueName := "notify_confirms_basic"
-	suite.createTestQueue(queueName)
+	suite.createTestQueue(queueName, "", "")
 
 	err := suite.channelPublish.Confirm(false)
 	if !suite.NoError(err, "put into confirmation mode") {
@@ -1162,7 +1296,7 @@ func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
 	nackQueueName := "test_confirm_nack"
 
 	// Set up the ack queue
-	suite.createTestQueue(ackQueueName)
+	suite.createTestQueue(ackQueueName, "", "")
 
 	publishCount := 10
 
@@ -1182,6 +1316,9 @@ func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
 	published := new(sync.WaitGroup)
 	allPublished := make(chan struct{})
 	receivedCount := 0
+	ackCount := 0
+	nackCount := 0
+	orphanCount := 0
 
 	go func() {
 		defer close(allPublished)
@@ -1218,6 +1355,7 @@ func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
 
 	go func() {
 		for _ = range eventsAck {
+			ackCount++
 			receivedCount++
 			published.Done()
 		}
@@ -1225,6 +1363,7 @@ func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
 
 	go func() {
 		for _ = range eventsNack {
+			nackCount++
 			receivedCount++
 			published.Done()
 		}
@@ -1232,6 +1371,7 @@ func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
 
 	go func() {
 		for _ = range eventsOrphan {
+			orphanCount++
 			receivedCount++
 			published.Done()
 		}
@@ -1247,6 +1387,464 @@ func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
 	suite.Equal(
 		publishCount, receivedCount, "received 10 confirmations",
 	)
+	suite.Equal(
+		7, ackCount, "received 5 acks",
+	)
+	suite.Equal(
+		3, orphanCount, "received 5 orphans",
+	)
+}
+
+func (suite *ChannelMethodsSuite) Test0190_QueuePurge() {
+	suite.T().Cleanup(suite.replaceChannels)
+
+	queueName := "test_queue_purge"
+	suite.createTestQueue(queueName, "", "")
+
+	err := suite.channelPublish.Confirm(false)
+	if !suite.NoError(err, "put channel into confirm mode") {
+		suite.T().FailNow()
+	}
+
+	publishCount := 2
+	notifyPublish := make(chan Confirmation, publishCount)
+
+	suite.channelPublish.NotifyPublish(notifyPublish)
+
+	// publish 2 messages and wait for acks
+	go func() {
+		for i := 0 ; i < publishCount ; i++ {
+			err := suite.channelPublish.Publish(
+				"",
+				queueName,
+				false,
+				false,
+				Publishing{
+					Body: []byte(fmt.Sprintf("message %v", i)),
+				},
+			)
+			if !suite.NoErrorf(err, "publish message %v", i) {
+				suite.T().FailNow()
+			}
+		}
+	}()
+
+	confirmationsReceived := make(chan struct{})
+
+	go func() {
+		defer close(confirmationsReceived)
+		timer := time.NewTimer(0)
+
+		for i := 0 ; i < publishCount ; i++ {
+			timer.Reset(3 * time.Second)
+
+			select {
+			case confirmation := <- notifyPublish:
+				suite.Truef(confirmation.Ack, "message %v acked", i)
+			case <- timer.C:
+				suite.T().Error("confirmation timeout")
+				suite.T().FailNow()
+			}
+		}
+	}()
+
+	select {
+	case <- confirmationsReceived:
+	case <- time.NewTimer(3 * time.Second).C:
+		suite.T().Error("confirmations timeout")
+		suite.T().FailNow()
+	}
+
+	// Check that 2 messages get purged
+	count, err := suite.channelPublish.QueuePurge(queueName, false)
+	if !suite.NoError(err, "purge queue") {
+		suite.T().FailNow()
+	}
+
+	suite.Equal(2, count, "2 messages purged")
+}
+
+func (suite *ChannelMethodsSuite) Test0200_ExchangeDeclare() {
+	err := suite.channelPublish.ExchangeDeclare(
+		"test_exchange_basic",
+		ExchangeDirect,
+		false,
+		false,
+		false,
+		false,
+		nil,
+	)
+
+	if !suite.NoError(err, "declare exchange") {
+		suite.T().FailNow()
+	}
+}
+
+func (suite *ChannelMethodsSuite) Test0210_ExchangeDeclarePassive() {
+	err := suite.channelPublish.ExchangeDeclarePassive(
+		"test_exchange_basic",
+		ExchangeDirect,
+		false,
+		false,
+		false,
+		false,
+		nil,
+	)
+
+	if !suite.NoError(err, "declare passive exchange") {
+		suite.T().FailNow()
+	}
+}
+
+func (suite *ChannelMethodsSuite) Test0220_ExchangeDelete() {
+	err := suite.channelPublish.ExchangeDelete(
+		"test_exchange_basic",
+		false,
+		false,
+	)
+
+	if !suite.NoError(err, "delete exchange") {
+		suite.T().FailNow()
+	}
+}
+
+func (suite *ChannelMethodsSuite) Test0230_ExchangeDeclarePassive_Err() {
+	suite.T().Cleanup(suite.replaceChannels)
+
+	err := suite.channelPublish.ExchangeDeclarePassive(
+		"test_exchange_basic",
+		ExchangeDirect,
+		false,
+		false,
+		false,
+		false,
+		nil,
+	)
+
+	if !suite.Error(err, "declare passive non-existent exchange") {
+		suite.T().FailNow()
+	}
+}
+
+func (suite *ChannelMethodsSuite) Test0240_QueueBind() {
+	exchangeName := "test_exchange_bind"
+	queueName := "test_queue_name"
+	suite.createTestExchange(exchangeName, ExchangeDirect)
+	suite.createTestQueue(queueName, "", "")
+
+	err := suite.channelPublish.QueueBind(
+		queueName, queueName, exchangeName, false, nil,
+	)
+	if !suite.NoError(err, "bind queue") {
+		suite.T().FailNow()
+	}
+
+	err = suite.channelPublish.Confirm(false)
+	if !suite.NoError(err, "put channel into confirm mode") {
+		suite.T().FailNow()
+	}
+
+	confirmations := make(chan Confirmation, 5)
+	suite.channelPublish.NotifyPublish(confirmations)
+
+	// lets test publishing and getting a message on the exchange
+	err = suite.channelPublish.Publish(
+		exchangeName,
+		queueName,
+		false,
+		false,
+		Publishing{
+			Body: []byte("some message"),
+		},
+	)
+	if !suite.NoError(err, "error publishing message") {
+		suite.T().FailNow()
+	}
+
+	select {
+	case confirmation := <- confirmations:
+		if !suite.True(confirmation.Ack, "publishing confirmed") {
+			suite.T().FailNow()
+		}
+	case <- time.NewTimer(3 * time.Second).C:
+		suite.T().Error("publish confirmation timed out")
+		suite.T().FailNow()
+	}
+
+	_, ok, err := suite.channelPublish.Get(queueName, false)
+	if !suite.NoError(err, "error getting message") {
+		suite.T().FailNow()
+	}
+
+	if !suite.True(ok, "message was fetched") {
+		suite.T().FailNow()
+	}
+}
+
+func (suite *ChannelMethodsSuite) Test0250_QueueUnbind() {
+	exchangeName := "test_queue_unbind_exchange"
+	suite.createTestExchange(exchangeName, ExchangeDirect)
+
+	queueName := "test_queue_unbind_queue"
+	suite.createTestQueue(queueName, exchangeName, queueName)
+
+	suite.T().Log("GOT HERE")
+
+	// unbind the queue
+	err := suite.channelPublish.QueueUnbind(
+		queueName, queueName, exchangeName, nil,
+	)
+
+	if !suite.NoError(err, "unbind queue") {
+		suite.T().FailNow()
+	}
+}
+
+// TODO: write better tests for exchange bind and unbind
+func (suite *ChannelMethodsSuite) Test0260_ExchangeBindUnbind() {
+	suite.T().Cleanup(suite.replaceChannels)
+
+	exchangeName1 := "test_exchange_bind1"
+	suite.createTestExchange(exchangeName1, ExchangeDirect)
+
+	exchangeName2 := "test_exchange_bind2"
+	suite.createTestExchange(exchangeName2, ExchangeDirect)
+
+	// unbind the queue
+	err := suite.channelPublish.ExchangeBind(
+		exchangeName2, "test_key", exchangeName1, false, nil,
+	)
+
+	if !suite.NoError(err, "bind exchange") {
+		suite.T().FailNow()
+	}
+
+	// unbind the queue
+	err = suite.channelPublish.ExchangeUnbind(
+		exchangeName2, "test_key", exchangeName1, false, nil,
+	)
+
+	if !suite.NoError(err, "unbind exchange") {
+		suite.T().FailNow()
+	}
+}
+
+func (suite *ChannelMethodsSuite) Test0270_AckMessage() {
+	suite.T().Cleanup(suite.replaceChannels)
+
+	queueName := "queue_test_consume_ack"
+	suite.createTestQueue(queueName, "", "")
+
+	// Publish 1 message
+	suite.publishMessages("", queueName, 1)
+
+	delivery := suite.getMessage(queueName, false)
+
+	err := delivery.Ack(false)
+	if !suite.NoError(err, "ack message") {
+		suite.T().FailNow()
+	}
+
+	// If the message was acked then the queue should be emtpy
+	_, ok, err := suite.channelConsume.Get(queueName, false)
+	if !suite.NoError(err, "get empty queue") {
+		suite.T().FailNow()
+	}
+
+	if !suite.False(ok, "queue is empty") {
+		suite.T().FailNow()
+	}
+}
+
+func (suite *ChannelMethodsSuite) Test0280_NackMessage() {
+	suite.T().Cleanup(suite.replaceChannels)
+
+	queueName := "queue_test_consume_ack"
+	suite.createTestQueue(queueName, "", "")
+
+	// Publish 1 message
+	suite.publishMessages("", queueName, 1)
+
+	delivery := suite.getMessage(queueName, false)
+
+	err := delivery.Nack(false, false)
+	if !suite.NoError(err, "ack message") {
+		suite.T().FailNow()
+	}
+
+	// If the message was nacked then the queue should be emtpy
+	_, ok, err := suite.channelConsume.Get(queueName, false)
+	if !suite.NoError(err, "get empty queue") {
+		suite.T().FailNow()
+	}
+
+	if !suite.False(ok, "queue is empty") {
+		suite.T().FailNow()
+	}
+}
+
+func (suite *ChannelMethodsSuite) Test0290_NackMessage_Requeue() {
+	suite.T().Cleanup(suite.replaceChannels)
+
+	queueName := "queue_test_consume_ack"
+	suite.createTestQueue(queueName, "", "")
+
+	// Publish 1 message
+	suite.publishMessages("", queueName, 1)
+
+	delivery := suite.getMessage(queueName, false)
+
+	err := delivery.Nack(false, true)
+	if !suite.NoError(err, "nack and requeue message") {
+		suite.T().FailNow()
+	}
+
+	// If the message was nacked then we should get the same message
+	redelivery, ok, err := suite.channelConsume.Get(queueName, false)
+	if !suite.NoError(err, "get empty queue") {
+		suite.T().FailNow()
+	}
+
+	if !suite.True(ok, "got message") {
+		suite.T().FailNow()
+	}
+
+	suite.Equal(delivery.Body, redelivery.Body, "message is redelivery")
+}
+
+func (suite *ChannelMethodsSuite) Test0300_RejectMessage() {
+	suite.T().Cleanup(suite.replaceChannels)
+
+	queueName := "queue_test_consume_ack"
+	suite.createTestQueue(queueName, "", "")
+
+	// Publish 1 message
+	suite.publishMessages("", queueName, 1)
+
+	delivery := suite.getMessage(queueName, false)
+
+	err := delivery.Reject(false)
+	if !suite.NoError(err, "reject message") {
+		suite.T().FailNow()
+	}
+
+	// If the message was acked then the queue should be emtpy
+	_, ok, err := suite.channelConsume.Get(queueName, false)
+	if !suite.NoError(err, "get empty queue") {
+		suite.T().FailNow()
+	}
+
+	if !suite.False(ok, "queue is empty") {
+		suite.T().FailNow()
+	}
+}
+
+func (suite *ChannelMethodsSuite) Test0310_RejectMessage_Requeue() {
+	suite.T().Cleanup(suite.replaceChannels)
+
+	queueName := "queue_test_consume_ack"
+	suite.createTestQueue(queueName, "", "")
+
+	// Publish 1 message
+	suite.publishMessages("", queueName, 1)
+
+	delivery := suite.getMessage(queueName, false)
+
+	err := delivery.Reject(true)
+	if !suite.NoError(err, "reject and requeue message") {
+		suite.T().FailNow()
+	}
+
+	// If the message was nacked then we should get the same message
+	redelivery, ok, err := suite.channelConsume.Get(queueName, false)
+	if !suite.NoError(err, "get empty queue") {
+		suite.T().FailNow()
+	}
+
+	if !suite.True(ok, "got message") {
+		suite.T().FailNow()
+	}
+
+	suite.Equal(delivery.Body, redelivery.Body, "message is redelivery")
+}
+
+func (suite *ChannelMethodsSuite) Test0320_Acknowledge_Orphan() {
+	type testCase struct {
+		method string
+	}
+
+	testCases := []testCase{
+		{
+			method: "ack",
+		},
+		{
+			method: "nack",
+		},
+		{
+			method: "reject",
+		},
+	}
+
+	queueName := "queue_test_consume_ack"
+	suite.createTestQueue(queueName, "", "")
+
+	// Publish 1 message. This one message will keep getting redelivered on the force
+	// reconnect, so we only need to publish it once
+	suite.publishMessages("", queueName, 1)
+
+	var thisCase testCase
+
+	test := func(t *testing.T) {
+		assert := assert.New(t)
+
+		t.Cleanup(suite.replaceChannels)
+
+		delivery := suite.getMessage(queueName, false)
+
+		suite.channelConsume.Test(t).ForceReconnect(nil)
+
+		var err error
+
+		switch thisCase.method {
+		case "ack":
+			err = delivery.Ack(false)
+		case "nack":
+			err = delivery.Nack(false, false)
+		case "reject":
+			err = delivery.Reject( false)
+		default:
+			t.Errorf("incorrect method arg: %v", thisCase.method)
+			t.FailNow()
+		}
+		if !assert.Error(err, "got acknowledgement error") {
+			t.FailNow()
+		}
+
+		var orphanErr *ErrCantAcknowledgeOrphans
+		if !assert.ErrorAs(
+			err, &orphanErr, "error is ErrCantAcknowledgeOrphans",
+		) {
+			t.FailNow()
+		}
+
+		assert.Equal(
+			uint64(1), orphanErr.OrphanTagFirst, "first orphan is 1",
+		)
+		assert.Equal(
+			uint64(1), orphanErr.OrphanTagLast, "last orphan is 1",
+		)
+
+		assert.Equal(
+			uint64(0), orphanErr.SuccessTagFirst, "first success is 0",
+		)
+		assert.Equal(
+			uint64(0), orphanErr.SuccessTagLast, "last success is 0",
+		)
+	}
+
+	for _, thisCase = range testCases {
+		suite.T().Run(fmt.Sprintf("%v_method", thisCase.method), test)
+	}
 }
 
 func TestChannelMethods(t *testing.T) {

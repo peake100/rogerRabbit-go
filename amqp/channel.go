@@ -620,7 +620,8 @@ func (channel *Channel) runAcknowledgementRoutine() {
 	var tagWithOffset uint64
 
 	transportChannel := channel.transportChannel
-	settings := transportChannel.settings
+	// This needs to be a reference so we get the latest values
+	settings := &transportChannel.settings
 
 	// Wrap the underlying methods in closures with identical signatures so we can
 	// call them generically based on what kind of method we are using.
@@ -2056,4 +2057,55 @@ func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool {
 	}
 
 	return flowNotifications
+}
+
+// Panic
+func panicTransactionMessage(methodName string) error {
+	return fmt.Errorf(
+		"%v and other transaction methods not implemented, pull requests are" +
+			" welcome for this functionality",
+		methodName,
+	)
+}
+
+/*
+Tx puts the channel into transaction mode on the server.  All publishings and
+acknowledgments following this method will be atomically committed or rolled
+back for a single queue.  Call either Channel.TxCommit or Channel.TxRollback to
+leave a this transaction and immediately start a new transaction.
+
+The atomicity across multiple queues is not defined as queue declarations and
+bindings are not included in the transaction.
+
+The behavior of publishings that are delivered as mandatory or immediate while
+the channel is in a transaction is not defined.
+
+Once a channel has been put into transaction mode, it cannot be taken out of
+transaction mode.  Use a different channel for non-transactional semantics.
+
+*/
+func (channel *Channel) Tx() error {
+	panic(panicTransactionMessage("Tx"))
+}
+
+/*
+TxCommit atomically commits all publishings and acknowledgments for a single
+queue and immediately start a new transaction.
+
+Calling this method without having called Channel.Tx is an error.
+
+*/
+func (channel *Channel) TxCommit() error {
+	panic(panicTransactionMessage("TxCommit"))
+}
+
+/*
+TxRollback atomically rolls back all publishings and acknowledgments for a
+single queue and immediately start a new transaction.
+
+Calling this method without having called Channel.Tx is an error.
+
+*/
+func (channel *Channel) TxRollback() error {
+	panic(panicTransactionMessage("TxRollback"))
 }

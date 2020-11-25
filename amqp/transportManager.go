@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
+	"time"
 )
 
 // The transport interface is a common interface between the *streadway.Connection and
@@ -38,8 +39,15 @@ type transportTester struct {
 }
 
 // Force a disconnect of the channel or connection and waits for a reconnection to
-// occur or ctx to cancel.
+// occur or ctx to cancel. If a nil context is passed, a context with a 3-second timeout
+// will be used instead
 func (tester *transportTester) ForceReconnect(ctx context.Context) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 3 * time.Second)
+		defer cancel()
+	}
+
 	connectionEstablished := make(chan struct{})
 	waitingOnReconnect := make(chan struct{})
 
@@ -165,13 +173,13 @@ func (manager *transportManager) retryOperationOnClosed(
 			// Acquire the transportLock for read. This allow multiple operation to
 			// occur at the same time, but blocks the connection from being switched
 			// out until the operations resolve.
+			//
+			// We don't need to worry about lock contention, as once the transport
+			// reconnection routine requests the lock, and new read acquisitions will
+			// be blocked until the lock is acquired and released for write.
 			manager.transportLock.RLock()
 			defer manager.transportLock.RUnlock()
 
-			// TODO: to reduce lock contention, we should subscribe to transport
-			// 	re-establishment notifications here. But to do that we also need to
-			// 	implement unsubscribing to notifications or subscribing to one-time
-			//	notifications.
 			err = operation()
 		}()
 
@@ -180,7 +188,8 @@ func (manager *transportManager) retryOperationOnClosed(
 			return nil
 		}
 
-
+		// If this was a type of error we should retry the operation on (error resulting
+		// from a connection error), then log it and continue.
 		if isRepeatErr(err) {
 			if manager.logger.Debug().Enabled() {
 				log.Debug().Caller(1).Msgf(

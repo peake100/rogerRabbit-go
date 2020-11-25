@@ -34,6 +34,12 @@ const InternalError = streadway.InternalError
 const ResourceError = streadway.ResourceError
 const SyntaxError = streadway.SyntaxError
 
+// Copy over exchange types
+const ExchangeDirect = streadway.ExchangeDirect
+const ExchangeFanout = streadway.ExchangeFanout
+const ExchangeHeaders = streadway.ExchangeHeaders
+const ExchangeTopic = streadway.ExchangeTopic
+
 // Publishing captures the client message sent to the server.  The fields
 // outside of the Headers table included in this struct mirror the underlying
 // fields in the content frame.  They use native types for convenience and
