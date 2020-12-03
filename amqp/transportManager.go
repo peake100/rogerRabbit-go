@@ -34,7 +34,7 @@ type transportReconnect interface {
 }
 
 type transportTester struct {
-	t *testing.T
+	t       *testing.T
 	manager *transportManager
 }
 
@@ -44,7 +44,7 @@ type transportTester struct {
 func (tester *transportTester) ForceReconnect(ctx context.Context) {
 	if ctx == nil {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(context.Background(), 3 * time.Second)
+		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 	}
 
@@ -59,7 +59,6 @@ func (tester *transportTester) ForceReconnect(ctx context.Context) {
 		// Grab the cond lock
 		tester.manager.reconnectCond.L.Lock()
 		defer tester.manager.reconnectCond.L.Unlock()
-
 
 		// Signal to our main function that we have spun up our wait
 		close(waitingOnReconnect)
@@ -117,6 +116,9 @@ type transportManager struct {
 	notificationSubscriberDisconnect []chan error
 	// List of channels to send a connection close notification to.
 	notificationSubscriberClose []chan *streadway.Error
+	// Mutex for notification subscriber lists. Allows subscribers to be added during
+	// an active redial loop.
+	notificationSubscriberLock *sync.Mutex
 
 	// Logger
 	logger zerolog.Logger
@@ -169,7 +171,7 @@ func (manager *transportManager) retryOperationOnClosed(
 
 		// Run the operation in a closure so we can acquire and release the
 		// transportLock using defer.
-		func(){
+		func() {
 			// Acquire the transportLock for read. This allow multiple operation to
 			// occur at the same time, but blocks the connection from being switched
 			// out until the operations resolve.
@@ -204,12 +206,13 @@ func (manager *transportManager) retryOperationOnClosed(
 	}
 }
 
-
 // Sends results of a dial attempt to all NotifyOnDial subscribers.
 func (manager *transportManager) sendConnectNotifications(err error) {
+	manager.notificationSubscriberLock.Lock()
+	defer manager.notificationSubscriberLock.Unlock()
 	// Notify all our close subscribers.
 	for _, receiver := range manager.notificationSubscribersConnect {
-		// We are going to send the close error (if any) and close the channelConsume.
+		// We are going to send the close error (if any) and close the ChannelConsume.
 		receiver <- err
 	}
 }
@@ -217,6 +220,8 @@ func (manager *transportManager) sendConnectNotifications(err error) {
 // Sends the error from NotifyOnClose of the underlying connection when a disconnect
 // occurs to all NotifyOnDisconnect subscribers.
 func (manager *transportManager) sendDisconnectNotifications(err *streadway.Error) {
+	manager.notificationSubscriberLock.Lock()
+	defer manager.notificationSubscriberLock.Unlock()
 	// Notify all our close subscribers.
 	for _, receiver := range manager.notificationSubscriberDisconnect {
 		// We need to send an explicit nil on a nil pointer as a nil pointer with a
@@ -231,12 +236,22 @@ func (manager *transportManager) sendDisconnectNotifications(err *streadway.Erro
 
 // Sends notification to all NotifyOnClose subscribers.
 func (manager *transportManager) sendCloseNotifications(err *streadway.Error) {
+	if manager.logger.Debug().Enabled() {
+		manager.logger.Debug().Msg("sending close notifications")
+	}
+
+	manager.notificationSubscriberLock.Lock()
+	defer manager.notificationSubscriberLock.Unlock()
 	// Notify all our close subscribers.
 	for _, receiver := range manager.notificationSubscriberClose {
-		// We are going to send the close error (if any) and close the channelConsume.
+		// We are going to send the close error (if any) and close the ChannelConsume.
 		receiver <- err
 		// This event is only sent once, so we can
 		close(receiver)
+	}
+
+	if manager.logger.Debug().Enabled() {
+		manager.logger.Debug().Msg("close notifications sent")
 	}
 }
 
@@ -301,7 +316,7 @@ func (manager *transportManager) reconnect(ctx context.Context, retry bool) erro
 	// Broadcast that we have made a successful reconnection to any one-time listeners.
 	manager.reconnectCond.Broadcast()
 
-	// Register a notification channelConsume for the new connection's closure.
+	// Register a notification ChannelConsume for the new connection's closure.
 	closeChan := make(chan *streadway.Error, 1)
 	manager.transport.NotifyClose(closeChan)
 
@@ -341,8 +356,8 @@ func (manager *transportManager) reconnect(ctx context.Context, retry bool) erro
 func (manager *transportManager) NotifyClose(
 	receiver chan *streadway.Error,
 ) chan *streadway.Error {
-	manager.transportLock.Lock()
-	defer manager.transportLock.Unlock()
+	manager.notificationSubscriberLock.Lock()
+	defer manager.notificationSubscriberLock.Unlock()
 
 	// If the context of the transport manager has been cancelled, close the receiver
 	// and exit.
@@ -363,8 +378,8 @@ func (manager *transportManager) NotifyClose(
 func (manager *transportManager) NotifyDial(
 	receiver chan error,
 ) error {
-	manager.transportLock.Lock()
-	defer manager.transportLock.Unlock()
+	manager.notificationSubscriberLock.Lock()
+	defer manager.notificationSubscriberLock.Unlock()
 
 	// If the context of the transport manager has been cancelled, close the receiver
 	// and exit.
@@ -384,8 +399,8 @@ func (manager *transportManager) NotifyDial(
 func (manager *transportManager) NotifyDisconnect(
 	receiver chan error,
 ) error {
-	manager.transportLock.Lock()
-	defer manager.transportLock.Unlock()
+	manager.notificationSubscriberLock.Lock()
+	defer manager.notificationSubscriberLock.Unlock()
 
 	// If the context of the transport manager has been cancelled, close the receiver
 	// and exit.
@@ -400,6 +415,28 @@ func (manager *transportManager) NotifyDisconnect(
 	return nil
 }
 
+func (manager *transportManager) cancelCtxCloseTransport() {
+	// Grab the notification subscriber lock so new subscribers will not get added
+	// without seeing the context cancel.
+	manager.notificationSubscriberLock.Lock()
+
+	// Cancel the context the tryReconnect this closure will cause exits.
+	manager.cancelFunc()
+
+	// Release the notification lock. Not doing so before we grab the transport lock
+	// can result in a deadlock if a redial is in process (since the redial needs to
+	// grab the subscribers lock to notify them).
+	manager.notificationSubscriberLock.Unlock()
+
+	// Take control of the connection lock to ensure all in-process operations have
+	// completed.
+	manager.transportLock.Lock()
+	defer manager.transportLock.Unlock()
+
+	// Close the current connection on exit
+	defer manager.transport.Close()
+}
+
 // Close the robust connection. This both closes the current connection and keeps it
 // from reconnecting.
 func (manager *transportManager) Close() error {
@@ -408,18 +445,11 @@ func (manager *transportManager) Close() error {
 		return streadway.ErrClosed
 	}
 
-	// Cancel the context the tryReconnect this closure will cause exits.
-	manager.cancelFunc()
+	manager.cancelCtxCloseTransport()
 
-	// Take control of the connection lock to ensure all outstanding operations have
-	// completed.
-	manager.transportLock.Lock()
-	defer manager.transportLock.Unlock()
-
-	// Close the current connection on exit
-	defer manager.transport.Close()
-
-	// Close all disconnect and connect subscribers, then clear them
+	// Close all disconnect and connect subscribers, then clear them. We don't need to
+	// grab the lock for this since the cancelled context will keep any new subscribers
+	// from being added.
 	for _, subscriber := range manager.notificationSubscribersConnect {
 		close(subscriber)
 	}
@@ -430,16 +460,31 @@ func (manager *transportManager) Close() error {
 	}
 	manager.notificationSubscriberDisconnect = nil
 
+	// Send closure notifications to all subscribers.
 	manager.sendCloseNotifications(nil)
 
 	// Execute any cleanup on behalf of the transport implementation.
 	return manager.transport.cleanup()
 }
 
+// ROGER NOTE: unlike streadway/amqp, which only implements IsClosed() on connection
+// objects, rogerRabbit makes IsClosed() available on both connections and channels.
+// IsClosed() will return true until the connection / channel is shut down, even if the
+// underlying connection is currently disconnected and waiting to reconnect.
+//
+// --
+//
+// IsClosed returns true if the connection is marked as closed, otherwise false
+// is returned.
+func (manager *transportManager) IsClosed() bool {
+	// If the context is cancelled, the transport is closed.
+	return manager.ctx.Err() != nil
+}
+
 // Test methods for the transport
 func (manager *transportManager) Test(t *testing.T) *transportTester {
 	return &transportTester{
-		t: t,
+		t:       t,
 		manager: manager,
 	}
 }
@@ -464,6 +509,7 @@ func newTransportManager(
 		notificationSubscribersConnect:   nil,
 		notificationSubscriberDisconnect: nil,
 		notificationSubscriberClose:      nil,
+		notificationSubscriberLock:       new(sync.Mutex),
 		logger:                           logger,
 	}
 

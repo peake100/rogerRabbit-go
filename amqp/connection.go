@@ -12,7 +12,12 @@ import (
 type transportConnection struct {
 	*streadway.Connection
 	dialUrl string
+
+	// The config option passed to this connection
 	dialConfig *Config
+
+	// Teh streadway config extracted from the settings on dialConfig
+	streadwayConfig *streadway.Config
 }
 
 func (transport *transportConnection) cleanup() error {
@@ -20,7 +25,8 @@ func (transport *transportConnection) cleanup() error {
 }
 
 func (transport *transportConnection) tryReconnect(ctx context.Context) error {
-	conn, err := streadway.DialConfig(transport.dialUrl, *transport.dialConfig)
+
+	conn, err := streadway.DialConfig(transport.dialUrl, *transport.streadwayConfig)
 	if err != nil {
 		return err
 	}
@@ -49,7 +55,7 @@ type Connection struct {
 	*transportManager
 }
 
-// Gets a streadway channelConsume from the current connection.
+// Gets a streadway ChannelConsume from the current connection.
 func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 	channel *streadway.Channel, err error,
 ) {
@@ -61,7 +67,7 @@ func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 
 	err = conn.retryOperationOnClosed(ctx, operation, true)
 
-	// Return the channelConsume and error.
+	// Return the ChannelConsume and error.
 	return channel, err
 }
 
@@ -71,7 +77,7 @@ all errors until Channel.Close() is called.
 
 --
 
-Channel opens a unique, concurrent server channelConsume to process the bulk of AMQP
+Channel opens a unique, concurrent server ChannelConsume to process the bulk of AMQP
 messages.  Any error from methods on this receiver will render the receiver
 invalid and a new Channel should be opened.
 
@@ -85,7 +91,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 		rogerConn: conn,
 		settings: channelSettings{
 			// Channels start with their flow active
-			flowActive: true,
+			flowActive:        true,
 			publisherConfirms: false,
 			tagPublishCount:   &initialPublishCount,
 			tagPublishOffset:  0,
@@ -114,7 +120,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 	manager := newTransportManager(conn.ctx, transportChan, "CHANNEL")
 	transportChan.logger = manager.logger
 
-	// Create our more robust channelConsume wrapper.
+	// Create our more robust ChannelConsume wrapper.
 	rogerChannel := &Channel{
 		transportChannel: transportChan,
 		transportManager: manager,
@@ -133,17 +139,31 @@ func (conn *Connection) Channel() (*Channel, error) {
 
 // Get a new roger connection for a given url and connection config.
 func newConnection(url string, config *Config) *Connection {
+	streadwayConfig := &streadway.Config{
+		SASL:            config.SASL,
+		Vhost:           config.Vhost,
+		ChannelMax:      config.ChannelMax,
+		FrameSize:       config.FrameSize,
+		Heartbeat:       config.Heartbeat,
+		TLSClientConfig: config.TLSClientConfig,
+		Properties:      config.Properties,
+		Locale:          config.Locale,
+		Dial:            config.Dial,
+	}
+
 	// Create our robust connection object
 	transportConn := &transportConnection{
-		Connection: nil,
-		dialUrl:    url,
-		dialConfig: config,
+		Connection:      nil,
+		dialUrl:         url,
+		dialConfig:      config,
+		streadwayConfig: streadwayConfig,
 	}
 
 	transportManager := newTransportManager(
 		context.Background(), transportConn, "CONNECTION",
 	)
-
+	// Use the logger from the config
+	transportManager.logger = config.Logger
 
 	conn := &Connection{
 		transportConn:    transportConn,
@@ -209,7 +229,7 @@ func DialConfigCtx(
 	ctx context.Context, url string, config Config,
 ) (*Connection, error) {
 	conn := newConnection(url, &config)
-	err := conn.reconnect(ctx,true)
+	err := conn.reconnect(ctx, true)
 	if err != nil {
 		return nil, err
 	}

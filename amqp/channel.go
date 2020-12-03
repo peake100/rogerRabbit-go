@@ -22,39 +22,38 @@ type queueDeclareArgs struct {
 
 // Store queue bind information for re-establishing bindings on disconnect.
 type queueBindArgs struct {
-	name string
-	key string
+	name     string
+	key      string
 	exchange string
-	noWait bool
-	args Table
+	noWait   bool
+	args     Table
 }
-
 
 // Store exchange declare information for re-establishing queues on disconnect.
 type exchangeDeclareArgs struct {
-	name string
-	kind string
-	durable bool
+	name       string
+	kind       string
+	durable    bool
 	autoDelete bool
-	internal bool
-	noWait bool
-	args Table
+	internal   bool
+	noWait     bool
+	args       Table
 }
 
 // Store exchange bind information for re-establishing bindings on disconnect.
 type exchangeBindArgs struct {
 	destination string
-	key string
-	source string
-	noWait bool
-	args Table
+	key         string
+	source      string
+	noWait      bool
+	args        Table
 }
 
 // Holds current qos settings for the channel so they can be re-instated on reconnect.
 type qosSettings struct {
 	prefetchCount int
-	prefetchSize int
-	global bool
+	prefetchSize  int
+	global        bool
 }
 
 // Enum-like for acknowledgement types.
@@ -71,13 +70,13 @@ type ackInfo struct {
 	// Delivery tag to acknowledge
 	deliveryTag uint64
 	// The method to call when acknowledging
-	method   	ackMethod
+	method ackMethod
 	// Passed to `multiple` arg on ack and nack methods
-	multiple 	bool
+	multiple bool
 	// Passed to `requeue` arg on nack and reject methods
-	requeue  	bool
+	requeue bool
 	// result passed to this channel so it can be returned to the initial caller.
-	resultChan  chan error
+	resultChan chan error
 }
 
 func newAckInfo(
@@ -90,7 +89,7 @@ func newAckInfo(
 		requeue:     requeue,
 		// use a buffer as 1 so we don't block the acknowledge routine when it sends a
 		// result
-		resultChan:  make(chan error, 1),
+		resultChan: make(chan error, 1),
 	}
 }
 
@@ -209,6 +208,19 @@ func (transport *transportChannel) cleanup() error {
 	return nil
 }
 
+// Removed a queue from the list of queues to be redeclared on reconnect
+func (transport *transportChannel) removeQueue(queueName string) {
+	// Remove the queue.
+	transport.declareQueues.Delete(queueName)
+	// Remove all binding commands associated with this queue from the re-bind on
+	// reconnect list.
+	transport.removeQueueBindings(
+		queueName,
+		"",
+		"",
+	)
+}
+
 // Remove a re-connection queue binding when a queue, exchange, or binding is removed.
 func (transport *transportChannel) removeQueueBindings(
 	queueName string,
@@ -257,6 +269,19 @@ func (transport *transportChannel) removeQueueBindings(
 	}
 
 	transport.bindQueues = transport.bindQueues[0:i]
+}
+
+// Remove an exchange from the re-declaration list, as well as all queue and
+// inter-exchange bindings it was a part of.
+func (transport *transportChannel) removeExchange(exchangeName string) {
+	// Remove the exchange from the list of exchanges we need to re-declare
+	transport.declareExchanges.Delete(exchangeName)
+	// Remove all bindings associated with this exchange from the list of bindings
+	// to re-declare on re-connections.
+	transport.removeQueueBindings("", exchangeName, "")
+	transport.removeExchangeBindings(
+		"", "", "", exchangeName,
+	)
 }
 
 // Remove a re-connection binding when a binding or exchange is removed.
@@ -368,7 +393,20 @@ func (transport *transportChannel) reconnectDeclareQueues() error {
 
 	redeclareQueues := func(key, value interface{}) bool {
 		thisQueue := value.(*queueDeclareArgs)
-		_, err = transport.Channel.QueueDeclare(
+
+		// By default, we will passively declare a queue. This allows us to respect
+		// queue deletion by other producers or consumers.
+		method := transport.Channel.QueueDeclarePassive
+		// UNLESS it is an auto-delete queue. Such a queue may have been cleaned up
+		// by the broker and should be fully re-declared on reconnect.
+
+		// TODO: add ability to configure whether or not a passive declare should be
+		//   used.
+		if true {
+			method = transport.Channel.QueueDeclare
+		}
+
+		_, err = method(
 			thisQueue.name,
 			thisQueue.durable,
 			thisQueue.autoDelete,
@@ -378,6 +416,15 @@ func (transport *transportChannel) reconnectDeclareQueues() error {
 			thisQueue.args,
 		)
 		if err != nil {
+			var streadwayErr *Error
+			if errors.As(err, &streadwayErr) && streadwayErr.Code == NotFound {
+				// If this is a passive declare, we can get a 404 NOT_FOUND error. If we
+				// do, then we should remove this queue from the list of queues that is
+				// to be re-declared, so that we don't get caught in an endless loop
+				// of reconnects.
+				transport.removeQueue(thisQueue.name)
+			}
+
 			err = fmt.Errorf(
 				"error re-declaring queue '%v': %w", thisQueue.name, err,
 			)
@@ -399,7 +446,20 @@ func (transport *transportChannel) reconnectDeclareExchanges() error {
 
 	redeclareExchanges := func(key, value interface{}) bool {
 		thisExchange := value.(*exchangeDeclareArgs)
-		err = transport.Channel.ExchangeDeclare(
+
+		// By default, we will passively declare a queue. This allows us to respect
+		// queue deletion by other producers or consumers.
+		method := transport.Channel.ExchangeDeclarePassive
+		// UNLESS it is an auto-delete queue. Such a queue may have been cleaned up
+		// by the broker and should be fully re-declared on reconnect.
+
+		// TODO: add ability to configure whether or not a passive declare should be
+		//   used.
+		if true {
+			method = transport.Channel.ExchangeDeclare
+		}
+
+		err = method(
 			thisExchange.name,
 			thisExchange.kind,
 			thisExchange.durable,
@@ -410,6 +470,14 @@ func (transport *transportChannel) reconnectDeclareExchanges() error {
 			thisExchange.args,
 		)
 		if err != nil {
+			var streadwayErr *Error
+			if errors.As(err, &streadwayErr) && streadwayErr.Code == NotFound {
+				// If this is a passive declare, we can get a 404 NOT_FOUND error. If we
+				// do, then we should remove this queue from the list of queues that is
+				// to be re-declared, so that we don't get caught in an endless loop
+				// of reconnects.
+				transport.removeExchange(thisExchange.name)
+			}
 			err = fmt.Errorf(
 				"error re-declaring exchange '%v': %w", thisExchange.name, err,
 			)
@@ -434,7 +502,7 @@ func (transport *transportChannel) reconnectBindQueues() error {
 	transport.bindQueuesLock.Lock()
 	defer transport.bindQueuesLock.Unlock()
 
-	for _, thisBinding :=  range transport.bindQueues {
+	for _, thisBinding := range transport.bindQueues {
 		err := transport.Channel.QueueBind(
 			thisBinding.name,
 			thisBinding.key,
@@ -445,8 +513,8 @@ func (transport *transportChannel) reconnectBindQueues() error {
 
 		if err != nil {
 			return fmt.Errorf(
-			"error re-binding queue '%v' to exchange '%v' with routing key" +
-				" '%v': %w",
+				"error re-binding queue '%v' to exchange '%v' with routing key"+
+					" '%v': %w",
 				thisBinding.name,
 				thisBinding.exchange,
 				thisBinding.key,
@@ -467,7 +535,7 @@ func (transport *transportChannel) reconnectBindExchanges() error {
 	transport.bindExchangesLock.Lock()
 	defer transport.bindExchangesLock.Unlock()
 
-	for _, thisBinding :=  range transport.bindExchanges {
+	for _, thisBinding := range transport.bindExchanges {
 		err := transport.Channel.ExchangeBind(
 			thisBinding.destination,
 			thisBinding.key,
@@ -478,7 +546,7 @@ func (transport *transportChannel) reconnectBindExchanges() error {
 
 		if err != nil {
 			return fmt.Errorf(
-				"error re-binding source exchange '%v' to destination exchange" +
+				"error re-binding source exchange '%v' to destination exchange"+
 					" '%v' with routing key '%v': %w",
 				thisBinding.source,
 				thisBinding.destination,
@@ -688,7 +756,7 @@ func (channel *Channel) runAcknowledgementRoutine() {
 				Uint64("DELIVERY TAG", ackReq.deliveryTag).
 				Bool("MULTIPLE", ackReq.multiple).
 				Bool("REQUEUE", ackReq.requeue).
-				Msg("acknowledgement(s) sent")
+				Msg("delivery acknowledgement(s) sent")
 		}
 
 		// If we are acknowledging multiple requests and some of them span into a
@@ -783,7 +851,7 @@ Qos controls how many messages or how many bytes the server will try to keep on
 the network for consumers before receiving delivery acks.  The intent of Qos is
 to make sure the network buffers stay full between the server and client.
 
-With a prefetch count greater than zero, the server will deliver that many
+With a prefetch publishCount greater than zero, the server will deliver that many
 messages to consumers before acknowledgments are received.  The server ignores
 this option when consumers are started with noAck because no acknowledgments
 are expected or sent.
@@ -803,12 +871,12 @@ AMQP 0.9.1 specification in that global Qos settings are limited in scope to
 channels, not connections (https://www.rabbitmq.com/consumer-prefetch.html).
 
 To get round-robin behavior between consumers consuming from the same queue on
-different connections, set the prefetch count to 1, and the next available
+different connections, set the prefetch publishCount to 1, and the next available
 message on the server will be delivered to the next available consumer.
 
 If your consumer work time is reasonably consistent and not much greater
 than two times your network round trip time, you will see significant
-throughput improvements starting with a prefetch count of 2 or slightly
+throughput improvements starting with a prefetch publishCount of 2 or slightly
 greater as described by benchmarks on RabbitMQ.
 
 http://www.rabbitmq.com/blog/2012/04/25/rabbitmq-performance-measurements-part-2/
@@ -876,11 +944,14 @@ func (channel *Channel) Flow(active bool) error {
 	return channel.retryOperationOnClosed(channel.ctx, op, true)
 }
 
-
 /*
 ROGER NOTE: Queues declared with a roger channel will be automatically re-declared
 upon channel disconnect recovery. Calling channel.QueueDelete() will remove the queue
 from the list of queues to be re-declared in case of a disconnect.
+
+This may cases where queues deleted by other producers / consumers are
+automatically re-declared. Future updates will introduce more control over when and
+how queues are re-declared on reconnection.
 
 --
 
@@ -963,10 +1034,10 @@ func (channel *Channel) QueueDeclare(
 			exclusive:  exclusive,
 			// We are always going to wait on re-declares, but we should save the
 			// noWait value for posterity.
-			noWait:     noWait,
+			noWait: noWait,
 			// Copy the args so if the user mutates them for a future call we have
 			// an un-changed version of the originals.
-			args:       copyTable(args),
+			args: copyTable(args),
 		}
 
 		channel.transportChannel.declareQueues.Store(name, queueArgs)
@@ -1005,7 +1076,7 @@ func (channel *Channel) QueueDeclarePassive(
 
 /*
 QueueInspect passively declares a queue by name to inspect the current message
-count and consumer count.
+publishCount and consumer publishCount.
 
 Use this method to check how many messages ready for delivery reside in the queue,
 how many consumers are receiving deliveries, and whether a queue by this
@@ -1018,9 +1089,7 @@ If a queue by this name does not exist, an error will be returned and the
 channel will be closed.
 
 */
-func (channel *Channel) QueueInspect(
-	name string,
-) (queue Queue, err error) {
+func (channel *Channel) QueueInspect(name string) (queue Queue, err error) {
 	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func() error {
 		var opErr error
@@ -1095,7 +1164,7 @@ func (channel *Channel) QueueBind(
 			noWait:   noWait,
 			// Copy the arg table so if the caller re-uses it we preserve the original
 			// values.
-			args:     copyTable(args),
+			args: copyTable(args),
 		}
 
 		channel.transportChannel.bindQueuesLock.Lock()
@@ -1122,9 +1191,8 @@ unbind the queue from the default exchange.
 func (channel *Channel) QueueUnbind(name, key, exchange string, args Table) error {
 	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func() error {
-		var opErr error
-		opErr = channel.transportChannel.QueueUnbind(name, key, exchange, args)
-		if opErr == nil {
+		opErr := channel.transportChannel.QueueUnbind(name, key, exchange, args)
+		if opErr != nil {
 			return opErr
 		}
 
@@ -1179,7 +1247,7 @@ remaining on the queue.  If there are messages, an error will be returned and
 the channel will be closed.
 
 When noWait is true, the queue will be deleted without waiting for a response
-from the server.  The purged message count will not be meaningful. If the queue
+from the server.  The purged message publishCount will not be meaningful. If the queue
 could not be deleted, a channel exception will be raised and the channel will
 be closed.
 
@@ -1197,14 +1265,8 @@ func (channel *Channel) QueueDelete(
 			return opErr
 		}
 
-		channel.transportChannel.declareQueues.Delete(name)
-		// Remove all binding commands associated with this queue from the re-bind on
-		// reconnect list.
-		channel.transportChannel.removeQueueBindings(
-			name,
-			"",
-			"",
-		)
+		// Remove the queue from our list of queue to redeclare.
+		channel.transportChannel.removeQueue(name)
 
 		return nil
 	}
@@ -1214,6 +1276,16 @@ func (channel *Channel) QueueDelete(
 }
 
 /*
+ROGER NOTE: Exchanges declared with a roger channel will be automatically re-declared
+upon channel disconnect recovery. Calling channel.ExchangeDelete() will remove the
+exchange from the list of exchanges to be re-declared in case of a disconnect.
+
+This may cases where exchanges deleted by other producers / consumers are
+automatically re-declared. Future updates will introduce more control over when and
+how exchanges are re-declared on reconnection.
+
+--
+
 ExchangeDeclare declares an exchange on the server. If the exchange does not
 already exist, the server will create it.  If the exchange exists, the server
 verifies that it is of the provided type, durability and auto-delete flags.
@@ -1289,10 +1361,10 @@ func (channel *Channel) ExchangeDeclare(
 			internal:   internal,
 			// We will always use wait on re-establishments, but preserve the original
 			// setting here for posterity.
-			noWait:     noWait,
+			noWait: noWait,
 			// Copy the table so if the caller re-uses it we dont have it mutated
 			// between re-declarations.
-			args:       copyTable(args),
+			args: copyTable(args),
 		}
 
 		channel.transportChannel.declareExchanges.Store(name, exchangeArgs)
@@ -1358,14 +1430,8 @@ func (channel *Channel) ExchangeDelete(
 			return opErr
 		}
 
-		// Remove the exchange from the list of exchanges we need to re-declare
-		channel.transportChannel.declareExchanges.Delete(name)
-		// Remove all bindings associated with this exchange from the list of bindings
-		// to re-declare on re-connections.
-		channel.transportChannel.removeQueueBindings("", name, "")
-		channel.transportChannel.removeExchangeBindings(
-			"", "", "", name,
-		)
+		// Remove the exchange from our re-declare on reconnect lists.
+		channel.transportChannel.removeExchange(name)
 
 		return nil
 	}
@@ -1551,7 +1617,7 @@ func (channel *Channel) Publish(
 		// If there was no error, and we are in confirms mode, increment the current
 		// delivery tag. We need to do this atomically so if publish is getting called
 		// in more than one goroutine, we don't have a data race condition and
-		// under-count our tags.
+		// under-publishCount our tags.
 		atomic.AddUint64(channel.transportChannel.settings.tagPublishCount, 1)
 
 		return opErr
@@ -1688,7 +1754,7 @@ func (channel *Channel) Consume(
 			args:      args,
 		},
 		CallerDeliveries: callerDeliveries,
-		NewDelivery: channel.newDelivery,
+		NewDelivery:      channel.newDelivery,
 	}
 
 	// Pass it to our relay handler.
@@ -1731,7 +1797,7 @@ func (channel *Channel) Ack(tag uint64, multiple bool) error {
 	channel.transportChannel.ackChan <- ackInfo
 
 	// Pull the result
-	return <- ackInfo.resultChan
+	return <-ackInfo.resultChan
 }
 
 /*
@@ -1762,7 +1828,7 @@ func (channel *Channel) Nack(tag uint64, multiple bool, requeue bool) error {
 	channel.transportChannel.ackChan <- ackInfo
 
 	// Pull the result
-	return <- ackInfo.resultChan
+	return <-ackInfo.resultChan
 }
 
 /*
@@ -1793,9 +1859,8 @@ func (channel *Channel) Reject(tag uint64, requeue bool) error {
 	channel.transportChannel.ackChan <- ackInfo
 
 	// Pull the result
-	return <- ackInfo.resultChan
+	return <-ackInfo.resultChan
 }
-
 
 /*
 ROGER NOTE: It is possible that if a channel is disconnected unexpectedly, there may
@@ -2000,7 +2065,7 @@ The subscription tag is returned to the listener.
 
 */
 func (channel *Channel) NotifyCancel(cancellations chan string) chan string {
-	relay := &cancelEventRelay{
+	relay := &cancelRelay{
 		CallerCancellations: cancellations,
 	}
 
@@ -2014,6 +2079,15 @@ func (channel *Channel) NotifyCancel(cancellations chan string) chan string {
 }
 
 /*
+ROGER NOTE: Flow notification will be received when an unexpected disconnection occurs.
+If the broker disconnects, a ``false`` notification will be sent unless the last
+notification from the broker was ``false``, and when the connection is re-acquired, a
+``true`` notification will be sent before resuming relaying notification from the
+broker. This means that NotifyFlow can be a useful tool for dealing with disconnects,
+even when using RabbitMQ.
+
+--
+
 NotifyFlow registers a listener for basic.flow methods sent by the server.
 When `false` is sent on one of the listener channels, all publishers should
 pause until a `true` is sent.
@@ -2049,6 +2123,7 @@ basic.ack messages from getting rate limited with your basic.publish messages.
 func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool {
 	relay := &flowRelay{
 		CallerFlow: flowNotifications,
+		ChannelCtx: channel.ctx,
 	}
 
 	err := channel.setupAndLaunchEventRelay(relay)
@@ -2063,7 +2138,7 @@ func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool {
 // returns error we should pass to transaction panics until they are implemented.
 func panicTransactionMessage(methodName string) error {
 	return fmt.Errorf(
-		"%v and other transaction methods not implemented, pull requests are" +
+		"%v and other transaction methods not implemented, pull requests are"+
 			" welcome for this functionality",
 		methodName,
 	)

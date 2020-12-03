@@ -8,7 +8,7 @@ func copyTable(in Table) Table {
 	}
 
 	newTable := make(Table, len(in))
-	for key, value :=  range in {
+	for key, value := range in {
 		newTable[key] = value
 	}
 

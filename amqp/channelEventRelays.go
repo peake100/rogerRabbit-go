@@ -1,6 +1,7 @@
 package amqp
 
 import (
+	"context"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync/atomic"
@@ -103,7 +104,8 @@ func (channel *Channel) runEventRelay(relay eventRelay, relayLogger zerolog.Logg
 				legLogger.Debug().Msg("setting up relay leg")
 			}
 			setupErr = relay.SetupForRelayLeg(
-				channel.transportChannel.Channel, channel.transportChannel.settings,
+				channel.transportChannel.Channel,
+				channel.transportChannel.settings,
 			)
 			if setupErr != nil {
 				legLogger.Err(setupErr).Msg("error setting up event relay leg")
@@ -135,7 +137,8 @@ func (channel *Channel) setupAndLaunchEventRelay(relay eventRelay) error {
 
 	op := func() error {
 		err := relay.SetupForRelayLeg(
-			channel.transportChannel.Channel, channel.transportChannel.settings,
+			channel.transportChannel.Channel,
+			channel.transportChannel.settings,
 		)
 		if err != nil {
 			return err
@@ -169,10 +172,10 @@ func (channel *Channel) setupAndLaunchEventRelay(relay eventRelay) error {
 
 // Holds args for consume operation
 type consumeArgs struct {
-	queue, consumer string
+	queue, consumer                     string
 	autoAck, exclusive, noLocal, noWait bool
-	args Table
-	callerDeliveryChan chan Delivery
+	args                                Table
+	callerDeliveryChan                  chan Delivery
 }
 
 // Relays Deliveries across channel disconnects.
@@ -180,17 +183,17 @@ type consumeRelay struct {
 	// Arguments to call on Consume
 	ConsumeArgs consumeArgs
 	// Delivery channel to pass deliveries back to the client.
-	CallerDeliveries chan <- Delivery
+	CallerDeliveries chan<- Delivery
 
 	// The function we'll call to make a new delivery. Will be a method of the channel
 	// that spawned this relay.
 	NewDelivery func(orig streadway.Delivery) Delivery
 
-	// The pointer to the delivery tag count we need to atomically update with each
+	// The pointer to the delivery tag publishCount we need to atomically update with each
 	// consume.
 	deliveryTagCount *uint64
 	// The current delivery channel coming from the broker.
-	brokerDeliveries <- chan streadway.Delivery
+	brokerDeliveries <-chan streadway.Delivery
 }
 
 func (relay *consumeRelay) Logger(parent zerolog.Logger) zerolog.Logger {
@@ -226,7 +229,7 @@ func (relay *consumeRelay) SetupForRelayLeg(
 func (relay *consumeRelay) RunRelayLeg() (done bool, err error) {
 	// Drain consumer events
 	for brokerDelivery := range relay.brokerDeliveries {
-		// Add one to the delivery tag count
+		// Add one to the delivery tag publishCount
 		atomic.AddUint64(relay.deliveryTagCount, 1)
 
 		// Wrap the delivery and send on our way.
@@ -244,7 +247,7 @@ func (relay *consumeRelay) Shutdown() error {
 // Relays Deliveries across channel disconnects.
 type notifyPublishRelay struct {
 	// Delivery channel to pass deliveries back to the client.
-	CallerConfirmations chan <- Confirmation
+	CallerConfirmations chan<- Confirmation
 
 	// The number of confirmations we have sent on this relay.
 	confirmsSent uint64
@@ -252,7 +255,7 @@ type notifyPublishRelay struct {
 	// The delivery tag offset to add to our confirmations.
 	deliveryTagOffset uint64
 	// The current delivery channel coming from the broker.
-	brokerConfirmations <- chan streadway.Confirmation
+	brokerConfirmations <-chan streadway.Confirmation
 
 	// Logger
 	logger zerolog.Logger
@@ -302,7 +305,7 @@ func (relay *notifyPublishRelay) RunRelayLeg() (done bool, err error) {
 	// channel is forcibly closed, the final messages will not be confirmed.
 	for relay.confirmsSent < relay.deliveryTagOffset {
 		confirmation := Confirmation{
-			Confirmation:     streadway.Confirmation{
+			Confirmation: streadway.Confirmation{
 				DeliveryTag: relay.confirmsSent + 1,
 				Ack:         false,
 			},
@@ -316,7 +319,7 @@ func (relay *notifyPublishRelay) RunRelayLeg() (done bool, err error) {
 	}
 
 	// Range over the confirmations from the broker.
-	for brokerConf := range relay.brokerConfirmations  {
+	for brokerConf := range relay.brokerConfirmations {
 		brokerConf.DeliveryTag += relay.deliveryTagOffset
 		// Apply the offset to the delivery tag.
 		confirmation := Confirmation{
@@ -342,10 +345,10 @@ func (relay *notifyPublishRelay) Shutdown() error {
 // Relays return notification to the cl
 type notifyReturnRelay struct {
 	// The channel we are relaying returns to from the broker
-	CallerReturns chan <- Return
+	CallerReturns chan<- Return
 
 	// The current broker channel we are pulling from.
-	brokerReturns <- chan Return
+	brokerReturns <-chan Return
 
 	// Logger
 	logger zerolog.Logger
@@ -388,31 +391,33 @@ func (relay *notifyReturnRelay) Shutdown() error {
 	return nil
 }
 
-type cancelEventRelay struct {
+type cancelRelay struct {
 	// The channel we are relaying returns to from the broker
-	CallerCancellations chan <- string
+	CallerCancellations chan<- string
 
 	// The current broker channel we are pulling from.
-	brokerCancellations <- chan string
+	brokerCancellations <-chan string
 
 	// Logger
 	logger zerolog.Logger
 }
 
-func (relay *cancelEventRelay) Logger(parent zerolog.Logger) zerolog.Logger {
+func (relay *cancelRelay) Logger(parent zerolog.Logger) zerolog.Logger {
 	logger := parent.With().Str("EVENT_TYPE", "NOTIFY_CANCEL").Logger()
 	relay.logger = logger
 	return relay.logger
 }
 
-func (relay *cancelEventRelay) SetupForRelayLeg(newChannel *streadway.Channel, settings channelSettings) error {
+func (relay *cancelRelay) SetupForRelayLeg(
+	newChannel *streadway.Channel, settings channelSettings,
+) error {
 	brokerChannel := make(chan string, cap(relay.CallerCancellations))
 	relay.brokerCancellations = brokerChannel
 	newChannel.NotifyCancel(brokerChannel)
 	return nil
 }
 
-func (relay *cancelEventRelay) RunRelayLeg() (done bool, err error) {
+func (relay *cancelRelay) RunRelayLeg() (done bool, err error) {
 	for thisCancellation := range relay.brokerCancellations {
 		if relay.logger.Debug().Enabled() {
 			relay.logger.Debug().
@@ -426,20 +431,25 @@ func (relay *cancelEventRelay) RunRelayLeg() (done bool, err error) {
 	return false, nil
 }
 
-func (relay *cancelEventRelay) Shutdown() error {
+func (relay *cancelRelay) Shutdown() error {
 	defer close(relay.CallerCancellations)
 	return nil
 }
 
 type flowRelay struct {
+	// Context of the current channel
+	ChannelCtx context.Context
+
 	// The channel we are relaying returns to from the broker
-	CallerFlow chan <- bool
+	CallerFlow chan<- bool
 
 	// The current broker channel we are pulling from.
-	brokerFlow <- chan bool
+	brokerFlow <-chan bool
 
 	// Whether this relay has been setup before.
 	setup bool
+	// The last notification from the broker.
+	lastNotification bool
 
 	// Logger
 	logger zerolog.Logger
@@ -454,14 +464,18 @@ func (relay *flowRelay) Logger(parent zerolog.Logger) zerolog.Logger {
 func (relay *flowRelay) SetupForRelayLeg(
 	newChannel *streadway.Channel, settings channelSettings,
 ) error {
+	// Check if this is our initial setup
 	if relay.setup {
 		// If we have already setup the relay once, that means we are opening a new
 		// channel, and should send a flow -> true to the caller as a fresh channel
 		// will not have flow turned off yet.
-	} else {
 		relay.CallerFlow <- true
+	} else {
 		relay.setup = true
 	}
+
+	// Set the last notification to true.
+	relay.lastNotification = true
 
 	brokerChannel := make(chan bool, cap(relay.CallerFlow))
 	relay.brokerFlow = brokerChannel
@@ -479,6 +493,15 @@ func (relay *flowRelay) RunRelayLeg() (done bool, err error) {
 		}
 
 		relay.CallerFlow <- thisFlow
+		relay.lastNotification = thisFlow
+	}
+
+	// Turn flow to false on broker disconnection if the roger channel has not been
+	// closed and the last notification sent was a ``true`` (we don't want to send two
+	// falses in a row).
+	if relay.ChannelCtx.Err() == nil && relay.lastNotification {
+		relay.CallerFlow <- false
+		relay.lastNotification = false
 	}
 
 	return false, nil
@@ -488,4 +511,3 @@ func (relay *flowRelay) Shutdown() error {
 	defer close(relay.CallerFlow)
 	return nil
 }
-

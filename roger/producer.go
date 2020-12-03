@@ -1,4 +1,3 @@
-
 package roger
 
 import (
@@ -39,18 +38,18 @@ func (err ErrProducerNack) Error() string {
 
 // The args we are going to call channel.Publish with. See that methods documentation
 // for details on each args meaning.
-type PublishArgs struct {
-	Exchange string
-	Key string
+type publishArgs struct {
+	Exchange  string
+	Key       string
 	Mandatory bool
 	Immediate bool
-	Msg amqp.Publishing
+	Msg       amqp.Publishing
 }
 
 // The order for a publications.
-type PublishOrder struct {
+type publishOrder struct {
 	// Embed the args.
-	PublishArgs
+	publishArgs
 
 	// Set by the publishing routine after a successful publication.
 	DeliveryTag uint64
@@ -64,15 +63,35 @@ type ProducerOpts struct {
 	// Whether to confirm publications with the broker.
 	confirmPublish bool
 	// The buffer size of our internal publication queues.
-	internalQueueSize int
+	internalQueueCapacity int
+}
+
+// Whether to confirm publications with the broker before returning on a "Publish" call
+// When true, all called to Producer.Publish() will block until a publish confirmation
+// is received from the broker.
+//
+// Default: true.
+func (opts *ProducerOpts) WithConfirmPublish(confirm bool) *ProducerOpts {
+	opts.confirmPublish = confirm
+	return opts
+}
+
+// Internally, the producer stores incoming publication requests and published requests
+// waiting for a broker acknowledgement in go channels. This options sets the size
+// for those internal queues.
+//
+// Default: 64
+func (opts *ProducerOpts) WithInternalQueueCapacity(size int) *ProducerOpts {
+	opts.internalQueueCapacity = size
+	return opts
 }
 
 // Producer is a wrapper for an amqp channel that handles the boilerplate of confirming
 // publishings, retrying nacked messages, and other useful quality of life features.
 type Producer struct {
 	// Context for the producer.
-	ctx context.Context
-	ctxCancel context.CancelFunc
+	ctx         context.Context
+	ctxCancel   context.CancelFunc
 	publishLock *sync.RWMutex
 
 	// The channel we will be running publishing on. This producer is expected to have
@@ -82,25 +101,25 @@ type Producer struct {
 	// Channel receiving events from channel.NotifyPublish.
 	publishEvents chan amqp.Confirmation
 
-	// Internal queue for messages waiting to be published.
-	publishQueue chan *PublishOrder
-	// Internal queue of messages that have been sent to the broker, but are awaiting
+	// Internal Queue for messages waiting to be published.
+	publishQueue chan *publishOrder
+	// Internal Queue of messages that have been sent to the broker, but are awaiting
 	// confirmation.
-	confirmQueue chan *PublishOrder
+	confirmQueue chan *publishOrder
 
 	// Caller options for producer behavior
 	opts ProducerOpts
 }
 
 func (producer *Producer) runPublisher() {
-	// close the confirmation queue on the way out, letting the confirmation wrap up
+	// close the confirmation Queue on the way out, letting the confirmation wrap up
 	// work and exit.
 	defer close(producer.confirmQueue)
 
 	// Keep track of the current delivery tag.
 	deliveryTag := uint64(0)
 
-	// Range over our publish queue.
+	// Range over our publish Queue.
 	for thisOrder := range producer.publishQueue {
 		err := producer.channel.Publish(
 			thisOrder.Exchange,
@@ -132,12 +151,12 @@ func (producer *Producer) runConfirmations() {
 	// start shutdown if something goes horribly wrong here.
 	defer producer.StartShutdown()
 
-	// Iterate over our internal confirmation queue
+	// Iterate over our internal confirmation Queue
 	for thisOrder := range producer.confirmQueue {
 		// Get the next confirmation. Because confirmations are returned by the client
 		// in order, we don't have to worry bout lining them up. We are getting
 		// publications in order from both confirmQueue and
-		confirmation, ok := <- producer.publishEvents
+		confirmation, ok := <-producer.publishEvents
 		if !ok {
 			// If this channel is closed, then this is an orphan and we should send
 			// a closed err. This channel will not be opened again.
@@ -147,25 +166,25 @@ func (producer *Producer) runConfirmations() {
 
 		if confirmation.DeliveryTag != thisOrder.DeliveryTag {
 			panic(fmt.Errorf(
-				"confirmation delivery tag %v does not line up with order" +
+				"confirmation delivery tag %v does not line up with order"+
 					" delivery tag %v",
-					confirmation.DeliveryTag,
-					thisOrder.DeliveryTag,
+				confirmation.DeliveryTag,
+				thisOrder.DeliveryTag,
 			))
 		}
 
-		// If this was an ack, return, closing the result channel.
+		// If this was an ack, send an ack result
 		if confirmation.Ack {
 			thisOrder.result <- nil
-			return
+		} else {
+			// Otherwise return a nack error with orphan information
+			thisOrder.result <- ErrProducerNack{Orphan: confirmation.DisconnectOrphan}
 		}
-
-		// Otherwise return a nack error with orphan information
-		thisOrder.result <- ErrProducerNack{Orphan: confirmation.DisconnectOrphan}
 	}
 }
 
-// Publish a message.
+// Publish a message. This method is goroutine safe, even when confirming publications
+// with the broker.
 func (producer *Producer) Publish(
 	exchange string,
 	key string,
@@ -174,9 +193,9 @@ func (producer *Producer) Publish(
 	msg amqp.Publishing,
 ) (err error) {
 	// Create the order.
-	order := &PublishOrder{
+	order := &publishOrder{
 		// Save the args
-		PublishArgs: PublishArgs{
+		publishArgs: publishArgs{
 			Exchange:  exchange,
 			Key:       key,
 			Mandatory: mandatory,
@@ -186,7 +205,7 @@ func (producer *Producer) Publish(
 		// Set the delivery tag to 0, a proper tag will be set once publication occurs.
 		DeliveryTag: 0,
 		// Buffer the result channel by 1 so we never block the publication routine.
-		result:    make(chan error, 1),
+		result: make(chan error, 1),
 	}
 
 	// We are going to use a closure to grab and release the lock so we don't hold onto
@@ -202,23 +221,24 @@ func (producer *Producer) Publish(
 			return fmt.Errorf("publisher cancelled: %w", producer.ctx.Err())
 		}
 
-		// Push the order into our internal queue, or return an error if our context is
+		// Push the order into our internal Queue, or return an error if our context is
 		// cancelled before there is room.
 		select {
 		case producer.publishQueue <- order:
-		case <- producer.ctx.Done():
+		case <-producer.ctx.Done():
 			return fmt.Errorf("publisher cancelled: %w", producer.ctx.Err())
 		}
 
 		return nil
 	}()
+
 	// If we got an error from a cancelled context, return it.
 	if err != nil {
 		return err
 	}
 
 	// Block until we have a final result, then return it.
-	return <- order.result
+	return <-order.result
 }
 
 // Run the producer, this method blocks until the producer has been shut down.
@@ -256,7 +276,7 @@ func (producer *Producer) Run() error {
 	// All our workers will release this group when the producer is done.
 	complete := new(sync.WaitGroup)
 
-	// Launch a monitor routine to close the internal order queue when the producer
+	// Launch a monitor routine to close the internal order Queue when the producer
 	// context is cancelled. We run this in it's own routine rather than making it
 	// part of the shutdown function so publishQueue is only closed once.
 	complete.Add(1)
@@ -265,12 +285,12 @@ func (producer *Producer) Run() error {
 		// Unlock the lock, allowing new publishers to encounter the closed context and
 		// error without panicking on a closed channel.
 		defer producer.publishLock.Unlock()
-		// Close the publish queue, allowing the publish routine to wrap up and spin
+		// Close the publish Queue, allowing the publish routine to wrap up and spin
 		// down.
 		defer close(producer.publishQueue)
 		// Grab the publish lock for write, this will block the publish function from
-		// placing any new messages into the internal queue, and will allow any in the
-		// process of doing so to finish before we close that queue, avoiding panics
+		// placing any new messages into the internal Queue, and will allow any in the
+		// process of doing so to finish before we close that Queue, avoiding panics
 		// from sending to a closed channel.
 		defer producer.publishLock.Lock()
 
@@ -306,10 +326,9 @@ func (producer *Producer) StartShutdown() {
 
 // Returns a new ProducerOpts with default options.
 func NewProducerOpts() *ProducerOpts {
-	return &ProducerOpts{
-		confirmPublish: true,
-		internalQueueSize: 128,
-	}
+	return new(ProducerOpts).
+		WithConfirmPublish(true).
+		WithInternalQueueCapacity(64)
 }
 
 // Create a new producer using the given amqpChannel and opts.
@@ -339,9 +358,9 @@ func NewProducer(amqpChannel *amqp.Channel, opts *ProducerOpts) *Producer {
 		ctxCancel:     cancel,
 		publishLock:   new(sync.RWMutex),
 		channel:       amqpChannel,
-		publishEvents: make(chan amqp.Confirmation, opts.internalQueueSize),
-		publishQueue:  make(chan *PublishOrder, opts.internalQueueSize),
-		confirmQueue:  make(chan *PublishOrder, opts.internalQueueSize),
+		publishEvents: make(chan amqp.Confirmation, opts.internalQueueCapacity),
+		publishQueue:  make(chan *publishOrder, opts.internalQueueCapacity),
+		confirmQueue:  make(chan *publishOrder, opts.internalQueueCapacity),
 		opts:          *opts,
 	}
 }
