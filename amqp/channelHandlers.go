@@ -9,73 +9,77 @@ import (
 )
 
 // HOOK DEFINITIONS
-type HookReconnect = func(
+
+// Signature for hooks triggered when a channel is being re-established.
+type HandlerReconnect = func(
 	next func() (*streadway.Channel, error), logger zerolog.Logger,
 ) (*streadway.Channel, error)
 
-type HookQueueDeclare = func(
+type HandlerQueueDeclare = func(
 	next func() error, args *QueueDeclareArgs, logger zerolog.Logger,
 ) error
 
-type HookQueueDelete = func(
+type MiddlewareQueueDeclare = func(handler HandlerQueueDeclare) HandlerQueueDeclare
+
+type HandlerQueueDelete = func(
 	next func() error, args *QueueDeleteArgs, logger zerolog.Logger,
 ) error
 
-type HookQueueBind = func(
+type HandlerQueueBind = func(
 	next func() error, args *QueueBindArgs, logger zerolog.Logger,
 ) error
 
-type HookQueueUnbind = func(
+type HandlerQueueUnbind = func(
 	next func() error, args *QueueUnbindArgs, logger zerolog.Logger,
 ) error
 
-type HookExchangeDeclare func(
+type HandlerExchangeDeclare func(
 	next func() error, args *ExchangeDeclareArgs, logger zerolog.Logger,
 ) error
 
-type HookExchangeDelete func(
+type HandlerExchangeDelete func(
 	next func() error, args *ExchangeDeleteArgs, logger zerolog.Logger,
 ) error
 
-type HookExchangeBind func(
+type HandlerExchangeBind func(
 	next func() error, args *ExchangeBindArgs, logger zerolog.Logger,
 ) error
 
-type HookExchangeUnbind func(
+type HandlerExchangeUnbind func(
 	next func() error, args *ExchangeUnbindArgs, logger zerolog.Logger,
 ) error
 
-type channelHooks struct {
-	reconnect       []HookReconnect
-	queueDeclare    []HookQueueDeclare
-	queueDelete     []HookQueueDelete
-	queueBind       []HookQueueBind
-	queueUnbind     []HookQueueUnbind
-	exchangeDeclare []HookExchangeDeclare
-	exchangeDelete  []HookExchangeDelete
-	exchangeBind    []HookExchangeBind
-	exchangeUnbind  []HookExchangeUnbind
+type channelHandlers struct {
+	reconnect       []HandlerReconnect
+	queueDeclare    HandlerQueueDeclare
+	queueDelete     []HandlerQueueDelete
+	queueBind       []HandlerQueueBind
+	queueUnbind     []HandlerQueueUnbind
+	exchangeDeclare []HandlerExchangeDeclare
+	exchangeDelete  []HandlerExchangeDelete
+	exchangeBind    []HandlerExchangeBind
+	exchangeUnbind  []HandlerExchangeUnbind
 
 	lock *sync.RWMutex
 }
 
-func (hooks *channelHooks) RegisterReconnect(hook HookReconnect) {
-	hooks.lock.Lock()
-	defer hooks.lock.Unlock()
+func (handlers *channelHandlers) RegisterReconnect(hook HandlerReconnect) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
 
-	hooks.reconnect = append(hooks.reconnect, hook)
+	handlers.reconnect = append(handlers.reconnect, hook)
 }
 
-func (hooks *channelHooks) runHooksReconnect(
+func (handlers *channelHandlers) runHooksReconnect(
 	reconnect func() (*streadway.Channel, error),
 	logger zerolog.Logger,
 ) (*streadway.Channel, error) {
-	hooks.lock.RLock()
-	defer hooks.lock.RUnlock()
+	handlers.lock.RLock()
+	defer handlers.lock.RUnlock()
 
 	var lastMethod func() (*streadway.Channel, error)
 
-	for _, thisHook := range hooks.reconnect {
+	for _, thisHook := range handlers.reconnect {
 		// We have to declare a new variable here, or all inner methods will recursively
 		// call whatever the function pointer is set to outside the loop
 		innerMethod := lastMethod
@@ -92,22 +96,24 @@ func (hooks *channelHooks) runHooksReconnect(
 	return reconnect()
 }
 
-func (hooks *channelHooks) RegisterQueueDeclare(hook HookQueueDeclare) {
-	hooks.lock.Lock()
-	defer hooks.lock.Unlock()
+func (handlers *channelHandlers) RegisterQueueDeclare(
+	middleware MiddlewareQueueDeclare,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
 
-	hooks.queueDeclare = append(hooks.queueDeclare, hook)
+	handlers.queueDeclare = middleware(handlers.queueDeclare)
 }
 
-func (hooks *channelHooks) runHooksQueueDeclare(
+func (handlers *channelHandlers) runHooksQueueDeclare(
 	runMethodOnce func() error, args *QueueDeclareArgs, logger zerolog.Logger,
 ) error {
-	hooks.lock.RLock()
-	defer hooks.lock.RUnlock()
+	handlers.lock.RLock()
+	defer handlers.lock.RUnlock()
 
 	var lastMethod func() error
 
-	for _, thisHook := range hooks.queueDeclare {
+	for _, thisHook := range handlers.queueDeclare {
 		// We have to declare a new variable here, or all inner methods will recursively
 		// call whatever the function pointer is set to outside the loop
 		innerMethod := lastMethod
@@ -124,22 +130,22 @@ func (hooks *channelHooks) runHooksQueueDeclare(
 	return runMethodOnce()
 }
 
-func (hooks *channelHooks) RegisterQueueDelete(hook HookQueueDelete) {
-	hooks.lock.Lock()
-	defer hooks.lock.Unlock()
+func (handlers *channelHandlers) RegisterQueueDelete(hook HandlerQueueDelete) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
 
-	hooks.queueDelete = append(hooks.queueDelete, hook)
+	handlers.queueDelete = append(handlers.queueDelete, hook)
 }
 
-func (hooks *channelHooks) runHooksQueueDelete(
+func (handlers *channelHandlers) runHooksQueueDelete(
 	runMethodOnce func() error, args *QueueDeleteArgs, logger zerolog.Logger,
 ) error {
-	hooks.lock.RLock()
-	defer hooks.lock.RUnlock()
+	handlers.lock.RLock()
+	defer handlers.lock.RUnlock()
 
 	var lastMethod func() error
 
-	for _, thisHook := range hooks.queueDelete {
+	for _, thisHook := range handlers.queueDelete {
 		// We have to declare a new variable here, or all inner methods will recursively
 		// call whatever the function pointer is set to outside the loop
 		innerMethod := lastMethod
@@ -156,22 +162,22 @@ func (hooks *channelHooks) runHooksQueueDelete(
 	return runMethodOnce()
 }
 
-func (hooks *channelHooks) RegisterQueueBind(hook HookQueueBind) {
-	hooks.lock.Lock()
-	defer hooks.lock.Unlock()
+func (handlers *channelHandlers) RegisterQueueBind(hook HandlerQueueBind) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
 
-	hooks.queueBind = append(hooks.queueBind, hook)
+	handlers.queueBind = append(handlers.queueBind, hook)
 }
 
-func (hooks *channelHooks) runHooksQueueBind(
+func (handlers *channelHandlers) runHooksQueueBind(
 	runMethodOnce func() error, args *QueueBindArgs, logger zerolog.Logger,
 ) error {
-	hooks.lock.RLock()
-	defer hooks.lock.RUnlock()
+	handlers.lock.RLock()
+	defer handlers.lock.RUnlock()
 
 	var lastMethod func() error
 
-	for _, thisHook := range hooks.queueBind {
+	for _, thisHook := range handlers.queueBind {
 		// We have to declare a new variable here, or all inner methods will recursively
 		// call whatever the function pointer is set to outside the loop
 		innerMethod := lastMethod
@@ -188,22 +194,22 @@ func (hooks *channelHooks) runHooksQueueBind(
 	return runMethodOnce()
 }
 
-func (hooks *channelHooks) RegisterQueueUnbind(hook HookQueueUnbind) {
-	hooks.lock.Lock()
-	defer hooks.lock.Unlock()
+func (handlers *channelHandlers) RegisterQueueUnbind(hook HandlerQueueUnbind) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
 
-	hooks.queueUnbind = append(hooks.queueUnbind, hook)
+	handlers.queueUnbind = append(handlers.queueUnbind, hook)
 }
 
-func (hooks *channelHooks) runHooksQueueUnbind(
+func (handlers *channelHandlers) runHooksQueueUnbind(
 	runMethodOnce func() error, args *QueueUnbindArgs, logger zerolog.Logger,
 ) error {
-	hooks.lock.RLock()
-	defer hooks.lock.RUnlock()
+	handlers.lock.RLock()
+	defer handlers.lock.RUnlock()
 
 	var lastMethod func() error
 
-	for _, thisHook := range hooks.queueUnbind {
+	for _, thisHook := range handlers.queueUnbind {
 		// We have to declare a new variable here, or all inner methods will recursively
 		// call whatever the function pointer is set to outside the loop
 		innerMethod := lastMethod
@@ -220,22 +226,22 @@ func (hooks *channelHooks) runHooksQueueUnbind(
 	return runMethodOnce()
 }
 
-func (hooks *channelHooks) RegisterExchangeDeclare(hook HookExchangeDeclare) {
-	hooks.lock.Lock()
-	defer hooks.lock.Unlock()
+func (handlers *channelHandlers) RegisterExchangeDeclare(hook HandlerExchangeDeclare) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
 
-	hooks.exchangeDeclare = append(hooks.exchangeDeclare, hook)
+	handlers.exchangeDeclare = append(handlers.exchangeDeclare, hook)
 }
 
-func (hooks *channelHooks) runHooksExchangeDeclare(
+func (handlers *channelHandlers) runHooksExchangeDeclare(
 	runMethodOnce func() error, args *ExchangeDeclareArgs, logger zerolog.Logger,
 ) error {
-	hooks.lock.RLock()
-	defer hooks.lock.RUnlock()
+	handlers.lock.RLock()
+	defer handlers.lock.RUnlock()
 
 	var lastMethod func() error
 
-	for _, thisHook := range hooks.exchangeDeclare {
+	for _, thisHook := range handlers.exchangeDeclare {
 		// We have to declare a new variable here, or all inner methods will recursively
 		// call whatever the function pointer is set to outside the loop
 		innerMethod := lastMethod
@@ -252,22 +258,22 @@ func (hooks *channelHooks) runHooksExchangeDeclare(
 	return runMethodOnce()
 }
 
-func (hooks *channelHooks) RegisterExchangeDelete(hook HookExchangeDelete) {
-	hooks.lock.Lock()
-	defer hooks.lock.Unlock()
+func (handlers *channelHandlers) RegisterExchangeDelete(hook HandlerExchangeDelete) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
 
-	hooks.exchangeDelete = append(hooks.exchangeDelete, hook)
+	handlers.exchangeDelete = append(handlers.exchangeDelete, hook)
 }
 
-func (hooks *channelHooks) runHooksExchangeDelete(
+func (handlers *channelHandlers) runHooksExchangeDelete(
 	runMethodOnce func() error, args *ExchangeDeleteArgs, logger zerolog.Logger,
 ) error {
-	hooks.lock.RLock()
-	defer hooks.lock.RUnlock()
+	handlers.lock.RLock()
+	defer handlers.lock.RUnlock()
 
 	var lastMethod func() error
 
-	for _, thisHook := range hooks.exchangeDelete {
+	for _, thisHook := range handlers.exchangeDelete {
 		// We have to declare a new variable here, or all inner methods will recursively
 		// call whatever the function pointer is set to outside the loop
 		innerMethod := lastMethod
@@ -284,22 +290,22 @@ func (hooks *channelHooks) runHooksExchangeDelete(
 	return runMethodOnce()
 }
 
-func (hooks *channelHooks) RegisterExchangeBind(hook HookExchangeBind) {
-	hooks.lock.Lock()
-	defer hooks.lock.Unlock()
+func (handlers *channelHandlers) RegisterExchangeBind(hook HandlerExchangeBind) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
 
-	hooks.exchangeBind = append(hooks.exchangeBind, hook)
+	handlers.exchangeBind = append(handlers.exchangeBind, hook)
 }
 
-func (hooks *channelHooks) runHooksExchangeBind(
+func (handlers *channelHandlers) runHooksExchangeBind(
 	runMethodOnce func() error, args *ExchangeBindArgs, logger zerolog.Logger,
 ) error {
-	hooks.lock.RLock()
-	defer hooks.lock.RUnlock()
+	handlers.lock.RLock()
+	defer handlers.lock.RUnlock()
 
 	var lastMethod func() error
 
-	for _, thisHook := range hooks.exchangeBind {
+	for _, thisHook := range handlers.exchangeBind {
 		// We have to declare a new variable here, or all inner methods will recursively
 		// call whatever the function pointer is set to outside the loop
 		innerMethod := lastMethod
@@ -316,22 +322,22 @@ func (hooks *channelHooks) runHooksExchangeBind(
 	return runMethodOnce()
 }
 
-func (hooks *channelHooks) RegisterExchangeUnbind(hook HookExchangeUnbind) {
-	hooks.lock.Lock()
-	defer hooks.lock.Unlock()
+func (handlers *channelHandlers) RegisterExchangeUnbind(hook HandlerExchangeUnbind) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
 
-	hooks.exchangeUnbind = append(hooks.exchangeUnbind, hook)
+	handlers.exchangeUnbind = append(handlers.exchangeUnbind, hook)
 }
 
-func (hooks *channelHooks) runHooksExchangeUnbind(
+func (handlers *channelHandlers) runHooksExchangeUnbind(
 	runMethodOnce func() error, args *ExchangeUnbindArgs, logger zerolog.Logger,
 ) error {
-	hooks.lock.RLock()
-	defer hooks.lock.RUnlock()
+	handlers.lock.RLock()
+	defer handlers.lock.RUnlock()
 
 	var lastMethod func() error
 
-	for _, thisHook := range hooks.exchangeUnbind {
+	for _, thisHook := range handlers.exchangeUnbind {
 		// We have to declare a new variable here, or all inner methods will recursively
 		// call whatever the function pointer is set to outside the loop
 		innerMethod := lastMethod
@@ -350,7 +356,7 @@ func (hooks *channelHooks) runHooksExchangeUnbind(
 
 // This object implements hooks for re-declaring queues, exchanges, and bindings upon
 // reconnect.
-type routeDeclarationHooks struct {
+type routeDeclarationMiddleware struct {
 	// List of queues that must be declared upon re-establishing the channel. We use a
 	// map so we can remove queues from this list on queue delete.
 	declareQueues *sync.Map
@@ -368,12 +374,12 @@ type routeDeclarationHooks struct {
 }
 
 // Removed a queue from the list of queues to be redeclared on reconnect
-func (defaults *routeDeclarationHooks) removeQueue(queueName string) {
+func (middle *routeDeclarationMiddleware) removeQueue(queueName string) {
 	// Remove the queue.
-	defaults.declareQueues.Delete(queueName)
+	middle.declareQueues.Delete(queueName)
 	// Remove all binding commands associated with this queue from the re-bind on
 	// reconnect list.
-	defaults.removeQueueBindings(
+	middle.removeQueueBindings(
 		queueName,
 		"",
 		"",
@@ -381,7 +387,7 @@ func (defaults *routeDeclarationHooks) removeQueue(queueName string) {
 }
 
 // Remove a re-connection queue binding when a queue, exchange, or binding is removed.
-func (defaults *routeDeclarationHooks) removeQueueBindings(
+func (middle *routeDeclarationMiddleware) removeQueueBindings(
 	queueName string,
 	exchangeName string,
 	routingKey string,
@@ -400,14 +406,14 @@ func (defaults *routeDeclarationHooks) removeQueueBindings(
 		removeRouteMatch = true
 	}
 
-	defaults.bindQueuesLock.Lock()
-	defer defaults.bindQueuesLock.Unlock()
+	middle.bindQueuesLock.Lock()
+	defer middle.bindQueuesLock.Unlock()
 
 	// Rather than creating a new slice, we are going to filter out any matching
 	// bind declarations we find, then constrain the slice to the number if items
 	// we have left.
 	i := 0
-	for _, thisBinding := range defaults.bindQueues {
+	for _, thisBinding := range middle.bindQueues {
 		// If there is a routing Key to match, then the queue and exchange must match
 		// too (so we don't end up removing a binding with the same routing Key between
 		// a different queue-exchange pair).
@@ -423,28 +429,28 @@ func (defaults *routeDeclarationHooks) removeQueueBindings(
 			continue
 		}
 
-		defaults.bindQueues[i] = thisBinding
+		middle.bindQueues[i] = thisBinding
 		i++
 	}
 
-	defaults.bindQueues = defaults.bindQueues[0:i]
+	middle.bindQueues = middle.bindQueues[0:i]
 }
 
 // Remove an exchange from the re-declaration list, as well as all queue and
 // inter-exchange bindings it was a part of.
-func (defaults *routeDeclarationHooks) removeExchange(exchangeName string) {
+func (middle *routeDeclarationMiddleware) removeExchange(exchangeName string) {
 	// Remove the exchange from the list of exchanges we need to re-declare
-	defaults.declareExchanges.Delete(exchangeName)
+	middle.declareExchanges.Delete(exchangeName)
 	// Remove all bindings associated with this exchange from the list of bindings
 	// to re-declare on re-connections.
-	defaults.removeQueueBindings("", exchangeName, "")
-	defaults.removeExchangeBindings(
+	middle.removeQueueBindings("", exchangeName, "")
+	middle.removeExchangeBindings(
 		"", "", "", exchangeName,
 	)
 }
 
 // Remove a re-connection binding when a binding or exchange is removed.
-func (defaults *routeDeclarationHooks) removeExchangeBindings(
+func (middle *routeDeclarationMiddleware) removeExchangeBindings(
 	destination string,
 	key string,
 	source string,
@@ -470,14 +476,14 @@ func (defaults *routeDeclarationHooks) removeExchangeBindings(
 		removeDestinationMatch = true
 	}
 
-	defaults.bindQueuesLock.Lock()
-	defer defaults.bindQueuesLock.Unlock()
+	middle.bindQueuesLock.Lock()
+	defer middle.bindQueuesLock.Unlock()
 
 	// Rather than creating a new slice, we are going to filter out any matching
 	// bind declarations we find, then constrain the slice to the number if items
 	// we have left.
 	i := 0
-	for _, thisBinding := range defaults.bindExchanges {
+	for _, thisBinding := range middle.bindExchanges {
 		// If there is a routing Key to match, then the source and destination exchanges
 		// must match too (so we don't end up removing a binding with the same routing
 		// Key between a different set of exchanges).
@@ -493,14 +499,14 @@ func (defaults *routeDeclarationHooks) removeExchangeBindings(
 			continue
 		}
 
-		defaults.bindExchanges[i] = thisBinding
+		middle.bindExchanges[i] = thisBinding
 		i++
 	}
 
-	defaults.bindQueues = defaults.bindQueues[0:i]
+	middle.bindQueues = middle.bindQueues[0:i]
 }
 
-func (defaults *routeDeclarationHooks) reconnectDeclareQueues(channel *streadway.Channel) error {
+func (middle *routeDeclarationMiddleware) reconnectDeclareQueues(channel *streadway.Channel) error {
 	var err error
 
 	redeclareQueues := func(key, value interface{}) bool {
@@ -534,7 +540,7 @@ func (defaults *routeDeclarationHooks) reconnectDeclareQueues(channel *streadway
 				// do, then we should remove this queue from the list of queues that is
 				// to be re-declared, so that we don't get caught in an endless loop
 				// of reconnects.
-				defaults.removeQueue(thisQueue.Name)
+				middle.removeQueue(thisQueue.Name)
 			}
 
 			err = fmt.Errorf(
@@ -547,13 +553,13 @@ func (defaults *routeDeclarationHooks) reconnectDeclareQueues(channel *streadway
 	}
 
 	// Redeclare all queues in the map.
-	defaults.declareQueues.Range(redeclareQueues)
+	middle.declareQueues.Range(redeclareQueues)
 
 	return err
 }
 
 // Re-declares exchanges during reconnection
-func (defaults *routeDeclarationHooks) reconnectDeclareExchanges(
+func (middle *routeDeclarationMiddleware) reconnectDeclareExchanges(
 	channel *streadway.Channel,
 ) error {
 	var err error
@@ -590,7 +596,7 @@ func (defaults *routeDeclarationHooks) reconnectDeclareExchanges(
 				// do, then we should remove this queue from the list of queues that is
 				// to be re-declared, so that we don't get caught in an endless loop
 				// of reconnects.
-				defaults.removeExchange(thisExchange.Name)
+				middle.removeExchange(thisExchange.Name)
 			}
 			err = fmt.Errorf(
 				"error re-declaring exchange '%v': %w", thisExchange.Name, err,
@@ -602,23 +608,23 @@ func (defaults *routeDeclarationHooks) reconnectDeclareExchanges(
 	}
 
 	// Redeclare all queues in the map.
-	defaults.declareExchanges.Range(redeclareExchanges)
+	middle.declareExchanges.Range(redeclareExchanges)
 
 	return err
 }
 
 // Re-declares queue bindings during reconnection
-func (defaults *routeDeclarationHooks) reconnectBindQueues(
+func (middle *routeDeclarationMiddleware) reconnectBindQueues(
 	channel *streadway.Channel,
 ) error {
 	// We shouldn't meed to lock this resource here, since this method will only be
 	// used when we have a write lock on the transport, and all methods that modify the
 	// binding list must first acquire the same lock for read, but we will put this here
 	// in case that changes in the future.
-	defaults.bindQueuesLock.Lock()
-	defer defaults.bindQueuesLock.Unlock()
+	middle.bindQueuesLock.Lock()
+	defer middle.bindQueuesLock.Unlock()
 
-	for _, thisBinding := range defaults.bindQueues {
+	for _, thisBinding := range middle.bindQueues {
 		err := channel.QueueBind(
 			thisBinding.Name,
 			thisBinding.Key,
@@ -643,17 +649,17 @@ func (defaults *routeDeclarationHooks) reconnectBindQueues(
 }
 
 // Re-declares exchange bindings during reconnection
-func (defaults *routeDeclarationHooks) reconnectBindExchanges(
+func (middle *routeDeclarationMiddleware) reconnectBindExchanges(
 	channel *streadway.Channel,
 ) error {
 	// We shouldn't meed to lock this resource here, since this method will only be
 	// used when we have a write lock on the transport, and all methods that modify the
 	// binding list must first acquire the same lock for read, but we will put this here
 	// in case that changes in the future.
-	defaults.bindExchangesLock.Lock()
-	defer defaults.bindExchangesLock.Unlock()
+	middle.bindExchangesLock.Lock()
+	defer middle.bindExchangesLock.Unlock()
 
-	for _, thisBinding := range defaults.bindExchanges {
+	for _, thisBinding := range middle.bindExchanges {
 		err := channel.ExchangeBind(
 			thisBinding.Destination,
 			thisBinding.Key,
@@ -677,7 +683,7 @@ func (defaults *routeDeclarationHooks) reconnectBindExchanges(
 	return nil
 }
 
-func (defaults *routeDeclarationHooks) HookReconnect(
+func (middle *routeDeclarationMiddleware) HookReconnect(
 	next func() (*streadway.Channel, error), logger zerolog.Logger,
 ) (*streadway.Channel, error) {
 	channel, err := next()
@@ -693,7 +699,7 @@ func (defaults *routeDeclarationHooks) HookReconnect(
 	if debugEnabled {
 		logger.Debug().Msg("re-declaring queues")
 	}
-	err = defaults.reconnectDeclareQueues(channel)
+	err = middle.reconnectDeclareQueues(channel)
 	if err != nil {
 		return channel, err
 	}
@@ -702,7 +708,7 @@ func (defaults *routeDeclarationHooks) HookReconnect(
 	if debugEnabled {
 		logger.Debug().Msg("re-declaring exchanges")
 	}
-	err = defaults.reconnectDeclareExchanges(channel)
+	err = middle.reconnectDeclareExchanges(channel)
 	if err != nil {
 		return channel, err
 	}
@@ -711,7 +717,7 @@ func (defaults *routeDeclarationHooks) HookReconnect(
 	if debugEnabled {
 		logger.Debug().Msg("re-binding exchanges")
 	}
-	err = defaults.reconnectBindExchanges(channel)
+	err = middle.reconnectBindExchanges(channel)
 	if err != nil {
 		return channel, err
 	}
@@ -720,7 +726,7 @@ func (defaults *routeDeclarationHooks) HookReconnect(
 	if debugEnabled {
 		logger.Debug().Msg("re-binding queues")
 	}
-	err = defaults.reconnectBindQueues(channel)
+	err = middle.reconnectBindQueues(channel)
 	if err != nil {
 		return channel, err
 	}
@@ -728,7 +734,7 @@ func (defaults *routeDeclarationHooks) HookReconnect(
 	return channel, nil
 }
 
-func (defaults *routeDeclarationHooks) HookQueueDeclare(
+func (middle *routeDeclarationMiddleware) HookQueueDeclare(
 	next func() error, args *QueueDeclareArgs, logger zerolog.Logger,
 ) error {
 	// If there is any sort of error, pass it on.
@@ -738,11 +744,11 @@ func (defaults *routeDeclarationHooks) HookQueueDeclare(
 	}
 
 	// Store the queue name so we can re-declare it
-	defaults.declareQueues.Store(args.Name, args)
+	middle.declareQueues.Store(args.Name, args)
 	return nil
 }
 
-func (defaults *routeDeclarationHooks) HookQueueDelete(
+func (middle *routeDeclarationMiddleware) HookQueueDelete(
 	next func() error, args *QueueDeleteArgs, logger zerolog.Logger,
 ) error {
 	// If there is any sort of error, pass it on.
@@ -752,11 +758,11 @@ func (defaults *routeDeclarationHooks) HookQueueDelete(
 	}
 
 	// Remove the queue from our list of queue to redeclare.
-	defaults.removeQueue(args.Name)
+	middle.removeQueue(args.Name)
 	return nil
 }
 
-func (defaults *routeDeclarationHooks) HookQueueBind(
+func (middle *routeDeclarationMiddleware) HookQueueBind(
 	next func() error, args *QueueBindArgs, logger zerolog.Logger,
 ) error {
 	// If there is any sort of error, pass it on.
@@ -765,14 +771,14 @@ func (defaults *routeDeclarationHooks) HookQueueBind(
 		return err
 	}
 
-	defaults.bindQueuesLock.Lock()
-	defer defaults.bindQueuesLock.Unlock()
+	middle.bindQueuesLock.Lock()
+	defer middle.bindQueuesLock.Unlock()
 
-	defaults.bindQueues = append(defaults.bindQueues, args)
+	middle.bindQueues = append(middle.bindQueues, args)
 	return nil
 }
 
-func (defaults *routeDeclarationHooks) HookQueueUnbind(
+func (middle *routeDeclarationMiddleware) HookQueueUnbind(
 	next func() error, args *QueueUnbindArgs, logger zerolog.Logger,
 ) error {
 	// If there is any sort of error, pass it on.
@@ -782,7 +788,7 @@ func (defaults *routeDeclarationHooks) HookQueueUnbind(
 	}
 
 	// Remove this binding from the list of bindings to re-create on reconnect.
-	defaults.removeQueueBindings(
+	middle.removeQueueBindings(
 		args.Name,
 		args.Exchange,
 		args.Key,
@@ -790,7 +796,7 @@ func (defaults *routeDeclarationHooks) HookQueueUnbind(
 	return nil
 }
 
-func (defaults *routeDeclarationHooks) HookExchangeDeclare(
+func (middle *routeDeclarationMiddleware) HookExchangeDeclare(
 	next func() error, args *ExchangeDeclareArgs, logger zerolog.Logger,
 ) error {
 	// If there is any sort of error, pass it on.
@@ -799,11 +805,11 @@ func (defaults *routeDeclarationHooks) HookExchangeDeclare(
 		return err
 	}
 
-	defaults.declareExchanges.Store(args.Name, args)
+	middle.declareExchanges.Store(args.Name, args)
 	return nil
 }
 
-func (defaults *routeDeclarationHooks) HookExchangeDelete(
+func (middle *routeDeclarationMiddleware) HookExchangeDelete(
 	next func() error, args *ExchangeDeleteArgs, logger zerolog.Logger,
 ) error {
 	// If there is any sort of error, pass it on.
@@ -813,12 +819,12 @@ func (defaults *routeDeclarationHooks) HookExchangeDelete(
 	}
 
 	// Remove the exchange from our re-declare on reconnect lists.
-	defaults.removeExchange(args.Name)
+	middle.removeExchange(args.Name)
 
 	return nil
 }
 
-func (defaults *routeDeclarationHooks) HookExchangeBind(
+func (middle *routeDeclarationMiddleware) HookExchangeBind(
 	next func() error, args *ExchangeBindArgs, logger zerolog.Logger,
 ) error {
 	// If there is any sort of error, pass it on.
@@ -828,15 +834,15 @@ func (defaults *routeDeclarationHooks) HookExchangeBind(
 	}
 
 	// Store this binding so we can re-bind it if we lose and regain the connection.
-	defaults.bindExchangesLock.Lock()
-	defer defaults.bindExchangesLock.Unlock()
+	middle.bindExchangesLock.Lock()
+	defer middle.bindExchangesLock.Unlock()
 
-	defaults.bindExchanges = append(defaults.bindExchanges, args)
+	middle.bindExchanges = append(middle.bindExchanges, args)
 
 	return nil
 }
 
-func (defaults *routeDeclarationHooks) HookExchangeUnbind(
+func (middle *routeDeclarationMiddleware) HookExchangeUnbind(
 	next func() error, args *ExchangeUnbindArgs, logger zerolog.Logger,
 ) error {
 	// If there is any sort of error, pass it on.
@@ -845,7 +851,7 @@ func (defaults *routeDeclarationHooks) HookExchangeUnbind(
 		return err
 	}
 
-	defaults.removeExchangeBindings(
+	middle.removeExchangeBindings(
 		args.Destination, args.Key, args.Source, "",
 	)
 

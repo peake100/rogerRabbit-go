@@ -99,7 +99,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 			tagConsumeOffset:  0,
 		},
 		flowActiveLock: new(sync.Mutex),
-		hooks: &channelHooks{
+		hooks: &channelHandlers{
 			reconnect:       nil,
 			queueDeclare:    nil,
 			queueDelete:     nil,
@@ -122,7 +122,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 
 	if !conn.transportConn.dialConfig.NoDefaultHooks {
 		hooks := transportChan.hooks
-		declarationHooks := &routeDeclarationHooks{
+		declarationHooks := &routeDeclarationMiddleware{
 			declareQueues:     new(sync.Map),
 			declareExchanges:  new(sync.Map),
 			bindQueues:        nil,

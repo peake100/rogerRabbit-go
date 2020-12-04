@@ -109,7 +109,7 @@ type transportChannel struct {
 	flowActiveLock *sync.Mutex
 
 	// Holds all registered hooks.
-	hooks *channelHooks
+	hooks *channelHandlers
 
 	// We're going to handle all nacks and acks in a goroutine so we can track the
 	// latest without heavy lock contention. This channels will be used to send
@@ -1910,6 +1910,6 @@ func (channel *Channel) TxRollback() error {
 	panic(panicTransactionMessage("TxRollback"))
 }
 
-func (channel *Channel) Hooks() *channelHooks {
+func (channel *Channel) Hooks() *channelHandlers {
 	return channel.transportChannel.hooks
 }
