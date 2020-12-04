@@ -70,15 +70,26 @@ func (hooks *channelHooks) runHooksReconnect(
 	reconnect func() (*streadway.Channel, error),
 	logger zerolog.Logger,
 ) (*streadway.Channel, error) {
-	topMethod := reconnect
+	hooks.lock.RLock()
+	defer hooks.lock.RUnlock()
+
+	var lastMethod func() (*streadway.Channel, error)
 
 	for _, thisHook := range hooks.reconnect {
-		topMethod = func() (*streadway.Channel, error) {
-			return thisHook(topMethod, logger)
+		// We have to declare a new variable here, or all inner methods will recursively
+		// call whatever the function pointer is set to outside the loop
+		innerMethod := lastMethod
+		if innerMethod == nil {
+			innerMethod = reconnect
 		}
+
+		reconnect = func() (*streadway.Channel, error) {
+			return thisHook(innerMethod, logger)
+		}
+		lastMethod = reconnect
 	}
 
-	return topMethod()
+	return reconnect()
 }
 
 func (hooks *channelHooks) RegisterQueueDeclare(hook HookQueueDeclare) {
@@ -91,15 +102,26 @@ func (hooks *channelHooks) RegisterQueueDeclare(hook HookQueueDeclare) {
 func (hooks *channelHooks) runHooksQueueDeclare(
 	runMethodOnce func() error, args *QueueDeclareArgs, logger zerolog.Logger,
 ) error {
-	topMethod := runMethodOnce
+	hooks.lock.RLock()
+	defer hooks.lock.RUnlock()
+
+	var lastMethod func() error
 
 	for _, thisHook := range hooks.queueDeclare {
-		topMethod = func() error {
-			return thisHook(topMethod, args, logger)
+		// We have to declare a new variable here, or all inner methods will recursively
+		// call whatever the function pointer is set to outside the loop
+		innerMethod := lastMethod
+		if innerMethod == nil {
+			innerMethod = runMethodOnce
 		}
+
+		runMethodOnce = func() error {
+			return thisHook(innerMethod, args, logger)
+		}
+		lastMethod = runMethodOnce
 	}
 
-	return topMethod()
+	return runMethodOnce()
 }
 
 func (hooks *channelHooks) RegisterQueueDelete(hook HookQueueDelete) {
@@ -112,15 +134,26 @@ func (hooks *channelHooks) RegisterQueueDelete(hook HookQueueDelete) {
 func (hooks *channelHooks) runHooksQueueDelete(
 	runMethodOnce func() error, args *QueueDeleteArgs, logger zerolog.Logger,
 ) error {
-	topMethod := runMethodOnce
+	hooks.lock.RLock()
+	defer hooks.lock.RUnlock()
+
+	var lastMethod func() error
 
 	for _, thisHook := range hooks.queueDelete {
-		topMethod = func() error {
-			return thisHook(topMethod, args, logger)
+		// We have to declare a new variable here, or all inner methods will recursively
+		// call whatever the function pointer is set to outside the loop
+		innerMethod := lastMethod
+		if innerMethod == nil {
+			innerMethod = runMethodOnce
 		}
+
+		runMethodOnce = func() error {
+			return thisHook(innerMethod, args, logger)
+		}
+		lastMethod = runMethodOnce
 	}
 
-	return topMethod()
+	return runMethodOnce()
 }
 
 func (hooks *channelHooks) RegisterQueueBind(hook HookQueueBind) {
@@ -133,15 +166,26 @@ func (hooks *channelHooks) RegisterQueueBind(hook HookQueueBind) {
 func (hooks *channelHooks) runHooksQueueBind(
 	runMethodOnce func() error, args *QueueBindArgs, logger zerolog.Logger,
 ) error {
-	topMethod := runMethodOnce
+	hooks.lock.RLock()
+	defer hooks.lock.RUnlock()
+
+	var lastMethod func() error
 
 	for _, thisHook := range hooks.queueBind {
-		topMethod = func() error {
-			return thisHook(topMethod, args, logger)
+		// We have to declare a new variable here, or all inner methods will recursively
+		// call whatever the function pointer is set to outside the loop
+		innerMethod := lastMethod
+		if innerMethod == nil {
+			innerMethod = runMethodOnce
 		}
+
+		runMethodOnce = func() error {
+			return thisHook(innerMethod, args, logger)
+		}
+		lastMethod = runMethodOnce
 	}
 
-	return topMethod()
+	return runMethodOnce()
 }
 
 func (hooks *channelHooks) RegisterQueueUnbind(hook HookQueueUnbind) {
@@ -154,15 +198,26 @@ func (hooks *channelHooks) RegisterQueueUnbind(hook HookQueueUnbind) {
 func (hooks *channelHooks) runHooksQueueUnbind(
 	runMethodOnce func() error, args *QueueUnbindArgs, logger zerolog.Logger,
 ) error {
-	topMethod := runMethodOnce
+	hooks.lock.RLock()
+	defer hooks.lock.RUnlock()
+
+	var lastMethod func() error
 
 	for _, thisHook := range hooks.queueUnbind {
-		topMethod = func() error {
-			return thisHook(topMethod, args, logger)
+		// We have to declare a new variable here, or all inner methods will recursively
+		// call whatever the function pointer is set to outside the loop
+		innerMethod := lastMethod
+		if innerMethod == nil {
+			innerMethod = runMethodOnce
 		}
+
+		runMethodOnce = func() error {
+			return thisHook(innerMethod, args, logger)
+		}
+		lastMethod = runMethodOnce
 	}
 
-	return topMethod()
+	return runMethodOnce()
 }
 
 func (hooks *channelHooks) RegisterExchangeDeclare(hook HookExchangeDeclare) {
@@ -175,15 +230,26 @@ func (hooks *channelHooks) RegisterExchangeDeclare(hook HookExchangeDeclare) {
 func (hooks *channelHooks) runHooksExchangeDeclare(
 	runMethodOnce func() error, args *ExchangeDeclareArgs, logger zerolog.Logger,
 ) error {
-	topMethod := runMethodOnce
+	hooks.lock.RLock()
+	defer hooks.lock.RUnlock()
+
+	var lastMethod func() error
 
 	for _, thisHook := range hooks.exchangeDeclare {
-		topMethod = func() error {
-			return thisHook(topMethod, args, logger)
+		// We have to declare a new variable here, or all inner methods will recursively
+		// call whatever the function pointer is set to outside the loop
+		innerMethod := lastMethod
+		if innerMethod == nil {
+			innerMethod = runMethodOnce
 		}
+
+		runMethodOnce = func() error {
+			return thisHook(innerMethod, args, logger)
+		}
+		lastMethod = runMethodOnce
 	}
 
-	return topMethod()
+	return runMethodOnce()
 }
 
 func (hooks *channelHooks) RegisterExchangeDelete(hook HookExchangeDelete) {
@@ -196,15 +262,26 @@ func (hooks *channelHooks) RegisterExchangeDelete(hook HookExchangeDelete) {
 func (hooks *channelHooks) runHooksExchangeDelete(
 	runMethodOnce func() error, args *ExchangeDeleteArgs, logger zerolog.Logger,
 ) error {
-	topMethod := runMethodOnce
+	hooks.lock.RLock()
+	defer hooks.lock.RUnlock()
+
+	var lastMethod func() error
 
 	for _, thisHook := range hooks.exchangeDelete {
-		topMethod = func() error {
-			return thisHook(topMethod, args, logger)
+		// We have to declare a new variable here, or all inner methods will recursively
+		// call whatever the function pointer is set to outside the loop
+		innerMethod := lastMethod
+		if innerMethod == nil {
+			innerMethod = runMethodOnce
 		}
+
+		runMethodOnce = func() error {
+			return thisHook(innerMethod, args, logger)
+		}
+		lastMethod = runMethodOnce
 	}
 
-	return topMethod()
+	return runMethodOnce()
 }
 
 func (hooks *channelHooks) RegisterExchangeBind(hook HookExchangeBind) {
@@ -217,15 +294,26 @@ func (hooks *channelHooks) RegisterExchangeBind(hook HookExchangeBind) {
 func (hooks *channelHooks) runHooksExchangeBind(
 	runMethodOnce func() error, args *ExchangeBindArgs, logger zerolog.Logger,
 ) error {
-	topMethod := runMethodOnce
+	hooks.lock.RLock()
+	defer hooks.lock.RUnlock()
+
+	var lastMethod func() error
 
 	for _, thisHook := range hooks.exchangeBind {
-		topMethod = func() error {
-			return thisHook(topMethod, args, logger)
+		// We have to declare a new variable here, or all inner methods will recursively
+		// call whatever the function pointer is set to outside the loop
+		innerMethod := lastMethod
+		if innerMethod == nil {
+			innerMethod = runMethodOnce
 		}
+
+		runMethodOnce = func() error {
+			return thisHook(innerMethod, args, logger)
+		}
+		lastMethod = runMethodOnce
 	}
 
-	return topMethod()
+	return runMethodOnce()
 }
 
 func (hooks *channelHooks) RegisterExchangeUnbind(hook HookExchangeUnbind) {
@@ -238,15 +326,26 @@ func (hooks *channelHooks) RegisterExchangeUnbind(hook HookExchangeUnbind) {
 func (hooks *channelHooks) runHooksExchangeUnbind(
 	runMethodOnce func() error, args *ExchangeUnbindArgs, logger zerolog.Logger,
 ) error {
-	topMethod := runMethodOnce
+	hooks.lock.RLock()
+	defer hooks.lock.RUnlock()
+
+	var lastMethod func() error
 
 	for _, thisHook := range hooks.exchangeUnbind {
-		topMethod = func() error {
-			return thisHook(topMethod, args, logger)
+		// We have to declare a new variable here, or all inner methods will recursively
+		// call whatever the function pointer is set to outside the loop
+		innerMethod := lastMethod
+		if innerMethod == nil {
+			innerMethod = runMethodOnce
 		}
+
+		runMethodOnce = func() error {
+			return thisHook(innerMethod, args, logger)
+		}
+		lastMethod = runMethodOnce
 	}
 
-	return topMethod()
+	return runMethodOnce()
 }
 
 // This object implements hooks for re-declaring queues, exchanges, and bindings upon
@@ -644,7 +743,7 @@ func (defaults *routeDeclarationHooks) HookQueueDeclare(
 }
 
 func (defaults *routeDeclarationHooks) HookQueueDelete(
-	next func() error, args *QueueDeclareArgs, logger zerolog.Logger,
+	next func() error, args *QueueDeleteArgs, logger zerolog.Logger,
 ) error {
 	// If there is any sort of error, pass it on.
 	err := next()
@@ -688,5 +787,67 @@ func (defaults *routeDeclarationHooks) HookQueueUnbind(
 		args.Exchange,
 		args.Key,
 	)
+	return nil
+}
+
+func (defaults *routeDeclarationHooks) HookExchangeDeclare(
+	next func() error, args *ExchangeDeclareArgs, logger zerolog.Logger,
+) error {
+	// If there is any sort of error, pass it on.
+	err := next()
+	if err != nil {
+		return err
+	}
+
+	defaults.declareExchanges.Store(args.Name, args)
+	return nil
+}
+
+func (defaults *routeDeclarationHooks) HookExchangeDelete(
+	next func() error, args *ExchangeDeleteArgs, logger zerolog.Logger,
+) error {
+	// If there is any sort of error, pass it on.
+	err := next()
+	if err != nil {
+		return err
+	}
+
+	// Remove the exchange from our re-declare on reconnect lists.
+	defaults.removeExchange(args.Name)
+
+	return nil
+}
+
+func (defaults *routeDeclarationHooks) HookExchangeBind(
+	next func() error, args *ExchangeBindArgs, logger zerolog.Logger,
+) error {
+	// If there is any sort of error, pass it on.
+	err := next()
+	if err != nil {
+		return err
+	}
+
+	// Store this binding so we can re-bind it if we lose and regain the connection.
+	defaults.bindExchangesLock.Lock()
+	defer defaults.bindExchangesLock.Unlock()
+
+	defaults.bindExchanges = append(defaults.bindExchanges, args)
+
+	return nil
+}
+
+func (defaults *routeDeclarationHooks) HookExchangeUnbind(
+	next func() error, args *ExchangeUnbindArgs, logger zerolog.Logger,
+) error {
+	// If there is any sort of error, pass it on.
+	err := next()
+	if err != nil {
+		return err
+	}
+
+	defaults.removeExchangeBindings(
+		args.Destination, args.Key, args.Source, "",
+	)
+
 	return nil
 }

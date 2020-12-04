@@ -98,13 +98,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 			tagConsumeCount:   &initialConsumeCount,
 			tagConsumeOffset:  0,
 		},
-		flowActiveLock:    new(sync.Mutex),
-		declareQueues:     new(sync.Map),
-		declareExchanges:  new(sync.Map),
-		bindQueues:        nil,
-		bindQueuesLock:    new(sync.Mutex),
-		bindExchanges:     nil,
-		bindExchangesLock: new(sync.Mutex),
+		flowActiveLock: new(sync.Mutex),
 		hooks: &channelHooks{
 			reconnect:       nil,
 			queueDeclare:    nil,
@@ -124,6 +118,30 @@ func (conn *Connection) Channel() (*Channel, error) {
 		eventRelaysSetupComplete: new(sync.WaitGroup),
 		eventRelaysGo:            new(sync.WaitGroup),
 		logger:                   zerolog.Logger{},
+	}
+
+	if !conn.transportConn.dialConfig.NoDefaultHooks {
+		hooks := transportChan.hooks
+		declarationHooks := &routeDeclarationHooks{
+			declareQueues:     new(sync.Map),
+			declareExchanges:  new(sync.Map),
+			bindQueues:        nil,
+			bindQueuesLock:    new(sync.Mutex),
+			bindExchanges:     nil,
+			bindExchangesLock: new(sync.Mutex),
+		}
+
+		hooks.RegisterReconnect(declarationHooks.HookReconnect)
+
+		hooks.RegisterQueueDeclare(declarationHooks.HookQueueDeclare)
+		hooks.RegisterQueueDelete(declarationHooks.HookQueueDelete)
+		hooks.RegisterQueueBind(declarationHooks.HookQueueBind)
+		hooks.RegisterQueueUnbind(declarationHooks.HookQueueUnbind)
+
+		hooks.RegisterExchangeDeclare(declarationHooks.HookExchangeDeclare)
+		hooks.RegisterExchangeDelete(declarationHooks.HookExchangeDelete)
+		hooks.RegisterExchangeBind(declarationHooks.HookExchangeBind)
+		hooks.RegisterExchangeUnbind(declarationHooks.HookExchangeUnbind)
 	}
 
 	// Add 1 to this WaitGroup so it can be released on the initial channel establish.

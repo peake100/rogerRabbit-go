@@ -52,6 +52,10 @@ type Config struct {
 	// used during TLS and AMQP handshaking.
 	Dial func(network, addr string) (net.Conn, error)
 
+	// If set to true, the default hooks will not be registered on channels created
+	// through the associated connection.
+	NoDefaultHooks bool
+
 	// The logger to use for internal logging. If none, the default zerolog logger will
 	// be used.
 	Logger zerolog.Logger
