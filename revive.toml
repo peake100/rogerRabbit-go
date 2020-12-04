@@ -42,7 +42,7 @@ arguments =[8]
 # confusing.
 [rule.confusing-naming]
 
-# unction or methods that return multiple, no named, values of the same type could
+# function or methods that return multiple, no named, values of the same type could
 # induce error.
 [rule.confusing-results]
 

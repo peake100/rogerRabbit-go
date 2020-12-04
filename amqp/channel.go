@@ -10,45 +10,6 @@ import (
 	"sync/atomic"
 )
 
-// Store queue declare information for re-establishing queues on disconnect.
-type queueDeclareArgs struct {
-	name       string
-	durable    bool
-	autoDelete bool
-	exclusive  bool
-	noWait     bool
-	args       Table
-}
-
-// Store queue bind information for re-establishing bindings on disconnect.
-type queueBindArgs struct {
-	name     string
-	key      string
-	exchange string
-	noWait   bool
-	args     Table
-}
-
-// Store exchange declare information for re-establishing queues on disconnect.
-type exchangeDeclareArgs struct {
-	name       string
-	kind       string
-	durable    bool
-	autoDelete bool
-	internal   bool
-	noWait     bool
-	args       Table
-}
-
-// Store exchange bind information for re-establishing bindings on disconnect.
-type exchangeBindArgs struct {
-	destination string
-	key         string
-	source      string
-	noWait      bool
-	args        Table
-}
-
 // Holds current qos settings for the channel so they can be re-instated on reconnect.
 type qosSettings struct {
 	prefetchCount int
@@ -154,11 +115,11 @@ type transportChannel struct {
 	// a map so we can remove exchanges from this list on exchange delete.
 	declareExchanges *sync.Map
 	// List of bindings to re-build on channel re-establishment.
-	bindQueues []*queueBindArgs
+	bindQueues []*QueueBindArgs
 	// Lock that must be acquired to alter bindQueues.
 	bindQueuesLock *sync.Mutex
 	// List of bindings to re-build on channel re-establishment.
-	bindExchanges []*exchangeBindArgs
+	bindExchanges []*ExchangeBindArgs
 	// Lock that must be acquired to alter bindQueues.
 	bindExchangesLock *sync.Mutex
 
@@ -249,18 +210,18 @@ func (transport *transportChannel) removeQueueBindings(
 	// we have left.
 	i := 0
 	for _, thisBinding := range transport.bindQueues {
-		// If there is a routing key to match, then the queue and exchange must match
-		// too (so we don't end up removing a binding with the same routing key between
+		// If there is a routing Key to match, then the queue and exchange must match
+		// too (so we don't end up removing a binding with the same routing Key between
 		// a different queue-exchange pair).
 		if removeRouteMatch &&
-			thisBinding.key == routingKey &&
-			thisBinding.name == queueName &&
-			thisBinding.exchange == exchangeName {
+			thisBinding.Key == routingKey &&
+			thisBinding.Name == queueName &&
+			thisBinding.Exchange == exchangeName {
 			// then:
 			continue
-		} else if removeQueueMatch && thisBinding.name == queueName {
+		} else if removeQueueMatch && thisBinding.Name == queueName {
 			continue
-		} else if removeExchangeMatch && thisBinding.exchange == exchangeName {
+		} else if removeExchangeMatch && thisBinding.Exchange == exchangeName {
 			continue
 		}
 
@@ -319,18 +280,18 @@ func (transport *transportChannel) removeExchangeBindings(
 	// we have left.
 	i := 0
 	for _, thisBinding := range transport.bindExchanges {
-		// If there is a routing key to match, then the source and destination exchanges
+		// If there is a routing Key to match, then the source and destination exchanges
 		// must match too (so we don't end up removing a binding with the same routing
-		// key between a different set of exchanges).
+		// Key between a different set of exchanges).
 		if removeKeyMatch &&
-			thisBinding.key == key &&
-			thisBinding.source == source &&
-			thisBinding.destination == destination {
+			thisBinding.Key == key &&
+			thisBinding.Source == source &&
+			thisBinding.Destination == destination {
 			// then:
 			continue
-		} else if removeDestinationMatch && thisBinding.destination == destination {
+		} else if removeDestinationMatch && thisBinding.Destination == destination {
 			continue
-		} else if removeSourceMatch && thisBinding.source == source {
+		} else if removeSourceMatch && thisBinding.Source == source {
 			continue
 		}
 
@@ -392,7 +353,7 @@ func (transport *transportChannel) reconnectDeclareQueues() error {
 	var err error
 
 	redeclareQueues := func(key, value interface{}) bool {
-		thisQueue := value.(*queueDeclareArgs)
+		thisQueue := value.(*QueueDeclareArgs)
 
 		// By default, we will passively declare a queue. This allows us to respect
 		// queue deletion by other producers or consumers.
@@ -407,13 +368,13 @@ func (transport *transportChannel) reconnectDeclareQueues() error {
 		}
 
 		_, err = method(
-			thisQueue.name,
-			thisQueue.durable,
-			thisQueue.autoDelete,
-			thisQueue.exclusive,
+			thisQueue.Name,
+			thisQueue.Durable,
+			thisQueue.AutoDelete,
+			thisQueue.Exclusive,
 			// We need to wait and confirm this gets received before moving on
 			false,
-			thisQueue.args,
+			thisQueue.Args,
 		)
 		if err != nil {
 			var streadwayErr *Error
@@ -422,11 +383,11 @@ func (transport *transportChannel) reconnectDeclareQueues() error {
 				// do, then we should remove this queue from the list of queues that is
 				// to be re-declared, so that we don't get caught in an endless loop
 				// of reconnects.
-				transport.removeQueue(thisQueue.name)
+				transport.removeQueue(thisQueue.Name)
 			}
 
 			err = fmt.Errorf(
-				"error re-declaring queue '%v': %w", thisQueue.name, err,
+				"error re-declaring queue '%v': %w", thisQueue.Name, err,
 			)
 			return false
 		}
@@ -445,7 +406,7 @@ func (transport *transportChannel) reconnectDeclareExchanges() error {
 	var err error
 
 	redeclareExchanges := func(key, value interface{}) bool {
-		thisExchange := value.(*exchangeDeclareArgs)
+		thisExchange := value.(*ExchangeDeclareArgs)
 
 		// By default, we will passively declare a queue. This allows us to respect
 		// queue deletion by other producers or consumers.
@@ -460,14 +421,14 @@ func (transport *transportChannel) reconnectDeclareExchanges() error {
 		}
 
 		err = method(
-			thisExchange.name,
-			thisExchange.kind,
-			thisExchange.durable,
-			thisExchange.autoDelete,
-			thisExchange.internal,
+			thisExchange.Name,
+			thisExchange.Kind,
+			thisExchange.Durable,
+			thisExchange.AutoDelete,
+			thisExchange.Internal,
 			// we are going to wait so this is done synchronously.
 			false,
-			thisExchange.args,
+			thisExchange.Args,
 		)
 		if err != nil {
 			var streadwayErr *Error
@@ -476,10 +437,10 @@ func (transport *transportChannel) reconnectDeclareExchanges() error {
 				// do, then we should remove this queue from the list of queues that is
 				// to be re-declared, so that we don't get caught in an endless loop
 				// of reconnects.
-				transport.removeExchange(thisExchange.name)
+				transport.removeExchange(thisExchange.Name)
 			}
 			err = fmt.Errorf(
-				"error re-declaring exchange '%v': %w", thisExchange.name, err,
+				"error re-declaring exchange '%v': %w", thisExchange.Name, err,
 			)
 			return false
 		}
@@ -504,20 +465,20 @@ func (transport *transportChannel) reconnectBindQueues() error {
 
 	for _, thisBinding := range transport.bindQueues {
 		err := transport.Channel.QueueBind(
-			thisBinding.name,
-			thisBinding.key,
-			thisBinding.exchange,
+			thisBinding.Name,
+			thisBinding.Key,
+			thisBinding.Exchange,
 			false,
-			thisBinding.args,
+			thisBinding.Args,
 		)
 
 		if err != nil {
 			return fmt.Errorf(
-				"error re-binding queue '%v' to exchange '%v' with routing key"+
+				"error re-binding queue '%v' to exchange '%v' with routing Key"+
 					" '%v': %w",
-				thisBinding.name,
-				thisBinding.exchange,
-				thisBinding.key,
+				thisBinding.Name,
+				thisBinding.Exchange,
+				thisBinding.Key,
 				err,
 			)
 		}
@@ -537,20 +498,20 @@ func (transport *transportChannel) reconnectBindExchanges() error {
 
 	for _, thisBinding := range transport.bindExchanges {
 		err := transport.Channel.ExchangeBind(
-			thisBinding.destination,
-			thisBinding.key,
-			thisBinding.source,
+			thisBinding.Destination,
+			thisBinding.Key,
+			thisBinding.Source,
 			false,
-			thisBinding.args,
+			thisBinding.Args,
 		)
 
 		if err != nil {
 			return fmt.Errorf(
 				"error re-binding source exchange '%v' to destination exchange"+
-					" '%v' with routing key '%v': %w",
-				thisBinding.source,
-				thisBinding.destination,
-				thisBinding.key,
+					" '%v' with routing Key '%v': %w",
+				thisBinding.Source,
+				thisBinding.Destination,
+				thisBinding.Key,
 				err,
 			)
 		}
@@ -824,7 +785,7 @@ acknowledged when all queues that should have the message routed to them have
 either received acknowledgment of delivery or have enqueued the message,
 persisting the message if necessary.
 
-When noWait is true, the client will not wait for a response.  A channel
+When NoWait is true, the client will not wait for a response.  A channel
 exception could occur if the server does not support this method.
 
 */
@@ -960,35 +921,35 @@ Declaring creates a queue if it doesn't already exist, or ensures that an
 existing queue matches the same parameters.
 
 Every queue declared gets a default binding to the empty exchange "" which has
-the type "direct" with the routing key matching the queue's name.  With this
+the type "direct" with the routing Key matching the queue's Name.  With this
 default binding, it is possible to publish messages that route directly to
-this queue by publishing to "" with the routing key of the queue name.
+this queue by publishing to "" with the routing Key of the queue Name.
 
   QueueDeclare("alerts", true, false, false, false, nil)
   Publish("", "alerts", false, false, Publishing{Body: []byte("...")})
 
   Delivery       Exchange  Key       Queue
   -----------------------------------------------
-  key: alerts -> ""     -> alerts -> alerts
+  Key: alerts -> ""     -> alerts -> alerts
 
-The queue name may be empty, in which case the server will generate a unique name
+The queue Name may be empty, in which case the server will generate a unique Name
 which will be returned in the Name field of Queue struct.
 
 Durable and Non-Auto-Deleted queues will survive server restarts and remain
 when there are no remaining consumers or bindings. Persistent publishings will
 be restored in this queue on server restart.  These queues are only able to be
-bound to durable exchanges.
+bound to Durable exchanges.
 
 Non-Durable and Auto-Deleted queues will not be redeclared on server restart
 and will be deleted by the server after a short time when the last consumer is
 canceled or the last consumer's channel is closed.  Queues with this lifetime
-can also be deleted normally with QueueDelete.  These durable queues can only
-be bound to non-durable exchanges.
+can also be deleted normally with QueueDelete.  These Durable queues can only
+be bound to non-Durable exchanges.
 
 Non-Durable and Non-Auto-Deleted queues will remain declared as long as the
 server is running regardless of how many consumers.  This lifetime is useful
 for temporary topologies that may have long delays between consumer activity.
-These queues can only be bound to non-durable exchanges.
+These queues can only be bound to non-Durable exchanges.
 
 Durable and Auto-Deleted queues will be restored on server restart, but without
 active consumers will not survive and be removed.  This Lifetime is unlikely
@@ -997,9 +958,9 @@ to be useful.
 Exclusive queues are only accessible by the connection that declares them and
 will be deleted when the connection closes.  Channels on other connections
 will receive an error when attempting  to declare, bind, consume, purge or
-delete a queue with the same name.
+delete a queue with the same Name.
 
-When noWait is true, the queue will assume to be declared on the server.  A
+When NoWait is true, the queue will assume to be declared on the server.  A
 channel exception will arrive if the conditions are met for existing queues
 or attempting to modify an existing queue from a different connection.
 
@@ -1027,17 +988,17 @@ func (channel *Channel) QueueDeclare(
 		}
 
 		// We need to remember to re-declare this queue on reconnect
-		queueArgs := &queueDeclareArgs{
-			name:       name,
-			durable:    durable,
-			autoDelete: autoDelete,
-			exclusive:  exclusive,
+		queueArgs := &QueueDeclareArgs{
+			Name:       name,
+			Durable:    durable,
+			AutoDelete: autoDelete,
+			Exclusive:  exclusive,
 			// We are always going to wait on re-declares, but we should save the
-			// noWait value for posterity.
-			noWait: noWait,
-			// Copy the args so if the user mutates them for a future call we have
+			// NoWait value for posterity.
+			NoWait: noWait,
+			// Copy the Args so if the user mutates them for a future call we have
 			// an un-changed version of the originals.
-			args: copyTable(args),
+			Args: copyTable(args),
 		}
 
 		channel.transportChannel.declareQueues.Store(name, queueArgs)
@@ -1075,17 +1036,17 @@ func (channel *Channel) QueueDeclarePassive(
 }
 
 /*
-QueueInspect passively declares a queue by name to inspect the current message
+QueueInspect passively declares a queue by Name to inspect the current message
 publishCount and consumer publishCount.
 
 Use this method to check how many messages ready for delivery reside in the queue,
 how many consumers are receiving deliveries, and whether a queue by this
-name already exists.
+Name already exists.
 
-If the queue by this name exists, use Channel.QueueDeclare check if it is
+If the queue by this Name exists, use Channel.QueueDeclare check if it is
 declared with specific parameters.
 
-If a queue by this name does not exist, an error will be returned and the
+If a queue by this Name does not exist, an error will be returned and the
 channel will be closed.
 
 */
@@ -1103,19 +1064,19 @@ func (channel *Channel) QueueInspect(name string) (queue Queue, err error) {
 
 /*
 QueueBind binds an exchange to a queue so that publishings to the exchange will
-be routed to the queue when the publishing routing key matches the binding
-routing key.
+be routed to the queue when the publishing routing Key matches the binding
+routing Key.
 
   QueueBind("pagers", "alert", "log", false, nil)
   QueueBind("emails", "info", "log", false, nil)
 
   Delivery       Exchange  Key       Queue
   -----------------------------------------------
-  key: alert --> log ----> alert --> pagers
-  key: info ---> log ----> info ---> emails
-  key: debug --> log       (none)    (dropped)
+  Key: alert --> log ----> alert --> pagers
+  Key: info ---> log ----> info ---> emails
+  Key: debug --> log       (none)    (dropped)
 
-If a binding with the same key and arguments already exists between the
+If a binding with the same Key and arguments already exists between the
 exchange and queue, the attempt to rebind will be ignored and the existing
 binding will be retained.
 
@@ -1129,19 +1090,19 @@ with topic exchanges.
 
   Delivery       Exchange        Key       Queue
   -----------------------------------------------
-  key: alert --> amq.topic ----> alert --> pagers
-  key: info ---> amq.topic ----> # ------> emails
+  Key: alert --> amq.topic ----> alert --> pagers
+  Key: info ---> amq.topic ----> # ------> emails
                            \---> info ---/
-  key: debug --> amq.topic ----> # ------> emails
+  Key: debug --> amq.topic ----> # ------> emails
 
-It is only possible to bind a durable queue to a durable exchange regardless of
-whether the queue or exchange is auto-deleted.  Bindings between durable queues
+It is only possible to bind a Durable queue to a Durable exchange regardless of
+whether the queue or exchange is auto-deleted.  Bindings between Durable queues
 and exchanges will also be restored on server restart.
 
 If the binding could not complete, an error will be returned and the channel
 will be closed.
 
-When noWait is false and the queue could not be bound, the channel will be
+When NoWait is false and the queue could not be bound, the channel will be
 closed with an error.
 
 */
@@ -1157,14 +1118,14 @@ func (channel *Channel) QueueBind(
 			return opErr
 		}
 
-		bindArgs := &queueBindArgs{
-			name:     name,
-			key:      key,
-			exchange: exchange,
-			noWait:   noWait,
+		bindArgs := &QueueBindArgs{
+			Name:     name,
+			Key:      key,
+			Exchange: exchange,
+			NoWait:   noWait,
 			// Copy the arg table so if the caller re-uses it we preserve the original
 			// values.
-			args: copyTable(args),
+			Args: copyTable(args),
 		}
 
 		channel.transportChannel.bindQueuesLock.Lock()
@@ -1181,10 +1142,10 @@ func (channel *Channel) QueueBind(
 }
 
 /*
-QueueUnbind removes a binding between an exchange and queue matching the key and
+QueueUnbind removes a binding between an exchange and queue matching the Key and
 arguments.
 
-It is possible to send and empty string for the exchange name which means to
+It is possible to send and empty string for the exchange Name which means to
 unbind the queue from the default exchange.
 
 */
@@ -1217,7 +1178,7 @@ acknowledged will not be removed.
 
 When successful, returns the number of messages purged.
 
-If noWait is true, do not wait for the server response and the number of
+If NoWait is true, do not wait for the server response and the number of
 messages purged will not be meaningful.
 */
 func (channel *Channel) QueuePurge(name string, noWait bool) (
@@ -1246,7 +1207,7 @@ When ifEmpty is true, the queue will not be deleted if there are any messages
 remaining on the queue.  If there are messages, an error will be returned and
 the channel will be closed.
 
-When noWait is true, the queue will be deleted without waiting for a response
+When NoWait is true, the queue will be deleted without waiting for a response
 from the server.  The purged message publishCount will not be meaningful. If the queue
 could not be deleted, a channel exception will be raised and the channel will
 be closed.
@@ -1320,17 +1281,17 @@ temporary topologies that may have long delays between bindings.
 Durable and Auto-Deleted exchanges will survive server restarts and will be
 removed before and after server restarts when there are no remaining bindings.
 These exchanges are useful for robust temporary topologies or when you require
-binding durable queues to auto-deleted exchanges.
+binding Durable queues to auto-deleted exchanges.
 
 Note: RabbitMQ declares the default exchange types like 'amq.fanout' as
-durable, so queues that bind to these pre-declared exchanges must also be
-durable.
+Durable, so queues that bind to these pre-declared exchanges must also be
+Durable.
 
 Exchanges declared as `internal` do not accept accept publishings. Internal
 exchanges are useful when you wish to implement inter-exchange topologies
 that should not be exposed to users of the broker.
 
-When noWait is true, declare without waiting for a confirmation from the server.
+When NoWait is true, declare without waiting for a confirmation from the server.
 The channel may be closed as a result of an error.  Add a NotifyClose listener
 to respond to any exceptions.
 
@@ -1351,20 +1312,20 @@ func (channel *Channel) ExchangeDeclare(
 			return opErr
 		}
 
-		// Store the args so this exchange can be re-declared on channel
+		// Store the Args so this exchange can be re-declared on channel
 		// re-establishment.
-		exchangeArgs := &exchangeDeclareArgs{
-			name:       name,
-			kind:       kind,
-			durable:    durable,
-			autoDelete: autoDelete,
-			internal:   internal,
+		exchangeArgs := &ExchangeDeclareArgs{
+			Name:       name,
+			Kind:       kind,
+			Durable:    durable,
+			AutoDelete: autoDelete,
+			Internal:   internal,
 			// We will always use wait on re-establishments, but preserve the original
 			// setting here for posterity.
-			noWait: noWait,
+			NoWait: noWait,
 			// Copy the table so if the caller re-uses it we dont have it mutated
 			// between re-declarations.
-			args: copyTable(args),
+			Args: copyTable(args),
 		}
 
 		channel.transportChannel.declareExchanges.Store(name, exchangeArgs)
@@ -1415,7 +1376,7 @@ bindings.  If the exchange has queue bindings the server does not delete it
 but close the channel with an exception instead.  Set this to true if you are
 not the sole owner of the exchange.
 
-When noWait is true, do not wait for a server confirmation that the exchange has
+When NoWait is true, do not wait for a server confirmation that the exchange has
 been deleted.  Failing to delete the channel could close the channel.  Add a
 NotifyClose listener to respond to these channel exceptions.
 */
@@ -1454,7 +1415,7 @@ different binding keys, only a single message will be delivered to your
 exchange even though multiple bindings will match.
 
 Given a message delivered to the source exchange, the message will be forwarded
-to the destination exchange when the routing key is matched.
+to the destination exchange when the routing Key is matched.
 
   ExchangeBind("sell", "MSFT", "trade", false, nil)
   ExchangeBind("buy", "AAPL", "trade", false, nil)
@@ -1462,10 +1423,10 @@ to the destination exchange when the routing key is matched.
   Delivery       Source      Key      Destination
   example        exchange             exchange
   -----------------------------------------------
-  key: AAPL  --> trade ----> MSFT     sell
+  Key: AAPL  --> trade ----> MSFT     sell
                        \---> AAPL --> buy
 
-When noWait is true, do not wait for the server to confirm the binding.  If any
+When NoWait is true, do not wait for the server to confirm the binding.  If any
 error occurs the channel will be closed.  Add a listener to NotifyClose to
 handle these errors.
 
@@ -1486,12 +1447,12 @@ func (channel *Channel) ExchangeBind(
 
 		// Add this binding to the list of exchange bindings we must re-declare on
 		// re-connection establishment.
-		bindArgs := &exchangeBindArgs{
-			destination: destination,
-			key:         key,
-			source:      source,
-			noWait:      noWait,
-			args:        args,
+		bindArgs := &ExchangeBindArgs{
+			Destination: destination,
+			Key:         key,
+			Source:      source,
+			NoWait:      noWait,
+			Args:        args,
 		}
 
 		// Store this binding so we can re-bind it if we lose and regain the connection.
@@ -1511,11 +1472,11 @@ func (channel *Channel) ExchangeBind(
 
 /*
 ExchangeUnbind unbinds the destination exchange from the source exchange on the
-server by removing the routing key between them.  This is the inverse of
+server by removing the routing Key between them.  This is the inverse of
 ExchangeBind.  If the binding does not currently exist, an error will be
 returned.
 
-When noWait is true, do not wait for the server to confirm the deletion of the
+When NoWait is true, do not wait for the server to confirm the deletion of the
 binding.  If any error occurs the channel will be closed.  Add a listener to
 NotifyClose to handle these errors.
 
@@ -1551,7 +1512,7 @@ func (channel *Channel) ExchangeUnbind(
 Publish sends a Publishing from the client to an exchange on the server.
 
 When you want a single message to be delivered to a single queue, you can
-publish to the default exchange with the routingKey of the queue name.  This is
+publish to the default exchange with the routingKey of the queue Name.  This is
 because every declared queue gets an implicit route to the default exchange.
 
 Since publishings are asynchronous, any undeliverable message will get returned
@@ -1560,7 +1521,7 @@ undeliverable message when calling publish with either the mandatory or
 immediate parameters as true.
 
 Publishings can be undeliverable when the mandatory flag is true and no queue is
-bound that matches the routing key, or when the immediate flag is true and no
+bound that matches the routing Key, or when the immediate flag is true and no
 consumer on the matched queue is ready to accept the delivery.
 
 This can return an error when the channel, connection or socket is closed.  The
@@ -1706,8 +1667,8 @@ acknowledging deliveries means that some deliveries may get lost if the
 consumer is unable to process them after the server delivers them.
 See http://www.rabbitmq.com/confirms.html for more details.
 
-When exclusive is true, the server will ensure that this is the sole consumer
-from this queue. When exclusive is false, the server will fairly distribute
+When Exclusive is true, the server will ensure that this is the sole consumer
+from this queue. When Exclusive is false, the server will fairly distribute
 deliveries across multiple consumers.
 
 The noLocal flag is not supported by RabbitMQ.
@@ -1717,7 +1678,7 @@ Channel.Publish and Channel.Consume so not to have TCP pushback on publishing
 affect the ability to consume messages, so this parameter is here mostly for
 completeness.
 
-When noWait is true, do not wait for the server to confirm the request and
+When NoWait is true, do not wait for the server to confirm the request and
 immediately begin deliveries.  If it is not possible to consume, a channel
 exception will be raised and the channel will be closed.
 

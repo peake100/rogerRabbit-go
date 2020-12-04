@@ -1,3 +1,4 @@
+//revive:disable
 package roger_test
 
 import (

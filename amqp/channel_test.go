@@ -1,3 +1,5 @@
+//revive:disable
+
 package amqp
 
 import (
@@ -647,7 +649,7 @@ func (suite *ChannelMethodsSuite) Test0120_QueueDeclare_RedeclareAfterDisconnect
 	// Check and see if the queue was re-declared
 	info, err := suite.ChannelPublish.QueueInspect(queueName)
 	suite.NoError(err, "inspect queue")
-	suite.Equal(info.Name, queueName, "check name")
+	suite.Equal(info.Name, queueName, "check Name")
 }
 
 // Tests that queues are no re-declared if deleted on re-connect
@@ -1389,7 +1391,7 @@ func (suite *ChannelMethodsSuite) Test0265_ExchangeRedeclareAfterDisconnect() {
 		exchangeName,
 		ExchangeDirect,
 		false,
-		// Use autoDelete to force a full re-declare after disconnect
+		// Use AutoDelete to force a full re-declare after disconnect
 		true,
 		false,
 		false,

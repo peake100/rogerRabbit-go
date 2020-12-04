@@ -255,96 +255,6 @@ func (manager *transportManager) sendCloseNotifications(err *streadway.Error) {
 	}
 }
 
-func (manager *transportManager) reconnect(ctx context.Context, retry bool) error {
-	// Lock access to the connection and don't unlock until we have reconnected.
-	manager.transportLock.Lock()
-	defer manager.transportLock.Unlock()
-
-	// Endlessly redial the broker
-	for {
-		// Check to see if our context has been cancelled, and exit if so.
-		if ctx.Err() != nil {
-			if manager.logger.Debug().Enabled() {
-				manager.logger.
-					Debug().
-					Msg("context cancelled before transport reconnected")
-			}
-			return ctx.Err()
-		}
-
-		// Make the connection.
-		if manager.logger.Debug().Enabled() {
-			manager.logger.
-				Debug().
-				Uint64("RECONNECT_COUNT", manager.reconnectCount).
-				Msg("attempting connection")
-		}
-		err := manager.transport.tryReconnect(ctx)
-		if err != nil {
-			manager.logger.Debug().Err(err).Msg("error re-dialing connection")
-		}
-		// Send a notification to all listeners subscribed to dial events.
-		manager.sendConnectNotifications(err)
-		if err != nil {
-			manager.logger.
-				Error().
-				Err(err).
-				Uint64("RECONNECT_COUNT", manager.reconnectCount).
-				Msg("reconnect error")
-
-			// If this is our retry connection, we want to return the error and allow
-			// the user to decide whether or not to retry.
-			if !retry {
-				return err
-			}
-			// Otherwise, try again.
-			continue
-		}
-
-		manager.reconnectCount++
-
-		if manager.logger.Info().Enabled() {
-			manager.logger.Info().
-				Uint64("RECONNECT_COUNT", manager.reconnectCount).
-				Msg("AMQP BROKER CONNECTED")
-		}
-
-		// If there was no error, break out of the loop.
-		break
-	}
-
-	// Broadcast that we have made a successful reconnection to any one-time listeners.
-	manager.reconnectCond.Broadcast()
-
-	// Register a notification ChannelConsume for the new connection's closure.
-	closeChan := make(chan *streadway.Error, 1)
-	manager.transport.NotifyClose(closeChan)
-
-	// Launch a goroutine to tryReconnect on connection closure.
-	go func() {
-		// Wait for the current connection to close
-		disconnectEvent := <-closeChan
-		if manager.logger.Info().Enabled() {
-			manager.logger.Info().Msgf(
-				"AMQP BROKER DISCONNECTED: %v", disconnectEvent,
-			)
-		}
-		// Send a disconnect event to all interested subscribers.
-		manager.sendDisconnectNotifications(disconnectEvent)
-
-		// Exit if our context has been cancelled.
-		if manager.ctx.Err() != nil {
-			return
-		}
-
-		// Now that we have an initial connection, we use our internal context and retry
-		// on failure.
-		_ = manager.reconnect(manager.ctx, true)
-	}()
-
-	return nil
-}
-
 // As NotifyClose on streadway Connection/Channel. Subscribers to Close events will not
 // be notified when a reconnection occurs under the hood, only when the roger Connection
 // or Channel is closed by calling the Close method. This mirrors the streadway
@@ -469,7 +379,7 @@ func (manager *transportManager) Close() error {
 
 // ROGER NOTE: unlike streadway/amqp, which only implements IsClosed() on connection
 // objects, rogerRabbit makes IsClosed() available on both connections and channels.
-// IsClosed() will return true until the connection / channel is shut down, even if the
+// IsClosed() will return false until the connection / channel is shut down, even if the
 // underlying connection is currently disconnected and waiting to reconnect.
 //
 // --

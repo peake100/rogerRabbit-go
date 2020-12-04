@@ -189,7 +189,7 @@ type consumeRelay struct {
 	// that spawned this relay.
 	NewDelivery func(orig streadway.Delivery) Delivery
 
-	// The pointer to the delivery tag publishCount we need to atomically update with each
+	// The pointer to the delivery tag count we need to atomically update with each
 	// consume.
 	deliveryTagCount *uint64
 	// The current delivery channel coming from the broker.

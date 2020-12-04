@@ -11,7 +11,7 @@ import (
 // Implements transport for *streadway.Connection.
 type transportConnection struct {
 	*streadway.Connection
-	dialUrl string
+	dialURL string
 
 	// The config option passed to this connection
 	dialConfig *Config
@@ -26,7 +26,7 @@ func (transport *transportConnection) cleanup() error {
 
 func (transport *transportConnection) tryReconnect(ctx context.Context) error {
 
-	conn, err := streadway.DialConfig(transport.dialUrl, *transport.streadwayConfig)
+	conn, err := streadway.DialConfig(transport.dialURL, *transport.streadwayConfig)
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func newConnection(url string, config *Config) *Connection {
 	// Create our robust connection object
 	transportConn := &transportConnection{
 		Connection:      nil,
-		dialUrl:         url,
+		dialURL:         url,
 		dialConfig:      config,
 		streadwayConfig: streadwayConfig,
 	}

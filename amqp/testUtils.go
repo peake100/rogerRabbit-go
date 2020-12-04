@@ -1,3 +1,5 @@
+//revive:disable:import-shadowing
+
 package amqp
 
 import (
@@ -31,7 +33,7 @@ func GetTestConnection(t *testing.T) *Connection {
 
 	t.Cleanup(
 		func() {
-			conn.Close()
+			_ = conn.Close()
 		},
 	)
 
@@ -53,8 +55,9 @@ type ChannelSuiteBase struct {
 // replace and close the current ChannelConsume for a fresh one.
 func (suite *ChannelSuiteBase) ReplaceChannels() {
 	if suite.ChannelConsume != nil {
-		suite.ChannelConsume.Close()
+		_ = suite.ChannelConsume.Close()
 	}
+
 	channel, err := suite.ConnConsume.Channel()
 	if !suite.NoError(err, "open new ChannelConsume for suite") {
 		suite.FailNow("could not open ChannelConsume for test suite")
@@ -63,7 +66,7 @@ func (suite *ChannelSuiteBase) ReplaceChannels() {
 	suite.ChannelConsume = channel
 
 	if suite.ChannelPublish != nil {
-		suite.ChannelPublish.Close()
+		_ = suite.ChannelPublish.Close()
 	}
 	channel, err = suite.ConnConsume.Channel()
 	if !suite.NoError(err, "open new ChannelPublish for suite") {
@@ -93,7 +96,7 @@ func (suite *ChannelSuiteBase) CreateTestQueue(
 	}
 
 	cleanup := func() {
-		suite.ChannelPublish.QueueDelete(
+		_, _ = suite.ChannelPublish.QueueDelete(
 			name, false, false, false,
 		)
 	}
@@ -113,7 +116,7 @@ func (suite *ChannelSuiteBase) CreateTestQueue(
 	}
 
 	cleanup = func() {
-		suite.ChannelConsume.QueueDelete(
+		_, _ = suite.ChannelConsume.QueueDelete(
 			name, false, false, false,
 		)
 	}
@@ -158,7 +161,7 @@ func (suite *ChannelSuiteBase) CreateTestExchange(name string, kind string) {
 	}
 
 	cleanup := func() {
-		suite.ChannelPublish.ExchangeDelete(
+		_ = suite.ChannelPublish.ExchangeDelete(
 			name, false, false,
 		)
 	}
@@ -179,14 +182,56 @@ func (suite *ChannelSuiteBase) CreateTestExchange(name string, kind string) {
 	}
 
 	cleanup = func() {
-		suite.ChannelConsume.ExchangeDelete(
+		_ = suite.ChannelConsume.ExchangeDelete(
 			name, false, false,
 		)
 	}
 	suite.T().Cleanup(cleanup)
 }
 
-// Published messages on the given exchange and key, waits for confirmations, then
+func (suite *ChannelSuiteBase) publishMessagesSend(
+	t *testing.T, exchange string, key string, count int,
+) {
+	assert := assert.New(t)
+
+	for i := 0; i < count; i++ {
+		err := suite.ChannelPublish.Publish(
+			exchange,
+			key,
+			true,
+			false,
+			Publishing{
+				Body: []byte(fmt.Sprintf("%v", i)),
+			},
+		)
+
+		if !assert.NoErrorf(err, "publish %v", i) {
+			t.FailNow()
+		}
+	}
+}
+
+func (suite *ChannelSuiteBase) publishMessagesConfirm(
+	t *testing.T,
+	count int,
+	confirmationEvents <-chan Confirmation,
+	allConfirmed chan struct{},
+) {
+	assert := assert.New(t)
+
+	confirmCount := 0
+	for confirmation := range confirmationEvents {
+		if !assert.Truef(confirmation.Ack, "message %v acked", confirmCount) {
+			t.FailNow()
+		}
+		confirmCount++
+		if confirmCount == count {
+			close(allConfirmed)
+		}
+	}
+}
+
+// Published messages on the given exchange and Key, waits for confirmations, then
 // returns. Test is failed immediately if any of these steps fails.
 func (suite *ChannelSuiteBase) PublishMessages(
 	t *testing.T, exchange string, key string, count int,
@@ -201,37 +246,10 @@ func (suite *ChannelSuiteBase) PublishMessages(
 	confirmationEvents := make(chan Confirmation, count)
 	suite.ChannelPublish.NotifyPublish(confirmationEvents)
 
-	go func() {
-		for i := 0; i < count; i++ {
-			err := suite.ChannelPublish.Publish(
-				exchange,
-				key,
-				true,
-				false,
-				Publishing{
-					Body: []byte(fmt.Sprintf("%v", i)),
-				},
-			)
-
-			if !assert.NoErrorf(err, "publish %v", i) {
-				t.FailNow()
-			}
-		}
-	}()
+	go suite.publishMessagesSend(t, exchange, key, count)
 
 	allConfirmed := make(chan struct{})
-	go func() {
-		confirmCount := 0
-		for confirmation := range confirmationEvents {
-			if !assert.Truef(confirmation.Ack, "message %v acked", confirmCount) {
-				t.FailNow()
-			}
-			confirmCount++
-			if confirmCount == count {
-				close(allConfirmed)
-			}
-		}
-	}()
+	go suite.publishMessagesConfirm(t, count, confirmationEvents, allConfirmed)
 
 	select {
 	case <-allConfirmed:
@@ -257,7 +275,6 @@ func (suite *ChannelSuiteBase) GetMessage(queueName string, autoAck bool) Delive
 }
 
 func (suite *ChannelSuiteBase) SetupSuite() {
-	fmt.Println("SETTING UP SUITE")
 	// Get the test connection we are going to use for all of our tests
 	suite.ConnConsume = GetTestConnection(suite.T())
 	if suite.T().Failed() {
