@@ -105,6 +105,18 @@ func (conn *Connection) Channel() (*Channel, error) {
 		bindQueuesLock:    new(sync.Mutex),
 		bindExchanges:     nil,
 		bindExchangesLock: new(sync.Mutex),
+		hooks: &channelHooks{
+			reconnect:       nil,
+			queueDeclare:    nil,
+			queueDelete:     nil,
+			queueBind:       nil,
+			queueUnbind:     nil,
+			exchangeDeclare: nil,
+			exchangeDelete:  nil,
+			exchangeBind:    nil,
+			exchangeUnbind:  nil,
+			lock:            new(sync.RWMutex),
+		},
 		// Make a decently-buffered acknowledgement channel
 		ackChan:                  make(chan ackInfo, 128),
 		eventRelaysRunning:       new(sync.WaitGroup),

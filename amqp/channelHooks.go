@@ -89,11 +89,11 @@ func (hooks *channelHooks) RegisterQueueDeclare(hook HookQueueDeclare) {
 }
 
 func (hooks *channelHooks) runHooksQueueDeclare(
-	runMethodOnce func() error, args *QueueDeleteArgs, logger zerolog.Logger,
+	runMethodOnce func() error, args *QueueDeclareArgs, logger zerolog.Logger,
 ) error {
 	topMethod := runMethodOnce
 
-	for _, thisHook := range hooks.queueDelete {
+	for _, thisHook := range hooks.queueDeclare {
 		topMethod = func() error {
 			return thisHook(topMethod, args, logger)
 		}
@@ -110,11 +110,137 @@ func (hooks *channelHooks) RegisterQueueDelete(hook HookQueueDelete) {
 }
 
 func (hooks *channelHooks) runHooksQueueDelete(
-	retryOnDisconnect func() error, args *QueueDeleteArgs, logger zerolog.Logger,
+	runMethodOnce func() error, args *QueueDeleteArgs, logger zerolog.Logger,
 ) error {
-	topMethod := retryOnDisconnect
+	topMethod := runMethodOnce
 
 	for _, thisHook := range hooks.queueDelete {
+		topMethod = func() error {
+			return thisHook(topMethod, args, logger)
+		}
+	}
+
+	return topMethod()
+}
+
+func (hooks *channelHooks) RegisterQueueBind(hook HookQueueBind) {
+	hooks.lock.Lock()
+	defer hooks.lock.Unlock()
+
+	hooks.queueBind = append(hooks.queueBind, hook)
+}
+
+func (hooks *channelHooks) runHooksQueueBind(
+	runMethodOnce func() error, args *QueueBindArgs, logger zerolog.Logger,
+) error {
+	topMethod := runMethodOnce
+
+	for _, thisHook := range hooks.queueBind {
+		topMethod = func() error {
+			return thisHook(topMethod, args, logger)
+		}
+	}
+
+	return topMethod()
+}
+
+func (hooks *channelHooks) RegisterQueueUnbind(hook HookQueueUnbind) {
+	hooks.lock.Lock()
+	defer hooks.lock.Unlock()
+
+	hooks.queueUnbind = append(hooks.queueUnbind, hook)
+}
+
+func (hooks *channelHooks) runHooksQueueUnbind(
+	runMethodOnce func() error, args *QueueUnbindArgs, logger zerolog.Logger,
+) error {
+	topMethod := runMethodOnce
+
+	for _, thisHook := range hooks.queueUnbind {
+		topMethod = func() error {
+			return thisHook(topMethod, args, logger)
+		}
+	}
+
+	return topMethod()
+}
+
+func (hooks *channelHooks) RegisterExchangeDeclare(hook HookExchangeDeclare) {
+	hooks.lock.Lock()
+	defer hooks.lock.Unlock()
+
+	hooks.exchangeDeclare = append(hooks.exchangeDeclare, hook)
+}
+
+func (hooks *channelHooks) runHooksExchangeDeclare(
+	runMethodOnce func() error, args *ExchangeDeclareArgs, logger zerolog.Logger,
+) error {
+	topMethod := runMethodOnce
+
+	for _, thisHook := range hooks.exchangeDeclare {
+		topMethod = func() error {
+			return thisHook(topMethod, args, logger)
+		}
+	}
+
+	return topMethod()
+}
+
+func (hooks *channelHooks) RegisterExchangeDelete(hook HookExchangeDelete) {
+	hooks.lock.Lock()
+	defer hooks.lock.Unlock()
+
+	hooks.exchangeDelete = append(hooks.exchangeDelete, hook)
+}
+
+func (hooks *channelHooks) runHooksExchangeDelete(
+	runMethodOnce func() error, args *ExchangeDeleteArgs, logger zerolog.Logger,
+) error {
+	topMethod := runMethodOnce
+
+	for _, thisHook := range hooks.exchangeDelete {
+		topMethod = func() error {
+			return thisHook(topMethod, args, logger)
+		}
+	}
+
+	return topMethod()
+}
+
+func (hooks *channelHooks) RegisterExchangeBind(hook HookExchangeBind) {
+	hooks.lock.Lock()
+	defer hooks.lock.Unlock()
+
+	hooks.exchangeBind = append(hooks.exchangeBind, hook)
+}
+
+func (hooks *channelHooks) runHooksExchangeBind(
+	runMethodOnce func() error, args *ExchangeBindArgs, logger zerolog.Logger,
+) error {
+	topMethod := runMethodOnce
+
+	for _, thisHook := range hooks.exchangeBind {
+		topMethod = func() error {
+			return thisHook(topMethod, args, logger)
+		}
+	}
+
+	return topMethod()
+}
+
+func (hooks *channelHooks) RegisterExchangeUnbind(hook HookExchangeUnbind) {
+	hooks.lock.Lock()
+	defer hooks.lock.Unlock()
+
+	hooks.exchangeUnbind = append(hooks.exchangeUnbind, hook)
+}
+
+func (hooks *channelHooks) runHooksExchangeUnbind(
+	runMethodOnce func() error, args *ExchangeUnbindArgs, logger zerolog.Logger,
+) error {
+	topMethod := runMethodOnce
+
+	for _, thisHook := range hooks.exchangeUnbind {
 		topMethod = func() error {
 			return thisHook(topMethod, args, logger)
 		}
@@ -461,26 +587,41 @@ func (defaults *routeDeclarationHooks) HookReconnect(
 		return channel, err
 	}
 
+	// Recreate queue and exchange topology
+	debugEnabled := logger.Debug().Enabled()
+
 	// Declare the queues first.
+	if debugEnabled {
+		logger.Debug().Msg("re-declaring queues")
+	}
 	err = defaults.reconnectDeclareQueues(channel)
 	if err != nil {
 		return channel, err
 	}
 
 	// Next declare our exchanges.
+	if debugEnabled {
+		logger.Debug().Msg("re-declaring exchanges")
+	}
 	err = defaults.reconnectDeclareExchanges(channel)
 	if err != nil {
 		return channel, err
 	}
 
-	// Now re-bind our queues.
-	err = defaults.reconnectBindQueues(channel)
+	// Now, re-bind our exchanges.
+	if debugEnabled {
+		logger.Debug().Msg("re-binding exchanges")
+	}
+	err = defaults.reconnectBindExchanges(channel)
 	if err != nil {
 		return channel, err
 	}
 
-	// Finally, re-bind our exchanges.
-	err = defaults.reconnectBindExchanges(channel)
+	// Finally, re-bind our queues.
+	if debugEnabled {
+		logger.Debug().Msg("re-binding queues")
+	}
+	err = defaults.reconnectBindQueues(channel)
 	if err != nil {
 		return channel, err
 	}
