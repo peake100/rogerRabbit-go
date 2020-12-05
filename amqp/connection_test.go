@@ -388,14 +388,14 @@ func TestConnection_IsClosed(t *testing.T) {
 	assert.False(conn.IsClosed(), "connection is open")
 
 	t.Log("register notification")
-	// register a notification for when we reconnect
+	// register a notification for when we reconnectMiddleware
 	dialEvents := make(chan error, 10)
 	err := conn.NotifyDial(dialEvents)
 	if !assert.NoError(err, "register dial notifier") {
 		t.FailNow()
 	}
 
-	// grab a lock on the transport so we don't auto-reconnect
+	// grab a lock on the transport so we don't auto-reconnectMiddleware
 	conn.transportLock.Lock()
 	// force close the internal connection
 	err = conn.transportConn.Close()
@@ -407,7 +407,7 @@ func TestConnection_IsClosed(t *testing.T) {
 	// connection is down
 	assert.False(conn.IsClosed(), "connection is open")
 
-	// release the lock to let the connection reconnect
+	// release the lock to let the connection reconnectMiddleware
 	conn.transportLock.Unlock()
 
 	timeout := time.NewTimer(3 * time.Second)
@@ -422,7 +422,7 @@ func TestConnection_IsClosed(t *testing.T) {
 		t.FailNow()
 	}
 
-	// make sure we are still open on the user-facing side after a reconnect
+	// make sure we are still open on the user-facing side after a reconnectMiddleware
 	assert.False(conn.IsClosed(), "connection is open")
 
 	// Fully close the connection
@@ -432,6 +432,6 @@ func TestConnection_IsClosed(t *testing.T) {
 	}
 
 	// Make sure we are now telling the user the connection is closed.
-	// make sure we are still open on the user-facing side after a reconnect
+	// make sure we are still open on the user-facing side after a reconnectMiddleware
 	assert.True(conn.IsClosed(), "connection is closed")
 }

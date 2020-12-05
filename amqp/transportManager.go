@@ -51,7 +51,7 @@ func (tester *transportTester) ForceReconnect(ctx context.Context) {
 	connectionEstablished := make(chan struct{})
 	waitingOnReconnect := make(chan struct{})
 
-	// Launch a goroutine to wait on a reconnect
+	// Launch a goroutine to wait on a reconnectMiddleware
 	go func() {
 		// Signal that the connection has been re-established
 		defer close(connectionEstablished)
@@ -380,7 +380,7 @@ func (manager *transportManager) Close() error {
 // ROGER NOTE: unlike streadway/amqp, which only implements IsClosed() on connection
 // objects, rogerRabbit makes IsClosed() available on both connections and channels.
 // IsClosed() will return false until the connection / channel is shut down, even if the
-// underlying connection is currently disconnected and waiting to reconnect.
+// underlying connection is currently disconnected and waiting to reconnectMiddleware.
 //
 // --
 //

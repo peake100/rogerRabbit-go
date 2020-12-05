@@ -24,7 +24,7 @@ func (manager *transportManager) reconnectRedialOnce(ctx context.Context) error 
 			Error().
 			Err(err).
 			Uint64("RECONNECT_COUNT", manager.reconnectCount).
-			Msg("reconnect error")
+			Msg("reconnectMiddleware error")
 
 		// Otherwise, return (and possibly try again).
 		return err
@@ -89,7 +89,7 @@ func (manager *transportManager) reconnect(ctx context.Context, retry bool) erro
 	manager.transportLock.Lock()
 	defer manager.transportLock.Unlock()
 
-	// Redial the broker until we reconnect
+	// Redial the broker until we reconnectMiddleware
 	err := manager.reconnectRedial(ctx, retry)
 	if err != nil {
 		return err
@@ -102,7 +102,7 @@ func (manager *transportManager) reconnect(ctx context.Context, retry bool) erro
 	closeChan := make(chan *streadway.Error, 1)
 	manager.transport.NotifyClose(closeChan)
 
-	// Launch a goroutine to reconnect on connection closure.
+	// Launch a goroutine to reconnectMiddleware on connection closure.
 	go manager.reconnectListenForClose(closeChan)
 
 	return nil

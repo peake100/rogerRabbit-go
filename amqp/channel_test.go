@@ -1409,7 +1409,7 @@ func (suite *ChannelMethodsSuite) Test0265_ExchangeRedeclareAfterDisconnect() {
 		suite.T().FailNow()
 	}
 
-	// Force a reconnect
+	// Force a reconnectMiddleware
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	suite.ChannelPublish.Test(suite.T()).ForceReconnect(ctx)
@@ -1424,7 +1424,7 @@ func (suite *ChannelMethodsSuite) Test0265_ExchangeRedeclareAfterDisconnect() {
 		false,
 		nil,
 	)
-	suite.NoError(err, "check for exchange after reconnect")
+	suite.NoError(err, "check for exchange after reconnectMiddleware")
 }
 
 func (suite *ChannelMethodsSuite) Test0270_AckMessage() {
@@ -1599,7 +1599,7 @@ func (suite *ChannelMethodsSuite) Test0320_Acknowledge_OrphanErr() {
 		t.Cleanup(suite.ReplaceChannels)
 
 		// Publish 1 message. This one message will keep getting redelivered on the force
-		// reconnect, so we only need to publish it once
+		// reconnectMiddleware, so we only need to publish it once
 		suite.PublishMessages(t, "", queueName, thisCase.publishCount)
 
 		var delivery Delivery
@@ -1676,7 +1676,7 @@ func (suite *ChannelMethodsSuite) Test0340_QoS_OverReconnect() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	// Force a reconnect
+	// Force a reconnectMiddleware
 	suite.ChannelConsume.Test(suite.T()).ForceReconnect(ctx)
 
 	// TODO: Add some way to make sure the correct QoS was sent to the server, probably
@@ -1697,7 +1697,7 @@ func (suite *ChannelMethodsSuite) Test0350_QoS_PrefetchSize_Err() {
 	)
 }
 
-// TODO: Implement mocked tests for flow settings over reconnect. Flow is not supported
+// TODO: Implement mocked tests for flow settings over reconnectMiddleware. Flow is not supported
 //   by RabbitMQ
 func (suite *ChannelMethodsSuite) Test0360_Flow() {
 	suite.T().Cleanup(suite.ReplaceChannels)
@@ -1723,13 +1723,13 @@ func (suite *ChannelMethodsSuite) Test0370_NotifyFlow() {
 	default:
 	}
 
-	// Force a reconnect
+	// Force a reconnectMiddleware
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	suite.ChannelConsume.Test(suite.T()).ForceReconnect(ctx)
 
 	// Check that we have a flow = false followed by a flow = true notification on
-	// reconnect
+	// reconnectMiddleware
 	select {
 	case flow, open := <-flowEvents:
 		suite.False(flow, "flow false notification")

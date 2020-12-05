@@ -52,7 +52,7 @@ type Config struct {
 	// used during TLS and AMQP handshaking.
 	Dial func(network, addr string) (net.Conn, error)
 
-	// If set to true, the default hooks will not be registered on channels created
+	// If set to true, the default handlers will not be registered on channels created
 	// through the associated connection.
 	NoDefaultHooks bool
 

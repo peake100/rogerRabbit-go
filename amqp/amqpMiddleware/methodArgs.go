@@ -1,17 +1,21 @@
-package amqp
+package amqpMiddleware
+
+import (
+	streadway "github.com/streadway/amqp"
+)
 
 // Store queue declare information for re-establishing queues on disconnect.
-type QueueDeclareArgs struct {
+type ArgsQueueDeclare struct {
 	Name       string
 	Durable    bool
 	AutoDelete bool
 	Exclusive  bool
 	NoWait     bool
-	Args       Table
+	Args       streadway.Table
 }
 
 // Arguments passed to channel delete.
-type QueueDeleteArgs struct {
+type ArgsQueueDelete struct {
 	Name     string
 	IfUnused bool
 	IfEmpty  bool
@@ -19,51 +23,51 @@ type QueueDeleteArgs struct {
 }
 
 // Store queue bind information for re-establishing bindings on disconnect.
-type QueueBindArgs struct {
+type ArgsQueueBind struct {
 	Name     string
 	Key      string
 	Exchange string
 	NoWait   bool
-	Args     Table
+	Args     streadway.Table
 }
 
-type QueueUnbindArgs struct {
+type ArgsQueueUnbind struct {
 	Name     string
 	Key      string
 	Exchange string
-	Args     Table
+	Args     streadway.Table
 }
 
 // Store exchange declare information for re-establishing queues on disconnect.
-type ExchangeDeclareArgs struct {
+type ArgsExchangeDeclare struct {
 	Name       string
 	Kind       string
 	Durable    bool
 	AutoDelete bool
 	Internal   bool
 	NoWait     bool
-	Args       Table
+	Args       streadway.Table
 }
 
-type ExchangeDeleteArgs struct {
+type ArgsExchangeDelete struct {
 	Name     string
 	IfUnused bool
 	NoWait   bool
 }
 
 // Store exchange bind information for re-establishing bindings on disconnect.
-type ExchangeBindArgs struct {
+type ArgsExchangeBind struct {
 	Destination string
 	Key         string
 	Source      string
 	NoWait      bool
-	Args        Table
+	Args        streadway.Table
 }
 
-type ExchangeUnbindArgs struct {
+type ArgsExchangeUnbind struct {
 	Destination string
 	Key         string
 	Source      string
 	NoWait      bool
-	Args        Table
+	Args        streadway.Table
 }

@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
 	"sync/atomic"
 )
 
-// Holds current qos settings for the channel so they can be re-instated on reconnect.
+// Holds current qos settings for the channel so they can be re-instated on reconnectMiddleware.
 type qosSettings struct {
 	prefetchCount int
 	prefetchSize  int
@@ -74,7 +75,7 @@ type channelSettings struct {
 	// The current delivery tag for this robust connection. Each time a message is
 	// successfully published, this value should be atomically incremented. This tag
 	// will function like the normal channel tag, AND WILL NOT RESET when the underlying
-	// channel is re-established. Whenever we reconnect, the broker will reset and begin
+	// channel is re-established. Whenever we reconnectMiddleware, the broker will reset and begin
 	// delivery tags at 1. That means that we are going to need to track how the current
 	// underlying channel's delivery tag matches up against our user-facing tags.
 	//
@@ -108,8 +109,8 @@ type transportChannel struct {
 	// locks the flow state from being changed until release
 	flowActiveLock *sync.Mutex
 
-	// Holds all registered hooks.
-	hooks *channelHandlers
+	// Holds all registered handlers.
+	handlers *channelHandlers
 
 	// We're going to handle all nacks and acks in a goroutine so we can track the
 	// latest without heavy lock contention. This channels will be used to send
@@ -215,21 +216,11 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	}
 	transport.eventRelaysRunning.Wait()
 
-	// This function will act as the innermost middleware for the reconnection hooks.
-	reconnectFunc := func() (*streadway.Channel, error) {
-		channel, err := transport.rogerConn.getStreadwayChannel(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("error getting new channel: %w", err)
-		}
-
-		return channel, err
-	}
-
 	if debugEnabled {
 		logger.Debug().Msg("getting new channel")
 	}
 
-	channel, err := transport.hooks.runHooksReconnect(reconnectFunc, logger)
+	channel, err := transport.handlers.reconnect(ctx, logger)
 	if err != nil {
 		return err
 	}
@@ -638,8 +629,8 @@ func (channel *Channel) QueueDeclare(
 	args streadway.Table,
 ) (queue Queue, err error) {
 	// Run an an operation to get automatic retries on channel dis-connections.
-	// We need to remember to re-declare this queue on reconnect
-	queueArgs := &QueueDeclareArgs{
+	// We need to remember to re-declare this queue on reconnectMiddleware
+	queueArgs := &amqpMiddleware.ArgsQueueDeclare{
 		Name:       name,
 		Durable:    durable,
 		AutoDelete: autoDelete,
@@ -652,30 +643,11 @@ func (channel *Channel) QueueDeclare(
 		Args: copyTable(args),
 	}
 
-	// The core method we will run at the center of any middleware hooks.
-	runMethod := func() error {
-		var opErr error
-		queue, opErr = channel.transportChannel.QueueDeclare(
-			queueArgs.Name,
-			queueArgs.Durable,
-			queueArgs.AutoDelete,
-			queueArgs.Exclusive,
-			queueArgs.NoWait,
-			queueArgs.Args,
-		)
-
-		if opErr != nil {
-			return opErr
-		}
-
-		return nil
-	}
-
 	// Wrap the hook runner in a closure.
 	operation := func() error {
-		return channel.transportChannel.hooks.runHooksQueueDeclare(
-			runMethod, queueArgs, channel.logger,
-		)
+		var opErr error
+		queue, opErr = channel.transportChannel.handlers.queueDeclare(queueArgs)
+		return opErr
 	}
 
 	// Hand off to the retry operation method.
@@ -782,7 +754,7 @@ closed with an error.
 func (channel *Channel) QueueBind(
 	name, key, exchange string, noWait bool, args Table,
 ) error {
-	bindArgs := &QueueBindArgs{
+	bindArgs := &amqpMiddleware.ArgsQueueBind{
 		Name:     name,
 		Key:      key,
 		Exchange: exchange,
@@ -792,28 +764,9 @@ func (channel *Channel) QueueBind(
 		Args: copyTable(args),
 	}
 
-	// Run an an operation to get automatic retries on channel disconnections.
-	runMethod := func() error {
-		var opErr error
-		opErr = channel.transportChannel.QueueBind(
-			bindArgs.Name,
-			bindArgs.Key,
-			bindArgs.Exchange,
-			bindArgs.NoWait,
-			bindArgs.Args,
-		)
-
-		if opErr != nil {
-			return opErr
-		}
-
-		return nil
-	}
-
+	// Wrap the method handler
 	operation := func() error {
-		return channel.transportChannel.hooks.runHooksQueueBind(
-			runMethod, bindArgs, channel.logger,
-		)
+		return channel.transportChannel.handlers.queueBind(bindArgs)
 	}
 
 	err := channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -829,32 +782,15 @@ unbind the queue from the default exchange.
 
 */
 func (channel *Channel) QueueUnbind(name, key, exchange string, args Table) error {
-	unbindArgs := &QueueUnbindArgs{
+	unbindArgs := &amqpMiddleware.ArgsQueueUnbind{
 		Name:     name,
 		Key:      key,
 		Exchange: exchange,
 		Args:     copyTable(args),
 	}
 
-	// Run an an operation to get automatic retries on channel dis-connections.
-	runMethod := func() error {
-		opErr := channel.transportChannel.QueueUnbind(
-			unbindArgs.Name,
-			unbindArgs.Key,
-			unbindArgs.Exchange,
-			unbindArgs.Args,
-		)
-		if opErr != nil {
-			return opErr
-		}
-
-		return nil
-	}
-
 	operation := func() error {
-		return channel.transportChannel.hooks.runHooksQueueUnbind(
-			runMethod, unbindArgs, channel.logger,
-		)
+		return channel.transportChannel.handlers.queueUnbind(unbindArgs)
 	}
 
 	err := channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -906,33 +842,17 @@ be closed.
 func (channel *Channel) QueueDelete(
 	name string, ifUnused, ifEmpty, noWait bool,
 ) (count int, err error) {
-	deleteArgs := &QueueDeleteArgs{
+	deleteArgs := &amqpMiddleware.ArgsQueueDelete{
 		Name:     name,
 		IfUnused: ifUnused,
 		IfEmpty:  ifEmpty,
 		NoWait:   noWait,
 	}
 
-	// Run an an operation to get automatic retries on channel dis-connections.
-	runMethod := func() error {
-		var opErr error
-		count, opErr = channel.transportChannel.QueueDelete(
-			deleteArgs.Name,
-			deleteArgs.IfUnused,
-			deleteArgs.IfEmpty,
-			deleteArgs.NoWait,
-		)
-		if opErr != nil {
-			return opErr
-		}
-
-		return nil
-	}
-
 	operation := func() error {
-		return channel.transportChannel.hooks.runHooksQueueDelete(
-			runMethod, deleteArgs, channel.logger,
-		)
+		var opErr error
+		count, opErr = channel.transportChannel.handlers.queueDelete(deleteArgs)
+		return opErr
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -1004,8 +924,7 @@ the exchange can be sent for exchange types that require extra parameters.
 func (channel *Channel) ExchangeDeclare(
 	name, kind string, durable, autoDelete, internal, noWait bool, args Table,
 ) (err error) {
-
-	exchangeArgs := &ExchangeDeclareArgs{
+	exchangeArgs := &amqpMiddleware.ArgsExchangeDeclare{
 		Name:       name,
 		Kind:       kind,
 		Durable:    durable,
@@ -1019,29 +938,8 @@ func (channel *Channel) ExchangeDeclare(
 		Args: copyTable(args),
 	}
 
-	// Run an an operation to get automatic retries on channel dis-connections.
-	runMethod := func() error {
-		var opErr error
-		opErr = channel.transportChannel.ExchangeDeclare(
-			exchangeArgs.Name,
-			exchangeArgs.Kind,
-			exchangeArgs.Durable,
-			exchangeArgs.AutoDelete,
-			exchangeArgs.Internal,
-			exchangeArgs.NoWait,
-			exchangeArgs.Args,
-		)
-		if opErr != nil {
-			return opErr
-		}
-
-		return nil
-	}
-
 	operation := func() error {
-		return channel.transportChannel.hooks.runHooksExchangeDeclare(
-			runMethod, exchangeArgs, channel.logger,
-		)
+		return channel.transportChannel.handlers.exchangeDeclare(exchangeArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -1094,29 +992,14 @@ NotifyClose listener to respond to these channel exceptions.
 func (channel *Channel) ExchangeDelete(
 	name string, ifUnused, noWait bool,
 ) (err error) {
-	deleteArgs := &ExchangeDeleteArgs{
+	deleteArgs := &amqpMiddleware.ArgsExchangeDelete{
 		Name:     name,
 		IfUnused: ifUnused,
 		NoWait:   noWait,
 	}
 
-	// Run an an operation to get automatic retries on channel dis-connections.
-	runMethod := func() error {
-		var opErr error
-		opErr = channel.transportChannel.ExchangeDelete(
-			deleteArgs.Name, deleteArgs.IfUnused, deleteArgs.NoWait,
-		)
-		if opErr != nil {
-			return opErr
-		}
-
-		return nil
-	}
-
 	operation := func() error {
-		return channel.transportChannel.hooks.runHooksExchangeDelete(
-			runMethod, deleteArgs, channel.logger,
-		)
+		return channel.transportChannel.handlers.exchangeDelete(deleteArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -1157,7 +1040,7 @@ Optional arguments specific to the exchanges bound can also be specified.
 func (channel *Channel) ExchangeBind(
 	destination, key, source string, noWait bool, args Table,
 ) (err error) {
-	bindArgs := &ExchangeBindArgs{
+	bindArgs := &amqpMiddleware.ArgsExchangeBind{
 		Destination: destination,
 		Key:         key,
 		Source:      source,
@@ -1165,27 +1048,8 @@ func (channel *Channel) ExchangeBind(
 		Args:        copyTable(args),
 	}
 
-	// Run an an operation to get automatic retries on channel dis-connections.
-	runMethod := func() error {
-		var opErr error
-		opErr = channel.transportChannel.ExchangeBind(
-			bindArgs.Destination,
-			bindArgs.Key,
-			bindArgs.Source,
-			bindArgs.NoWait,
-			bindArgs.Args,
-		)
-		if opErr != nil {
-			return opErr
-		}
-
-		return nil
-	}
-
 	operation := func() error {
-		return channel.transportChannel.hooks.runHooksExchangeBind(
-			runMethod, bindArgs, channel.logger,
-		)
+		return channel.transportChannel.handlers.exchangeBind(bindArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -1209,7 +1073,7 @@ identify the binding.
 func (channel *Channel) ExchangeUnbind(
 	destination, key, source string, noWait bool, args Table,
 ) (err error) {
-	unbindArgs := &ExchangeUnbindArgs{
+	unbindArgs := &amqpMiddleware.ArgsExchangeUnbind{
 		Destination: destination,
 		Key:         key,
 		Source:      source,
@@ -1217,27 +1081,8 @@ func (channel *Channel) ExchangeUnbind(
 		Args:        copyTable(args),
 	}
 
-	// Run an an operation to get automatic retries on channel dis-connections.
-	runMethod := func() error {
-		var opErr error
-		opErr = channel.transportChannel.ExchangeUnbind(
-			unbindArgs.Destination,
-			unbindArgs.Key,
-			unbindArgs.Source,
-			unbindArgs.NoWait,
-			unbindArgs.Args,
-		)
-		if opErr != nil {
-			return opErr
-		}
-
-		return nil
-	}
-
 	operation := func() error {
-		return channel.transportChannel.hooks.runHooksExchangeUnbind(
-			runMethod, unbindArgs, channel.logger,
-		)
+		return channel.transportChannel.handlers.exchangeUnbind(unbindArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -1911,5 +1756,5 @@ func (channel *Channel) TxRollback() error {
 }
 
 func (channel *Channel) Hooks() *channelHandlers {
-	return channel.transportChannel.hooks
+	return channel.transportChannel.handlers
 }

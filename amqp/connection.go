@@ -3,6 +3,7 @@ package amqp
 import (
 	"context"
 	"crypto/tls"
+	"github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
@@ -72,7 +73,7 @@ func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 }
 
 /*
-ROGER NOTE: Unlike the normal channels, roger channels will automatically reconnect on
+ROGER NOTE: Unlike the normal channels, roger channels will automatically reconnectMiddleware on
 all errors until Channel.Close() is called.
 
 --
@@ -99,18 +100,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 			tagConsumeOffset:  0,
 		},
 		flowActiveLock: new(sync.Mutex),
-		hooks: &channelHandlers{
-			reconnect:       nil,
-			queueDeclare:    nil,
-			queueDelete:     nil,
-			queueBind:       nil,
-			queueUnbind:     nil,
-			exchangeDeclare: nil,
-			exchangeDelete:  nil,
-			exchangeBind:    nil,
-			exchangeUnbind:  nil,
-			lock:            new(sync.RWMutex),
-		},
+		handlers:       newChannelHandlers(conn),
 		// Make a decently-buffered acknowledgement channel
 		ackChan:                  make(chan ackInfo, 128),
 		eventRelaysRunning:       new(sync.WaitGroup),
@@ -121,27 +111,18 @@ func (conn *Connection) Channel() (*Channel, error) {
 	}
 
 	if !conn.transportConn.dialConfig.NoDefaultHooks {
-		hooks := transportChan.hooks
-		declarationHooks := &routeDeclarationMiddleware{
-			declareQueues:     new(sync.Map),
-			declareExchanges:  new(sync.Map),
-			bindQueues:        nil,
-			bindQueuesLock:    new(sync.Mutex),
-			bindExchanges:     nil,
-			bindExchangesLock: new(sync.Mutex),
-		}
+		handlers := transportChan.handlers
+		declarationMiddleware := defaultMiddlewares.NewRouteDeclarationMiddleware()
 
-		hooks.RegisterReconnect(declarationHooks.HookReconnect)
-
-		hooks.RegisterQueueDeclare(declarationHooks.HookQueueDeclare)
-		hooks.RegisterQueueDelete(declarationHooks.HookQueueDelete)
-		hooks.RegisterQueueBind(declarationHooks.HookQueueBind)
-		hooks.RegisterQueueUnbind(declarationHooks.HookQueueUnbind)
-
-		hooks.RegisterExchangeDeclare(declarationHooks.HookExchangeDeclare)
-		hooks.RegisterExchangeDelete(declarationHooks.HookExchangeDelete)
-		hooks.RegisterExchangeBind(declarationHooks.HookExchangeBind)
-		hooks.RegisterExchangeUnbind(declarationHooks.HookExchangeUnbind)
+		handlers.AddReconnect(declarationMiddleware.Reconnect)
+		handlers.AddQueueDeclare(declarationMiddleware.QueueDeclare)
+		handlers.AddQueueDelete(declarationMiddleware.QueueDelete)
+		handlers.AddQueueBind(declarationMiddleware.QueueBind)
+		handlers.AddQueueUnbind(declarationMiddleware.QueueUnbind)
+		handlers.AddExchangeDeclare(declarationMiddleware.ExchangeDeclare)
+		handlers.AddExchangeDelete(declarationMiddleware.ExchangeDelete)
+		handlers.AddExchangeBind(declarationMiddleware.ExchangeBind)
+		handlers.AddExchangeUnbind(declarationMiddleware.ExchangeUnbind)
 	}
 
 	// Add 1 to this WaitGroup so it can be released on the initial channel establish.
