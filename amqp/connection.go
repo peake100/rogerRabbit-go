@@ -86,6 +86,12 @@ func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 	handlers.AddQoS(qosMiddleware.Qos)
 	middlewareStorage.QoS = qosMiddleware
 
+	// Confirmation middleware
+	confirmMiddleware := defaultMiddlewares.NewConfirmMiddleware()
+	handlers.AddReconnect(confirmMiddleware.Reconnect)
+	handlers.AddConfirm(confirmMiddleware.Confirm)
+	middlewareStorage.Confirm = confirmMiddleware
+
 	// Route declaration middleware
 	declarationMiddleware := defaultMiddlewares.NewRouteDeclarationMiddleware()
 	handlers.AddReconnect(declarationMiddleware.Reconnect)
@@ -119,7 +125,6 @@ func (conn *Connection) Channel() (*Channel, error) {
 		Channel:   nil,
 		rogerConn: conn,
 		settings: channelSettings{
-			publisherConfirms: false,
 			// Channels start with their flow active
 			flowActive:           true,
 			tagPublishCount:      &initialPublishCount,

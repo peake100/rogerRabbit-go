@@ -31,4 +31,4 @@ type HandlerExchangeUnbind func(args *ArgsExchangeUnbind) error
 
 type HandlerQoS func(args *ArgsQoS) error
 
-type HandlerConfirms func(args *ArgsConfirms) error
+type HandlerConfirm func(args *ArgsConfirms) error

@@ -22,4 +22,4 @@ type ExchangeUnbind func(next HandlerExchangeUnbind) HandlerExchangeUnbind
 
 type QoS func(next HandlerQoS) HandlerQoS
 
-type Confirms func(next HandlerConfirms) HandlerConfirms
+type Confirm func(next HandlerConfirm) HandlerConfirm

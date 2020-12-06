@@ -171,3 +171,15 @@ func (builder *middlewareBaseBuilder) createBaseHandlerQoS() (
 
 	return handler
 }
+
+func (builder *middlewareBaseBuilder) createBaseHandlerConfirm() (
+	handler amqpMiddleware.HandlerConfirm,
+) {
+	handler = func(args *amqpMiddleware.ArgsConfirms) error {
+		return builder.currentChan.Confirm(
+			args.NoWait,
+		)
+	}
+
+	return handler
+}

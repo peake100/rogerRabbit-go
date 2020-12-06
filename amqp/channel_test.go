@@ -1132,10 +1132,10 @@ func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
 		publishCount, receivedCount, "received 10 confirmations",
 	)
 	suite.Equal(
-		7, ackCount, "received 5 acks",
+		7, ackCount, "received 7 acks",
 	)
 	suite.Equal(
-		3, orphanCount, "received 5 orphans",
+		3, orphanCount, "received 3 orphans",
 	)
 }
 
@@ -1177,7 +1177,8 @@ func (suite *ChannelMethodsSuite) Test0190_QueuePurge() {
 
 	go func() {
 		defer close(confirmationsReceived)
-		timer := time.NewTimer(0)
+		timer := time.NewTimer(3 * time.Second)
+		defer timer.Stop()
 
 		for i := 0; i < publishCount; i++ {
 			timer.Reset(3 * time.Second)

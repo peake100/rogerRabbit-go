@@ -79,5 +79,5 @@ type ArgsQoS struct {
 }
 
 type ArgsConfirms struct {
-	ConfirmsOn bool
+	NoWait bool
 }

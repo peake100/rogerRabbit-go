@@ -55,10 +55,6 @@ func newAckInfo(
 // eventRelay.SetupForRelayLeg() without exposing objects such methods should not have
 // access to.
 type channelSettings struct {
-	// Whether the channel is in publisher confirms mode. When true, all re-connected
-	// channels will be put into publisher confirms mode.
-	publisherConfirms bool
-
 	// Whether consumer flow to this channel is open. When false, re-established
 	// channels will immediately be put into pause mode.
 	flowActive bool
@@ -157,7 +153,6 @@ func (transport *transportChannel) reconnectApplyChannelSettings() error {
 	if transport.logger.Debug().Enabled() {
 		transport.logger.Debug().
 			Bool("CONSUMER_FLOW_ACTIVE", transport.settings.flowActive).
-			Bool("CONFIRMS", transport.settings.publisherConfirms).
 			Msg("applying channel settings")
 	}
 
@@ -169,14 +164,6 @@ func (transport *transportChannel) reconnectApplyChannelSettings() error {
 		err := transport.Channel.Flow(transport.settings.flowActive)
 		if err != nil {
 			return fmt.Errorf("error pausing consumer flow: %w", err)
-		}
-	}
-
-	// If in publisher confirms mode, set up the new channel to be so.
-	if transport.settings.publisherConfirms {
-		err := transport.Channel.Confirm(false)
-		if err != nil {
-			return fmt.Errorf("error putting into confirm mode: %w", err)
 		}
 	}
 
@@ -425,18 +412,10 @@ exception could occur if the server does not support this method.
 
 */
 func (channel *Channel) Confirm(noWait bool) error {
+	args := &amqpMiddleware.ArgsConfirms{NoWait: noWait}
+
 	op := func() error {
-		var opErr error
-		opErr = channel.transportChannel.Confirm(noWait)
-		if opErr != nil {
-			return opErr
-		}
-
-		// remember this setting so we can put re-established channels into confirmation
-		// mode.
-		channel.transportChannel.settings.publisherConfirms = true
-
-		return nil
+		return channel.transportChannel.handlers.confirm(args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, op, true)
@@ -1128,7 +1107,7 @@ func (channel *Channel) Publish(
 		}
 
 		// Return if publishing confirms is not turned on
-		if !channel.transportChannel.settings.publisherConfirms {
+		if !channel.transportChannel.settings.defaultMiddlewares.Confirm.ConfirmsOn() {
 			return nil
 		}
 
@@ -1742,6 +1721,7 @@ func (channel *Channel) Middleware() *channelHandlers {
 type ChannelTestingDefaultMiddlewares struct {
 	QoS *defaultMiddlewares.QoSMiddleware
 	RouteDeclaration *defaultMiddlewares.RouteDeclarationMiddleware
+	Confirm *defaultMiddlewares.ConfirmsMiddleware
 }
 
 // Holds testing information and methods for channels.
