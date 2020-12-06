@@ -54,7 +54,7 @@ type Config struct {
 
 	// If set to true, the default handlers will not be registered on channels created
 	// through the associated connection.
-	NoDefaultHooks bool
+	NoDefaultMiddleware bool
 
 	// The logger to use for internal logging. If none, the default zerolog logger will
 	// be used.

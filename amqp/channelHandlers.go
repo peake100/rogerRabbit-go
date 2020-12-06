@@ -17,6 +17,8 @@ type channelHandlers struct {
 	exchangeBind    amqpMiddleware.HandlerExchangeBind
 	exchangeUnbind  amqpMiddleware.HandlerExchangeUnbind
 
+	qos amqpMiddleware.HandlerQoS
+
 	lock *sync.RWMutex
 }
 
@@ -93,6 +95,15 @@ func (handlers *channelHandlers) AddExchangeUnbind(
 	handlers.exchangeUnbind = middleware(handlers.exchangeUnbind)
 }
 
+func (handlers *channelHandlers) AddQoS(
+	middleware amqpMiddleware.QoS,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.qos = middleware(handlers.qos)
+}
+
 func newChannelHandlers(conn *Connection) *channelHandlers {
 	baseBuilder := &middlewareBaseBuilder{
 		connection: conn,
@@ -108,6 +119,7 @@ func newChannelHandlers(conn *Connection) *channelHandlers {
 		exchangeDelete:  baseBuilder.createBaseHandlerExchangeDelete(),
 		exchangeBind:    baseBuilder.createBaseHandlerExchangeBind(),
 		exchangeUnbind:  baseBuilder.createBaseHandlerExchangeUnbind(),
+		qos: 			 baseBuilder.createBaseHandlerQoS(),
 		lock:            new(sync.RWMutex),
 	}
 }

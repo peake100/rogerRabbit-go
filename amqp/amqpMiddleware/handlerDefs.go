@@ -28,3 +28,7 @@ type HandlerExchangeDelete func(args *ArgsExchangeDelete) error
 type HandlerExchangeBind func(args *ArgsExchangeBind) error
 
 type HandlerExchangeUnbind func(args *ArgsExchangeUnbind) error
+
+type HandlerQoS func(args *ArgsQoS) error
+
+type HandlerConfirms func(args *ArgsConfirms) error

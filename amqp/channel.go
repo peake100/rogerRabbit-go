@@ -5,18 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
+	"github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
 	"sync/atomic"
+	"testing"
 )
-
-// Holds current qos settings for the channel so they can be re-instated on reconnectMiddleware.
-type qosSettings struct {
-	prefetchCount int
-	prefetchSize  int
-	global        bool
-}
 
 // Enum-like for acknowledgement types.
 type ackMethod int
@@ -64,10 +59,6 @@ type channelSettings struct {
 	// channels will be put into publisher confirms mode.
 	publisherConfirms bool
 
-	// If not nil, these are the latest qos settings passed to the QoS() method for the
-	// channel, and will be-reapplied to any new channel created due to a disconnection
-	// event.
-	qos *qosSettings
 	// Whether consumer flow to this channel is open. When false, re-established
 	// channels will immediately be put into pause mode.
 	flowActive bool
@@ -94,6 +85,8 @@ type channelSettings struct {
 	tagConsumeOffset uint64
 	// The highest ack we have received
 	tagLatestDeliveryAck uint64
+
+	defaultMiddlewares *ChannelTestingDefaultMiddlewares
 }
 
 // Implements transport for *streadway.Channel.
@@ -165,7 +158,6 @@ func (transport *transportChannel) reconnectApplyChannelSettings() error {
 		transport.logger.Debug().
 			Bool("CONSUMER_FLOW_ACTIVE", transport.settings.flowActive).
 			Bool("CONFIRMS", transport.settings.publisherConfirms).
-			Interface("QOS", transport.settings.qos).
 			Msg("applying channel settings")
 	}
 
@@ -185,15 +177,6 @@ func (transport *transportChannel) reconnectApplyChannelSettings() error {
 		err := transport.Channel.Confirm(false)
 		if err != nil {
 			return fmt.Errorf("error putting into confirm mode: %w", err)
-		}
-	}
-
-	// If qos settings were given, apply them.
-	qos := transport.settings.qos
-	if qos != nil {
-		err := transport.Channel.Qos(qos.prefetchCount, qos.prefetchSize, qos.global)
-		if err != nil {
-			return fmt.Errorf("error applying qos settings: %w", err)
 		}
 	}
 
@@ -495,21 +478,14 @@ greater as described by benchmarks on RabbitMQ.
 http://www.rabbitmq.com/blog/2012/04/25/rabbitmq-performance-measurements-part-2/
 */
 func (channel *Channel) Qos(prefetchCount, prefetchSize int, global bool) error {
+	args := &amqpMiddleware.ArgsQoS{
+		PrefetchCount: prefetchCount,
+		PrefetchSize:  prefetchSize,
+		Global:        global,
+	}
+
 	op := func() error {
-		opErr := channel.transportChannel.Qos(prefetchCount, prefetchSize, global)
-		if opErr != nil {
-			return opErr
-		}
-
-		// remember these settings so we can configure re-established channels the same
-		// way.
-		channel.transportChannel.settings.qos = &qosSettings{
-			prefetchCount: prefetchCount,
-			prefetchSize:  prefetchSize,
-			global:        global,
-		}
-
-		return nil
+		return channel.transportChannel.handlers.qos(args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, op, true)
@@ -1755,6 +1731,34 @@ func (channel *Channel) TxRollback() error {
 	panic(panicTransactionMessage("TxRollback"))
 }
 
-func (channel *Channel) Hooks() *channelHandlers {
+/*
+Namespace object with methods for registering middleware. Middleware will be called
+in the order it is registered.
+*/
+func (channel *Channel) Middleware() *channelHandlers {
 	return channel.transportChannel.handlers
+}
+
+type ChannelTestingDefaultMiddlewares struct {
+	QoS *defaultMiddlewares.QoSMiddleware
+	RouteDeclaration *defaultMiddlewares.RouteDeclarationMiddleware
+}
+
+// Holds testing information and methods for channels.
+type ChannelTesting struct {
+	*transportTester
+
+	// The middleware objects registered to the channel during channel creation.
+	DefaultMiddlewares *ChannelTestingDefaultMiddlewares
+}
+
+// Test methods for the transport
+func (channel *Channel) Test(t *testing.T) *ChannelTesting {
+	return &ChannelTesting{
+		transportTester:    &transportTester{
+			t,
+			channel.transportManager,
+		},
+		DefaultMiddlewares: channel.transportChannel.settings.defaultMiddlewares,
+	}
 }

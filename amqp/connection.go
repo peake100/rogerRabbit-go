@@ -72,6 +72,34 @@ func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 	return channel, err
 }
 
+func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
+	if config.NoDefaultMiddleware {
+		return
+	}
+
+	handlers := channel.transportChannel.handlers
+	middlewareStorage := channel.transportChannel.settings.defaultMiddlewares
+
+	// Qos middleware
+	qosMiddleware := defaultMiddlewares.NewQosMiddleware()
+	handlers.AddReconnect(qosMiddleware.Reconnect)
+	handlers.AddQoS(qosMiddleware.Qos)
+	middlewareStorage.QoS = qosMiddleware
+
+	// Route declaration middleware
+	declarationMiddleware := defaultMiddlewares.NewRouteDeclarationMiddleware()
+	handlers.AddReconnect(declarationMiddleware.Reconnect)
+	handlers.AddQueueDeclare(declarationMiddleware.QueueDeclare)
+	handlers.AddQueueDelete(declarationMiddleware.QueueDelete)
+	handlers.AddQueueBind(declarationMiddleware.QueueBind)
+	handlers.AddQueueUnbind(declarationMiddleware.QueueUnbind)
+	handlers.AddExchangeDeclare(declarationMiddleware.ExchangeDeclare)
+	handlers.AddExchangeDelete(declarationMiddleware.ExchangeDelete)
+	handlers.AddExchangeBind(declarationMiddleware.ExchangeBind)
+	handlers.AddExchangeUnbind(declarationMiddleware.ExchangeUnbind)
+	middlewareStorage.RouteDeclaration = declarationMiddleware
+}
+
 /*
 ROGER NOTE: Unlike the normal channels, roger channels will automatically reconnectMiddleware on
 all errors until Channel.Close() is called.
@@ -91,13 +119,15 @@ func (conn *Connection) Channel() (*Channel, error) {
 		Channel:   nil,
 		rogerConn: conn,
 		settings: channelSettings{
-			// Channels start with their flow active
-			flowActive:        true,
 			publisherConfirms: false,
-			tagPublishCount:   &initialPublishCount,
-			tagPublishOffset:  0,
-			tagConsumeCount:   &initialConsumeCount,
-			tagConsumeOffset:  0,
+			// Channels start with their flow active
+			flowActive:           true,
+			tagPublishCount:      &initialPublishCount,
+			tagPublishOffset:     0,
+			tagConsumeCount:      &initialConsumeCount,
+			tagConsumeOffset:     0,
+			tagLatestDeliveryAck: 0,
+			defaultMiddlewares:   new(ChannelTestingDefaultMiddlewares),
 		},
 		flowActiveLock: new(sync.Mutex),
 		handlers:       newChannelHandlers(conn),
@@ -108,21 +138,6 @@ func (conn *Connection) Channel() (*Channel, error) {
 		eventRelaysSetupComplete: new(sync.WaitGroup),
 		eventRelaysGo:            new(sync.WaitGroup),
 		logger:                   zerolog.Logger{},
-	}
-
-	if !conn.transportConn.dialConfig.NoDefaultHooks {
-		handlers := transportChan.handlers
-		declarationMiddleware := defaultMiddlewares.NewRouteDeclarationMiddleware()
-
-		handlers.AddReconnect(declarationMiddleware.Reconnect)
-		handlers.AddQueueDeclare(declarationMiddleware.QueueDeclare)
-		handlers.AddQueueDelete(declarationMiddleware.QueueDelete)
-		handlers.AddQueueBind(declarationMiddleware.QueueBind)
-		handlers.AddQueueUnbind(declarationMiddleware.QueueUnbind)
-		handlers.AddExchangeDeclare(declarationMiddleware.ExchangeDeclare)
-		handlers.AddExchangeDelete(declarationMiddleware.ExchangeDelete)
-		handlers.AddExchangeBind(declarationMiddleware.ExchangeBind)
-		handlers.AddExchangeUnbind(declarationMiddleware.ExchangeUnbind)
 	}
 
 	// Add 1 to this WaitGroup so it can be released on the initial channel establish.
@@ -136,6 +151,8 @@ func (conn *Connection) Channel() (*Channel, error) {
 		transportChannel: transportChan,
 		transportManager: manager,
 	}
+
+	newChannelApplyDefaultMiddleware(rogerChannel, conn.transportConn.dialConfig)
 
 	// Try and establish a channel using the connection's context.
 	err := rogerChannel.reconnect(conn.ctx, true)

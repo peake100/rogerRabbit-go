@@ -157,3 +157,17 @@ func (builder *middlewareBaseBuilder) createBaseHandlerExchangeUnbind() (
 
 	return handler
 }
+
+func (builder *middlewareBaseBuilder) createBaseHandlerQoS() (
+	handler amqpMiddleware.HandlerQoS,
+) {
+	handler = func(args *amqpMiddleware.ArgsQoS) error {
+		return builder.currentChan.Qos(
+			args.PrefetchCount,
+			args.PrefetchSize,
+			args.Global,
+		)
+	}
+
+	return handler
+}

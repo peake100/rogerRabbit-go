@@ -1,6 +1,7 @@
 package amqpMiddleware
 
 // Middleware definitions for channel methods.
+
 type Reconnect = func(next HandlerReconnect) HandlerReconnect
 
 type QueueDeclare = func(next HandlerQueueDeclare) HandlerQueueDeclare
@@ -18,3 +19,7 @@ type ExchangeDelete func(next HandlerExchangeDelete) HandlerExchangeDelete
 type ExchangeBind func(next HandlerExchangeBind) HandlerExchangeBind
 
 type ExchangeUnbind func(next HandlerExchangeUnbind) HandlerExchangeUnbind
+
+type QoS func(next HandlerQoS) HandlerQoS
+
+type Confirms func(next HandlerConfirms) HandlerConfirms

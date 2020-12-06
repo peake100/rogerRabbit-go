@@ -156,7 +156,7 @@ func (middle *RouteDeclarationMiddleware) removeExchangeBindings(
 	for _, thisBinding := range middle.bindExchanges {
 		// If there is a routing Key to match, then the source and destination exchanges
 		// must match too (so we don't end up removing a binding with the same routing
-		// Key between a different set of exchanges).
+		// Key between a different isSet of exchanges).
 		if removeKeyMatch &&
 			thisBinding.Key == key &&
 			thisBinding.Source == source &&

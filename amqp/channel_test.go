@@ -1659,12 +1659,16 @@ func (suite *ChannelMethodsSuite) Test0330_QoS_PrefetchCount() {
 	err := suite.ChannelConsume.Qos(10, 0, false)
 	suite.NoError(err, "QoS")
 
+	qosMiddleware := suite.ChannelConsume.Test(suite.T()).DefaultMiddlewares.QoS
+
 	suite.Equal(
-		10, suite.ChannelConsume.transportChannel.settings.qos.prefetchCount,
+		10, qosMiddleware.QosArgs().PrefetchCount, "prefetch count",
 	)
 	suite.Equal(
-		0, suite.ChannelConsume.transportChannel.settings.qos.prefetchSize,
+		0, qosMiddleware.QosArgs().PrefetchSize,"prefetch size",
 	)
+
+	suite.True(qosMiddleware.IsSet(), "QoS was set")
 }
 
 func (suite *ChannelMethodsSuite) Test0340_QoS_OverReconnect() {

@@ -71,3 +71,13 @@ type ArgsExchangeUnbind struct {
 	NoWait      bool
 	Args        streadway.Table
 }
+
+type ArgsQoS struct {
+	PrefetchCount int
+	PrefetchSize int
+	Global bool
+}
+
+type ArgsConfirms struct {
+	ConfirmsOn bool
+}
