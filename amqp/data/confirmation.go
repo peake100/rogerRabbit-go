@@ -1,4 +1,4 @@
-package amqp
+package data
 
 import streadway "github.com/streadway/amqp"
 

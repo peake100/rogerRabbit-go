@@ -1,6 +1,7 @@
 package amqpMiddleware
 
 import (
+	"github.com/peake100/rogerRabbit-go/amqp/data"
 	streadway "github.com/streadway/amqp"
 )
 
@@ -80,4 +81,20 @@ type ArgsQoS struct {
 
 type ArgsConfirms struct {
 	NoWait bool
+}
+
+type ArgsPublish struct {
+	Exchange string
+	Key string
+	Mandatory bool
+	Immediate bool
+	Msg streadway.Publishing
+}
+
+type ArgsNotifyPublish struct {
+	Confirm chan data.Confirmation
+}
+
+type EventNotifyPublish struct {
+	Confirmation data.Confirmation
 }

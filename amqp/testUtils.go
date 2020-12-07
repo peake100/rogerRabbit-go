@@ -5,6 +5,7 @@ package amqp
 import (
 	"context"
 	"fmt"
+	"github.com/peake100/rogerRabbit-go/amqp/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -214,7 +215,7 @@ func (suite *ChannelSuiteBase) publishMessagesSend(
 func (suite *ChannelSuiteBase) publishMessagesConfirm(
 	t *testing.T,
 	count int,
-	confirmationEvents <-chan Confirmation,
+	confirmationEvents <-chan data.Confirmation,
 	allConfirmed chan struct{},
 ) {
 	assert := assert.New(t)
@@ -243,7 +244,7 @@ func (suite *ChannelSuiteBase) PublishMessages(
 		t.FailNow()
 	}
 
-	confirmationEvents := make(chan Confirmation, count)
+	confirmationEvents := make(chan data.Confirmation, count)
 	suite.ChannelPublish.NotifyPublish(confirmationEvents)
 
 	go suite.publishMessagesSend(t, exchange, key, count)

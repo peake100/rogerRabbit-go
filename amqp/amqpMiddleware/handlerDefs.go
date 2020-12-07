@@ -2,6 +2,7 @@ package amqpMiddleware
 
 import (
 	"context"
+	"github.com/peake100/rogerRabbit-go/amqp/data"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
@@ -32,3 +33,9 @@ type HandlerExchangeUnbind func(args *ArgsExchangeUnbind) error
 type HandlerQoS func(args *ArgsQoS) error
 
 type HandlerConfirm func(args *ArgsConfirms) error
+
+type HandlerPublish func(args *ArgsPublish) error
+
+type HandlerNotifyPublish func(args *ArgsNotifyPublish) chan data.Confirmation
+
+type HandlerNotifyPublishEvent func(event *EventNotifyPublish)

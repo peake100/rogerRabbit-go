@@ -6,6 +6,8 @@ import (
 )
 
 type channelHandlers struct {
+	// METHODS MIDDLEWARE
+
 	reconnect    amqpMiddleware.HandlerReconnect
 	queueDeclare amqpMiddleware.HandlerQueueDeclare
 	queueDelete  amqpMiddleware.HandlerQueueDelete
@@ -19,6 +21,14 @@ type channelHandlers struct {
 
 	qos amqpMiddleware.HandlerQoS
 	confirm amqpMiddleware.HandlerConfirm
+
+	notifyPublish amqpMiddleware.HandlerNotifyPublish
+
+	publish amqpMiddleware.HandlerPublish
+
+	// EVENTS MIDDLEWARE
+
+	notifyPublishEventMiddleware []amqpMiddleware.NotifyPublishEvent
 
 	lock *sync.RWMutex
 }
@@ -114,9 +124,40 @@ func (handlers *channelHandlers) AddConfirm(
 	handlers.confirm = middleware(handlers.confirm)
 }
 
-func newChannelHandlers(conn *Connection) *channelHandlers {
+func (handlers *channelHandlers) AddPublish(
+	middleware amqpMiddleware.Publish,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.publish = middleware(handlers.publish)
+}
+
+func (handlers *channelHandlers) AddNotifyPublish(
+	middleware amqpMiddleware.NotifyPublish,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyPublish = middleware(handlers.notifyPublish)
+}
+
+func (handlers *channelHandlers) AddNotifyPublishEvent(
+	middleware amqpMiddleware.NotifyPublishEvent,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyPublishEventMiddleware = append(
+		handlers.notifyPublishEventMiddleware, middleware,
+	)
+}
+
+
+func newChannelHandlers(conn *Connection, channel *Channel) *channelHandlers {
 	baseBuilder := &middlewareBaseBuilder{
 		connection: conn,
+		channel: channel,
 	}
 
 	return &channelHandlers{
@@ -131,6 +172,11 @@ func newChannelHandlers(conn *Connection) *channelHandlers {
 		exchangeUnbind:  baseBuilder.createBaseHandlerExchangeUnbind(),
 		qos: 			 baseBuilder.createBaseHandlerQoS(),
 		confirm: 		 baseBuilder.createBaseHandlerConfirm(),
+		publish: 		 baseBuilder.createBaseHandlerPublish(),
+		notifyPublish:   baseBuilder.createBaseHandlerNotifyPublish(),
+
+		notifyPublishEventMiddleware: nil,
+
 		lock:            new(sync.RWMutex),
 	}
 }

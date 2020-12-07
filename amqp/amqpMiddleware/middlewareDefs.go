@@ -23,3 +23,9 @@ type ExchangeUnbind func(next HandlerExchangeUnbind) HandlerExchangeUnbind
 type QoS func(next HandlerQoS) HandlerQoS
 
 type Confirm func(next HandlerConfirm) HandlerConfirm
+
+type Publish func(next HandlerPublish) HandlerPublish
+
+type NotifyPublish func(next HandlerNotifyPublish) HandlerNotifyPublish
+
+type NotifyPublishEvent func(next HandlerNotifyPublishEvent) HandlerNotifyPublishEvent

@@ -2,6 +2,8 @@ package amqp
 
 import (
 	"context"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
+	"github.com/peake100/rogerRabbit-go/amqp/data"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync/atomic"
@@ -247,18 +249,27 @@ func (relay *consumeRelay) Shutdown() error {
 // Relays Deliveries across channel disconnects.
 type notifyPublishRelay struct {
 	// Delivery channel to pass deliveries back to the client.
-	CallerConfirmations chan<- Confirmation
+	CallerConfirmations chan<- data.Confirmation
 
-	// The number of confirmations we have sent on this relay.
-	confirmsSent uint64
-
-	// The delivery tag offset to add to our confirmations.
-	deliveryTagOffset uint64
 	// The current delivery channel coming from the broker.
 	brokerConfirmations <-chan streadway.Confirmation
 
+	// Middleware for notify publish.
+	middleware []amqpMiddleware.NotifyPublishEvent
+	// Handler for notify publish events.
+	handler amqpMiddleware.HandlerNotifyPublishEvent
+
 	// Logger
 	logger zerolog.Logger
+}
+
+// Creates the innermost handler for the event send
+func (relay *notifyPublishRelay) baseHandler() (
+	handler amqpMiddleware.HandlerNotifyPublishEvent,
+) {
+	return func(event *amqpMiddleware.EventNotifyPublish) {
+		relay.CallerConfirmations <- event.Confirmation
+	}
 }
 
 func (relay *notifyPublishRelay) Logger(parent zerolog.Logger) zerolog.Logger {
@@ -277,13 +288,10 @@ func (relay *notifyPublishRelay) SetupForRelayLeg(
 	)
 	relay.brokerConfirmations = newChannel.NotifyPublish(brokerConfirmations)
 
-	// The offset is the number of messages our last channel published.
-	relay.deliveryTagOffset = *settings.tagPublishCount
-
 	return nil
 }
 
-func (relay *notifyPublishRelay) logConfirmation(confirmation Confirmation) {
+func (relay *notifyPublishRelay) logConfirmation(confirmation data.Confirmation) {
 	relay.logger.Debug().
 		Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
 		Bool("ACK", confirmation.Ack).
@@ -292,45 +300,17 @@ func (relay *notifyPublishRelay) logConfirmation(confirmation Confirmation) {
 }
 
 func (relay *notifyPublishRelay) RunRelayLeg() (done bool, err error) {
-	// The goal of this library is to simulate the behavior of streadway/amqp. Since
-	// the streadway lib guarantees that all confirms will be in an ascending, ordered,
-	// unbroken stream, we need to handle a case where a channel was terminated before
-	// all deliveries were acknowledged, and continuing to send confirmations would
-	// result in a DeliveryTag gap.
-	//
-	// It's possible that when the last connection went down, we missed some
-	// confirmations. We are going to check that the offset matches the number we
-	// have sent so far and, if not, nack the difference. We are only going to do this
-	// on re-connections to better mock the behavior of the original lib, where if the
-	// channel is forcibly closed, the final messages will not be confirmed.
-	for relay.confirmsSent < relay.deliveryTagOffset {
-		confirmation := Confirmation{
-			Confirmation: streadway.Confirmation{
-				DeliveryTag: relay.confirmsSent + 1,
-				Ack:         false,
-			},
-			DisconnectOrphan: true,
-		}
-		if relay.logger.Debug().Enabled() {
-			relay.logConfirmation(confirmation)
-		}
-		relay.CallerConfirmations <- confirmation
-		relay.confirmsSent++
-	}
-
 	// Range over the confirmations from the broker.
 	for brokerConf := range relay.brokerConfirmations {
-		brokerConf.DeliveryTag += relay.deliveryTagOffset
 		// Apply the offset to the delivery tag.
-		confirmation := Confirmation{
+		confirmation := data.Confirmation{
 			Confirmation:     brokerConf,
 			DisconnectOrphan: false,
 		}
 		if relay.logger.Debug().Enabled() {
 			relay.logConfirmation(confirmation)
 		}
-		relay.CallerConfirmations <- confirmation
-		relay.confirmsSent++
+		relay.handler(&amqpMiddleware.EventNotifyPublish{Confirmation: confirmation})
 	}
 
 	// Otherwise continue to the next channel.
@@ -340,6 +320,24 @@ func (relay *notifyPublishRelay) RunRelayLeg() (done bool, err error) {
 func (relay *notifyPublishRelay) Shutdown() error {
 	close(relay.CallerConfirmations)
 	return nil
+}
+
+func newNotifyPublishRelay(
+	callerConfirmations chan<- data.Confirmation,
+	middleware []amqpMiddleware.NotifyPublishEvent,
+) *notifyPublishRelay {
+	// Create the relay
+	relay := &notifyPublishRelay{
+		CallerConfirmations: callerConfirmations,
+	}
+
+	// Apply all middleware to the handler
+	relay.handler = relay.baseHandler()
+	for _, thisMiddleware := range middleware {
+		relay.handler = thisMiddleware(relay.handler)
+	}
+
+	return relay
 }
 
 // Relays return notification to the cl

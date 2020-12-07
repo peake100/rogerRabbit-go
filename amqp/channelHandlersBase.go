@@ -3,20 +3,21 @@ package amqp
 import (
 	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
+	"github.com/peake100/rogerRabbit-go/amqp/data"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
 
 // Builds the base method handlers for a given robust connection + channel
 type middlewareBaseBuilder struct {
-	connection  *Connection
-	currentChan *streadway.Channel
+	connection     *Connection
+	channel        *Channel
+	underlyingChan *streadway.Channel
 }
 
 func (builder *middlewareBaseBuilder) createBaseHandlerReconnect(
 	connection *Connection,
 ) (handler amqpMiddleware.HandlerReconnect) {
-
 	handler = func(
 		ctx context.Context, logger zerolog.Logger,
 	) (*streadway.Channel, error) {
@@ -24,7 +25,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerReconnect(
 		if err != nil {
 			return nil, err
 		}
-		builder.currentChan = channel
+		builder.underlyingChan = channel
 		return channel, nil
 	}
 
@@ -35,7 +36,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerQueueDeclare() (
 	handler amqpMiddleware.HandlerQueueDeclare,
 ) {
 	handler = func(args *amqpMiddleware.ArgsQueueDeclare) (Queue, error) {
-		return builder.currentChan.QueueDeclare(
+		return builder.underlyingChan.QueueDeclare(
 			args.Name,
 			args.Durable,
 			args.AutoDelete,
@@ -52,7 +53,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerQueueDelete() (
 	handler amqpMiddleware.HandlerQueueDelete,
 ) {
 	handler = func(args *amqpMiddleware.ArgsQueueDelete) (int, error) {
-		return builder.currentChan.QueueDelete(
+		return builder.underlyingChan.QueueDelete(
 			args.Name,
 			args.IfUnused,
 			args.IfEmpty,
@@ -67,7 +68,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerQueueBind() (
 	handler amqpMiddleware.HandlerQueueBind,
 ) {
 	handler = func(args *amqpMiddleware.ArgsQueueBind) error {
-		return builder.currentChan.QueueBind(
+		return builder.underlyingChan.QueueBind(
 			args.Name,
 			args.Key,
 			args.Exchange,
@@ -83,7 +84,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerQueueUnbind() (
 	handler amqpMiddleware.HandlerQueueUnbind,
 ) {
 	handler = func(args *amqpMiddleware.ArgsQueueUnbind) error {
-		return builder.currentChan.QueueUnbind(
+		return builder.underlyingChan.QueueUnbind(
 			args.Name,
 			args.Key,
 			args.Exchange,
@@ -98,7 +99,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerExchangeDeclare() (
 	handler amqpMiddleware.HandlerExchangeDeclare,
 ) {
 	handler = func(args *amqpMiddleware.ArgsExchangeDeclare) error {
-		return builder.currentChan.ExchangeDeclare(
+		return builder.underlyingChan.ExchangeDeclare(
 			args.Name,
 			args.Kind,
 			args.Durable,
@@ -116,7 +117,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerExchangeDelete() (
 	handler amqpMiddleware.HandlerExchangeDelete,
 ) {
 	handler = func(args *amqpMiddleware.ArgsExchangeDelete) error {
-		return builder.currentChan.ExchangeDelete(
+		return builder.underlyingChan.ExchangeDelete(
 			args.Name,
 			args.IfUnused,
 			args.NoWait,
@@ -130,7 +131,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerExchangeBind() (
 	handler amqpMiddleware.HandlerExchangeBind,
 ) {
 	handler = func(args *amqpMiddleware.ArgsExchangeBind) error {
-		return builder.currentChan.ExchangeBind(
+		return builder.underlyingChan.ExchangeBind(
 			args.Destination,
 			args.Key,
 			args.Source,
@@ -146,7 +147,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerExchangeUnbind() (
 	handler amqpMiddleware.HandlerExchangeUnbind,
 ) {
 	handler = func(args *amqpMiddleware.ArgsExchangeUnbind) error {
-		return builder.currentChan.ExchangeUnbind(
+		return builder.underlyingChan.ExchangeUnbind(
 			args.Destination,
 			args.Key,
 			args.Source,
@@ -162,7 +163,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerQoS() (
 	handler amqpMiddleware.HandlerQoS,
 ) {
 	handler = func(args *amqpMiddleware.ArgsQoS) error {
-		return builder.currentChan.Qos(
+		return builder.underlyingChan.Qos(
 			args.PrefetchCount,
 			args.PrefetchSize,
 			args.Global,
@@ -176,9 +177,50 @@ func (builder *middlewareBaseBuilder) createBaseHandlerConfirm() (
 	handler amqpMiddleware.HandlerConfirm,
 ) {
 	handler = func(args *amqpMiddleware.ArgsConfirms) error {
-		return builder.currentChan.Confirm(
+		return builder.underlyingChan.Confirm(
 			args.NoWait,
 		)
+	}
+
+	return handler
+}
+
+func (builder *middlewareBaseBuilder) createBaseHandlerPublish() (
+	handler amqpMiddleware.HandlerPublish,
+) {
+	handler = func(args *amqpMiddleware.ArgsPublish) error {
+		return builder.underlyingChan.Publish(
+			args.Exchange,
+			args.Key,
+			args.Mandatory,
+			args.Immediate,
+			args.Msg,
+		)
+	}
+
+	return handler
+}
+
+func (builder *middlewareBaseBuilder) createBaseHandlerNotifyPublish() (
+	handler amqpMiddleware.HandlerNotifyPublish,
+) {
+	handler = func(args *amqpMiddleware.ArgsNotifyPublish) chan data.Confirmation {
+		channel := builder.channel
+
+		relay := newNotifyPublishRelay(
+			args.Confirm,
+			channel.transportChannel.handlers.notifyPublishEventMiddleware,
+		)
+
+		err := channel.setupAndLaunchEventRelay(relay)
+		// On an error, close the channel.
+		if err != nil {
+			channel.logger.Error().
+				Err(err).
+				Msg("error setting up NotifyPublish event relay")
+			close(args.Confirm)
+		}
+		return args.Confirm
 	}
 
 	return handler

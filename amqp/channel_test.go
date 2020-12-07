@@ -5,6 +5,7 @@ package amqp
 import (
 	"context"
 	"fmt"
+	"github.com/peake100/rogerRabbit-go/amqp/data"
 	streadway "github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -714,7 +715,7 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Basic() {
 		suite.T().FailNow()
 	}
 	publishCount := 10
-	notifyPublish := make(chan Confirmation, publishCount)
+	notifyPublish := make(chan data.Confirmation, publishCount)
 	suite.ChannelPublish.NotifyPublish(notifyPublish)
 
 	allReceived := make(chan struct{})
@@ -787,7 +788,7 @@ func (suite *ChannelMethodsSuite) Test0150_NotifyPublish_Reconnections() {
 		suite.T().FailNow()
 	}
 	publishCount := 10
-	notifyPublish := make(chan Confirmation, publishCount)
+	notifyPublish := make(chan data.Confirmation, publishCount)
 	suite.ChannelPublish.NotifyPublish(notifyPublish)
 
 	allReceived := make(chan struct{})
@@ -1093,6 +1094,7 @@ func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
 				},
 			)
 
+			suite.T().Logf("PUBLISHED MESSAGE %v", i)
 			suite.NoErrorf(err, "publish message %v", i)
 		}
 	}()
@@ -1151,7 +1153,7 @@ func (suite *ChannelMethodsSuite) Test0190_QueuePurge() {
 	}
 
 	publishCount := 2
-	notifyPublish := make(chan Confirmation, publishCount)
+	notifyPublish := make(chan data.Confirmation, publishCount)
 
 	suite.ChannelPublish.NotifyPublish(notifyPublish)
 
@@ -1289,7 +1291,7 @@ func (suite *ChannelMethodsSuite) Test0240_QueueBind() {
 		suite.T().FailNow()
 	}
 
-	confirmations := make(chan Confirmation, 5)
+	confirmations := make(chan data.Confirmation, 5)
 	suite.ChannelPublish.NotifyPublish(confirmations)
 
 	// lets test publishing and getting a message on the exchange

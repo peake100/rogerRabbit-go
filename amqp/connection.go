@@ -92,6 +92,14 @@ func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 	handlers.AddConfirm(confirmMiddleware.Confirm)
 	middlewareStorage.Confirm = confirmMiddleware
 
+	// Publish Tags middleware
+	publishTagsMiddleware := defaultMiddlewares.NewPublishTagsMiddleware()
+	handlers.AddReconnect(publishTagsMiddleware.Reconnect)
+	handlers.AddConfirm(publishTagsMiddleware.Confirm)
+	handlers.AddPublish(publishTagsMiddleware.Publish)
+	handlers.AddNotifyPublishEvent(publishTagsMiddleware.NotifyPublishEvent)
+	middlewareStorage.PublishTags = publishTagsMiddleware
+
 	// Route declaration middleware
 	declarationMiddleware := defaultMiddlewares.NewRouteDeclarationMiddleware()
 	handlers.AddReconnect(declarationMiddleware.Reconnect)
@@ -118,7 +126,6 @@ invalid and a new Channel should be opened.
 
 */
 func (conn *Connection) Channel() (*Channel, error) {
-	initialPublishCount := uint64(0)
 	initialConsumeCount := uint64(0)
 
 	transportChan := &transportChannel{
@@ -127,15 +134,13 @@ func (conn *Connection) Channel() (*Channel, error) {
 		settings: channelSettings{
 			// Channels start with their flow active
 			flowActive:           true,
-			tagPublishCount:      &initialPublishCount,
-			tagPublishOffset:     0,
 			tagConsumeCount:      &initialConsumeCount,
 			tagConsumeOffset:     0,
 			tagLatestDeliveryAck: 0,
 			defaultMiddlewares:   new(ChannelTestingDefaultMiddlewares),
 		},
 		flowActiveLock: new(sync.Mutex),
-		handlers:       newChannelHandlers(conn),
+		handlers:       nil,
 		// Make a decently-buffered acknowledgement channel
 		ackChan:                  make(chan ackInfo, 128),
 		eventRelaysRunning:       new(sync.WaitGroup),
@@ -157,6 +162,9 @@ func (conn *Connection) Channel() (*Channel, error) {
 		transportManager: manager,
 	}
 
+	// Initialize our channel handlers with the new channel
+	transportChan.handlers = newChannelHandlers(conn, rogerChannel)
+	// Add default middleware around these handlers.
 	newChannelApplyDefaultMiddleware(rogerChannel, conn.transportConn.dialConfig)
 
 	// Try and establish a channel using the connection's context.

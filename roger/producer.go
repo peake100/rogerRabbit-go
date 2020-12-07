@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
+	"github.com/peake100/rogerRabbit-go/amqp/data"
 	"sync"
 )
 
@@ -99,7 +100,7 @@ type Producer struct {
 	// channel after it is passed to the producer may result in unexpected behavior.
 	channel *amqp.Channel
 	// Channel receiving events from channel.NotifyPublish.
-	publishEvents chan amqp.Confirmation
+	publishEvents chan data.Confirmation
 
 	// Internal Queue for messages waiting to be published.
 	publishQueue chan *publishOrder
@@ -358,7 +359,7 @@ func NewProducer(amqpChannel *amqp.Channel, opts *ProducerOpts) *Producer {
 		ctxCancel:     cancel,
 		publishLock:   new(sync.RWMutex),
 		channel:       amqpChannel,
-		publishEvents: make(chan amqp.Confirmation, opts.internalQueueCapacity),
+		publishEvents: make(chan data.Confirmation, opts.internalQueueCapacity),
 		publishQueue:  make(chan *publishOrder, opts.internalQueueCapacity),
 		confirmQueue:  make(chan *publishOrder, opts.internalQueueCapacity),
 		opts:          *opts,

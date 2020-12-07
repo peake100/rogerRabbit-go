@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
+	"github.com/peake100/rogerRabbit-go/amqp/data"
 	"github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
@@ -59,22 +60,6 @@ type channelSettings struct {
 	// channels will immediately be put into pause mode.
 	flowActive bool
 
-	// The current delivery tag for this robust connection. Each time a message is
-	// successfully published, this value should be atomically incremented. This tag
-	// will function like the normal channel tag, AND WILL NOT RESET when the underlying
-	// channel is re-established. Whenever we reconnectMiddleware, the broker will reset and begin
-	// delivery tags at 1. That means that we are going to need to track how the current
-	// underlying channel's delivery tag matches up against our user-facing tags.
-	//
-	// The goal is to simulate the normal channel's behavior and continue to send an
-	// unbroken stream of incrementing delivery tags, even during multiple connection
-	// interruptions.
-	//
-	// We use a pointer here to support atomic operations.
-	tagPublishCount *uint64
-	// Offset to add to a given tag to get it's actual broker delivery tag for the
-	// current channel.
-	tagPublishOffset uint64
 	// As tagPublishCount, but for delivery tags of delivered messages.
 	tagConsumeCount *uint64
 	// As tagConsumeCount, but for consumption tags.
@@ -171,7 +156,6 @@ func (transport *transportChannel) reconnectApplyChannelSettings() error {
 }
 
 func (transport *transportChannel) reconnectUpdateTagTrackers() {
-	transport.settings.tagPublishOffset = *transport.settings.tagPublishCount
 	transport.settings.tagConsumeOffset = *transport.settings.tagConsumeCount
 }
 
@@ -1084,40 +1068,17 @@ func (channel *Channel) Publish(
 	immediate bool,
 	msg Publishing,
 ) (err error) {
+	args := &amqpMiddleware.ArgsPublish{
+		Exchange:  exchange,
+		Key:       key,
+		Mandatory: mandatory,
+		Immediate: immediate,
+		Msg:       msg,
+	}
+
 	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func() error {
-		opErr := channel.transportChannel.Publish(
-			exchange,
-			key,
-			mandatory,
-			immediate,
-			msg,
-		)
-		if opErr != nil {
-			return opErr
-		}
-
-		if channel.logger.Debug().Enabled() {
-			channel.logger.Debug().
-				Str("EXCHANGE", exchange).
-				Str("ROUTING_KEY", key).
-				Bytes("BODY", msg.Body).
-				Str("MESSAGE_ID", msg.MessageId).
-				Msg("published message")
-		}
-
-		// Return if publishing confirms is not turned on
-		if !channel.transportChannel.settings.defaultMiddlewares.Confirm.ConfirmsOn() {
-			return nil
-		}
-
-		// If there was no error, and we are in confirms mode, increment the current
-		// delivery tag. We need to do this atomically so if publish is getting called
-		// in more than one goroutine, we don't have a data race condition and
-		// under-publishCount our tags.
-		atomic.AddUint64(channel.transportChannel.settings.tagPublishCount, 1)
-
-		return opErr
+		return channel.transportChannel.handlers.publish(args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -1397,20 +1358,13 @@ It's advisable to wait for all Confirmations to arrive before calling
 Channel.Close() or Connection.Close().
 
 */
-func (channel *Channel) NotifyPublish(confirm chan Confirmation) chan Confirmation {
+func (channel *Channel) NotifyPublish(
+	confirm chan data.Confirmation,
+) chan data.Confirmation {
 	// Setup and launch the event relay that will handle these events across multiple
 	// connections.
-	relay := &notifyPublishRelay{
-		CallerConfirmations: confirm,
-	}
-
-	err := channel.setupAndLaunchEventRelay(relay)
-	// On an error, close the channel.
-	if err != nil {
-		channel.logger.Err(err).Msg("error setting up NotifyPublish event relay")
-		close(confirm)
-	}
-	return confirm
+	args := &amqpMiddleware.ArgsNotifyPublish{Confirm: confirm}
+	return channel.transportChannel.handlers.notifyPublish(args)
 }
 
 // Closes confirmation tag channels for NotifyConfirm and NotifyConfirmOrOrphaned.
@@ -1432,7 +1386,7 @@ mainLoop:
 }
 
 func notifyConfirmHandleAckAndNack(
-	confirmation Confirmation, ack, nack chan uint64, logger zerolog.Logger,
+	confirmation data.Confirmation, ack, nack chan uint64, logger zerolog.Logger,
 ) {
 	if confirmation.Ack {
 		if logger.Debug().Enabled() {
@@ -1470,7 +1424,7 @@ For strict ordering, use NotifyPublish instead.
 func (channel *Channel) NotifyConfirm(
 	ack, nack chan uint64,
 ) (chan uint64, chan uint64) {
-	confirmsEvents := channel.NotifyPublish(make(chan Confirmation, cap(ack)+cap(nack)))
+	confirmsEvents := channel.NotifyPublish(make(chan data.Confirmation, cap(ack)+cap(nack)))
 	logger := channel.logger.With().
 		Str("EVENT_TYPE", "NOTIFY_CONFIRM").
 		Logger()
@@ -1495,7 +1449,7 @@ func (channel *Channel) NotifyConfirmOrOrphaned(
 	ack, nack, orphaned chan uint64,
 ) (chan uint64, chan uint64, chan uint64) {
 	confirmsEvents := channel.NotifyPublish(
-		make(chan Confirmation, cap(ack)+cap(nack)+cap(orphaned)),
+		make(chan data.Confirmation, cap(ack)+cap(nack)+cap(orphaned)),
 	)
 	logger := channel.logger.With().
 		Str("EVENT_TYPE", "NOTIFY_CONFIRM_OR_ORPHAN").
@@ -1722,6 +1676,7 @@ type ChannelTestingDefaultMiddlewares struct {
 	QoS *defaultMiddlewares.QoSMiddleware
 	RouteDeclaration *defaultMiddlewares.RouteDeclarationMiddleware
 	Confirm *defaultMiddlewares.ConfirmsMiddleware
+	PublishTags *defaultMiddlewares.PublishTagsMiddleware
 }
 
 // Holds testing information and methods for channels.
