@@ -173,6 +173,16 @@ func (builder *middlewareBaseBuilder) createBaseHandlerQoS() (
 	return handler
 }
 
+func (builder *middlewareBaseBuilder) createBaseHandlerFlow() (
+	handler amqpMiddleware.HandlerFlow,
+) {
+	handler = func(args *amqpMiddleware.ArgsFlow) error {
+		return builder.underlyingChan.Flow(args.Active)
+	}
+
+	return handler
+}
+
 func (builder *middlewareBaseBuilder) createBaseHandlerConfirm() (
 	handler amqpMiddleware.HandlerConfirm,
 ) {

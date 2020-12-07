@@ -86,6 +86,12 @@ func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 	handlers.AddQoS(qosMiddleware.Qos)
 	middlewareStorage.QoS = qosMiddleware
 
+	// Flow middleware
+	flowMiddleware := defaultMiddlewares.NewFlowMiddleware()
+	handlers.AddReconnect(flowMiddleware.Reconnect)
+	handlers.AddFlow(flowMiddleware.Flow)
+	middlewareStorage.Flow = flowMiddleware
+
 	// Confirmation middleware
 	confirmMiddleware := defaultMiddlewares.NewConfirmMiddleware()
 	handlers.AddReconnect(confirmMiddleware.Reconnect)
@@ -140,14 +146,10 @@ func (conn *Connection) Channel() (*Channel, error) {
 		Channel:   nil,
 		rogerConn: conn,
 		settings: channelSettings{
-			// Channels start with their flow active
-			flowActive:           true,
 			defaultMiddlewares:   new(ChannelTestingDefaultMiddlewares),
 		},
 		flowActiveLock: new(sync.Mutex),
 		handlers:       nil,
-		// Make a decently-buffered acknowledgement channel
-		ackChan:                  make(chan ackInfo, 128),
 		eventRelaysRunning:       new(sync.WaitGroup),
 		eventRelaysRunSetup:      new(sync.WaitGroup),
 		eventRelaysSetupComplete: new(sync.WaitGroup),

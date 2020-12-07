@@ -79,6 +79,10 @@ type ArgsQoS struct {
 	Global        bool
 }
 
+type ArgsFlow struct {
+	Active bool
+}
+
 type ArgsConfirms struct {
 	NoWait bool
 }

@@ -9,6 +9,11 @@ type channelHandlers struct {
 	// METHODS MIDDLEWARE
 
 	reconnect    amqpMiddleware.HandlerReconnect
+
+	qos     amqpMiddleware.HandlerQoS
+	flow    amqpMiddleware.HandlerFlow
+	confirm amqpMiddleware.HandlerConfirm
+
 	queueDeclare amqpMiddleware.HandlerQueueDeclare
 	queueDelete  amqpMiddleware.HandlerQueueDelete
 	queueBind    amqpMiddleware.HandlerQueueBind
@@ -18,9 +23,6 @@ type channelHandlers struct {
 	exchangeDelete  amqpMiddleware.HandlerExchangeDelete
 	exchangeBind    amqpMiddleware.HandlerExchangeBind
 	exchangeUnbind  amqpMiddleware.HandlerExchangeUnbind
-
-	qos     amqpMiddleware.HandlerQoS
-	confirm amqpMiddleware.HandlerConfirm
 
 	notifyPublish amqpMiddleware.HandlerNotifyPublish
 
@@ -44,6 +46,33 @@ func (handlers *channelHandlers) AddReconnect(middleware amqpMiddleware.Reconnec
 	defer handlers.lock.Unlock()
 
 	handlers.reconnect = middleware(handlers.reconnect)
+}
+
+func (handlers *channelHandlers) AddQoS(
+	middleware amqpMiddleware.QoS,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.qos = middleware(handlers.qos)
+}
+
+func (handlers *channelHandlers) AddFlow(
+	middleware amqpMiddleware.Flow,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.flow = middleware(handlers.flow)
+}
+
+func (handlers *channelHandlers) AddConfirm(
+	middleware amqpMiddleware.Confirm,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.confirm = middleware(handlers.confirm)
 }
 
 func (handlers *channelHandlers) AddQueueDeclare(
@@ -110,24 +139,6 @@ func (handlers *channelHandlers) AddExchangeUnbind(
 	defer handlers.lock.Unlock()
 
 	handlers.exchangeUnbind = middleware(handlers.exchangeUnbind)
-}
-
-func (handlers *channelHandlers) AddQoS(
-	middleware amqpMiddleware.QoS,
-) {
-	handlers.lock.Lock()
-	defer handlers.lock.Unlock()
-
-	handlers.qos = middleware(handlers.qos)
-}
-
-func (handlers *channelHandlers) AddConfirm(
-	middleware amqpMiddleware.Confirm,
-) {
-	handlers.lock.Lock()
-	defer handlers.lock.Unlock()
-
-	handlers.confirm = middleware(handlers.confirm)
 }
 
 func (handlers *channelHandlers) AddPublish(
@@ -223,6 +234,7 @@ func newChannelHandlers(conn *Connection, channel *Channel) *channelHandlers {
 		exchangeBind:    baseBuilder.createBaseHandlerExchangeBind(),
 		exchangeUnbind:  baseBuilder.createBaseHandlerExchangeUnbind(),
 		qos:             baseBuilder.createBaseHandlerQoS(),
+		flow:            baseBuilder.createBaseHandlerFlow(),
 		confirm:         baseBuilder.createBaseHandlerConfirm(),
 		publish:         baseBuilder.createBaseHandlerPublish(),
 		get:             baseBuilder.createBaseHandlerGet(),

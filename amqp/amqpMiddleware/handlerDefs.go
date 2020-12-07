@@ -32,6 +32,8 @@ type HandlerExchangeUnbind func(args *ArgsExchangeUnbind) error
 
 type HandlerQoS func(args *ArgsQoS) error
 
+type HandlerFlow func(args *ArgsFlow) error
+
 type HandlerConfirm func(args *ArgsConfirms) error
 
 type HandlerPublish func(args *ArgsPublish) error

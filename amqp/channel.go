@@ -12,52 +12,11 @@ import (
 	"testing"
 )
 
-// Enum-like for acknowledgement types.
-type ackMethod int
-
-const (
-	ack    ackMethod = 0
-	nack   ackMethod = 1
-	reject ackMethod = 2
-)
-
-// Ack command for acknowledge routine.
-type ackInfo struct {
-	// Delivery tag to acknowledge
-	deliveryTag uint64
-	// The method to call when acknowledging
-	method ackMethod
-	// Passed to `multiple` arg on ack and nack methods
-	multiple bool
-	// Passed to `requeue` arg on nack and reject methods
-	requeue bool
-	// result passed to this channel so it can be returned to the initial caller.
-	resultChan chan error
-}
-
-func newAckInfo(
-	deliveryTag uint64, method ackMethod, multiple bool, requeue bool,
-) ackInfo {
-	return ackInfo{
-		deliveryTag: deliveryTag,
-		method:      method,
-		multiple:    multiple,
-		requeue:     requeue,
-		// use a buffer as 1 so we don't block the acknowledge routine when it sends a
-		// result
-		resultChan: make(chan error, 1),
-	}
-}
-
 // This object holds the current settings for our channel. We break this into it's own
 // struct so that we can pass the current settings to methods like
 // eventRelay.SetupForRelayLeg() without exposing objects such methods should not have
 // access to.
 type channelSettings struct {
-	// Whether consumer flow to this channel is open. When false, re-established
-	// channels will immediately be put into pause mode.
-	flowActive bool
-
 	defaultMiddlewares *ChannelTestingDefaultMiddlewares
 }
 
@@ -76,15 +35,6 @@ type transportChannel struct {
 
 	// Holds all registered handlers.
 	handlers *channelHandlers
-
-	// We're going to handle all nacks and acks in a goroutine so we can track the
-	// latest without heavy lock contention. This channels will be used to send
-	// them to the processor.
-	//
-	// TODO: It may be faster to have a parking lot channel of ackInfo values we can
-	// 	recycle rather than creating them fresh each time. Should benchmark both
-	//	 approaches
-	ackChan chan ackInfo
 
 	// Event processors should grab this WaitGroup when they spin up and release it
 	// when they have finished processing all available events after a channel close.
@@ -119,30 +69,6 @@ type transportChannel struct {
 func (transport *transportChannel) cleanup() error {
 	// Release this lock so event processors can close.
 	defer transport.eventRelaysRunSetup.Done()
-	defer close(transport.ackChan)
-	return nil
-}
-
-// Sets up a channel with all the settings applied to the last one. This method will
-// get called whenever a channel connection is re-established with a fresh channel.
-func (transport *transportChannel) reconnectApplyChannelSettings() error {
-	if transport.logger.Debug().Enabled() {
-		transport.logger.Debug().
-			Bool("CONSUMER_FLOW_ACTIVE", transport.settings.flowActive).
-			Msg("applying channel settings")
-	}
-
-	// If flow was paused, immediately pause it again
-	if !transport.settings.flowActive {
-		transport.flowActiveLock.Lock()
-		defer transport.flowActiveLock.Unlock()
-
-		err := transport.Channel.Flow(transport.settings.flowActive)
-		if err != nil {
-			return fmt.Errorf("error pausing consumer flow: %w", err)
-		}
-	}
-
 	return nil
 }
 
@@ -161,22 +87,14 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 		logger.Debug().Msg("getting new channel")
 	}
 
+	// Invoke all our reconnection middleware and reconnect the channel.
 	channel, err := transport.handlers.reconnect(ctx, logger)
 	if err != nil {
 		return err
 	}
 
-	if debugEnabled {
-		transport.logger.Debug().
-			Msg("setting up channel")
-	}
-
 	// Set up the new channel
 	transport.Channel = channel
-	err = transport.reconnectApplyChannelSettings()
-	if err != nil {
-		return err
-	}
 
 	// Acquire the final WaitGroup to release when we are ready to let the relays start
 	// processing again.
@@ -341,19 +259,12 @@ Connections for publishings and deliveries.
 
 */
 func (channel *Channel) Flow(active bool) error {
+	args := &amqpMiddleware.ArgsFlow{
+		Active: active,
+	}
+
 	op := func() error {
-		channel.transportChannel.flowActiveLock.Lock()
-		defer channel.transportChannel.flowActiveLock.Unlock()
-
-		opErr := channel.transportChannel.Flow(active)
-		if opErr != nil {
-			return opErr
-		}
-
-		// Update the setting if there was no error.
-		channel.transportChannel.settings.flowActive = active
-
-		return nil
+		return channel.transportChannel.handlers.flow(args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, op, true)
@@ -1539,8 +1450,11 @@ func (channel *Channel) Middleware() *channelHandlers {
 
 type ChannelTestingDefaultMiddlewares struct {
 	QoS              *defaultMiddlewares.QoSMiddleware
-	RouteDeclaration *defaultMiddlewares.RouteDeclarationMiddleware
+	Flow             *defaultMiddlewares.FlowMiddleware
 	Confirm          *defaultMiddlewares.ConfirmsMiddleware
+
+	RouteDeclaration *defaultMiddlewares.RouteDeclarationMiddleware
+
 	PublishTags      *defaultMiddlewares.PublishTagsMiddleware
 	DeliveryTags     *defaultMiddlewares.DeliveryTagsMiddleware
 }
