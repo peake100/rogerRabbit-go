@@ -17,7 +17,7 @@ type eventRelay interface {
 	Logger(parent zerolog.Logger) zerolog.Logger
 	// Use a streadway.Channel() to set up relaying messages from this channel to the
 	// client.
-	SetupForRelayLeg(newChannel *streadway.Channel, settings channelSettings) error
+	SetupForRelayLeg(newChannel *streadway.Channel) error
 	// Run the relay until all events from the channel passed to SetupRelayLeg() are
 	// exhausted,
 	RunRelayLeg() (done bool, err error)
@@ -104,10 +104,7 @@ func (channel *Channel) runEventRelay(relay eventRelay, relayLogger zerolog.Logg
 			if legLogger.Debug().Enabled() {
 				legLogger.Debug().Msg("setting up relay leg")
 			}
-			setupErr = relay.SetupForRelayLeg(
-				channel.transportChannel.Channel,
-				channel.transportChannel.settings,
-			)
+			setupErr = relay.SetupForRelayLeg(channel.transportChannel.Channel)
 			if setupErr != nil {
 				legLogger.Err(setupErr).Msg("error setting up event relay leg")
 			}
@@ -137,10 +134,7 @@ func (channel *Channel) setupAndLaunchEventRelay(relay eventRelay) error {
 		Logger()
 
 	op := func() error {
-		err := relay.SetupForRelayLeg(
-			channel.transportChannel.Channel,
-			channel.transportChannel.settings,
-		)
+		err := relay.SetupForRelayLeg(channel.transportChannel.Channel)
 		if err != nil {
 			return err
 		}
@@ -208,9 +202,7 @@ func (relay *consumeRelay) Logger(parent zerolog.Logger) zerolog.Logger {
 		Logger()
 }
 
-func (relay *consumeRelay) SetupForRelayLeg(
-	newChannel *streadway.Channel, settings channelSettings,
-) error {
+func (relay *consumeRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
 	brokerDeliveries, err := newChannel.Consume(
 		relay.ConsumeArgs.queue,
 		relay.ConsumeArgs.consumer,
@@ -298,9 +290,7 @@ func (relay *notifyPublishRelay) Logger(parent zerolog.Logger) zerolog.Logger {
 	return relay.logger
 }
 
-func (relay *notifyPublishRelay) SetupForRelayLeg(
-	newChannel *streadway.Channel, settings channelSettings,
-) error {
+func (relay *notifyPublishRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
 	// Get our broker channel. We will make it with the same capacity of the channel the
 	// caller sent into it.
 	brokerConfirmations := make(
@@ -378,9 +368,7 @@ func (relay *notifyReturnRelay) Logger(parent zerolog.Logger) zerolog.Logger {
 	return relay.logger
 }
 
-func (relay *notifyReturnRelay) SetupForRelayLeg(
-	newChannel *streadway.Channel, settings channelSettings,
-) error {
+func (relay *notifyReturnRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
 	brokerChannel := make(chan Return, cap(relay.CallerReturns))
 	relay.brokerReturns = brokerChannel
 	newChannel.NotifyReturn(brokerChannel)
@@ -426,9 +414,7 @@ func (relay *cancelRelay) Logger(parent zerolog.Logger) zerolog.Logger {
 	return relay.logger
 }
 
-func (relay *cancelRelay) SetupForRelayLeg(
-	newChannel *streadway.Channel, settings channelSettings,
-) error {
+func (relay *cancelRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
 	brokerChannel := make(chan string, cap(relay.CallerCancellations))
 	relay.brokerCancellations = brokerChannel
 	newChannel.NotifyCancel(brokerChannel)
@@ -479,9 +465,7 @@ func (relay *flowRelay) Logger(parent zerolog.Logger) zerolog.Logger {
 	return relay.logger
 }
 
-func (relay *flowRelay) SetupForRelayLeg(
-	newChannel *streadway.Channel, settings channelSettings,
-) error {
+func (relay *flowRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
 	// Check if this is our initial setup
 	if relay.setup {
 		// If we have already setup the relay once, that means we are opening a new

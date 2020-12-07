@@ -12,14 +12,6 @@ import (
 	"testing"
 )
 
-// This object holds the current settings for our channel. We break this into it's own
-// struct so that we can pass the current settings to methods like
-// eventRelay.SetupForRelayLeg() without exposing objects such methods should not have
-// access to.
-type channelSettings struct {
-	defaultMiddlewares *ChannelTestingDefaultMiddlewares
-}
-
 // Implements transport for *streadway.Channel.
 type transportChannel struct {
 	// The current, underlying channel object.
@@ -28,13 +20,9 @@ type transportChannel struct {
 	// The roger connection we will use to re-establish dropped channels.
 	rogerConn *Connection
 
-	// Current settings for the channel.
-	settings channelSettings
-	// locks the flow state from being changed until release
-	flowActiveLock *sync.Mutex
-
 	// Holds all registered handlers.
-	handlers *channelHandlers
+	handlers           *channelHandlers
+	defaultMiddlewares *ChannelTestingDefaultMiddlewares
 
 	// Event processors should grab this WaitGroup when they spin up and release it
 	// when they have finished processing all available events after a channel close.
@@ -1449,14 +1437,14 @@ func (channel *Channel) Middleware() *channelHandlers {
 }
 
 type ChannelTestingDefaultMiddlewares struct {
-	QoS              *defaultMiddlewares.QoSMiddleware
-	Flow             *defaultMiddlewares.FlowMiddleware
-	Confirm          *defaultMiddlewares.ConfirmsMiddleware
+	QoS     *defaultMiddlewares.QoSMiddleware
+	Flow    *defaultMiddlewares.FlowMiddleware
+	Confirm *defaultMiddlewares.ConfirmsMiddleware
 
 	RouteDeclaration *defaultMiddlewares.RouteDeclarationMiddleware
 
-	PublishTags      *defaultMiddlewares.PublishTagsMiddleware
-	DeliveryTags     *defaultMiddlewares.DeliveryTagsMiddleware
+	PublishTags  *defaultMiddlewares.PublishTagsMiddleware
+	DeliveryTags *defaultMiddlewares.DeliveryTagsMiddleware
 }
 
 // Holds testing information and methods for channels.
@@ -1474,6 +1462,6 @@ func (channel *Channel) Test(t *testing.T) *ChannelTesting {
 			t,
 			channel.transportManager,
 		},
-		DefaultMiddlewares: channel.transportChannel.settings.defaultMiddlewares,
+		DefaultMiddlewares: channel.transportChannel.defaultMiddlewares,
 	}
 }

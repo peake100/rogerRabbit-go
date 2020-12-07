@@ -78,7 +78,7 @@ func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 	}
 
 	handlers := channel.transportChannel.handlers
-	middlewareStorage := channel.transportChannel.settings.defaultMiddlewares
+	middlewareStorage := channel.transportChannel.defaultMiddlewares
 
 	// Qos middleware
 	qosMiddleware := defaultMiddlewares.NewQosMiddleware()
@@ -143,13 +143,10 @@ invalid and a new Channel should be opened.
 */
 func (conn *Connection) Channel() (*Channel, error) {
 	transportChan := &transportChannel{
-		Channel:   nil,
-		rogerConn: conn,
-		settings: channelSettings{
-			defaultMiddlewares:   new(ChannelTestingDefaultMiddlewares),
-		},
-		flowActiveLock: new(sync.Mutex),
-		handlers:       nil,
+		Channel:                  nil,
+		rogerConn:                conn,
+		handlers:                 nil,
+		defaultMiddlewares:       new(ChannelTestingDefaultMiddlewares),
 		eventRelaysRunning:       new(sync.WaitGroup),
 		eventRelaysRunSetup:      new(sync.WaitGroup),
 		eventRelaysSetupComplete: new(sync.WaitGroup),

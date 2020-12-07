@@ -8,7 +8,7 @@ import (
 type channelHandlers struct {
 	// METHODS MIDDLEWARE
 
-	reconnect    amqpMiddleware.HandlerReconnect
+	reconnect amqpMiddleware.HandlerReconnect
 
 	qos     amqpMiddleware.HandlerQoS
 	flow    amqpMiddleware.HandlerFlow
