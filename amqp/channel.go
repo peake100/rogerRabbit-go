@@ -1280,7 +1280,7 @@ The subscription tag is returned to the listener.
 
 */
 func (channel *Channel) NotifyCancel(cancellations chan string) chan string {
-	relay := &cancelRelay{
+	relay := &notifyCancelRelay{
 		CallerCancellations: cancellations,
 	}
 
@@ -1336,7 +1336,7 @@ basic.ack messages from getting rate limited with your basic.publish messages.
 
 */
 func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool {
-	relay := &flowRelay{
+	relay := &notifyFlowRelay{
 		CallerFlow: flowNotifications,
 		ChannelCtx: channel.ctx,
 	}

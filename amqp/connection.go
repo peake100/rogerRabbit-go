@@ -26,7 +26,6 @@ func (transport *transportConnection) cleanup() error {
 }
 
 func (transport *transportConnection) tryReconnect(ctx context.Context) error {
-
 	conn, err := streadway.DialConfig(transport.dialURL, *transport.streadwayConfig)
 	if err != nil {
 		return err
