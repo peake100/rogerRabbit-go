@@ -62,6 +62,36 @@ func (middleware *DeliveryTagsMiddleware) Get(
 	return handler
 }
 
+func (middleware *DeliveryTagsMiddleware) Ack(
+	next amqpMiddleware.HandlerAck,
+) (handler amqpMiddleware.HandlerAck) {
+	handler = func(args *amqpMiddleware.ArgsAck) error {
+		return next(args)
+	}
+
+	return handler
+}
+
+func (middleware *DeliveryTagsMiddleware) Nack(
+	next amqpMiddleware.HandlerNack,
+) (handler amqpMiddleware.HandlerNack) {
+	handler = func(args *amqpMiddleware.ArgsNack) error {
+		return next(args)
+	}
+
+	return handler
+}
+
+func (middleware *DeliveryTagsMiddleware) Nack(
+	next amqpMiddleware.HandlerNack,
+) (handler amqpMiddleware.HandlerNack) {
+	handler = func(args *amqpMiddleware.ArgsNack) error {
+		return next(args)
+	}
+
+	return handler
+}
+
 func (middleware *DeliveryTagsMiddleware) ConsumeEvent(
 	next amqpMiddleware.HandlerConsumeEvent,
 ) (handler amqpMiddleware.HandlerConsumeEvent) {
