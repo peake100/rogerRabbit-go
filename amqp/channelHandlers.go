@@ -25,16 +25,16 @@ type channelHandlers struct {
 	notifyPublish amqpMiddleware.HandlerNotifyPublish
 
 	publish amqpMiddleware.HandlerPublish
-	get amqpMiddleware.HandlerGet
+	get     amqpMiddleware.HandlerGet
 
-	ack amqpMiddleware.HandlerAck
-	nack amqpMiddleware.HandlerNack
+	ack    amqpMiddleware.HandlerAck
+	nack   amqpMiddleware.HandlerNack
 	reject amqpMiddleware.HandlerReject
 
 	// EVENTS MIDDLEWARE
 
 	notifyPublishEventMiddleware []amqpMiddleware.NotifyPublishEvent
-	consumeEventMiddleware []amqpMiddleware.ConsumeEvent
+	consumeEventMiddleware       []amqpMiddleware.ConsumeEvent
 
 	lock *sync.RWMutex
 }
@@ -195,7 +195,7 @@ func (handlers *channelHandlers) AddNotifyPublishEvent(
 	)
 }
 
-func (handlers *channelHandlers) AddNotifyConsumeEvent(
+func (handlers *channelHandlers) AddConsumeEvent(
 	middleware amqpMiddleware.ConsumeEvent,
 ) {
 	handlers.lock.Lock()
@@ -225,7 +225,7 @@ func newChannelHandlers(conn *Connection, channel *Channel) *channelHandlers {
 		qos:             baseBuilder.createBaseHandlerQoS(),
 		confirm:         baseBuilder.createBaseHandlerConfirm(),
 		publish:         baseBuilder.createBaseHandlerPublish(),
-		get:		     baseBuilder.createBaseHandlerGet(),
+		get:             baseBuilder.createBaseHandlerGet(),
 		ack:             baseBuilder.createBaseHandlerAck(),
 		nack:            baseBuilder.createBaseHandlerNack(),
 		reject:          baseBuilder.createBaseHandlerReject(),

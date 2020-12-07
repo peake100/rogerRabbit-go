@@ -209,7 +209,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerGet() (
 	) (msg data.Delivery, ok bool, err error) {
 		var msgOrig streadway.Delivery
 		msgOrig, ok, err = builder.underlyingChan.Get(args.Queue, args.AutoAck)
-		msg = data.NewDelivery(msgOrig, 0, builder.channel)
+		msg = data.NewDelivery(msgOrig, builder.channel)
 		return msg, ok, err
 	}
 

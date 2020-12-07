@@ -12,10 +12,6 @@ import (
 )
 
 type DeliveryTagsMiddleware struct {
-	// Context that is cancelled when the current channel is closed.
-	deliveriesCtx context.Context
-	deliveriesCancel context.CancelFunc
-
 	// As tagPublishCount, but for delivery tags of delivered messages.
 	tagConsumeCount *uint64
 	// As tagConsumeCount, but for consumption tags.
@@ -33,8 +29,6 @@ func (middleware *DeliveryTagsMiddleware) Reconnect(
 	handler = func(
 		ctx context.Context, logger zerolog.Logger,
 	) (*streadway.Channel, error) {
-		// Cancel the deliveries context in case our monitor routine hasn't done so yet
-		middleware.deliveriesCancel()
 		middleware.tagConsumeOffset = *middleware.tagConsumeCount
 
 		channel, err := next(ctx, logger)
@@ -43,25 +37,11 @@ func (middleware *DeliveryTagsMiddleware) Reconnect(
 
 		}
 
-		// Create a new context for deliveries to inherit.
-		middleware.deliveriesCtx, middleware.deliveriesCancel = context.WithCancel(
-			context.Background(),
-		)
-		chanClose := make(chan *streadway.Error, 1)
-		channel.NotifyClose(chanClose)
-
-		// Cancel that context when the current amqp channel is closed.
-		go func() {
-			defer middleware.deliveriesCancel()
-			<-chanClose
-		}()
-
 		return channel, err
 	}
 
 	return handler
 }
-
 
 func (middleware *DeliveryTagsMiddleware) Get(
 	next amqpMiddleware.HandlerGet,
@@ -93,8 +73,8 @@ func (middleware *DeliveryTagsMiddleware) containsOrphans(
 	// orphan
 	if tag > middleware.tagConsumeOffset && !multiple {
 		return false
-	// If the tag is below the current offset, it is an orphan, regardless of whether
-	// if is a multiple ack
+		// If the tag is below the current offset, it is an orphan, regardless of whether
+		// if is a multiple ack
 	} else if tag < middleware.tagConsumeOffset {
 		return true
 	}
@@ -193,9 +173,11 @@ func (middleware *DeliveryTagsMiddleware) ConsumeEvent(
 	next amqpMiddleware.HandlerConsumeEvent,
 ) (handler amqpMiddleware.HandlerConsumeEvent) {
 	handler = func(event data.Delivery) {
+		// Apply the offset to our delivery
 		event.TagOffset = middleware.tagConsumeOffset
 		event.DeliveryTag += middleware.tagConsumeOffset
 
+		// Increment the counter
 		atomic.AddUint64(middleware.tagConsumeCount, 1)
 
 		next(event)
@@ -211,10 +193,11 @@ func NewDeliveryTagsMiddleware() *DeliveryTagsMiddleware {
 		tagConsumeCount:   &tagConsumeCount,
 		tagConsumeOffset:  0,
 		tagLatestMultiAck: 0,
+		orphanCheckLock:   new(sync.Mutex),
 	}
 }
 
-// Retuned when an acknowledgement method (ack, nack, reject) cannot be completed
+// Returned when an acknowledgement method (ack, nack, reject) cannot be completed
 // because the original channel it was consumed from has been closed and replaced with a
 // new one. When part of a multi-ack, it's possible that SOME tags will be orphaned and
 // some will succeed, this error contains detailed information on both groups

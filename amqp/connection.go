@@ -100,6 +100,16 @@ func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 	handlers.AddNotifyPublishEvent(publishTagsMiddleware.NotifyPublishEvent)
 	middlewareStorage.PublishTags = publishTagsMiddleware
 
+	// Delivery Tags middleware
+	deliveryTagsMiddleware := defaultMiddlewares.NewDeliveryTagsMiddleware()
+	handlers.AddReconnect(deliveryTagsMiddleware.Reconnect)
+	handlers.AddGet(deliveryTagsMiddleware.Get)
+	handlers.AddConsumeEvent(deliveryTagsMiddleware.ConsumeEvent)
+	handlers.AddAck(deliveryTagsMiddleware.Ack)
+	handlers.AddNack(deliveryTagsMiddleware.Nack)
+	handlers.AddReject(deliveryTagsMiddleware.Reject)
+	middlewareStorage.DeliveryTags = deliveryTagsMiddleware
+
 	// Route declaration middleware
 	declarationMiddleware := defaultMiddlewares.NewRouteDeclarationMiddleware()
 	handlers.AddReconnect(declarationMiddleware.Reconnect)
@@ -126,17 +136,12 @@ invalid and a new Channel should be opened.
 
 */
 func (conn *Connection) Channel() (*Channel, error) {
-	initialConsumeCount := uint64(0)
-
 	transportChan := &transportChannel{
 		Channel:   nil,
 		rogerConn: conn,
 		settings: channelSettings{
 			// Channels start with their flow active
 			flowActive:           true,
-			tagConsumeCount:      &initialConsumeCount,
-			tagConsumeOffset:     0,
-			tagLatestDeliveryAck: 0,
 			defaultMiddlewares:   new(ChannelTestingDefaultMiddlewares),
 		},
 		flowActiveLock: new(sync.Mutex),

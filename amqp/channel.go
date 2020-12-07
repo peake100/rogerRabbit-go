@@ -2,7 +2,6 @@ package amqp
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/data"
@@ -10,7 +9,6 @@ import (
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
-	"sync/atomic"
 	"testing"
 )
 
@@ -59,13 +57,6 @@ type channelSettings struct {
 	// Whether consumer flow to this channel is open. When false, re-established
 	// channels will immediately be put into pause mode.
 	flowActive bool
-
-	// As tagPublishCount, but for delivery tags of delivered messages.
-	tagConsumeCount *uint64
-	// As tagConsumeCount, but for consumption tags.
-	tagConsumeOffset uint64
-	// The highest ack we have received
-	tagLatestDeliveryAck uint64
 
 	defaultMiddlewares *ChannelTestingDefaultMiddlewares
 }
@@ -155,10 +146,6 @@ func (transport *transportChannel) reconnectApplyChannelSettings() error {
 	return nil
 }
 
-func (transport *transportChannel) reconnectUpdateTagTrackers() {
-	transport.settings.tagConsumeOffset = *transport.settings.tagConsumeCount
-}
-
 func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	// Wait for all event processors processing events from the previous channel to be
 	// ready.
@@ -190,11 +177,6 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
-	if debugEnabled {
-		logger.Debug().Msg("updating tag trackers")
-	}
-	transport.reconnectUpdateTagTrackers()
 
 	// Acquire the final WaitGroup to release when we are ready to let the relays start
 	// processing again.
@@ -243,125 +225,6 @@ type Channel struct {
 
 // Start helper routines.
 func (channel *Channel) start() {
-	go channel.runAcknowledgementRoutine()
-}
-
-// We are going to handle sending acknowledgements in a single goroutine so we can
-// avoid using locks to handle tracking the latest acknowledged tag.
-func (channel *Channel) runAcknowledgementRoutine() {
-	var logger zerolog.Logger
-	// Each loop will put the ack request into this variable
-	var ackReq ackInfo
-	// Each loop will put the tag with offset into this variable
-	var tagWithOffset uint64
-
-	transportChannel := channel.transportChannel
-	// This needs to be a reference so we get the latest values
-	settings := &transportChannel.settings
-
-	// Wrap the underlying methods in closures with identical signatures so we can
-	// call them generically based on what kind of method we are using.
-	ackMethod := func() error {
-		logger = channel.logger.With().Str("METHOD", "ACK").Logger()
-		return transportChannel.Ack(
-			tagWithOffset,
-			ackReq.multiple,
-		)
-	}
-
-	nackMethod := func() error {
-		logger = channel.logger.With().Str("METHOD", "NACK").Logger()
-		return transportChannel.Nack(
-			tagWithOffset,
-			ackReq.multiple,
-			ackReq.requeue,
-		)
-	}
-
-	rejectMethod := func() error {
-		logger = channel.logger.With().Str("METHOD", "REJECT").Logger()
-		return transportChannel.Reject(
-			tagWithOffset,
-			ackReq.requeue,
-		)
-	}
-
-	var method func() error
-
-	// Only one of these operations will be occurring simultaneously.
-	operation := func() error {
-		var opErr error
-
-		// If there was no error, set the latest delivery tag to this tag on exit.
-		defer func() {
-			if opErr == nil {
-				settings.tagLatestDeliveryAck = ackReq.deliveryTag
-			}
-		}()
-
-		// If this delivery tag is less or equal to our current offset, then all
-		// requested tags are orphans and we can return an error
-		if ackReq.deliveryTag <= settings.tagConsumeOffset {
-			return defaultMiddlewares.NewErrCantAcknowledgeOrphans(
-				settings.tagLatestDeliveryAck,
-				ackReq.deliveryTag,
-				settings.tagConsumeOffset,
-				ackReq.multiple,
-			)
-		}
-
-		tagWithOffset = ackReq.deliveryTag - settings.tagConsumeOffset
-
-		// Invoke the method and return any errors
-		opErr = method()
-		if opErr != nil {
-			return opErr
-		}
-
-		if logger.Debug().Enabled() {
-			logger.Debug().
-				Uint64("DELIVERY TAG", ackReq.deliveryTag).
-				Bool("MULTIPLE", ackReq.multiple).
-				Bool("REQUEUE", ackReq.requeue).
-				Msg("delivery acknowledgement(s) sent")
-		}
-
-		// If we are acknowledging multiple requests and some of them span into a
-		// previous connection, we need to report an orphaned tag error.
-		if ackReq.method != reject &&
-			ackReq.multiple &&
-			settings.tagLatestDeliveryAck < settings.tagConsumeOffset {
-			// then:
-			return defaultMiddlewares.NewErrCantAcknowledgeOrphans(
-				settings.tagLatestDeliveryAck,
-				ackReq.deliveryTag,
-				settings.tagConsumeOffset,
-				ackReq.multiple,
-			)
-		}
-
-		return nil
-	}
-
-	// Range over all the acknowledgement requests we receive.
-	for ackReq = range transportChannel.ackChan {
-		// pick the correct underlying channel method to use
-		switch ackReq.method {
-		case ack:
-			method = ackMethod
-		case nack:
-			method = nackMethod
-		case reject:
-			method = rejectMethod
-		default:
-			panic(errors.New("got bad ack request type"))
-		}
-
-		// Do the operation
-		err := channel.retryOperationOnClosed(channel.ctx, operation, true)
-		// Send the result back to the caller
-		ackReq.resultChan <- err
-	}
 }
 
 /*
@@ -1119,11 +982,6 @@ func (channel *Channel) Get(
 			return opErr
 		}
 
-		msg.TagOffset = channel.transportChannel.settings.tagConsumeOffset
-		msg.DeliveryTag += msg.TagOffset
-
-		// If there was no error, atomically increment the delivery tag.
-		atomic.AddUint64(channel.transportChannel.settings.tagConsumeCount, 1)
 		return opErr
 	}
 
@@ -1198,28 +1056,29 @@ the returned chan is closed.
 func (channel *Channel) Consume(
 	queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args Table,
 ) (deliveryChan <-chan data.Delivery, err error) {
-	// Make a buffered channel so we don't cause latency from waiting for queues to be
-	// ready
-	callerDeliveries := make(chan data.Delivery, 16)
-	deliveryChan = callerDeliveries
+	consumeArgs := &consumeArgs{
+		queue:     queue,
+		consumer:  consumer,
+		autoAck:   autoAck,
+		exclusive: exclusive,
+		noLocal:   noLocal,
+		noWait:    noWait,
+		args:      args,
+		// Make a buffered channel so we don't cause latency from waiting for queues to
+		// be ready
+		callerDeliveryChan: make(chan data.Delivery, 16),
+	}
+	deliveryChan = consumeArgs.callerDeliveryChan
 
 	// Create our consumer relay
-	consumerRelay := &consumeRelay{
-		ConsumeArgs: consumeArgs{
-			queue:     queue,
-			consumer:  consumer,
-			autoAck:   autoAck,
-			exclusive: exclusive,
-			noLocal:   noLocal,
-			noWait:    noWait,
-			args:      args,
-		},
-		CallerDeliveries: callerDeliveries,
-		NewDelivery:      channel.NewDelivery,
-	}
+	consumeRelay := newConsumeRelay(
+		consumeArgs,
+		channel,
+		channel.transportChannel.handlers.consumeEventMiddleware,
+	)
 
 	// Pass it to our relay handler.
-	err = channel.setupAndLaunchEventRelay(consumerRelay)
+	err = channel.setupAndLaunchEventRelay(consumeRelay)
 	if err != nil {
 		return nil, err
 	}
@@ -1249,16 +1108,16 @@ is true.
 See also Delivery.Ack
 */
 func (channel *Channel) Ack(tag uint64, multiple bool) error {
-	if channel.ctx.Err() != nil {
-		return streadway.ErrClosed
+	args := &amqpMiddleware.ArgsAck{
+		Tag:      tag,
+		Multiple: multiple,
 	}
 
-	// Send this ack request to the acknowledgement routine
-	ackInfo := newAckInfo(tag, ack, multiple, false)
-	channel.transportChannel.ackChan <- ackInfo
+	operation := func() error {
+		return channel.transportChannel.handlers.ack(args)
+	}
 
-	// Pull the result
-	return <-ackInfo.resultChan
+	return channel.retryOperationOnClosed(channel.ctx, operation, true)
 }
 
 /*
@@ -1280,16 +1139,17 @@ it must be redelivered or dropped.
 See also Delivery.Nack
 */
 func (channel *Channel) Nack(tag uint64, multiple bool, requeue bool) error {
-	if channel.ctx.Err() != nil {
-		return streadway.ErrClosed
+	args := &amqpMiddleware.ArgsNack{
+		Tag:      tag,
+		Multiple: multiple,
+		Requeue:  requeue,
 	}
 
-	// Send this ack request to the acknowledgement routine
-	ackInfo := newAckInfo(tag, nack, multiple, requeue)
-	channel.transportChannel.ackChan <- ackInfo
+	operation := func() error {
+		return channel.transportChannel.handlers.nack(args)
+	}
 
-	// Pull the result
-	return <-ackInfo.resultChan
+	return channel.retryOperationOnClosed(channel.ctx, operation, true)
 }
 
 /*
@@ -1311,16 +1171,16 @@ multiple messages, reducing the amount of protocol messages to exchange.
 See also Delivery.Reject
 */
 func (channel *Channel) Reject(tag uint64, requeue bool) error {
-	if channel.ctx.Err() != nil {
-		return streadway.ErrClosed
+	args := &amqpMiddleware.ArgsReject{
+		Tag:     tag,
+		Requeue: requeue,
 	}
 
-	// Send this ack request to the acknowledgement routine
-	ackInfo := newAckInfo(tag, reject, false, requeue)
-	channel.transportChannel.ackChan <- ackInfo
+	operation := func() error {
+		return channel.transportChannel.handlers.reject(args)
+	}
 
-	// Pull the result
-	return <-ackInfo.resultChan
+	return channel.retryOperationOnClosed(channel.ctx, operation, true)
 }
 
 /*
@@ -1427,7 +1287,9 @@ For strict ordering, use NotifyPublish instead.
 func (channel *Channel) NotifyConfirm(
 	ack, nack chan uint64,
 ) (chan uint64, chan uint64) {
-	confirmsEvents := channel.NotifyPublish(make(chan data.Confirmation, cap(ack)+cap(nack)))
+	confirmsEvents := channel.NotifyPublish(
+		make(chan data.Confirmation, cap(ack)+cap(nack)),
+	)
 	logger := channel.logger.With().
 		Str("EVENT_TYPE", "NOTIFY_CONFIRM").
 		Logger()
@@ -1680,6 +1542,7 @@ type ChannelTestingDefaultMiddlewares struct {
 	RouteDeclaration *defaultMiddlewares.RouteDeclarationMiddleware
 	Confirm          *defaultMiddlewares.ConfirmsMiddleware
 	PublishTags      *defaultMiddlewares.PublishTagsMiddleware
+	DeliveryTags     *defaultMiddlewares.DeliveryTagsMiddleware
 }
 
 // Holds testing information and methods for channels.

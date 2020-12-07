@@ -6,7 +6,6 @@ import (
 	"github.com/peake100/rogerRabbit-go/amqp/data"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
-	"sync/atomic"
 )
 
 // Interface that an event relay should implement to handle continuous relaying of
@@ -187,15 +186,19 @@ type consumeRelay struct {
 	// Delivery channel to pass deliveries back to the client.
 	CallerDeliveries chan<- data.Delivery
 
-	// The function we'll call to make a new delivery. Will be a method of the channel
-	// that spawned this relay.
-	NewDelivery func(orig streadway.Delivery) data.Delivery
+	Acknowledger streadway.Acknowledger
 
-	// The pointer to the delivery tag count we need to atomically update with each
-	// consume.
-	deliveryTagCount *uint64
 	// The current delivery channel coming from the broker.
 	brokerDeliveries <-chan streadway.Delivery
+
+	// The handler with middleware we will call to pass events to the caller.
+	handler amqpMiddleware.HandlerConsumeEvent
+}
+
+func (relay *consumeRelay) baseHandler() amqpMiddleware.HandlerConsumeEvent {
+	return func(event data.Delivery) {
+		relay.CallerDeliveries <- event
+	}
 }
 
 func (relay *consumeRelay) Logger(parent zerolog.Logger) zerolog.Logger {
@@ -223,7 +226,6 @@ func (relay *consumeRelay) SetupForRelayLeg(
 	}
 
 	relay.brokerDeliveries = brokerDeliveries
-	relay.deliveryTagCount = settings.tagConsumeCount
 
 	return nil
 }
@@ -231,11 +233,8 @@ func (relay *consumeRelay) SetupForRelayLeg(
 func (relay *consumeRelay) RunRelayLeg() (done bool, err error) {
 	// Drain consumer events
 	for brokerDelivery := range relay.brokerDeliveries {
-		// Add one to the delivery tag publishCount
-		atomic.AddUint64(relay.deliveryTagCount, 1)
-
 		// Wrap the delivery and send on our way.
-		relay.CallerDeliveries <- relay.NewDelivery(brokerDelivery)
+		relay.handler(data.NewDelivery(brokerDelivery, relay.Acknowledger))
 	}
 
 	return false, nil
@@ -244,6 +243,27 @@ func (relay *consumeRelay) RunRelayLeg() (done bool, err error) {
 func (relay *consumeRelay) Shutdown() error {
 	close(relay.CallerDeliveries)
 	return nil
+}
+
+func newConsumeRelay(
+	consumeArgs *consumeArgs,
+	channel *Channel,
+	middleware []amqpMiddleware.ConsumeEvent,
+) *consumeRelay {
+	relay := &consumeRelay{
+		ConsumeArgs:      *consumeArgs,
+		CallerDeliveries: consumeArgs.callerDeliveryChan,
+		Acknowledger:     channel,
+		brokerDeliveries: nil,
+		handler:          nil,
+	}
+
+	relay.handler = relay.baseHandler()
+	for _, thisMiddleware := range middleware {
+		relay.handler = thisMiddleware(relay.handler)
+	}
+
+	return relay
 }
 
 // Relays Deliveries across channel disconnects.

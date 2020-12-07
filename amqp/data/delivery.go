@@ -9,18 +9,17 @@ type Delivery struct {
 
 func NewDelivery(
 	orig streadway.Delivery,
-	tagOffset uint64,
 	acknowledger streadway.Acknowledger,
 ) Delivery {
-	delivery := Delivery{
-		Delivery: orig,
-		TagOffset: tagOffset,
-	}
-	delivery.DeliveryTag += tagOffset
-
 	// Swap out the acknowledger for our robust channel so ack, nack, and reject
 	// methods call our robust channel rather than the underlying one.
-	delivery.Acknowledger = acknowledger
+	orig.Acknowledger = acknowledger
+
+	// Embed the original delivery
+	delivery := Delivery{
+		Delivery:  orig,
+		TagOffset: 0,
+	}
 
 	return delivery
 }
