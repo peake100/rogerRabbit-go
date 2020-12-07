@@ -216,6 +216,36 @@ func (builder *middlewareBaseBuilder) createBaseHandlerGet() (
 	return handler
 }
 
+func (builder *middlewareBaseBuilder) createBaseHandlerAck() (
+	handler amqpMiddleware.HandlerAck,
+) {
+	handler = func(args *amqpMiddleware.ArgsAck) error {
+		return builder.underlyingChan.Ack(args.Tag, args.Multiple)
+	}
+
+	return handler
+}
+
+func (builder *middlewareBaseBuilder) createBaseHandlerNack() (
+	handler amqpMiddleware.HandlerNack,
+) {
+	handler = func(args *amqpMiddleware.ArgsNack) error {
+		return builder.underlyingChan.Nack(args.Tag, args.Multiple, args.Requeue)
+	}
+
+	return handler
+}
+
+func (builder *middlewareBaseBuilder) createBaseHandlerReject() (
+	handler amqpMiddleware.HandlerReject,
+) {
+	handler = func(args *amqpMiddleware.ArgsReject) error {
+		return builder.underlyingChan.Reject(args.Tag, args.Requeue)
+	}
+
+	return handler
+}
+
 func (builder *middlewareBaseBuilder) createBaseHandlerNotifyPublish() (
 	handler amqpMiddleware.HandlerNotifyPublish,
 ) {

@@ -27,6 +27,10 @@ type channelHandlers struct {
 	publish amqpMiddleware.HandlerPublish
 	get amqpMiddleware.HandlerGet
 
+	ack amqpMiddleware.HandlerAck
+	nack amqpMiddleware.HandlerNack
+	reject amqpMiddleware.HandlerReject
+
 	// EVENTS MIDDLEWARE
 
 	notifyPublishEventMiddleware []amqpMiddleware.NotifyPublishEvent
@@ -144,6 +148,33 @@ func (handlers *channelHandlers) AddGet(
 	handlers.get = middleware(handlers.get)
 }
 
+func (handlers *channelHandlers) AddAck(
+	middleware amqpMiddleware.Ack,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.ack = middleware(handlers.ack)
+}
+
+func (handlers *channelHandlers) AddNack(
+	middleware amqpMiddleware.Nack,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.nack = middleware(handlers.nack)
+}
+
+func (handlers *channelHandlers) AddReject(
+	middleware amqpMiddleware.Reject,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.reject = middleware(handlers.reject)
+}
+
 func (handlers *channelHandlers) AddNotifyPublish(
 	middleware amqpMiddleware.NotifyPublish,
 ) {
@@ -195,6 +226,9 @@ func newChannelHandlers(conn *Connection, channel *Channel) *channelHandlers {
 		confirm:         baseBuilder.createBaseHandlerConfirm(),
 		publish:         baseBuilder.createBaseHandlerPublish(),
 		get:		     baseBuilder.createBaseHandlerGet(),
+		ack:             baseBuilder.createBaseHandlerAck(),
+		nack:            baseBuilder.createBaseHandlerNack(),
+		reject:          baseBuilder.createBaseHandlerReject(),
 		notifyPublish:   baseBuilder.createBaseHandlerNotifyPublish(),
 
 		notifyPublishEventMiddleware: nil,

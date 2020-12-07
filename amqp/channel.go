@@ -302,7 +302,7 @@ func (channel *Channel) runAcknowledgementRoutine() {
 		// If this delivery tag is less or equal to our current offset, then all
 		// requested tags are orphans and we can return an error
 		if ackReq.deliveryTag <= settings.tagConsumeOffset {
-			return newErrCantAcknowledgeOrphans(
+			return defaultMiddlewares.NewErrCantAcknowledgeOrphans(
 				settings.tagLatestDeliveryAck,
 				ackReq.deliveryTag,
 				settings.tagConsumeOffset,
@@ -332,7 +332,7 @@ func (channel *Channel) runAcknowledgementRoutine() {
 			ackReq.multiple &&
 			settings.tagLatestDeliveryAck < settings.tagConsumeOffset {
 			// then:
-			return newErrCantAcknowledgeOrphans(
+			return defaultMiddlewares.NewErrCantAcknowledgeOrphans(
 				settings.tagLatestDeliveryAck,
 				ackReq.deliveryTag,
 				settings.tagConsumeOffset,

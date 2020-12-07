@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/data"
+	"github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"
 	streadway "github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -1629,7 +1630,7 @@ func (suite *ChannelMethodsSuite) Test0320_Acknowledge_OrphanErr() {
 			t.FailNow()
 		}
 
-		var orphanErr *ErrCantAcknowledgeOrphans
+		var orphanErr *defaultMiddlewares.ErrCantAcknowledgeOrphans
 		if !assert.ErrorAs(
 			err, &orphanErr, "error is ErrCantAcknowledgeOrphans",
 		) {
