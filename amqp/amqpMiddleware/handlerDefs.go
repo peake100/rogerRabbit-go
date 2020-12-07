@@ -36,6 +36,16 @@ type HandlerConfirm func(args *ArgsConfirms) error
 
 type HandlerPublish func(args *ArgsPublish) error
 
+type HandlerGet func(args *ArgsGet) (msg data.Delivery, ok bool, err error)
+
+type HandlerAck func(args *ArgsAck) error
+
+type HandlerNack func(args *ArgsNack) error
+
+type HandlerReject func(args *ArgsReject) error
+
 type HandlerNotifyPublish func(args *ArgsNotifyPublish) chan data.Confirmation
 
 type HandlerNotifyPublishEvent func(event *EventNotifyPublish)
+
+type HandlerConsumeEvent func(event data.Delivery)

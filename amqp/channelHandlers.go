@@ -25,10 +25,12 @@ type channelHandlers struct {
 	notifyPublish amqpMiddleware.HandlerNotifyPublish
 
 	publish amqpMiddleware.HandlerPublish
+	get amqpMiddleware.HandlerGet
 
 	// EVENTS MIDDLEWARE
 
 	notifyPublishEventMiddleware []amqpMiddleware.NotifyPublishEvent
+	consumeEventMiddleware []amqpMiddleware.ConsumeEvent
 
 	lock *sync.RWMutex
 }
@@ -133,6 +135,15 @@ func (handlers *channelHandlers) AddPublish(
 	handlers.publish = middleware(handlers.publish)
 }
 
+func (handlers *channelHandlers) AddGet(
+	middleware amqpMiddleware.Get,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.get = middleware(handlers.get)
+}
+
 func (handlers *channelHandlers) AddNotifyPublish(
 	middleware amqpMiddleware.NotifyPublish,
 ) {
@@ -150,6 +161,17 @@ func (handlers *channelHandlers) AddNotifyPublishEvent(
 
 	handlers.notifyPublishEventMiddleware = append(
 		handlers.notifyPublishEventMiddleware, middleware,
+	)
+}
+
+func (handlers *channelHandlers) AddNotifyConsumeEvent(
+	middleware amqpMiddleware.ConsumeEvent,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.consumeEventMiddleware = append(
+		handlers.consumeEventMiddleware, middleware,
 	)
 }
 
@@ -172,6 +194,7 @@ func newChannelHandlers(conn *Connection, channel *Channel) *channelHandlers {
 		qos:             baseBuilder.createBaseHandlerQoS(),
 		confirm:         baseBuilder.createBaseHandlerConfirm(),
 		publish:         baseBuilder.createBaseHandlerPublish(),
+		get:		     baseBuilder.createBaseHandlerGet(),
 		notifyPublish:   baseBuilder.createBaseHandlerNotifyPublish(),
 
 		notifyPublishEventMiddleware: nil,

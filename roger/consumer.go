@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
+	"github.com/peake100/rogerRabbit-go/amqp/data"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	streadway "github.com/streadway/amqp"
@@ -68,7 +69,7 @@ type AmqpDeliveryProcessor interface {
 	// in it being logged and the delivery being nacked. If requeue is true, the nacked
 	// delivery will be requeued. If err is nil, requeue is ignored.
 	HandleDelivery(
-		ctx context.Context, delivery amqp.Delivery, logger zerolog.Logger,
+		ctx context.Context, delivery data.Delivery, logger zerolog.Logger,
 	) (err error, requeue bool)
 
 	// Run at shutdown to allow the route handler to clean up any necessary resources.
@@ -147,7 +148,7 @@ func (consumer *Consumer) RegisterProcessor(
 // Handle a single delivery.
 func (consumer *Consumer) handleDelivery(
 	handler AmqpDeliveryProcessor,
-	delivery amqp.Delivery,
+	delivery data.Delivery,
 	args *ConsumeArgs,
 	logger zerolog.Logger,
 	complete *sync.WaitGroup,
@@ -241,7 +242,7 @@ func (consumer *Consumer) runProcessor(
 	workersComplete := new(sync.WaitGroup)
 
 	// Pull all deliveries down from the consumer.
-	var delivery amqp.Delivery
+	var delivery data.Delivery
 deliveriesLoop:
 	for {
 		// Pull a delivery or exit on context close.

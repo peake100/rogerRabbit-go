@@ -1105,22 +1105,25 @@ the channel or connection is closed, the message will not get requeued.
 func (channel *Channel) Get(
 	queue string,
 	autoAck bool,
-) (msg Delivery, ok bool, err error) {
+) (msg data.Delivery, ok bool, err error) {
+	args := &amqpMiddleware.ArgsGet{
+		Queue:   queue,
+		AutoAck: autoAck,
+	}
+
 	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func() error {
 		var opErr error
-		var msgStreadway streadway.Delivery
-		msgStreadway, ok, opErr = channel.transportChannel.Get(
-			queue,
-			autoAck,
-		)
+		msg, ok, opErr = channel.transportChannel.handlers.get(args)
 		if opErr != nil {
 			return opErr
 		}
 
+		msg.TagOffset = channel.transportChannel.settings.tagConsumeOffset
+		msg.DeliveryTag += msg.TagOffset
+
 		// If there was no error, atomically increment the delivery tag.
 		atomic.AddUint64(channel.transportChannel.settings.tagConsumeCount, 1)
-		msg = channel.newDelivery(msgStreadway)
 		return opErr
 	}
 
@@ -1194,10 +1197,10 @@ the returned chan is closed.
 */
 func (channel *Channel) Consume(
 	queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args Table,
-) (deliveryChan <-chan Delivery, err error) {
+) (deliveryChan <-chan data.Delivery, err error) {
 	// Make a buffered channel so we don't cause latency from waiting for queues to be
 	// ready
-	callerDeliveries := make(chan Delivery, 16)
+	callerDeliveries := make(chan data.Delivery, 16)
 	deliveryChan = callerDeliveries
 
 	// Create our consumer relay
@@ -1212,7 +1215,7 @@ func (channel *Channel) Consume(
 			args:      args,
 		},
 		CallerDeliveries: callerDeliveries,
-		NewDelivery:      channel.newDelivery,
+		NewDelivery:      channel.NewDelivery,
 	}
 
 	// Pass it to our relay handler.

@@ -177,7 +177,7 @@ type consumeArgs struct {
 	queue, consumer                     string
 	autoAck, exclusive, noLocal, noWait bool
 	args                                Table
-	callerDeliveryChan                  chan Delivery
+	callerDeliveryChan                  chan data.Delivery
 }
 
 // Relays Deliveries across channel disconnects.
@@ -185,11 +185,11 @@ type consumeRelay struct {
 	// Arguments to call on Consume
 	ConsumeArgs consumeArgs
 	// Delivery channel to pass deliveries back to the client.
-	CallerDeliveries chan<- Delivery
+	CallerDeliveries chan<- data.Delivery
 
 	// The function we'll call to make a new delivery. Will be a method of the channel
 	// that spawned this relay.
-	NewDelivery func(orig streadway.Delivery) Delivery
+	NewDelivery func(orig streadway.Delivery) data.Delivery
 
 	// The pointer to the delivery tag count we need to atomically update with each
 	// consume.

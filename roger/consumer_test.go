@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
+	"github.com/peake100/rogerRabbit-go/amqp/data"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 	"sync"
@@ -59,7 +60,7 @@ func (consumer *BasicTestConsumer) SetupChannel(
 }
 
 func (consumer *BasicTestConsumer) HandleDelivery(
-	ctx context.Context, delivery amqp.Delivery, logger zerolog.Logger,
+	ctx context.Context, delivery data.Delivery, logger zerolog.Logger,
 ) (err error, requeue bool) {
 
 	// Check whether all messages have been received, then signal receipt.

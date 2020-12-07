@@ -282,7 +282,7 @@ func (suite *ChannelMethodsSuite) Test0060_Get() {
 	timer := time.NewTimer(3 * time.Second)
 	defer timer.Stop()
 
-	var message Delivery
+	var message data.Delivery
 	var ok bool
 	var err error
 
@@ -1605,7 +1605,7 @@ func (suite *ChannelMethodsSuite) Test0320_Acknowledge_OrphanErr() {
 		// reconnectMiddleware, so we only need to publish it once
 		suite.PublishMessages(t, "", queueName, thisCase.publishCount)
 
-		var delivery Delivery
+		var delivery data.Delivery
 		for i := 0; i < thisCase.publishCount; i++ {
 			delivery = suite.GetMessage(queueName, false)
 		}

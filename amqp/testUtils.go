@@ -262,7 +262,7 @@ func (suite *ChannelSuiteBase) PublishMessages(
 
 // get a single message, failing the test immediately if there is not a message waiting
 // or the get message fails.
-func (suite *ChannelSuiteBase) GetMessage(queueName string, autoAck bool) Delivery {
+func (suite *ChannelSuiteBase) GetMessage(queueName string, autoAck bool) data.Delivery {
 	delivery, ok, err := suite.ChannelConsume.Get(queueName, autoAck)
 	if !suite.NoError(err, "get message") {
 		suite.T().FailNow()

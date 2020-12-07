@@ -91,6 +91,27 @@ type ArgsPublish struct {
 	Msg       streadway.Publishing
 }
 
+type ArgsGet struct {
+	Queue string
+	AutoAck bool
+}
+
+type ArgsAck struct {
+	Tag uint64
+	Multiple bool
+}
+
+type ArgsNack struct {
+	Tag uint64
+	Multiple bool
+	Requeue bool
+}
+
+type ArgsReject struct {
+	Tag uint64
+	Requeue bool
+}
+
 type ArgsNotifyPublish struct {
 	Confirm chan data.Confirmation
 }
