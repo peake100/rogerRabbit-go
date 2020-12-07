@@ -1673,10 +1673,10 @@ func (channel *Channel) Middleware() *channelHandlers {
 }
 
 type ChannelTestingDefaultMiddlewares struct {
-	QoS *defaultMiddlewares.QoSMiddleware
+	QoS              *defaultMiddlewares.QoSMiddleware
 	RouteDeclaration *defaultMiddlewares.RouteDeclarationMiddleware
-	Confirm *defaultMiddlewares.ConfirmsMiddleware
-	PublishTags *defaultMiddlewares.PublishTagsMiddleware
+	Confirm          *defaultMiddlewares.ConfirmsMiddleware
+	PublishTags      *defaultMiddlewares.PublishTagsMiddleware
 }
 
 // Holds testing information and methods for channels.
@@ -1690,7 +1690,7 @@ type ChannelTesting struct {
 // Test methods for the transport
 func (channel *Channel) Test(t *testing.T) *ChannelTesting {
 	return &ChannelTesting{
-		transportTester:    &transportTester{
+		transportTester: &transportTester{
 			t,
 			channel.transportManager,
 		},

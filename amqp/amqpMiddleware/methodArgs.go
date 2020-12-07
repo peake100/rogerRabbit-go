@@ -75,8 +75,8 @@ type ArgsExchangeUnbind struct {
 
 type ArgsQoS struct {
 	PrefetchCount int
-	PrefetchSize int
-	Global bool
+	PrefetchSize  int
+	Global        bool
 }
 
 type ArgsConfirms struct {
@@ -84,11 +84,11 @@ type ArgsConfirms struct {
 }
 
 type ArgsPublish struct {
-	Exchange string
-	Key string
+	Exchange  string
+	Key       string
 	Mandatory bool
 	Immediate bool
-	Msg streadway.Publishing
+	Msg       streadway.Publishing
 }
 
 type ArgsNotifyPublish struct {

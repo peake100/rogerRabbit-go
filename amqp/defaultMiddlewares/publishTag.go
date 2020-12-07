@@ -188,7 +188,6 @@ func (middleware *PublishTagsMiddleware) NotifyPublishEvent(
 	}
 }
 
-
 func NewPublishTagsMiddleware() *PublishTagsMiddleware {
 	count := uint64(0)
 	return &PublishTagsMiddleware{

@@ -19,7 +19,7 @@ type channelHandlers struct {
 	exchangeBind    amqpMiddleware.HandlerExchangeBind
 	exchangeUnbind  amqpMiddleware.HandlerExchangeUnbind
 
-	qos amqpMiddleware.HandlerQoS
+	qos     amqpMiddleware.HandlerQoS
 	confirm amqpMiddleware.HandlerConfirm
 
 	notifyPublish amqpMiddleware.HandlerNotifyPublish
@@ -153,11 +153,10 @@ func (handlers *channelHandlers) AddNotifyPublishEvent(
 	)
 }
 
-
 func newChannelHandlers(conn *Connection, channel *Channel) *channelHandlers {
 	baseBuilder := &middlewareBaseBuilder{
 		connection: conn,
-		channel: channel,
+		channel:    channel,
 	}
 
 	return &channelHandlers{
@@ -170,13 +169,13 @@ func newChannelHandlers(conn *Connection, channel *Channel) *channelHandlers {
 		exchangeDelete:  baseBuilder.createBaseHandlerExchangeDelete(),
 		exchangeBind:    baseBuilder.createBaseHandlerExchangeBind(),
 		exchangeUnbind:  baseBuilder.createBaseHandlerExchangeUnbind(),
-		qos: 			 baseBuilder.createBaseHandlerQoS(),
-		confirm: 		 baseBuilder.createBaseHandlerConfirm(),
-		publish: 		 baseBuilder.createBaseHandlerPublish(),
+		qos:             baseBuilder.createBaseHandlerQoS(),
+		confirm:         baseBuilder.createBaseHandlerConfirm(),
+		publish:         baseBuilder.createBaseHandlerPublish(),
 		notifyPublish:   baseBuilder.createBaseHandlerNotifyPublish(),
 
 		notifyPublishEventMiddleware: nil,
 
-		lock:            new(sync.RWMutex),
+		lock: new(sync.RWMutex),
 	}
 }

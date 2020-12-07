@@ -67,4 +67,3 @@ func NewConfirmMiddleware() *ConfirmsMiddleware {
 		confirmsOn: false,
 	}
 }
-
