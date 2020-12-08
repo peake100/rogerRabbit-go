@@ -20,10 +20,7 @@ const (
 func GetTestConnection(t *testing.T) *Connection {
 	assert := assert.New(t)
 
-	dialCtx, dialCancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer dialCancel()
-
-	conn, err := DialCtx(dialCtx, TestAddress)
+	conn, err := DialCtx(context.Background(), TestAddress)
 	if !assert.NoError(err, "dial connection") {
 		t.FailNow()
 	}
