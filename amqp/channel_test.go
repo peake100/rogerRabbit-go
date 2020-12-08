@@ -226,7 +226,7 @@ func (suite *ChannelMethodsSuite) Test0010_QueueDeclare() {
 		"test_channel_methods",
 		false,
 		true,
-		true,
+		false,
 		false,
 		nil,
 	)
@@ -319,7 +319,7 @@ func (suite *ChannelMethodsSuite) Test0070_Consume_Basic() {
 		"test_channel_methods",
 		false,
 		true,
-		true,
+		false,
 		false,
 		nil,
 	)
@@ -331,7 +331,7 @@ func (suite *ChannelMethodsSuite) Test0070_Consume_Basic() {
 		queue.Name,
 		"",
 		true,
-		true,
+		false,
 		false,
 		false,
 		nil,
@@ -403,42 +403,12 @@ func (suite *ChannelMethodsSuite) Test0070_Consume_Basic() {
 
 func (suite *ChannelMethodsSuite) Test0080_Consume_OverDisconnect_Channel() {
 	suite.T().Cleanup(suite.ReplaceChannels)
-	defer func() {
-		_, err := suite.ChannelPublish.transportChannel.QueueDelete(
-			"disconnect_consumer_test",
-			false,
-			false,
-			true,
-		)
-		suite.NoError(err, "remove test queue")
-	}()
 
-	queue, err := suite.ChannelConsume.QueueDeclare(
-		"disconnect_consumer_test",
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if !suite.NoError(err, "declare queue") {
-		suite.T().FailNow()
-	}
-
-	queue, err = suite.ChannelPublish.QueueDeclare(
-		"disconnect_consumer_test",
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if !suite.NoError(err, "declare queue") {
-		suite.T().FailNow()
-	}
+	queueName := "disconnect_consumer_test"
+	suite.CreateTestQueue(queueName, "", "")
 
 	messageChannel, err := suite.ChannelConsume.Consume(
-		queue.Name,
+		queueName,
 		"",
 		true,
 		false,
@@ -451,13 +421,11 @@ func (suite *ChannelMethodsSuite) Test0080_Consume_OverDisconnect_Channel() {
 	}
 
 	for i := 1; i <= 10; i++ {
-		suite.NoError(err, "set up consumer")
-
 		message := fmt.Sprintf("test consumer %v", i)
 
 		err = suite.ChannelPublish.Publish(
 			"",
-			queue.Name,
+			queueName,
 			true,
 			false,
 			Publishing{
@@ -530,7 +498,7 @@ func (suite *ChannelMethodsSuite) Test0090_QueueDelete() {
 	_, err := suite.ChannelPublish.QueueDeclare(
 		queueName, false,
 		false,
-		true,
+		false,
 		false,
 		nil,
 	)
@@ -569,7 +537,7 @@ func (suite *ChannelMethodsSuite) Test0100_QueueDeclarePassive() {
 	_, err := suite.ChannelPublish.QueueDeclare(
 		queueName, false,
 		false,
-		true,
+		false,
 		false,
 		nil,
 	)
@@ -578,7 +546,7 @@ func (suite *ChannelMethodsSuite) Test0100_QueueDeclarePassive() {
 	_, err = suite.ChannelPublish.QueueDeclarePassive(
 		queueName, false,
 		false,
-		true,
+		false,
 		false,
 		nil,
 	)
@@ -593,7 +561,7 @@ func (suite *ChannelMethodsSuite) Test0110_QueueDeclarePassive_Err() {
 	_, err := suite.ChannelPublish.QueueDeclarePassive(
 		queueName, false,
 		false,
-		true,
+		false,
 		false,
 		nil,
 	)
@@ -628,7 +596,7 @@ func (suite *ChannelMethodsSuite) Test0120_QueueDeclare_RedeclareAfterDisconnect
 		false,
 		// Set auto-delete to true for a forced re-connection
 		true,
-		true,
+		false,
 		false,
 		nil,
 	)
@@ -671,7 +639,7 @@ func (suite *ChannelMethodsSuite) Test0130_QueueDeclare_NoRedeclareAfterDelete()
 		queueName,
 		false,
 		false,
-		true,
+		false,
 		false,
 		nil,
 	)
@@ -1773,24 +1741,34 @@ func (suite *ChannelMethodsSuite) Test0370_NotifyFlow() {
 func (suite *ChannelMethodsSuite) Test0380_NotifyCancel() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
-	cancelEvents := make(chan string, 10)
-	suite.ChannelConsume.NotifyCancel(cancelEvents)
-
 	queueName := "test_notify_cancel"
 	suite.CreateTestQueue(queueName, "", "")
 
+	cancelEvents := make(chan string, 10)
+	suite.ChannelConsume.NotifyCancel(cancelEvents)
+
 	consumerName := "test_consumer"
-	_, err := suite.ChannelConsume.Consume(
+	messages, err := suite.ChannelConsume.Consume(
 		queueName,
-		"test_consumer",
+		consumerName,
 		true,
 		false,
 		false,
 		false,
 		nil,
 	)
-
 	if !suite.NoError(err, "consume") {
+		suite.T().FailNow()
+	}
+
+	// Publish 1 message then consume it to make sure the consumer is running before
+	// we cancel it.
+	suite.PublishMessages(suite.T(), "", queueName, 1)
+
+	select {
+	case <-messages:
+	case <-time.NewTimer(3 * time.Second).C:
+		suite.T().Error("consume timeout")
 		suite.T().FailNow()
 	}
 
@@ -1805,7 +1783,7 @@ func (suite *ChannelMethodsSuite) Test0380_NotifyCancel() {
 	select {
 	case cancelled := <-cancelEvents:
 		suite.Equal(consumerName, cancelled)
-	case <-time.NewTimer(3 * time.Second).C:
+	case <-time.NewTimer(1 * time.Second).C:
 		suite.T().Error("event timeout")
 		suite.T().FailNow()
 	}
@@ -1818,7 +1796,7 @@ func (suite *ChannelMethodsSuite) Test0380_NotifyCancel() {
 	select {
 	case _, open := <-cancelEvents:
 		suite.False(open, "event channel closed")
-	case <-time.NewTimer(3 * time.Second).C:
+	case <-time.NewTimer(1 * time.Second).C:
 		suite.T().Error("event close timeout")
 		suite.T().FailNow()
 	}

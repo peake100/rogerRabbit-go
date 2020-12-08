@@ -52,6 +52,8 @@ const (
 
 // Type Aliases
 type (
+	Acknowledger = streadway.Acknowledger
+
 	// Authentication interface provides a means for different SASL authentication
 	// mechanisms to be used during connection tuning.
 	Authentication = streadway.Authentication

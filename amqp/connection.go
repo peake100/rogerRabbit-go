@@ -6,7 +6,6 @@ import (
 	"github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
-	"sync"
 )
 
 // Implements transport for *streadway.Connection.
@@ -130,7 +129,7 @@ func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 }
 
 /*
-ROGER NOTE: Unlike the normal channels, roger channels will automatically reconnectMiddleware on
+ROGER NOTE: Unlike the normal channels, roger channels will automatically reconnect on
 all errors until Channel.Close() is called.
 
 --
@@ -142,19 +141,12 @@ invalid and a new Channel should be opened.
 */
 func (conn *Connection) Channel() (*Channel, error) {
 	transportChan := &transportChannel{
-		Channel:                  nil,
-		rogerConn:                conn,
-		handlers:                 nil,
-		defaultMiddlewares:       new(ChannelTestingDefaultMiddlewares),
-		eventRelaysRunning:       new(sync.WaitGroup),
-		eventRelaysRunSetup:      new(sync.WaitGroup),
-		eventRelaysSetupComplete: new(sync.WaitGroup),
-		eventRelaysGo:            new(sync.WaitGroup),
-		logger:                   zerolog.Logger{},
+		Channel:            nil,
+		rogerConn:          conn,
+		handlers:           nil,
+		defaultMiddlewares: new(ChannelTestingDefaultMiddlewares),
+		logger:             zerolog.Logger{},
 	}
-
-	// Add 1 to this WaitGroup so it can be released on the initial channel establish.
-	transportChan.eventRelaysRunSetup.Add(1)
 
 	manager := newTransportManager(conn.ctx, transportChan, "CHANNEL")
 	transportChan.logger = manager.logger
@@ -163,6 +155,10 @@ func (conn *Connection) Channel() (*Channel, error) {
 	rogerChannel := &Channel{
 		transportChannel: transportChan,
 		transportManager: manager,
+	}
+
+	transportChan.relaySync = channelRelaySync{
+		shared: newSharedSync(rogerChannel),
 	}
 
 	// Initialize our channel handlers with the new channel
@@ -175,8 +171,6 @@ func (conn *Connection) Channel() (*Channel, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	rogerChannel.start()
 
 	return rogerChannel, nil
 }

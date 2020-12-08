@@ -42,27 +42,56 @@ func (middle *RouteDeclarationMiddleware) removeQueue(queueName string) {
 	)
 }
 
+type removeQueueBindingOpts struct {
+	// Queue name to remove bindings for
+	queueName string
+	// Exchange name to remove bindings for
+	exchangeName string
+	// Routing key to remove bindings for
+	routingKey string
+
+	// Remove binding if queue name matches
+	removeQueueMatch bool
+	// Remove binding if exchange name matches
+	removeExchangeMatch bool
+	// Remove binding if route name matches
+	removeRouteMatch bool
+}
+
+func removeQueueBindingOk(
+	binding *amqpMiddleware.ArgsQueueBind, opts removeQueueBindingOpts,
+) bool {
+	// If there is a routing Key to match, then the queue and exchange must match
+	// too (so we don't end up removing a binding with the same routing Key between
+	// a different queue-exchange pair).
+	if opts.removeRouteMatch &&
+		binding.Key == opts.routingKey &&
+		binding.Name == opts.queueName &&
+		binding.Exchange == opts.exchangeName {
+		// then:
+		return true
+	}
+
+	if opts.removeQueueMatch && binding.Name == opts.queueName {
+		return true
+	}
+
+	if opts.removeExchangeMatch && binding.Exchange == opts.exchangeName {
+		return true
+	}
+
+	return false
+}
+
 func (middle *RouteDeclarationMiddleware) removeQueueBindingsFromSlice(
-	queueName, exchangeName, routingKey string,
-	removeQueueMatch, removeExchangeMatch, removeRouteMatch bool,
+	opts removeQueueBindingOpts,
 ) {
 	// Rather than creating a new slice, we are going to filter out any matching
 	// bind declarations we find, then constrain the slice to the number if items
 	// we have left.
 	i := 0
 	for _, thisBinding := range middle.bindQueues {
-		// If there is a routing Key to match, then the queue and exchange must match
-		// too (so we don't end up removing a binding with the same routing Key between
-		// a different queue-exchange pair).
-		if removeRouteMatch &&
-			thisBinding.Key == routingKey &&
-			thisBinding.Name == queueName &&
-			thisBinding.Exchange == exchangeName {
-			// then:
-			continue
-		} else if removeQueueMatch && thisBinding.Name == queueName {
-			continue
-		} else if removeExchangeMatch && thisBinding.Exchange == exchangeName {
+		if removeQueueBindingOk(thisBinding, opts) {
 			continue
 		}
 
@@ -79,30 +108,25 @@ func (middle *RouteDeclarationMiddleware) removeQueueBindings(
 	exchangeName string,
 	routingKey string,
 ) {
-	removeQueueMatch := false
-	removeExchangeMatch := false
-	removeRouteMatch := false
-
-	if queueName != "" {
-		removeQueueMatch = true
-	}
-	if exchangeName != "" {
-		removeExchangeMatch = true
-	}
-	if routingKey != "" {
-		removeRouteMatch = true
-	}
-
 	middle.bindQueuesLock.Lock()
 	defer middle.bindQueuesLock.Unlock()
 
 	middle.removeQueueBindingsFromSlice(
-		queueName,
-		exchangeName,
-		routingKey,
-		removeQueueMatch,
-		removeExchangeMatch,
-		removeRouteMatch,
+		removeQueueBindingOpts{
+			queueName:    queueName,
+			exchangeName: exchangeName,
+			routingKey:   routingKey,
+
+			// If the queue name is non-emtpy, remove on queue match (will remove all
+			// bindings for the queue).
+			removeQueueMatch: queueName != "",
+			// If the exchange name is non-empty, remove on exchange match (will remove
+			//all bindings for the exchange).
+			removeExchangeMatch: exchangeName != "",
+			// If the routeingKey is non-nil, only remove bindings where the routing
+			// key, queue, and exchange all match (that exact binding).
+			removeRouteMatch: routingKey != "",
+		},
 	)
 }
 
@@ -115,8 +139,66 @@ func (middle *RouteDeclarationMiddleware) removeExchange(exchangeName string) {
 	// to re-declare on re-connections.
 	middle.removeQueueBindings("", exchangeName, "")
 	middle.removeExchangeBindings(
-		"", "", "", exchangeName,
+		exchangeName, "", exchangeName, true,
 	)
+}
+
+type removeExchangeBindingOpts struct {
+	destination string
+	key         string
+	source      string
+	// When a queue is deleted we need to remove any binding where the source or
+	// destination matches
+	destinationOrSource bool
+
+	removeDestinationMatch bool
+	removeKeyMatch         bool
+	removeSourceMatch      bool
+}
+
+func removeExchangeBindingOk(
+	binding *amqpMiddleware.ArgsExchangeBind, opts removeExchangeBindingOpts,
+) bool {
+	// If there is a routing Key to match, then the source and destination exchanges
+	// must match too (so we don't end up removing a binding with the same routing
+	// Key between a different isSet of exchanges).
+	if opts.removeKeyMatch &&
+		binding.Key == opts.key &&
+		binding.Source == opts.source &&
+		binding.Destination == opts.destination {
+		// then:
+		return true
+	}
+
+	if opts.removeDestinationMatch && binding.Destination == opts.destination {
+		return true
+	}
+
+	if opts.removeSourceMatch && binding.Source == opts.source {
+		return true
+	}
+
+	return false
+}
+
+func (middle *RouteDeclarationMiddleware) removeExchangeBindingsFromSlice(
+	opts removeExchangeBindingOpts,
+) {
+	// Rather than creating a new slice, we are going to filter out any matching
+	// bind declarations we find, then constrain the slice to the number if items
+	// we have left.
+	i := 0
+	for _, thisBinding := range middle.bindExchanges {
+		// If we are to remove the binding, continue.
+		if removeExchangeBindingOk(thisBinding, opts) {
+			continue
+		}
+
+		middle.bindExchanges[i] = thisBinding
+		i++
+	}
+
+	middle.bindQueues = middle.bindQueues[0:i]
 }
 
 // Remove a re-connection binding when a binding or exchange is removed.
@@ -126,54 +208,22 @@ func (middle *RouteDeclarationMiddleware) removeExchangeBindings(
 	source string,
 	// When a queue is deleted we need to remove any binding where the source or
 	// destination matches
-	destinationOrSource string,
+	destinationOrSource bool,
 ) {
-	removeDestinationMatch := false
-	removeKeyMatch := false
-	removeSourceMatch := false
-
-	if destination != "" {
-		removeDestinationMatch = true
-	}
-	if key != "" {
-		removeKeyMatch = true
-	}
-	if source != "" {
-		removeSourceMatch = true
-	}
-	if destinationOrSource != "" {
-		removeSourceMatch = true
-		removeDestinationMatch = true
-	}
-
 	middle.bindQueuesLock.Lock()
 	defer middle.bindQueuesLock.Unlock()
 
-	// Rather than creating a new slice, we are going to filter out any matching
-	// bind declarations we find, then constrain the slice to the number if items
-	// we have left.
-	i := 0
-	for _, thisBinding := range middle.bindExchanges {
-		// If there is a routing Key to match, then the source and destination exchanges
-		// must match too (so we don't end up removing a binding with the same routing
-		// Key between a different isSet of exchanges).
-		if removeKeyMatch &&
-			thisBinding.Key == key &&
-			thisBinding.Source == source &&
-			thisBinding.Destination == destination {
-			// then:
-			continue
-		} else if removeDestinationMatch && thisBinding.Destination == destination {
-			continue
-		} else if removeSourceMatch && thisBinding.Source == source {
-			continue
-		}
-
-		middle.bindExchanges[i] = thisBinding
-		i++
-	}
-
-	middle.bindQueues = middle.bindQueues[0:i]
+	middle.removeExchangeBindingsFromSlice(
+		removeExchangeBindingOpts{
+			destination:            destination,
+			key:                    key,
+			source:                 source,
+			destinationOrSource:    destinationOrSource,
+			removeDestinationMatch: destination != "" || destinationOrSource,
+			removeKeyMatch:         key != "",
+			removeSourceMatch:      source != "" || destinationOrSource,
+		},
+	)
 }
 
 func (middle *RouteDeclarationMiddleware) reconnectDeclareQueues(
@@ -207,7 +257,10 @@ func (middle *RouteDeclarationMiddleware) reconnectDeclareQueues(
 		)
 		if err != nil {
 			var streadwayErr *streadway.Error
-			if errors.As(err, &streadwayErr) && streadwayErr.Code == streadway.NotFound {
+			if errors.As(err, &streadwayErr) &&
+				streadwayErr.Code == streadway.NotFound {
+				// THEN:
+
 				// If this is a passive declare, we can get a 404 NOT_FOUND error. If we
 				// do, then we should remove this queue from the list of queues that is
 				// to be re-declared, so that we don't get caught in an endless loop
@@ -223,7 +276,6 @@ func (middle *RouteDeclarationMiddleware) reconnectDeclareQueues(
 
 		return true
 	}
-
 	// Redeclare all queues in the map.
 	middle.declareQueues.Range(redeclareQueues)
 
@@ -263,7 +315,8 @@ func (middle *RouteDeclarationMiddleware) reconnectDeclareExchanges(
 		)
 		if err != nil {
 			var streadwayErr *streadway.Error
-			if errors.As(err, &streadwayErr) && streadwayErr.Code == streadway.NotFound {
+			if errors.As(err, &streadwayErr) &&
+				streadwayErr.Code == streadway.NotFound {
 				// If this is a passive declare, we can get a 404 NOT_FOUND error. If we
 				// do, then we should remove this queue from the list of queues that is
 				// to be re-declared, so that we don't get caught in an endless loop
@@ -355,59 +408,45 @@ func (middle *RouteDeclarationMiddleware) reconnectBindExchanges(
 	return nil
 }
 
+func (middle *RouteDeclarationMiddleware) reconnectHandler(
+	ctx context.Context, logger zerolog.Logger, next amqpMiddleware.HandlerReconnect,
+) (*streadway.Channel, error) {
+	channel, err := next(ctx, logger)
+	// If there was an error, pass it up the chain.
+	if err != nil {
+		return channel, err
+	}
+
+	err = middle.reconnectDeclareQueues(channel)
+	if err != nil {
+		return channel, err
+	}
+
+	err = middle.reconnectDeclareExchanges(channel)
+	if err != nil {
+		return channel, err
+	}
+
+	err = middle.reconnectBindExchanges(channel)
+	if err != nil {
+		return channel, err
+	}
+
+	err = middle.reconnectBindQueues(channel)
+	if err != nil {
+		return channel, err
+	}
+
+	return channel, nil
+}
+
 func (middle *RouteDeclarationMiddleware) Reconnect(
 	next amqpMiddleware.HandlerReconnect,
 ) (handler amqpMiddleware.HandlerReconnect) {
 	handler = func(
 		ctx context.Context, logger zerolog.Logger,
 	) (*streadway.Channel, error) {
-		channel, err := next(ctx, logger)
-
-		// If there was an error, pass it up the chain.
-		if err != nil {
-			return channel, err
-		}
-
-		// Recreate queue and exchange topology
-		debugEnabled := logger.Debug().Enabled()
-
-		// Declare the queues first.
-		if debugEnabled {
-			logger.Debug().Msg("re-declaring queues")
-		}
-		err = middle.reconnectDeclareQueues(channel)
-		if err != nil {
-			return channel, err
-		}
-
-		// Next declare our exchanges.
-		if debugEnabled {
-			logger.Debug().Msg("re-declaring exchanges")
-		}
-		err = middle.reconnectDeclareExchanges(channel)
-		if err != nil {
-			return channel, err
-		}
-
-		// Now, re-bind our exchanges.
-		if debugEnabled {
-			logger.Debug().Msg("re-binding exchanges")
-		}
-		err = middle.reconnectBindExchanges(channel)
-		if err != nil {
-			return channel, err
-		}
-
-		// Finally, re-bind our queues.
-		if debugEnabled {
-			logger.Debug().Msg("re-binding queues")
-		}
-		err = middle.reconnectBindQueues(channel)
-		if err != nil {
-			return channel, err
-		}
-
-		return channel, nil
+		return middle.reconnectHandler(ctx, logger, next)
 	}
 
 	return handler
@@ -562,7 +601,7 @@ func (middle *RouteDeclarationMiddleware) ExchangeUnbind(
 		}
 
 		middle.removeExchangeBindings(
-			args.Destination, args.Key, args.Source, "",
+			args.Destination, args.Key, args.Source, false,
 		)
 
 		return nil

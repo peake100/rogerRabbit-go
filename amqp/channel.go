@@ -8,7 +8,6 @@ import (
 	"github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
-	"sync"
 	"testing"
 )
 
@@ -24,31 +23,8 @@ type transportChannel struct {
 	handlers           *channelHandlers
 	defaultMiddlewares *ChannelTestingDefaultMiddlewares
 
-	// Event processors should grab this WaitGroup when they spin up and release it
-	// when they have finished processing all available events after a channel close.
-	// This will block a reconnection from being available for new work until all
-	// work from the previous channel has been finished.
-	//
-	// This will also block the updating of values like tagPublishCount until all
-	// eventProcessors have finished work.
-	eventRelaysRunning *sync.WaitGroup
-	// This WaitGroup will close when a new channel is opened but not yet serving
-	// requests, this allows event processors to grab information about the channel
-	// and remain confident that we did not miss a new channel while wrapping up event
-	// processing from a previous channel in a situation where we are rapidly connecting
-	// and disconnecting
-	eventRelaysRunSetup *sync.WaitGroup
-	// This WaitGroup should be added to before a processor releases
-	// eventRelaysRunning and released after a processor has acquired all the info
-	// it needs from a new channel. Once this WaitGroup is fully released, the write
-	// lock on the channel will be released and channel methods will become available to
-	// callers again.
-	eventRelaysSetupComplete *sync.WaitGroup
-	// This WaitGroup will be released when all relays are ready. Event relays will
-	// wait on this group after releasing eventRelaysSetupComplete so that they don't
-	// error out and re-enter the beginning of their lifecycle before
-	// eventRelaysRunSetup has been re-acquired by the transport manager.
-	eventRelaysGo *sync.WaitGroup
+	// Sync object for communicating with relays
+	relaySync channelRelaySync
 
 	// Logger for the channel transport
 	logger zerolog.Logger
@@ -56,7 +32,7 @@ type transportChannel struct {
 
 func (transport *transportChannel) cleanup() error {
 	// Release this lock so event processors can close.
-	defer transport.eventRelaysRunSetup.Done()
+	defer transport.relaySync.shared.runSetup.Done()
 	return nil
 }
 
@@ -69,7 +45,7 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	if debugEnabled {
 		logger.Debug().Msg("waiting for event relays to finish")
 	}
-	transport.eventRelaysRunning.Wait()
+	transport.relaySync.WaitForRelayLegComplete()
 
 	if debugEnabled {
 		logger.Debug().Msg("getting new channel")
@@ -83,28 +59,17 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 
 	// Set up the new channel
 	transport.Channel = channel
-
-	// Acquire the final WaitGroup to release when we are ready to let the relays start
-	// processing again.
-	transport.eventRelaysGo.Add(1)
-
 	// Allow the relays to advance to the setup stage.
 	if debugEnabled {
 		logger.Debug().Msg("advancing event relays to setup")
 	}
-	transport.eventRelaysRunSetup.Done()
+	transport.relaySync.StartSetup()
+	transport.relaySync.WaitForRelaySetupComplete()
 
-	// Wait for the relays to finish their setup.
-	transport.eventRelaysSetupComplete.Wait()
-
-	// Block the relays from setting up again until we have a new channel.
-	transport.eventRelaysRunSetup.Add(1)
-
-	// Release the relays, allowing them to start processing events on our new channel.
 	if debugEnabled {
 		logger.Debug().Msg("restarting event relay processing")
 	}
-	transport.eventRelaysGo.Done()
+	transport.relaySync.StartRelays()
 
 	return nil
 }
@@ -127,10 +92,6 @@ type Channel struct {
 	// Manages the lifetime of the connection: such as automatic reconnects, connection
 	// status events, and closing.
 	*transportManager
-}
-
-// Start helper routines.
-func (channel *Channel) start() {
 }
 
 /*

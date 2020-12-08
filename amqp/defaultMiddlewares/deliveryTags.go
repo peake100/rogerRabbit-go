@@ -73,8 +73,8 @@ func (middleware *DeliveryTagsMiddleware) containsOrphans(
 	// orphan
 	if tag > middleware.tagConsumeOffset && !multiple {
 		return false
-		// If the tag is below the current offset, it is an orphan, regardless of whether
-		// if is a multiple ack
+		// If the tag is below the current offset, it is an orphan, regardless of
+		// whether if is a multiple ack.
 	} else if tag < middleware.tagConsumeOffset {
 		return true
 	}

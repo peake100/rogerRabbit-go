@@ -22,137 +22,119 @@ type eventRelay interface {
 	Shutdown() error
 }
 
+func shutdownRelay(relay eventRelay, relaySync *relaySync, relayLogger zerolog.Logger) {
+	// Release any outstanding WaitGroups we are holding on exit
+	defer relaySync.Complete()
+
+	if relayLogger.Debug().Enabled() {
+		relayLogger.Debug().Msg("shutting down relay")
+	}
+
+	// Invoke the shutdown method of the relay.
+	err := relay.Shutdown()
+	if err != nil {
+		relayLogger.Err(err).Msg("error shutting down relay")
+	}
+}
+
+func (channel *Channel) runEventRelayCycleSetup(
+	relay eventRelay, relaySync *relaySync, legLogger zerolog.Logger,
+) (setupErr error) {
+	// Release our hold on the event relays setup complete on exit.
+	defer relaySync.SetupComplete()
+
+	// Wait for a new channel to be established.
+	if legLogger.Debug().Enabled() {
+		legLogger.Debug().Msg("relay waiting for new connection")
+	}
+	relaySync.WaitForSetup()
+
+	if relaySync.IsDone() {
+		return nil
+	}
+
+	// Set up our next leg.
+	if legLogger.Debug().Enabled() {
+		legLogger.Debug().Msg("setting up relay leg")
+	}
+	setupErr = relay.SetupForRelayLeg(channel.transportChannel.Channel)
+	if setupErr != nil {
+		legLogger.Err(setupErr).Msg("error setting up event relay leg")
+	}
+
+	return setupErr
+}
+
+func (channel *Channel) runEventRelayCycleLeg(
+	relay eventRelay, flowControl *relaySync, legLogger zerolog.Logger,
+) {
+	if legLogger.Debug().Enabled() {
+		legLogger.Debug().Msg("starting relay leg")
+	}
+	done, runErr := relay.RunRelayLeg()
+	flowControl.SetDone(done)
+
+	if legLogger.Debug().Enabled() {
+		legLogger.Debug().Msg("exiting relay leg")
+	}
+	// Log any errors.
+	if runErr != nil {
+		legLogger.Err(runErr).Msg("error running event relay leg")
+	}
+}
+
+func (channel *Channel) runEventRelayCycle(
+	relay eventRelay, relaySync *relaySync, legLogger zerolog.Logger,
+) {
+	setupErr := channel.runEventRelayCycleSetup(relay, relaySync, legLogger)
+
+	if legLogger.Debug().Enabled() {
+		legLogger.Debug().Msg("waiting for relay start")
+	}
+
+	if !relaySync.IsDone() {
+		relaySync.WaitForRunLeg()
+	}
+
+	// Whether or not we run the leg, reset our sync to mark the run as complete.
+	defer relaySync.RunLegComplete()
+
+	// If there was no setup error and our relay is not done, run the leg.
+	if setupErr == nil {
+		channel.runEventRelayCycleLeg(relay, relaySync, legLogger)
+	}
+}
+
 // launch as goroutine to run an event relay after it's initial setup.
 func (channel *Channel) runEventRelay(relay eventRelay, relayLogger zerolog.Logger) {
-	var setupErr error
+	relaySync := &relaySync{
+		done:              false,
+		shared:            channel.transportChannel.relaySync.shared,
+		firstSetupDone:    false,
+		setupCompleteHeld: false,
+		legCompleteHeld:   false,
+	}
 
 	relayLeg := 1
-	legLogger := relayLogger.With().Int("LEG", relayLeg).Logger()
-
 	// Shutdown our relay on exit.
-	defer func() {
-		if relayLogger.Debug().Enabled() {
-			relayLogger.Debug().Msg("shutting down relay")
-		}
-		err := relay.Shutdown()
-		if err != nil {
-			relayLogger.Err(err).Msg("error shutting down relay")
-		}
-	}()
+	defer shutdownRelay(relay, relaySync, relayLogger)
 
 	// Start running each leg.
 	for {
-		var done bool
-
-		// We're going to use closure here to control the flow of the WaitGroups.
-		func() {
-			// Release our hold on the running WaitGroup.
-			defer channel.transportChannel.eventRelaysRunning.Done()
-			// Grab a hold on the relays ready WaitGroup.
-			defer channel.transportChannel.eventRelaysSetupComplete.Add(1)
-
-			// If there was no error the last time we ran the setup for this relay,
-			// run the leg.
-			if setupErr != nil {
-				return
-			}
-
-			var runErr error
-			if legLogger.Debug().Enabled() {
-				legLogger.Debug().Msg("starting relay leg")
-			}
-			done, runErr = relay.RunRelayLeg()
-			if legLogger.Debug().Enabled() {
-				legLogger.Debug().Msg("exiting relay leg")
-			}
-			// Log any errors.
-			if runErr != nil {
-				legLogger.Err(runErr).Msg("error running event relay leg")
-			}
-		}()
-
-		relayLeg++
-		legLogger = relayLogger.With().Int("LEG", relayLeg).Logger()
-
-		func() {
-			// Release our hold on the event relays ready on exit.
-			defer channel.transportChannel.eventRelaysSetupComplete.Done()
-
-			// Exit if done.
-			if done {
-				return
-			}
-
-			// Wait for a new channel to be established.
-			if legLogger.Debug().Enabled() {
-				legLogger.Debug().Msg("relay waiting for new connection")
-			}
-			channel.transportChannel.eventRelaysRunSetup.Wait()
-
-			// If the new channel WaitGroup was released due to a context cancellation,
-			// exit.
-			if channel.ctx.Err() != nil {
-				done = true
-				return
-			}
-
-			// Set up our next leg.
-			if legLogger.Debug().Enabled() {
-				legLogger.Debug().Msg("setting up relay leg")
-			}
-			setupErr = relay.SetupForRelayLeg(channel.transportChannel.Channel)
-			if setupErr != nil {
-				legLogger.Err(setupErr).Msg("error setting up event relay leg")
-			}
-
-			// Grab the event processor running WaitGroup.
-			channel.transportChannel.eventRelaysRunning.Add(1)
-		}()
-
-		// Stop loop if done or if our channel context has been cancelled.
-		if done || channel.ctx.Err() != nil {
-			break
+		legLogger := relayLogger.With().Int("LEG", relayLeg).Logger()
+		channel.runEventRelayCycle(relay, relaySync, legLogger)
+		if relaySync.IsDone() {
+			return
 		}
-
-		// Wait for the final go-ahead to start our relay again
-		channel.transportChannel.eventRelaysGo.Wait()
+		relayLeg++
 	}
 }
 
 func (channel *Channel) setupAndLaunchEventRelay(relay eventRelay) error {
-	// Run the initial setup as an op so we can use the transport lock to safely enter
-	// into our loop.
-	var waitGroupGrabbed bool
-
 	logger := relay.Logger(channel.logger).
 		With().
 		Str("SUBPROCESS", "EVENT_RELAY").
 		Logger()
-
-	op := func() error {
-		err := relay.SetupForRelayLeg(channel.transportChannel.Channel)
-		if err != nil {
-			return err
-		}
-		// Grab a spot on the event processor WaitGroup
-		waitGroupGrabbed = true
-		channel.transportChannel.eventRelaysRunning.Add(1)
-		return nil
-	}
-
-	// Run the initial setup, exit if we hit an error.
-	if logger.Debug().Enabled() {
-		logger.Debug().Msg("setting up initial relay leg")
-	}
-	setupErr := channel.retryOperationOnClosed(channel.ctx, op, true)
-	if setupErr != nil {
-		// Release the running WaitGroup if we grabbed it during setup.
-		// Run the initial setup, exit if we hit an error.
-		if waitGroupGrabbed {
-			channel.transportChannel.eventRelaysRunning.Done()
-		}
-		return setupErr
-	}
 
 	// Launch the runner
 	go channel.runEventRelay(relay, logger)

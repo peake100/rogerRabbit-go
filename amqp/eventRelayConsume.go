@@ -81,13 +81,13 @@ func (relay *consumeRelay) Shutdown() error {
 
 func newConsumeRelay(
 	consumeArgs *consumeArgs,
-	channel *Channel,
+	acknowledger Acknowledger,
 	middleware []amqpMiddleware.ConsumeEvent,
 ) *consumeRelay {
 	relay := &consumeRelay{
 		ConsumeArgs:      *consumeArgs,
 		CallerDeliveries: consumeArgs.callerDeliveryChan,
-		Acknowledger:     channel,
+		Acknowledger:     acknowledger,
 		brokerDeliveries: nil,
 		handler:          nil,
 	}
