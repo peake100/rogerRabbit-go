@@ -54,7 +54,7 @@ var (
 // here.
 const (
 	Persistent = streadway.Persistent
-	Transient = streadway.Transient
+	Transient  = streadway.Transient
 )
 
 // Constants for standard AMQP 0-9-1 exchange types.
