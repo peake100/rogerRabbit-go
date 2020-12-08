@@ -192,18 +192,13 @@ func (manager *transportManager) retryOperationOnClosed(
 	for {
 		err := manager.retryOperationOnClosedSingle(ctx, operation)
 
-		// If there was no error, exit.
-		if err == nil || !retry {
-			return nil
-		}
-
-		// If this was a type of error we should retry the operation on (error resulting
-		// from a connection error), then log it and continue.
-		if !isRepeatErr(err) {
-			// If it's not a retry error, return it.
+		// If there was no error, we are not trying, or this is not a repeat error,
+		// or our context has cancelled: return.
+		if err == nil || !retry || !isRepeatErr(err) || ctx.Err() != nil {
 			return err
 		}
 
+		// Otherwise retry the operation once the connection has been established.
 		if manager.logger.Debug().Enabled() {
 			log.Debug().Caller(1).Msgf(
 				"repeating operation on error: %v", err,
