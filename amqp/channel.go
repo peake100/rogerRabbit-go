@@ -1180,28 +1180,34 @@ func (channel *Channel) NotifyConfirmOrOrphaned(
 		Str("EVENT_TYPE", "NOTIFY_CONFIRM_OR_ORPHAN").
 		Logger()
 
-	go func() {
-		// Close channels on exit
-		defer notifyConfirmCloseConfirmChannels(ack, nack, orphaned)
-
-		// range over confirmation events and place them in the ack and nack channels.
-		for confirmation := range confirmsEvents {
-			if confirmation.DisconnectOrphan {
-				if logger.Debug().Enabled() {
-					logger.Debug().
-						Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
-						Bool("ACK", confirmation.Ack).
-						Str("CHANNEL", "ORPHANED").
-						Msg("orphaned confirmation sent")
-				}
-				orphaned <- confirmation.DeliveryTag
-			} else {
-				notifyConfirmHandleAckAndNack(confirmation, ack, nack, logger)
-			}
-		}
-	}()
+	go channel.runNotifyConfirmOrOrphaned(ack, nack, orphaned, confirmsEvents, logger)
 
 	return ack, nack, orphaned
+}
+
+func (channel *Channel) runNotifyConfirmOrOrphaned(
+	ack, nack, orphaned chan uint64,
+	confirmEvents <-chan data.Confirmation,
+	logger zerolog.Logger,
+) {
+	// Close channels on exit
+	defer notifyConfirmCloseConfirmChannels(ack, nack, orphaned)
+
+	// range over confirmation events and place them in the ack and nack channels.
+	for confirmation := range confirmEvents {
+		if confirmation.DisconnectOrphan {
+			if logger.Debug().Enabled() {
+				logger.Debug().
+					Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
+					Bool("ACK", confirmation.Ack).
+					Str("CHANNEL", "ORPHANED").
+					Msg("orphaned confirmation sent")
+			}
+			orphaned <- confirmation.DeliveryTag
+		} else {
+			notifyConfirmHandleAckAndNack(confirmation, ack, nack, logger)
+		}
+	}
 }
 
 /*

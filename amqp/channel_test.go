@@ -1634,7 +1634,9 @@ func (suite *ChannelMethodsSuite) Test0330_QoS_PrefetchCount() {
 	qosMiddleware := suite.ChannelConsume.Test(suite.T()).DefaultMiddlewares.QoS
 
 	suite.Equal(
-		10, qosMiddleware.QosArgs().PrefetchCount, "prefetch count",
+		10,
+		qosMiddleware.QosArgs().PrefetchCount,
+		"prefetch count",
 	)
 	suite.Equal(
 		0, qosMiddleware.QosArgs().PrefetchSize, "prefetch size",

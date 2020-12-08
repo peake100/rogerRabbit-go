@@ -147,6 +147,40 @@ func isRepeatErr(err error) bool {
 	return false
 }
 
+func (manager *transportManager) retryOperationOnClosedSingle(
+	ctx context.Context,
+	operation func() error,
+) error {
+	// If the context of our robust transport mechanism is closed, return an
+	// ErrClosed.
+	if ctx.Err() != nil {
+		if manager.logger.Debug().Enabled() {
+			log.Debug().Caller(1).Msg(
+				"operation attempted after context close",
+			)
+		}
+		return streadway.ErrClosed
+	}
+
+	// Run the operation in a closure so we can acquire and release the
+	// transportLock using defer.
+	var err error
+	func() {
+		// Acquire the transportLock for read. This allow multiple operation to
+		// occur at the same time, but blocks the connection from being switched
+		// out until the operations resolve.
+		//
+		// We don't need to worry about lock contention, as once the transport
+		// reconnection routine requests the lock, and new read acquisitions will
+		// be blocked until the lock is acquired and released for write.
+		manager.transportLock.RLock()
+		defer manager.transportLock.RUnlock()
+
+		err = operation()
+	}()
+	return err
+}
+
 // Repeats operation until a non-closed error is returned or ctx expires. This is a
 // helper method for implementing methods like Channel.QueueBind, in which we want
 // to retry the operation if our underlying transport mechanism has connection issues.
@@ -155,35 +189,8 @@ func (manager *transportManager) retryOperationOnClosed(
 	operation func() error,
 	retry bool,
 ) error {
-	var err error
-
 	for {
-		// If the context of our robust transport mechanism is closed, return an
-		// ErrClosed.
-		if ctx.Err() != nil {
-			if manager.logger.Debug().Enabled() {
-				log.Debug().Caller(1).Msg(
-					"operation attempted after context close",
-				)
-			}
-			return streadway.ErrClosed
-		}
-
-		// Run the operation in a closure so we can acquire and release the
-		// transportLock using defer.
-		func() {
-			// Acquire the transportLock for read. This allow multiple operation to
-			// occur at the same time, but blocks the connection from being switched
-			// out until the operations resolve.
-			//
-			// We don't need to worry about lock contention, as once the transport
-			// reconnection routine requests the lock, and new read acquisitions will
-			// be blocked until the lock is acquired and released for write.
-			manager.transportLock.RLock()
-			defer manager.transportLock.RUnlock()
-
-			err = operation()
-		}()
+		err := manager.retryOperationOnClosedSingle(ctx, operation)
 
 		// If there was no error, exit.
 		if err == nil || !retry {
@@ -192,17 +199,16 @@ func (manager *transportManager) retryOperationOnClosed(
 
 		// If this was a type of error we should retry the operation on (error resulting
 		// from a connection error), then log it and continue.
-		if isRepeatErr(err) {
-			if manager.logger.Debug().Enabled() {
-				log.Debug().Caller(1).Msgf(
-					"repeating operation on error: %v", err,
-				)
-			}
-			continue
+		if !isRepeatErr(err) {
+			// If it's not a retry error, return it.
+			return err
 		}
 
-		// If it's not a retry error, return it.
-		return err
+		if manager.logger.Debug().Enabled() {
+			log.Debug().Caller(1).Msgf(
+				"repeating operation on error: %v", err,
+			)
+		}
 	}
 }
 
