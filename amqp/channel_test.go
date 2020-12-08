@@ -762,7 +762,8 @@ func (suite *ChannelMethodsSuite) Test0150_NotifyPublish_Reconnections() {
 
 	allReceived := make(chan struct{})
 
-	confirmations := new(sync.WaitGroup)
+	publications := make(chan struct{})
+	confirmations := make(chan struct{})
 
 	workersDone := new(sync.WaitGroup)
 	workersDone.Add(1)
@@ -782,17 +783,16 @@ func (suite *ChannelMethodsSuite) Test0150_NotifyPublish_Reconnections() {
 				suite.T().FailNow()
 			}
 			// Add 1 to the confirmation WaitGroup
-			confirmations.Add(1)
+			publications <- struct{}{}
+			<-confirmations
 
 			// Every second and third publish, wait for our confirmations to line up
 			// and close the channel or connection to force a reconnection
 			if i%3 == 0 {
 				suite.T().Log("closing connection")
-				confirmations.Wait()
 				suite.ConnPublish.transportConn.Close()
 			} else if i%2 == 0 {
 				suite.T().Log("closing channel")
-				confirmations.Wait()
 				suite.ChannelPublish.transportChannel.Close()
 			}
 		}
@@ -805,7 +805,8 @@ func (suite *ChannelMethodsSuite) Test0150_NotifyPublish_Reconnections() {
 		i := 0
 		for confirmation := range notifyPublish {
 			// Subtract 1 to the confirmation WaitGroup
-			confirmations.Done()
+			<-publications
+			confirmations <- struct{}{}
 			suite.Equal(
 				uint64(i)+1, confirmation.DeliveryTag, "delivery tag",
 			)
