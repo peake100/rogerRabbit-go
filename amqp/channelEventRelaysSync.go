@@ -2,6 +2,7 @@ package amqp
 
 import (
 	"context"
+	streadway "github.com/streadway/amqp"
 	"sync"
 )
 
@@ -91,6 +92,7 @@ type relaySync struct {
 	shared sharedSync
 
 	firstSetupDone bool
+	firstSetupWait chan struct{}
 
 	setupCompleteHeld bool
 	legCompleteHeld   bool
@@ -141,6 +143,7 @@ func (relaySync *relaySync) SetupComplete() {
 		// Mark that we are through the first setup so we do not try to acquire the
 		// transport lock on the next go-around
 		relaySync.firstSetupDone = true
+		close(relaySync.firstSetupWait)
 	} else {
 		defer func() {
 			relaySync.shared.setupComplete.Done()
@@ -168,4 +171,25 @@ func (relaySync *relaySync) RunLegComplete() {
 	// Acquire the setup complete group before releasing the running group.
 	relaySync.setupCompleteHeld = true
 	relaySync.shared.setupComplete.Add(1)
+}
+
+func (relaySync *relaySync) WaitForInit(ctx context.Context) error {
+	select {
+	case <-relaySync.firstSetupWait:
+	case <-ctx.Done():
+		return streadway.ErrClosed
+	}
+
+	return nil
+}
+
+func newRelaySync(shared sharedSync) *relaySync {
+	return &relaySync{
+		done:              false,
+		shared:            shared,
+		firstSetupDone:    false,
+		firstSetupWait:    make(chan struct{}),
+		setupCompleteHeld: false,
+		legCompleteHeld:   false,
+	}
 }
