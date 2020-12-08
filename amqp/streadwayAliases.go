@@ -43,7 +43,21 @@ var (
 	ErrVhost           = streadway.ErrVhost
 )
 
-// Copy over exchange types
+// DeliveryMode.  Transient means higher throughput but messages will not be
+// restored on broker restart.  The delivery mode of publishings is unrelated
+// to the durability of the queues they reside on.  Transient messages will
+// not be restored to durable queues, persistent messages will be restored to
+// durable queues and lost on non-durable queues during server restart.
+//
+// This remains typed as uint8 to match Publishing.DeliveryMode.  Other
+// delivery modes specific to custom queue implementations are not enumerated
+// here.
+const (
+	Persistent = streadway.Persistent
+	Transient = streadway.Transient
+)
+
+// Constants for standard AMQP 0-9-1 exchange types.
 const (
 	ExchangeDirect  = streadway.ExchangeDirect
 	ExchangeFanout  = streadway.ExchangeFanout
@@ -58,6 +72,16 @@ type (
 	// Authentication interface provides a means for different SASL authentication
 	// mechanisms to be used during connection tuning.
 	Authentication = streadway.Authentication
+
+	// Blocking notifies the server's TCP flow control of the Connection.  When a
+	// server hits a memory or disk alarm it will block all connections until the
+	// resources are reclaimed.  Use NotifyBlock on the Connection to receive these
+	// events.
+	Blocking = streadway.Blocking
+
+	// Decimal matches the AMQP decimal type.  Scale is the number of decimal
+	// digits Scale == 2, Value == 12345, Decimal == 123.45
+	Decimal = streadway.Decimal
 
 	// Error captures the code and reason a ChannelConsume or connection has been closed
 	// by the server.
