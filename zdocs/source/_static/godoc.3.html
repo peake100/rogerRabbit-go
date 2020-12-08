@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#375EAB">
 
-  <title>scratch - Go Documentation Server</title>
+  <title>amqpMiddleware - Go Documentation Server</title>
 
 <link type="text/css" rel="stylesheet" href="style.css">
 
@@ -43,7 +43,7 @@
 
 
   <h1>
-    Command scratch
+    Package amqpMiddleware
     <span class="text-muted"></span>
   </h1>
 
@@ -75,6 +75,1753 @@
 
 	
 		
+		<div id="short-nav">
+			<dl>
+			<dd><code>import "github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"</code></dd>
+			</dl>
+			<dl>
+			<dd><a href="godoc.3.html#pkg-overview" class="overviewLink">Overview</a></dd>
+			<dd><a href="godoc.3.html#pkg-index" class="indexLink">Index</a></dd>
+			
+			
+			</dl>
+		</div>
+		<!-- The package's Name is printed as title by the top-level template -->
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ▹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
+				
+				
+			</div>
+		</div>
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ▹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ▾</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+			
+			
+			
+				
+				<dd><a href="godoc.3.html#Ack">type Ack</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsAck">type ArgsAck</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsConfirms">type ArgsConfirms</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsExchangeBind">type ArgsExchangeBind</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsExchangeDeclare">type ArgsExchangeDeclare</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsExchangeDelete">type ArgsExchangeDelete</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsExchangeUnbind">type ArgsExchangeUnbind</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsFlow">type ArgsFlow</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsGet">type ArgsGet</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsNack">type ArgsNack</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsNotifyPublish">type ArgsNotifyPublish</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsPublish">type ArgsPublish</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsQoS">type ArgsQoS</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsQueueBind">type ArgsQueueBind</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsQueueDeclare">type ArgsQueueDeclare</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsQueueDelete">type ArgsQueueDelete</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsQueueUnbind">type ArgsQueueUnbind</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ArgsReject">type ArgsReject</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#Confirm">type Confirm</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ConsumeEvent">type ConsumeEvent</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#EventNotifyPublish">type EventNotifyPublish</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ExchangeBind">type ExchangeBind</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ExchangeDeclare">type ExchangeDeclare</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ExchangeDelete">type ExchangeDelete</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ExchangeUnbind">type ExchangeUnbind</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#Flow">type Flow</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#Get">type Get</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerAck">type HandlerAck</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerConfirm">type HandlerConfirm</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerConsumeEvent">type HandlerConsumeEvent</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerExchangeBind">type HandlerExchangeBind</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerExchangeDeclare">type HandlerExchangeDeclare</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerExchangeDelete">type HandlerExchangeDelete</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerExchangeUnbind">type HandlerExchangeUnbind</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerFlow">type HandlerFlow</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerGet">type HandlerGet</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerNack">type HandlerNack</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerNotifyPublish">type HandlerNotifyPublish</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerNotifyPublishEvent">type HandlerNotifyPublishEvent</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerPublish">type HandlerPublish</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerQoS">type HandlerQoS</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerQueueBind">type HandlerQueueBind</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerQueueDeclare">type HandlerQueueDeclare</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerQueueDelete">type HandlerQueueDelete</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerQueueUnbind">type HandlerQueueUnbind</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerReconnect">type HandlerReconnect</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#HandlerReject">type HandlerReject</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#Nack">type Nack</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#NotifyPublish">type NotifyPublish</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#NotifyPublishEvent">type NotifyPublishEvent</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#Publish">type Publish</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#QoS">type QoS</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#QueueBind">type QueueBind</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#QueueDeclare">type QueueDeclare</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#QueueDelete">type QueueDelete</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#QueueUnbind">type QueueUnbind</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#Reconnect">type Reconnect</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#Reject">type Reject</a></dd>
+				
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h3>Package files</h3>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go">handlerDefs.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go">methodArgs.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go">middlewareDefs.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+
+		
+		
+		
+		
+			
+			
+			<h2 id="Ack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=951:992#L23">Ack</a>
+				<a class="permalink" href="godoc.3.html#Ack">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type Ack func(next <a href="godoc.3.html#HandlerAck">HandlerAck</a>) <a href="godoc.3.html#HandlerAck">HandlerAck</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsAck">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1838:1893#L93">ArgsAck</a>
+				<a class="permalink" href="godoc.3.html#ArgsAck">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ArgsAck struct {
+<span id="ArgsAck.Tag"></span>    Tag      <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
+<span id="ArgsAck.Multiple"></span>    Multiple <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsConfirms">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1611:1652#L76">ArgsConfirms</a>
+				<a class="permalink" href="godoc.3.html#ArgsConfirms">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ArgsConfirms struct {
+<span id="ArgsConfirms.NoWait"></span>    NoWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsExchangeBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1205:1344#L50">ArgsExchangeBind</a>
+				<a class="permalink" href="godoc.3.html#ArgsExchangeBind">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+Store exchange bind information for re-establishing bindings on disconnect.
+</p>
+
+			<pre>type ArgsExchangeBind struct {
+<span id="ArgsExchangeBind.Destination"></span>    Destination <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsExchangeBind.Key"></span>    Key         <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsExchangeBind.Source"></span>    Source      <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsExchangeBind.NoWait"></span>    NoWait      <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsExchangeBind.Args"></span>    Args        <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Table">Table</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsExchangeDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=872:1041#L33">ArgsExchangeDeclare</a>
+				<a class="permalink" href="godoc.3.html#ArgsExchangeDeclare">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+Store exchange declare information for re-establishing queues on disconnect.
+</p>
+
+			<pre>type ArgsExchangeDeclare struct {
+<span id="ArgsExchangeDeclare.Name"></span>    Name       <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsExchangeDeclare.Kind"></span>    Kind       <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsExchangeDeclare.Durable"></span>    Durable    <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsExchangeDeclare.AutoDelete"></span>    AutoDelete <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsExchangeDeclare.Internal"></span>    Internal   <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsExchangeDeclare.NoWait"></span>    NoWait     <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsExchangeDeclare.Args"></span>    Args       <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Table">Table</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsExchangeDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1043:1124#L43">ArgsExchangeDelete</a>
+				<a class="permalink" href="godoc.3.html#ArgsExchangeDelete">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ArgsExchangeDelete struct {
+<span id="ArgsExchangeDelete.Name"></span>    Name     <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsExchangeDelete.IfUnused"></span>    IfUnused <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsExchangeDelete.NoWait"></span>    NoWait   <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsExchangeUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1346:1487#L58">ArgsExchangeUnbind</a>
+				<a class="permalink" href="godoc.3.html#ArgsExchangeUnbind">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ArgsExchangeUnbind struct {
+<span id="ArgsExchangeUnbind.Destination"></span>    Destination <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsExchangeUnbind.Key"></span>    Key         <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsExchangeUnbind.Source"></span>    Source      <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsExchangeUnbind.NoWait"></span>    NoWait      <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsExchangeUnbind.Args"></span>    Args        <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Table">Table</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1572:1609#L72">ArgsFlow</a>
+				<a class="permalink" href="godoc.3.html#ArgsFlow">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ArgsFlow struct {
+<span id="ArgsFlow.Active"></span>    Active <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsGet">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1783:1836#L88">ArgsGet</a>
+				<a class="permalink" href="godoc.3.html#ArgsGet">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ArgsGet struct {
+<span id="ArgsGet.Queue"></span>    Queue   <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsGet.AutoAck"></span>    AutoAck <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsNack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1895:1966#L98">ArgsNack</a>
+				<a class="permalink" href="godoc.3.html#ArgsNack">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ArgsNack struct {
+<span id="ArgsNack.Tag"></span>    Tag      <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
+<span id="ArgsNack.Multiple"></span>    Multiple <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsNack.Requeue"></span>    Requeue  <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=2026:2091#L109">ArgsNotifyPublish</a>
+				<a class="permalink" href="godoc.3.html#ArgsNotifyPublish">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ArgsNotifyPublish struct {
+<span id="ArgsNotifyPublish.Confirm"></span>    Confirm chan <a href="godoc.4.html">data</a>.<a href="godoc.4.html#Confirmation">Confirmation</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1654:1781#L80">ArgsPublish</a>
+				<a class="permalink" href="godoc.3.html#ArgsPublish">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ArgsPublish struct {
+<span id="ArgsPublish.Exchange"></span>    Exchange  <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsPublish.Key"></span>    Key       <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsPublish.Mandatory"></span>    Mandatory <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsPublish.Immediate"></span>    Immediate <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsPublish.Msg"></span>    Msg       <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Publishing">Publishing</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsQoS">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1489:1570#L66">ArgsQoS</a>
+				<a class="permalink" href="godoc.3.html#ArgsQoS">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ArgsQoS struct {
+<span id="ArgsQoS.PrefetchCount"></span>    PrefetchCount <a href="http://localhost:6161/pkg/builtin/#int">int</a>
+<span id="ArgsQoS.PrefetchSize"></span>    PrefetchSize  <a href="http://localhost:6161/pkg/builtin/#int">int</a>
+<span id="ArgsQoS.Global"></span>    Global        <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsQueueBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=559:680#L17">ArgsQueueBind</a>
+				<a class="permalink" href="godoc.3.html#ArgsQueueBind">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+Store queue bind information for re-establishing bindings on disconnect.
+</p>
+
+			<pre>type ArgsQueueBind struct {
+<span id="ArgsQueueBind.Name"></span>    Name     <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsQueueBind.Key"></span>    Key      <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsQueueBind.Exchange"></span>    Exchange <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsQueueBind.NoWait"></span>    NoWait   <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsQueueBind.Args"></span>    Args     <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Table">Table</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsQueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=200:347#L1">ArgsQueueDeclare</a>
+				<a class="permalink" href="godoc.3.html#ArgsQueueDeclare">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+Store queue declare information for re-establishing queues on disconnect.
+</p>
+
+			<pre>type ArgsQueueDeclare struct {
+<span id="ArgsQueueDeclare.Name"></span>    Name       <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsQueueDeclare.Durable"></span>    Durable    <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsQueueDeclare.AutoDelete"></span>    AutoDelete <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsQueueDeclare.Exclusive"></span>    Exclusive  <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsQueueDeclare.NoWait"></span>    NoWait     <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsQueueDeclare.Args"></span>    Args       <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Table">Table</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsQueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=388:481#L9">ArgsQueueDelete</a>
+				<a class="permalink" href="godoc.3.html#ArgsQueueDelete">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+Arguments passed to channel delete.
+</p>
+
+			<pre>type ArgsQueueDelete struct {
+<span id="ArgsQueueDelete.Name"></span>    Name     <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsQueueDelete.IfUnused"></span>    IfUnused <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsQueueDelete.IfEmpty"></span>    IfEmpty  <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+<span id="ArgsQueueDelete.NoWait"></span>    NoWait   <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsQueueUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=682:790#L25">ArgsQueueUnbind</a>
+				<a class="permalink" href="godoc.3.html#ArgsQueueUnbind">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ArgsQueueUnbind struct {
+<span id="ArgsQueueUnbind.Name"></span>    Name     <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsQueueUnbind.Key"></span>    Key      <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsQueueUnbind.Exchange"></span>    Exchange <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+<span id="ArgsQueueUnbind.Args"></span>    Args     <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Table">Table</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ArgsReject">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1968:2024#L104">ArgsReject</a>
+				<a class="permalink" href="godoc.3.html#ArgsReject">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ArgsReject struct {
+<span id="ArgsReject.Tag"></span>    Tag     <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
+<span id="ArgsReject.Requeue"></span>    Requeue <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Confirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=798:851#L17">Confirm</a>
+				<a class="permalink" href="godoc.3.html#Confirm">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type Confirm func(next <a href="godoc.3.html#HandlerConfirm">HandlerConfirm</a>) <a href="godoc.3.html#HandlerConfirm">HandlerConfirm</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ConsumeEvent">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1253:1321#L33">ConsumeEvent</a>
+				<a class="permalink" href="godoc.3.html#ConsumeEvent">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ConsumeEvent func(next <a href="godoc.3.html#HandlerConsumeEvent">HandlerConsumeEvent</a>) <a href="godoc.3.html#HandlerConsumeEvent">HandlerConsumeEvent</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="EventNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=2093:2159#L113">EventNotifyPublish</a>
+				<a class="permalink" href="godoc.3.html#EventNotifyPublish">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type EventNotifyPublish struct {
+<span id="EventNotifyPublish.Confirmation"></span>    Confirmation <a href="godoc.4.html">data</a>.<a href="godoc.4.html#Confirmation">Confirmation</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ExchangeBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=563:631#L9">ExchangeBind</a>
+				<a class="permalink" href="godoc.3.html#ExchangeBind">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ExchangeBind func(next <a href="godoc.3.html#HandlerExchangeBind">HandlerExchangeBind</a>) <a href="godoc.3.html#HandlerExchangeBind">HandlerExchangeBind</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ExchangeDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=408:485#L5">ExchangeDeclare</a>
+				<a class="permalink" href="godoc.3.html#ExchangeDeclare">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ExchangeDeclare func(next <a href="godoc.3.html#HandlerExchangeDeclare">HandlerExchangeDeclare</a>) <a href="godoc.3.html#HandlerExchangeDeclare">HandlerExchangeDeclare</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ExchangeDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=487:561#L7">ExchangeDelete</a>
+				<a class="permalink" href="godoc.3.html#ExchangeDelete">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ExchangeDelete func(next <a href="godoc.3.html#HandlerExchangeDelete">HandlerExchangeDelete</a>) <a href="godoc.3.html#HandlerExchangeDelete">HandlerExchangeDelete</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ExchangeUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=633:707#L11">ExchangeUnbind</a>
+				<a class="permalink" href="godoc.3.html#ExchangeUnbind">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ExchangeUnbind func(next <a href="godoc.3.html#HandlerExchangeUnbind">HandlerExchangeUnbind</a>) <a href="godoc.3.html#HandlerExchangeUnbind">HandlerExchangeUnbind</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Flow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=752:796#L15">Flow</a>
+				<a class="permalink" href="godoc.3.html#Flow">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type Flow func(next <a href="godoc.3.html#HandlerFlow">HandlerFlow</a>) <a href="godoc.3.html#HandlerFlow">HandlerFlow</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Get">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=908:949#L21">Get</a>
+				<a class="permalink" href="godoc.3.html#Get">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type Get func(next <a href="godoc.3.html#HandlerGet">HandlerGet</a>) <a href="godoc.3.html#HandlerGet">HandlerGet</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerAck">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1168:1209#L33">HandlerAck</a>
+				<a class="permalink" href="godoc.3.html#HandlerAck">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerAck func(args *<a href="godoc.3.html#ArgsAck">ArgsAck</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerConfirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=988:1038#L27">HandlerConfirm</a>
+				<a class="permalink" href="godoc.3.html#HandlerConfirm">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerConfirm func(args *<a href="godoc.3.html#ArgsConfirms">ArgsConfirms</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerConsumeEvent">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1449:1499#L43">HandlerConsumeEvent</a>
+				<a class="permalink" href="godoc.3.html#HandlerConsumeEvent">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerConsumeEvent func(event <a href="godoc.4.html">data</a>.<a href="godoc.4.html#Delivery">Delivery</a>)</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerExchangeBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=774:833#L19">HandlerExchangeBind</a>
+				<a class="permalink" href="godoc.3.html#HandlerExchangeBind">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerExchangeBind func(args *<a href="godoc.3.html#ArgsExchangeBind">ArgsExchangeBind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerExchangeDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=640:707#L15">HandlerExchangeDeclare</a>
+				<a class="permalink" href="godoc.3.html#HandlerExchangeDeclare">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerExchangeDeclare = func(args *<a href="godoc.3.html#ArgsExchangeDeclare">ArgsExchangeDeclare</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerExchangeDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=709:772#L17">HandlerExchangeDelete</a>
+				<a class="permalink" href="godoc.3.html#HandlerExchangeDelete">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerExchangeDelete func(args *<a href="godoc.3.html#ArgsExchangeDelete">ArgsExchangeDelete</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerExchangeUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=835:898#L21">HandlerExchangeUnbind</a>
+				<a class="permalink" href="godoc.3.html#HandlerExchangeUnbind">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerExchangeUnbind func(args *<a href="godoc.3.html#ArgsExchangeUnbind">ArgsExchangeUnbind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=943:986#L25">HandlerFlow</a>
+				<a class="permalink" href="godoc.3.html#HandlerFlow">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerFlow func(args *<a href="godoc.3.html#ArgsFlow">ArgsFlow</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerGet">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1091:1166#L31">HandlerGet</a>
+				<a class="permalink" href="godoc.3.html#HandlerGet">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerGet func(args *<a href="godoc.3.html#ArgsGet">ArgsGet</a>) (msg <a href="godoc.4.html">data</a>.<a href="godoc.4.html#Delivery">Delivery</a>, ok <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerNack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1211:1254#L35">HandlerNack</a>
+				<a class="permalink" href="godoc.3.html#HandlerNack">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerNack func(args *<a href="godoc.3.html#ArgsNack">ArgsNack</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1305:1383#L39">HandlerNotifyPublish</a>
+				<a class="permalink" href="godoc.3.html#HandlerNotifyPublish">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerNotifyPublish func(args *<a href="godoc.3.html#ArgsNotifyPublish">ArgsNotifyPublish</a>) chan <a href="godoc.4.html">data</a>.<a href="godoc.4.html#Confirmation">Confirmation</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerNotifyPublishEvent">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1385:1447#L41">HandlerNotifyPublishEvent</a>
+				<a class="permalink" href="godoc.3.html#HandlerNotifyPublishEvent">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerNotifyPublishEvent func(event *<a href="godoc.3.html#EventNotifyPublish">EventNotifyPublish</a>)</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1040:1089#L29">HandlerPublish</a>
+				<a class="permalink" href="godoc.3.html#HandlerPublish">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerPublish func(args *<a href="godoc.3.html#ArgsPublish">ArgsPublish</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerQoS">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=900:941#L23">HandlerQoS</a>
+				<a class="permalink" href="godoc.3.html#HandlerQoS">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerQoS func(args *<a href="godoc.3.html#ArgsQoS">ArgsQoS</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerQueueBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=522:577#L11">HandlerQueueBind</a>
+				<a class="permalink" href="godoc.3.html#HandlerQueueBind">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerQueueBind = func(args *<a href="godoc.3.html#ArgsQueueBind">ArgsQueueBind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerQueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=362:442#L7">HandlerQueueDeclare</a>
+				<a class="permalink" href="godoc.3.html#HandlerQueueDeclare">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerQueueDeclare = func(args *<a href="godoc.3.html#ArgsQueueDeclare">ArgsQueueDeclare</a>) (<a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Queue">Queue</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerQueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=444:520#L9">HandlerQueueDelete</a>
+				<a class="permalink" href="godoc.3.html#HandlerQueueDelete">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerQueueDelete = func(args *<a href="godoc.3.html#ArgsQueueDelete">ArgsQueueDelete</a>) (count <a href="http://localhost:6161/pkg/builtin/#int">int</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerQueueUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=579:638#L13">HandlerQueueUnbind</a>
+				<a class="permalink" href="godoc.3.html#HandlerQueueUnbind">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerQueueUnbind = func(args *<a href="godoc.3.html#ArgsQueueUnbind">ArgsQueueUnbind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerReconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=256:360#L3">HandlerReconnect</a>
+				<a class="permalink" href="godoc.3.html#HandlerReconnect">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+Signature for handlers triggered when a channel is being re-established.
+</p>
+
+			<pre>type HandlerReconnect = func(
+    ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, logger <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Logger">Logger</a>,
+) (*<a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Channel">Channel</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerReject">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1256:1303#L37">HandlerReject</a>
+				<a class="permalink" href="godoc.3.html#HandlerReject">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type HandlerReject func(args *<a href="godoc.3.html#ArgsReject">ArgsReject</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Nack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=994:1038#L25">Nack</a>
+				<a class="permalink" href="godoc.3.html#Nack">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type Nack func(next <a href="godoc.3.html#HandlerNack">HandlerNack</a>) <a href="godoc.3.html#HandlerNack">HandlerNack</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="NotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1092:1163#L29">NotifyPublish</a>
+				<a class="permalink" href="godoc.3.html#NotifyPublish">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type NotifyPublish func(next <a href="godoc.3.html#HandlerNotifyPublish">HandlerNotifyPublish</a>) <a href="godoc.3.html#HandlerNotifyPublish">HandlerNotifyPublish</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="NotifyPublishEvent">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1165:1251#L31">NotifyPublishEvent</a>
+				<a class="permalink" href="godoc.3.html#NotifyPublishEvent">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type NotifyPublishEvent func(next <a href="godoc.3.html#HandlerNotifyPublishEvent">HandlerNotifyPublishEvent</a>) <a href="godoc.3.html#HandlerNotifyPublishEvent">HandlerNotifyPublishEvent</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Publish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=853:906#L19">Publish</a>
+				<a class="permalink" href="godoc.3.html#Publish">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type Publish func(next <a href="godoc.3.html#HandlerPublish">HandlerPublish</a>) <a href="godoc.3.html#HandlerPublish">HandlerPublish</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="QoS">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=709:750#L13">QoS</a>
+				<a class="permalink" href="godoc.3.html#QoS">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type QoS func(next <a href="godoc.3.html#HandlerQoS">HandlerQoS</a>) <a href="godoc.3.html#HandlerQoS">HandlerQoS</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="QueueBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=276:337#L1">QueueBind</a>
+				<a class="permalink" href="godoc.3.html#QueueBind">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type QueueBind = func(next <a href="godoc.3.html#HandlerQueueBind">HandlerQueueBind</a>) <a href="godoc.3.html#HandlerQueueBind">HandlerQueueBind</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="QueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=135:205#L1">QueueDeclare</a>
+				<a class="permalink" href="godoc.3.html#QueueDeclare">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type QueueDeclare = func(next <a href="godoc.3.html#HandlerQueueDeclare">HandlerQueueDeclare</a>) <a href="godoc.3.html#HandlerQueueDeclare">HandlerQueueDeclare</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="QueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=207:274#L1">QueueDelete</a>
+				<a class="permalink" href="godoc.3.html#QueueDelete">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type QueueDelete = func(next <a href="godoc.3.html#HandlerQueueDelete">HandlerQueueDelete</a>) <a href="godoc.3.html#HandlerQueueDelete">HandlerQueueDelete</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="QueueUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=339:406#L3">QueueUnbind</a>
+				<a class="permalink" href="godoc.3.html#QueueUnbind">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type QueueUnbind = func(next <a href="godoc.3.html#HandlerQueueUnbind">HandlerQueueUnbind</a>) <a href="godoc.3.html#HandlerQueueUnbind">HandlerQueueUnbind</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Reconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=72:133#L1">Reconnect</a>
+				<a class="permalink" href="godoc.3.html#Reconnect">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type Reconnect = func(next <a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>) <a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Reject">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1040:1090#L27">Reject</a>
+				<a class="permalink" href="godoc.3.html#Reject">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type Reject func(next <a href="godoc.3.html#HandlerReject">HandlerReject</a>) <a href="godoc.3.html#HandlerReject">HandlerReject</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
 		
 	
 

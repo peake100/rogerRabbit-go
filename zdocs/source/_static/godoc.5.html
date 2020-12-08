@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#375EAB">
+
+  <title>defaultMiddlewares - Go Documentation Server</title>
+
+<link type="text/css" rel="stylesheet" href="style.css">
+
+<script>window.initFuncs = [];</script>
+<script src="jquery.js" defer></script>
+
+
+
+<script>var goVersion = "go1.13.5";</script>
+<script src="godocs.js" defer></script>
+</head>
+<body>
+
+<div id='lowframe' style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="http://localhost:6161/pkg/">Go Documentation Server</a></div>
+<div class="top-heading" id="heading-narrow"><a href="http://localhost:6161/pkg/">GoDoc</a></div>
+<a href="godoc.5.html#" id="menu-button"><span id="menu-button-arrow">&#9661;</span></a>
+<form method="GET" action="http://localhost:6161/search">
+<div id="menu">
+
+<span class="search-box"><input type="search" id="search" name="q" placeholder="Search" aria-label="Search" required><button type="submit"><span><!-- magnifying glass: --><svg width="24" height="24" viewBox="0 0 24 24"><title>submit search</title><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/><path d="M0 0h24v24H0z" fill="none"/></svg></span></button></span>
+</div>
+</form>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Package defaultMiddlewares
+    <span class="text-muted"></span>
+  </h1>
+
+
+
+
+
+
+
+<div id="nav"></div>
+
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<!--
+	Note: Static (i.e., not template-generated) href and id
+	attributes start with "pkg-" to make it impossible for
+	them to conflict with generated attributes (some of which
+	correspond to Go identifiers).
+-->
+
+	<script>
+	document.ANALYSIS_DATA = null;
+	document.CALLGRAPH = null;
+	</script>
+
+	
+		
+		<div id="short-nav">
+			<dl>
+			<dd><code>import "github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"</code></dd>
+			</dl>
+			<dl>
+			<dd><a href="godoc.5.html#pkg-overview" class="overviewLink">Overview</a></dd>
+			<dd><a href="godoc.5.html#pkg-index" class="indexLink">Index</a></dd>
+			
+			
+			</dl>
+		</div>
+		<!-- The package's Name is printed as title by the top-level template -->
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ▹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
+				
+				
+			</div>
+		</div>
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ▹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ▾</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+			
+			
+				
+				<dd><a href="godoc.5.html#NewErrCantAcknowledgeOrphans">func NewErrCantAcknowledgeOrphans(latestAck uint64, thisAck uint64, offset uint64, multiple bool) error</a></dd>
+			
+			
+				
+				<dd><a href="godoc.5.html#ConfirmsMiddleware">type ConfirmsMiddleware</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#NewConfirmMiddleware">func NewConfirmMiddleware() *ConfirmsMiddleware</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#ConfirmsMiddleware.Confirm">func (middleware *ConfirmsMiddleware) Confirm(next amqpMiddleware.HandlerConfirm) (handler amqpMiddleware.HandlerConfirm)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#ConfirmsMiddleware.ConfirmsOn">func (middleware *ConfirmsMiddleware) ConfirmsOn() bool</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#ConfirmsMiddleware.Reconnect">func (middleware *ConfirmsMiddleware) Reconnect(next amqpMiddleware.HandlerReconnect) (handler amqpMiddleware.HandlerReconnect)</a></dd>
+				
+			
+				
+				<dd><a href="godoc.5.html#DeliveryTagsMiddleware">type DeliveryTagsMiddleware</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#NewDeliveryTagsMiddleware">func NewDeliveryTagsMiddleware() *DeliveryTagsMiddleware</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#DeliveryTagsMiddleware.Ack">func (middleware *DeliveryTagsMiddleware) Ack(next amqpMiddleware.HandlerAck) (handler amqpMiddleware.HandlerAck)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#DeliveryTagsMiddleware.ConsumeEvent">func (middleware *DeliveryTagsMiddleware) ConsumeEvent(next amqpMiddleware.HandlerConsumeEvent) (handler amqpMiddleware.HandlerConsumeEvent)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#DeliveryTagsMiddleware.Get">func (middleware *DeliveryTagsMiddleware) Get(next amqpMiddleware.HandlerGet) (handler amqpMiddleware.HandlerGet)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#DeliveryTagsMiddleware.Nack">func (middleware *DeliveryTagsMiddleware) Nack(next amqpMiddleware.HandlerNack) (handler amqpMiddleware.HandlerNack)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#DeliveryTagsMiddleware.Reconnect">func (middleware *DeliveryTagsMiddleware) Reconnect(next amqpMiddleware.HandlerReconnect) (handler amqpMiddleware.HandlerReconnect)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#DeliveryTagsMiddleware.Reject">func (middleware *DeliveryTagsMiddleware) Reject(next amqpMiddleware.HandlerReject) (handler amqpMiddleware.HandlerReject)</a></dd>
+				
+			
+				
+				<dd><a href="godoc.5.html#ErrCantAcknowledgeOrphans">type ErrCantAcknowledgeOrphans</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#ErrCantAcknowledgeOrphans.Error">func (err *ErrCantAcknowledgeOrphans) Error() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#ErrCantAcknowledgeOrphans.OrphanCount">func (err *ErrCantAcknowledgeOrphans) OrphanCount() uint64</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#ErrCantAcknowledgeOrphans.SuccessCount">func (err *ErrCantAcknowledgeOrphans) SuccessCount() uint64</a></dd>
+				
+			
+				
+				<dd><a href="godoc.5.html#FlowMiddleware">type FlowMiddleware</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#NewFlowMiddleware">func NewFlowMiddleware() *FlowMiddleware</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#FlowMiddleware.Active">func (middleware *FlowMiddleware) Active() bool</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#FlowMiddleware.Flow">func (middleware *FlowMiddleware) Flow(next amqpMiddleware.HandlerFlow) (handler amqpMiddleware.HandlerFlow)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#FlowMiddleware.Reconnect">func (middleware *FlowMiddleware) Reconnect(next amqpMiddleware.HandlerReconnect) (handler amqpMiddleware.HandlerReconnect)</a></dd>
+				
+			
+				
+				<dd><a href="godoc.5.html#PublishTagsMiddleware">type PublishTagsMiddleware</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#NewPublishTagsMiddleware">func NewPublishTagsMiddleware() *PublishTagsMiddleware</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#PublishTagsMiddleware.Confirm">func (middleware *PublishTagsMiddleware) Confirm(next amqpMiddleware.HandlerConfirm) (handler amqpMiddleware.HandlerConfirm)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#PublishTagsMiddleware.NotifyPublishEvent">func (middleware *PublishTagsMiddleware) NotifyPublishEvent(next amqpMiddleware.HandlerNotifyPublishEvent) (handler amqpMiddleware.HandlerNotifyPublishEvent)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#PublishTagsMiddleware.Publish">func (middleware *PublishTagsMiddleware) Publish(next amqpMiddleware.HandlerPublish) (handler amqpMiddleware.HandlerPublish)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#PublishTagsMiddleware.PublishCount">func (middleware *PublishTagsMiddleware) PublishCount() uint64</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#PublishTagsMiddleware.Reconnect">func (middleware *PublishTagsMiddleware) Reconnect(next amqpMiddleware.HandlerReconnect) (handler amqpMiddleware.HandlerReconnect)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#PublishTagsMiddleware.TagOffset">func (middleware *PublishTagsMiddleware) TagOffset() uint64</a></dd>
+				
+			
+				
+				<dd><a href="godoc.5.html#QoSMiddleware">type QoSMiddleware</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#NewQosMiddleware">func NewQosMiddleware() *QoSMiddleware</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#QoSMiddleware.IsSet">func (middleware *QoSMiddleware) IsSet() bool</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#QoSMiddleware.Qos">func (middleware *QoSMiddleware) Qos(next amqpMiddleware.HandlerQoS) (handler amqpMiddleware.HandlerQoS)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#QoSMiddleware.QosArgs">func (middleware *QoSMiddleware) QosArgs() amqpMiddleware.ArgsQoS</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#QoSMiddleware.Reconnect">func (middleware *QoSMiddleware) Reconnect(next amqpMiddleware.HandlerReconnect) (handler amqpMiddleware.HandlerReconnect)</a></dd>
+				
+			
+				
+				<dd><a href="godoc.5.html#RouteDeclarationMiddleware">type RouteDeclarationMiddleware</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#NewRouteDeclarationMiddleware">func NewRouteDeclarationMiddleware() *RouteDeclarationMiddleware</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#RouteDeclarationMiddleware.ExchangeBind">func (middle *RouteDeclarationMiddleware) ExchangeBind(next amqpMiddleware.HandlerExchangeBind) (handler amqpMiddleware.HandlerExchangeBind)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#RouteDeclarationMiddleware.ExchangeDeclare">func (middle *RouteDeclarationMiddleware) ExchangeDeclare(next amqpMiddleware.HandlerExchangeDeclare) (handler amqpMiddleware.HandlerExchangeDeclare)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#RouteDeclarationMiddleware.ExchangeDelete">func (middle *RouteDeclarationMiddleware) ExchangeDelete(next amqpMiddleware.HandlerExchangeDelete) (handler amqpMiddleware.HandlerExchangeDelete)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#RouteDeclarationMiddleware.ExchangeUnbind">func (middle *RouteDeclarationMiddleware) ExchangeUnbind(next amqpMiddleware.HandlerExchangeUnbind) (handler amqpMiddleware.HandlerExchangeUnbind)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#RouteDeclarationMiddleware.QueueBind">func (middle *RouteDeclarationMiddleware) QueueBind(next amqpMiddleware.HandlerQueueBind) (handler amqpMiddleware.HandlerQueueBind)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#RouteDeclarationMiddleware.QueueDeclare">func (middle *RouteDeclarationMiddleware) QueueDeclare(next amqpMiddleware.HandlerQueueDeclare) (handler amqpMiddleware.HandlerQueueDeclare)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#RouteDeclarationMiddleware.QueueDelete">func (middle *RouteDeclarationMiddleware) QueueDelete(next amqpMiddleware.HandlerQueueDelete) (handler amqpMiddleware.HandlerQueueDelete)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#RouteDeclarationMiddleware.QueueUnbind">func (middle *RouteDeclarationMiddleware) QueueUnbind(next amqpMiddleware.HandlerQueueUnbind) (handler amqpMiddleware.HandlerQueueUnbind)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.5.html#RouteDeclarationMiddleware.Reconnect">func (middle *RouteDeclarationMiddleware) Reconnect(next amqpMiddleware.HandlerReconnect) (handler amqpMiddleware.HandlerReconnect)</a></dd>
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h3>Package files</h3>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/confirms.go">confirms.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go">deliveryTags.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/flow.go">flow.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/publishTag.go">publishTag.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/qos.go">qos.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/routeDeclaration.go">routeDeclaration.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+
+		
+		
+		
+			
+			
+			<h2 id="NewErrCantAcknowledgeOrphans">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go?s=7288:7398#L254">NewErrCantAcknowledgeOrphans</a>
+				<a class="permalink" href="godoc.5.html#NewErrCantAcknowledgeOrphans">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func NewErrCantAcknowledgeOrphans(
+    latestAck <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>,
+    thisAck <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>,
+    offset <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>,
+    multiple <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
+) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<p>
+Make a new error when one or more tags cannot be acknowledged because they have been
+orphaned. This method assumes that there is an error to report, and will always
+result in a non-nil error object.
+</p>
+
+			
+			
+
+		
+		
+			
+			
+			<h2 id="ConfirmsMiddleware">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/confirms.go?s=342:429#L5">ConfirmsMiddleware</a>
+				<a class="permalink" href="godoc.5.html#ConfirmsMiddleware">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+Saves most recent QoS settings and re-applies them on restart.
+</p>
+<p>
+This method is currently racy if multiple goroutines call QoS with different
+settings.
+</p>
+
+			<pre>type ConfirmsMiddleware struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewConfirmMiddleware">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/confirms.go?s=1585:1632#L55">NewConfirmMiddleware</a>
+					<a class="permalink" href="godoc.5.html#NewConfirmMiddleware">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewConfirmMiddleware() *<a href="godoc.5.html#ConfirmsMiddleware">ConfirmsMiddleware</a></pre>
+				
+				
+				
+			
+
+			
+				
+				<h3 id="ConfirmsMiddleware.Confirm">func (*ConfirmsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/confirms.go?s=1239:1364#L40">Confirm</a>
+					<a class="permalink" href="godoc.5.html#ConfirmsMiddleware.Confirm">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#ConfirmsMiddleware">ConfirmsMiddleware</a>) Confirm(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerConfirm">HandlerConfirm</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerConfirm">HandlerConfirm</a>)</pre>
+				<p>
+Saves the QoS settings passed to the QoS function
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ConfirmsMiddleware.ConfirmsOn">func (*ConfirmsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/confirms.go?s=477:532#L11">ConfirmsOn</a>
+					<a class="permalink" href="godoc.5.html#ConfirmsMiddleware.ConfirmsOn">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#ConfirmsMiddleware">ConfirmsMiddleware</a>) ConfirmsOn() <a href="http://localhost:6161/pkg/builtin/#bool">bool</a></pre>
+				<p>
+Whether the QoS has been set. For testing.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ConfirmsMiddleware.Reconnect">func (*ConfirmsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/confirms.go?s=608:739#L16">Reconnect</a>
+					<a class="permalink" href="godoc.5.html#ConfirmsMiddleware.Reconnect">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#ConfirmsMiddleware">ConfirmsMiddleware</a>) Reconnect(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>)</pre>
+				<p>
+Re-applies QoS settings on reconnect
+</p>
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="DeliveryTagsMiddleware">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go?s=251:602#L4">DeliveryTagsMiddleware</a>
+				<a class="permalink" href="godoc.5.html#DeliveryTagsMiddleware">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type DeliveryTagsMiddleware struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewDeliveryTagsMiddleware">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go?s=4810:4866#L179">NewDeliveryTagsMiddleware</a>
+					<a class="permalink" href="godoc.5.html#NewDeliveryTagsMiddleware">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewDeliveryTagsMiddleware() *<a href="godoc.5.html#DeliveryTagsMiddleware">DeliveryTagsMiddleware</a></pre>
+				
+				
+				
+			
+
+			
+				
+				<h3 id="DeliveryTagsMiddleware.Ack">func (*DeliveryTagsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go?s=3418:3535#L123">Ack</a>
+					<a class="permalink" href="godoc.5.html#DeliveryTagsMiddleware.Ack">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#DeliveryTagsMiddleware">DeliveryTagsMiddleware</a>) Ack(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerAck">HandlerAck</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerAck">HandlerAck</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="DeliveryTagsMiddleware.ConsumeEvent">func (*DeliveryTagsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go?s=4371:4515#L162">ConsumeEvent</a>
+					<a class="permalink" href="godoc.5.html#DeliveryTagsMiddleware.ConsumeEvent">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#DeliveryTagsMiddleware">DeliveryTagsMiddleware</a>) ConsumeEvent(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerConsumeEvent">HandlerConsumeEvent</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerConsumeEvent">HandlerConsumeEvent</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="DeliveryTagsMiddleware.Get">func (*DeliveryTagsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go?s=1027:1144#L36">Get</a>
+					<a class="permalink" href="godoc.5.html#DeliveryTagsMiddleware.Get">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#DeliveryTagsMiddleware">DeliveryTagsMiddleware</a>) Get(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerGet">HandlerGet</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerGet">HandlerGet</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="DeliveryTagsMiddleware.Nack">func (*DeliveryTagsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go?s=3733:3853#L136">Nack</a>
+					<a class="permalink" href="godoc.5.html#DeliveryTagsMiddleware.Nack">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#DeliveryTagsMiddleware">DeliveryTagsMiddleware</a>) Nack(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerNack">HandlerNack</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerNack">HandlerNack</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="DeliveryTagsMiddleware.Reconnect">func (*DeliveryTagsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go?s=604:739#L16">Reconnect</a>
+					<a class="permalink" href="godoc.5.html#DeliveryTagsMiddleware.Reconnect">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#DeliveryTagsMiddleware">DeliveryTagsMiddleware</a>) Reconnect(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="DeliveryTagsMiddleware.Reject">func (*DeliveryTagsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go?s=4052:4178#L149">Reject</a>
+					<a class="permalink" href="godoc.5.html#DeliveryTagsMiddleware.Reject">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#DeliveryTagsMiddleware">DeliveryTagsMiddleware</a>) Reject(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReject">HandlerReject</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReject">HandlerReject</a>)</pre>
+				
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="ErrCantAcknowledgeOrphans">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go?s=5402:6152#L194">ErrCantAcknowledgeOrphans</a>
+				<a class="permalink" href="godoc.5.html#ErrCantAcknowledgeOrphans">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+Returned when an acknowledgement method (ack, nack, reject) cannot be completed
+because the original channel it was consumed from has been closed and replaced with a
+new one. When part of a multi-ack, it&#39;s possible that SOME tags will be orphaned and
+some will succeed, this error contains detailed information on both groups
+</p>
+
+			<pre>type ErrCantAcknowledgeOrphans struct {
+    <span class="comment">// The first tag that could not be acknowledged because it&#39;s original channel</span>
+    <span class="comment">// had been closed</span>
+<span id="ErrCantAcknowledgeOrphans.OrphanTagFirst"></span>    OrphanTagFirst <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
+    <span class="comment">// The last tag that could not be acknowledged because it&#39;s original channel had</span>
+    <span class="comment">// been closed. Inclusive. May be the same value as OrphanTagFirst if only one tag</span>
+    <span class="comment">// was orphaned</span>
+<span id="ErrCantAcknowledgeOrphans.OrphanTagLast"></span>    OrphanTagLast <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
+
+    <span class="comment">// The first tag that was successfully acknowledged. Will be 0 if multiple was set</span>
+    <span class="comment">// to false or if all tags were orphans.</span>
+<span id="ErrCantAcknowledgeOrphans.SuccessTagFirst"></span>    SuccessTagFirst <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
+    <span class="comment">// The last tag that was successfully acknowledged. Will be 0 if multiple was set</span>
+    <span class="comment">// to false or if all tags were orphans. May be the same as AckTagFirst if only one</span>
+    <span class="comment">// tags was successfully acknowledged.</span>
+<span id="ErrCantAcknowledgeOrphans.SuccessTagLast"></span>    SuccessTagLast <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+				
+				<h3 id="ErrCantAcknowledgeOrphans.Error">func (*ErrCantAcknowledgeOrphans) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go?s=6643:6695#L229">Error</a>
+					<a class="permalink" href="godoc.5.html#ErrCantAcknowledgeOrphans.Error">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (err *<a href="godoc.5.html#ErrCantAcknowledgeOrphans">ErrCantAcknowledgeOrphans</a>) Error() <a href="http://localhost:6161/pkg/builtin/#string">string</a></pre>
+				<p>
+Implements builtins.error
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ErrCantAcknowledgeOrphans.OrphanCount">func (*ErrCantAcknowledgeOrphans) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go?s=6243:6301#L213">OrphanCount</a>
+					<a class="permalink" href="godoc.5.html#ErrCantAcknowledgeOrphans.OrphanCount">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (err *<a href="godoc.5.html#ErrCantAcknowledgeOrphans">ErrCantAcknowledgeOrphans</a>) OrphanCount() <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a></pre>
+				<p>
+The number of tags orphaned (will always be 1 or greater or there would be no error).
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ErrCantAcknowledgeOrphans.SuccessCount">func (*ErrCantAcknowledgeOrphans) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/deliveryTags.go?s=6451:6510#L221">SuccessCount</a>
+					<a class="permalink" href="godoc.5.html#ErrCantAcknowledgeOrphans.SuccessCount">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (err *<a href="godoc.5.html#ErrCantAcknowledgeOrphans">ErrCantAcknowledgeOrphans</a>) SuccessCount() <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a></pre>
+				<p>
+The number of tags successfully acknowledged.
+</p>
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="FlowMiddleware">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/flow.go?s=325:512#L4">FlowMiddleware</a>
+				<a class="permalink" href="godoc.5.html#FlowMiddleware">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+FlowMiddleware tracks the Flow state of the channel, and if it is set to false by the
+user, re-established channels to flow=false.
+</p>
+
+			<pre>type FlowMiddleware struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewFlowMiddleware">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/flow.go?s=1503:1543#L53">NewFlowMiddleware</a>
+					<a class="permalink" href="godoc.5.html#NewFlowMiddleware">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewFlowMiddleware() *<a href="godoc.5.html#FlowMiddleware">FlowMiddleware</a></pre>
+				
+				
+				
+			
+
+			
+				
+				<h3 id="FlowMiddleware.Active">func (*FlowMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/flow.go?s=514:561#L11">Active</a>
+					<a class="permalink" href="godoc.5.html#FlowMiddleware.Active">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#FlowMiddleware">FlowMiddleware</a>) Active() <a href="http://localhost:6161/pkg/builtin/#bool">bool</a></pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="FlowMiddleware.Flow">func (*FlowMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/flow.go?s=1155:1267#L36">Flow</a>
+					<a class="permalink" href="godoc.5.html#FlowMiddleware.Flow">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#FlowMiddleware">FlowMiddleware</a>) Flow(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerFlow">HandlerFlow</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerFlow">HandlerFlow</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="FlowMiddleware.Reconnect">func (*FlowMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/flow.go?s=593:720#L15">Reconnect</a>
+					<a class="permalink" href="godoc.5.html#FlowMiddleware.Reconnect">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#FlowMiddleware">FlowMiddleware</a>) Reconnect(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>)</pre>
+				
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="PublishTagsMiddleware">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/publishTag.go?s=428:1496#L6">PublishTagsMiddleware</a>
+				<a class="permalink" href="godoc.5.html#PublishTagsMiddleware">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+The publish tags middleware keeps track of client-facing and internal Publishing
+DeliveryTags and applies the correct offset so tags are continuous, even over
+re-connections.
+</p>
+
+			<pre>type PublishTagsMiddleware struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewPublishTagsMiddleware">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/publishTag.go?s=5942:5996#L181">NewPublishTagsMiddleware</a>
+					<a class="permalink" href="godoc.5.html#NewPublishTagsMiddleware">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewPublishTagsMiddleware() *<a href="godoc.5.html#PublishTagsMiddleware">PublishTagsMiddleware</a></pre>
+				
+				
+				
+			
+
+			
+				
+				<h3 id="PublishTagsMiddleware.Confirm">func (*PublishTagsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/publishTag.go?s=2829:2957#L85">Confirm</a>
+					<a class="permalink" href="godoc.5.html#PublishTagsMiddleware.Confirm">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#PublishTagsMiddleware">PublishTagsMiddleware</a>) Confirm(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerConfirm">HandlerConfirm</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerConfirm">HandlerConfirm</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="PublishTagsMiddleware.NotifyPublishEvent">func (*PublishTagsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/publishTag.go?s=4998:5159#L151">NotifyPublishEvent</a>
+					<a class="permalink" href="godoc.5.html#PublishTagsMiddleware.NotifyPublishEvent">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#PublishTagsMiddleware">PublishTagsMiddleware</a>) NotifyPublishEvent(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerNotifyPublishEvent">HandlerNotifyPublishEvent</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerNotifyPublishEvent">HandlerNotifyPublishEvent</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="PublishTagsMiddleware.Publish">func (*PublishTagsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/publishTag.go?s=3144:3272#L101">Publish</a>
+					<a class="permalink" href="godoc.5.html#PublishTagsMiddleware.Publish">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#PublishTagsMiddleware">PublishTagsMiddleware</a>) Publish(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerPublish">HandlerPublish</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerPublish">HandlerPublish</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="PublishTagsMiddleware.PublishCount">func (*PublishTagsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/publishTag.go?s=1498:1560#L32">PublishCount</a>
+					<a class="permalink" href="godoc.5.html#PublishTagsMiddleware.PublishCount">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#PublishTagsMiddleware">PublishTagsMiddleware</a>) PublishCount() <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a></pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="PublishTagsMiddleware.Reconnect">func (*PublishTagsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/publishTag.go?s=2043:2177#L56">Reconnect</a>
+					<a class="permalink" href="godoc.5.html#PublishTagsMiddleware.Reconnect">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#PublishTagsMiddleware">PublishTagsMiddleware</a>) Reconnect(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="PublishTagsMiddleware.TagOffset">func (*PublishTagsMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/publishTag.go?s=1599:1658#L36">TagOffset</a>
+					<a class="permalink" href="godoc.5.html#PublishTagsMiddleware.TagOffset">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#PublishTagsMiddleware">PublishTagsMiddleware</a>) TagOffset() <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a></pre>
+				
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="QoSMiddleware">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/qos.go?s=342:487#L5">QoSMiddleware</a>
+				<a class="permalink" href="godoc.5.html#QoSMiddleware">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+Saves most recent QoS settings and re-applies them on restart.
+</p>
+<p>
+This method is currently racy if multiple goroutines call QoS with different
+settings.
+</p>
+
+			<pre>type QoSMiddleware struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewQosMiddleware">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/qos.go?s=1801:1839#L66">NewQosMiddleware</a>
+					<a class="permalink" href="godoc.5.html#NewQosMiddleware">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewQosMiddleware() *<a href="godoc.5.html#QoSMiddleware">QoSMiddleware</a></pre>
+				
+				
+				
+			
+
+			
+				
+				<h3 id="QoSMiddleware.IsSet">func (*QoSMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/qos.go?s=667:712#L18">IsSet</a>
+					<a class="permalink" href="godoc.5.html#QoSMiddleware.IsSet">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#QoSMiddleware">QoSMiddleware</a>) IsSet() <a href="http://localhost:6161/pkg/builtin/#bool">bool</a></pre>
+				<p>
+Whether the QoS has been set. For testing.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="QoSMiddleware.Qos">func (*QoSMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/qos.go?s=1508:1616#L51">Qos</a>
+					<a class="permalink" href="godoc.5.html#QoSMiddleware.Qos">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#QoSMiddleware">QoSMiddleware</a>) Qos(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerQoS">HandlerQoS</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerQoS">HandlerQoS</a>)</pre>
+				<p>
+Saves the QoS settings passed to the QoS function
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="QoSMiddleware.QosArgs">func (*QoSMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/qos.go?s=523:588#L13">QosArgs</a>
+					<a class="permalink" href="godoc.5.html#QoSMiddleware.QosArgs">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#QoSMiddleware">QoSMiddleware</a>) QosArgs() <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#ArgsQoS">ArgsQoS</a></pre>
+				<p>
+Get current args. For testing.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="QoSMiddleware.Reconnect">func (*QoSMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/qos.go?s=783:909#L23">Reconnect</a>
+					<a class="permalink" href="godoc.5.html#QoSMiddleware.Reconnect">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware *<a href="godoc.5.html#QoSMiddleware">QoSMiddleware</a>) Reconnect(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>)</pre>
+				<p>
+Re-applies QoS settings on reconnect
+</p>
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="RouteDeclarationMiddleware">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/routeDeclaration.go?s=311:1092#L5">RouteDeclarationMiddleware</a>
+				<a class="permalink" href="godoc.5.html#RouteDeclarationMiddleware">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+This object implements handlers for re-declaring queues, exchanges, and bindings upon
+reconnectMiddleware.
+</p>
+
+			<pre>type RouteDeclarationMiddleware struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewRouteDeclarationMiddleware">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/routeDeclaration.go?s=16877:16941#L603">NewRouteDeclarationMiddleware</a>
+					<a class="permalink" href="godoc.5.html#NewRouteDeclarationMiddleware">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewRouteDeclarationMiddleware() *<a href="godoc.5.html#RouteDeclarationMiddleware">RouteDeclarationMiddleware</a></pre>
+				
+				
+				
+			
+
+			
+				
+				<h3 id="RouteDeclarationMiddleware.ExchangeBind">func (*RouteDeclarationMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/routeDeclaration.go?s=15859:16003#L561">ExchangeBind</a>
+					<a class="permalink" href="godoc.5.html#RouteDeclarationMiddleware.ExchangeBind">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middle *<a href="godoc.5.html#RouteDeclarationMiddleware">RouteDeclarationMiddleware</a>) ExchangeBind(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerExchangeBind">HandlerExchangeBind</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerExchangeBind">HandlerExchangeBind</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="RouteDeclarationMiddleware.ExchangeDeclare">func (*RouteDeclarationMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/routeDeclaration.go?s=14987:15140#L525">ExchangeDeclare</a>
+					<a class="permalink" href="godoc.5.html#RouteDeclarationMiddleware.ExchangeDeclare">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middle *<a href="godoc.5.html#RouteDeclarationMiddleware">RouteDeclarationMiddleware</a>) ExchangeDeclare(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerExchangeDeclare">HandlerExchangeDeclare</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerExchangeDeclare">HandlerExchangeDeclare</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="RouteDeclarationMiddleware.ExchangeDelete">func (*RouteDeclarationMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/routeDeclaration.go?s=15399:15549#L542">ExchangeDelete</a>
+					<a class="permalink" href="godoc.5.html#RouteDeclarationMiddleware.ExchangeDelete">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middle *<a href="godoc.5.html#RouteDeclarationMiddleware">RouteDeclarationMiddleware</a>) ExchangeDelete(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerExchangeDelete">HandlerExchangeDelete</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerExchangeDelete">HandlerExchangeDelete</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="RouteDeclarationMiddleware.ExchangeUnbind">func (*RouteDeclarationMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/routeDeclaration.go?s=16430:16580#L583">ExchangeUnbind</a>
+					<a class="permalink" href="godoc.5.html#RouteDeclarationMiddleware.ExchangeUnbind">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middle *<a href="godoc.5.html#RouteDeclarationMiddleware">RouteDeclarationMiddleware</a>) ExchangeUnbind(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerExchangeUnbind">HandlerExchangeUnbind</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerExchangeUnbind">HandlerExchangeUnbind</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="RouteDeclarationMiddleware.QueueBind">func (*RouteDeclarationMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/routeDeclaration.go?s=14019:14154#L482">QueueBind</a>
+					<a class="permalink" href="godoc.5.html#RouteDeclarationMiddleware.QueueBind">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middle *<a href="godoc.5.html#RouteDeclarationMiddleware">RouteDeclarationMiddleware</a>) QueueBind(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerQueueBind">HandlerQueueBind</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerQueueBind">HandlerQueueBind</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="RouteDeclarationMiddleware.QueueDeclare">func (*RouteDeclarationMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/routeDeclaration.go?s=13057:13201#L445">QueueDeclare</a>
+					<a class="permalink" href="godoc.5.html#RouteDeclarationMiddleware.QueueDeclare">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middle *<a href="godoc.5.html#RouteDeclarationMiddleware">RouteDeclarationMiddleware</a>) QueueDeclare(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerQueueDeclare">HandlerQueueDeclare</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerQueueDeclare">HandlerQueueDeclare</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="RouteDeclarationMiddleware.QueueDelete">func (*RouteDeclarationMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/routeDeclaration.go?s=13544:13685#L463">QueueDelete</a>
+					<a class="permalink" href="godoc.5.html#RouteDeclarationMiddleware.QueueDelete">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middle *<a href="godoc.5.html#RouteDeclarationMiddleware">RouteDeclarationMiddleware</a>) QueueDelete(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerQueueDelete">HandlerQueueDelete</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerQueueDelete">HandlerQueueDelete</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="RouteDeclarationMiddleware.QueueUnbind">func (*RouteDeclarationMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/routeDeclaration.go?s=14482:14623#L502">QueueUnbind</a>
+					<a class="permalink" href="godoc.5.html#RouteDeclarationMiddleware.QueueUnbind">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middle *<a href="godoc.5.html#RouteDeclarationMiddleware">RouteDeclarationMiddleware</a>) QueueUnbind(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerQueueUnbind">HandlerQueueUnbind</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerQueueUnbind">HandlerQueueUnbind</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="RouteDeclarationMiddleware.Reconnect">func (*RouteDeclarationMiddleware) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares/routeDeclaration.go?s=12748:12883#L433">Reconnect</a>
+					<a class="permalink" href="godoc.5.html#RouteDeclarationMiddleware.Reconnect">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middle *<a href="godoc.5.html#RouteDeclarationMiddleware">RouteDeclarationMiddleware</a>) Reconnect(
+    next <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>,
+) (handler <a href="godoc.3.html">amqpMiddleware</a>.<a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>)</pre>
+				
+				
+				
+				
+			
+		
+	
+
+	
+
+
+
+
+
+
+
+<div id="footer">
+Build version go1.13.5.<br>
+Except as <a href="https://developers.google.com/site-policies#restrictions">noted</a>,
+the content of this page is licensed under the
+Creative Commons Attribution 3.0 License,
+and code is licensed under a <a href="http://localhost:6161/LICENSE">BSD license</a>.<br>
+<a href="http://localhost:6161/doc/tos.html">Terms of Service</a> |
+<a href="http://www.google.com/intl/en/policies/privacy/">Privacy Policy</a>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+</body>
+</html>
