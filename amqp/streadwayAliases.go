@@ -1,10 +1,11 @@
+package amqp
+
+import streadway "github.com/streadway/amqp"
+
 /*
 In this file we are going ot create type aliases for all streadway types we are NOT
 re-implementing
 */
-package amqp
-
-import streadway "github.com/streadway/amqp"
 
 // Copy over the error codes
 const (

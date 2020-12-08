@@ -11,4 +11,5 @@ Roger, Rabbit is broken into two packages:
 API Documentation
 -----------------
 
-API Documentation is provided by godoc and can be found here:
+API Documentation is provided by godoc and can be
+`found here <https://pkg.go.dev/github.com/peake100/rogerRabbit-go?readme=expanded#section-documentation>`_.
