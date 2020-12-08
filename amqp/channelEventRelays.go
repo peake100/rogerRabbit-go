@@ -38,7 +38,9 @@ func shutdownRelay(relay eventRelay, relaySync *relaySync, relayLogger zerolog.L
 }
 
 func (channel *Channel) runEventRelayCycleSetup(
-	relay eventRelay, relaySync *relaySync, legLogger zerolog.Logger,
+	relay eventRelay,
+	relaySync *relaySync,
+	legLogger zerolog.Logger,
 ) (setupErr error) {
 	// Release our hold on the event relays setup complete on exit.
 	defer relaySync.SetupComplete()
@@ -66,13 +68,13 @@ func (channel *Channel) runEventRelayCycleSetup(
 }
 
 func (channel *Channel) runEventRelayCycleLeg(
-	relay eventRelay, flowControl *relaySync, legLogger zerolog.Logger,
+	relay eventRelay, relaySync *relaySync, legLogger zerolog.Logger,
 ) {
 	if legLogger.Debug().Enabled() {
 		legLogger.Debug().Msg("starting relay leg")
 	}
 	done, runErr := relay.RunRelayLeg()
-	flowControl.SetDone(done)
+	relaySync.SetDone(done)
 
 	if legLogger.Debug().Enabled() {
 		legLogger.Debug().Msg("exiting relay leg")
@@ -106,15 +108,9 @@ func (channel *Channel) runEventRelayCycle(
 }
 
 // launch as goroutine to run an event relay after it's initial setup.
-func (channel *Channel) runEventRelay(relay eventRelay, relayLogger zerolog.Logger) {
-	relaySync := &relaySync{
-		done:              false,
-		shared:            channel.transportChannel.relaySync.shared,
-		firstSetupDone:    false,
-		setupCompleteHeld: false,
-		legCompleteHeld:   false,
-	}
-
+func (channel *Channel) runEventRelay(
+	relay eventRelay, relaySync *relaySync, relayLogger zerolog.Logger,
+) {
 	relayLeg := 1
 	// Shutdown our relay on exit.
 	defer shutdownRelay(relay, relaySync, relayLogger)
@@ -137,7 +133,12 @@ func (channel *Channel) setupAndLaunchEventRelay(relay eventRelay) error {
 		Logger()
 
 	// Launch the runner
-	go channel.runEventRelay(relay, logger)
+	relaySync := newRelaySync(channel.transportChannel.relaySync.shared)
+	go channel.runEventRelay(relay, relaySync, logger)
+	err := relaySync.WaitForInit(channel.ctx)
+	if err != nil {
+		return err
+	}
 
 	// Return
 	return nil
