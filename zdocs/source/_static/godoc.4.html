@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#375EAB">
 
-  <title>/src/islelib/zdevelop - Go Documentation Server</title>
+  <title>data - Go Documentation Server</title>
 
 <link type="text/css" rel="stylesheet" href="style.css">
 
@@ -43,7 +43,7 @@
 
 
   <h1>
-    Directory /src/islelib/zdevelop
+    Package data
     <span class="text-muted"></span>
   </h1>
 
@@ -68,39 +68,185 @@
 	correspond to Go identifiers).
 -->
 
-
-
-
+	<script>
+	document.ANALYSIS_DATA = null;
+	document.CALLGRAPH = null;
+	</script>
 
 	
+		
+		<div id="short-nav">
+			<dl>
+			<dd><code>import "github.com/peake100/rogerRabbit-go/amqp/data"</code></dd>
+			</dl>
+			<dl>
+			<dd><a href="godoc.4.html#pkg-overview" class="overviewLink">Overview</a></dd>
+			<dd><a href="godoc.4.html#pkg-index" class="indexLink">Index</a></dd>
+			
+			
+			</dl>
+		</div>
+		<!-- The package's Name is printed as title by the top-level template -->
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ▹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
+				
+				
+			</div>
+		</div>
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ▹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ▾</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+			
+			
+			
+				
+				<dd><a href="godoc.4.html#Confirmation">type Confirmation</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.4.html#Delivery">type Delivery</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.4.html#NewDelivery">func NewDelivery(orig streadway.Delivery, acknowledger streadway.Acknowledger) Delivery</a></dd>
+				
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h3>Package files</h3>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/data/config.go">config.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/data/confirmation.go">confirmation.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/data/delivery.go">delivery.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+
+		
+		
+		
+		
+			
+			
+			<h2 id="Confirmation">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/data/confirmation.go?s=498:949#L4">Confirmation</a>
+				<a class="permalink" href="godoc.4.html#Confirmation">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ROGER NOTE: As streadway/amqp.Confirmation, but with additional data on whether this
+confirmation was received directly from the broker, or created to fill in a gap in
+delivery tags that occurred due to an unexpected disconnection.
+</p>
+<p>
+--
+</p>
+<p>
+Confirmation notifies the acknowledgment or negative acknowledgement of a
+publishing identified by its delivery tag.  Use NotifyPublish on the Channel
+to consume these events.
+</p>
+
+			<pre>type Confirmation struct {
+    <span class="comment">// The original confirmation message, embedded to this struct can act as a drop-in</span>
+    <span class="comment">// replacement</span>
+    <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Confirmation">Confirmation</a>
+
+    <span class="comment">// When this value is true, this confirmation was never received due to a connection</span>
+    <span class="comment">// disruption, and is being reported as a NACK. However, it is possible that this</span>
+    <span class="comment">// message DID successfully reach the server, and only the confirmation response</span>
+    <span class="comment">// was never received.</span>
+<span id="Confirmation.DisconnectOrphan"></span>    DisconnectOrphan <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="Delivery">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/data/delivery.go?s=60:122#L1">Delivery</a>
+				<a class="permalink" href="godoc.4.html#Delivery">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type Delivery struct {
+    <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Delivery">Delivery</a>
+<span id="Delivery.TagOffset"></span>    TagOffset <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewDelivery">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/data/delivery.go?s=124:216#L1">NewDelivery</a>
+					<a class="permalink" href="godoc.4.html#NewDelivery">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewDelivery(
+    orig <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Delivery">Delivery</a>,
+    acknowledger <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Acknowledger">Acknowledger</a>,
+) <a href="godoc.4.html#Delivery">Delivery</a></pre>
+				
+				
+				
+			
+
+			
+		
 	
-	<div class="pkg-dir">
-		<table>
-			<tr>
-				<th class="pkg-name">Name</th>
-				<th class="pkg-synopsis">Synopsis</th>
-			</tr>
 
-			
-			<tr>
-				<td colspan="2"><a href="islelib.html">..</a></td>
-			</tr>
-			
+	
 
-			
-				<tr>
-				
-					<td class="pkg-name" style="padding-left: 0px;">
-						<a href="godoc.3.html">scratch</a>
-					</td>
-				
-					<td class="pkg-synopsis">
-						
-					</td>
-				</tr>
-			
-		</table>
-	</div>
+
+
+
 
 
 
