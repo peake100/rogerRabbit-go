@@ -49,6 +49,8 @@ type publishArgs struct {
 
 // The order for a publications.
 type publishOrder struct {
+	ctx context.Context
+
 	// Embed the args.
 	publishArgs
 
@@ -91,9 +93,9 @@ func (opts *ProducerOpts) WithInternalQueueCapacity(size int) *ProducerOpts {
 // publishings, retrying nacked messages, and other useful quality of life features.
 type Producer struct {
 	// Context for the producer.
-	ctx         context.Context
-	ctxCancel   context.CancelFunc
-	publishLock *sync.RWMutex
+	ctx              context.Context
+	ctxCancel        context.CancelFunc
+	publishQueueLock *sync.RWMutex
 
 	// The channel we will be running publishing on. This producer is expected to have
 	// full ownership of this channel. Any additional operations that occur on this
@@ -122,6 +124,11 @@ func (producer *Producer) runPublisher() {
 
 	// Range over our publish Queue.
 	for thisOrder := range producer.publishQueue {
+		// If the context has expired on this publication, skip it.
+		if thisOrder.ctx.Err() != nil {
+			continue
+		}
+
 		err := producer.channel.Publish(
 			thisOrder.Exchange,
 			thisOrder.Key,
@@ -142,7 +149,9 @@ func (producer *Producer) runPublisher() {
 			continue
 		}
 
-		// If we are confirming orders,  send this to the confirmation routine
+		// If we are confirming orders, send this to the confirmation routine. We don't
+		// want to check if the requester context has cancelled, as we already sent
+		// the message, and need to tack it to make sure our confirmations line up
 		thisOrder.DeliveryTag = deliveryTag
 		producer.confirmQueue <- thisOrder
 	}
@@ -185,8 +194,13 @@ func (producer *Producer) runConfirmations() {
 }
 
 // Publish a message. This method is goroutine safe, even when confirming publications
-// with the broker.
+// with the broker. When confirming messages with a broker, this method will block until
+// the broker confirms the message publication or ctx is cancelled.
+//
+// Cancelling the context will cause this method to return, but have no other effect
+// if the message has already been sent to thr broker and we are waiting for a response.
 func (producer *Producer) Publish(
+	ctx context.Context,
 	exchange string,
 	key string,
 	mandatory bool,
@@ -195,6 +209,9 @@ func (producer *Producer) Publish(
 ) (err error) {
 	// Create the order.
 	order := &publishOrder{
+		// Use the producer context.
+		ctx: ctx,
+
 		// Save the args
 		publishArgs: publishArgs{
 			Exchange:  exchange,
@@ -213,9 +230,9 @@ func (producer *Producer) Publish(
 	// it longer than we have to.
 	err = func() error {
 		// Put a read hold on closing the order channel so it isn't closed out from
-		// under us
-		producer.publishLock.RLock()
-		defer producer.publishLock.RUnlock()
+		// under us.
+		producer.publishQueueLock.RLock()
+		defer producer.publishQueueLock.RUnlock()
 
 		// Exit if the context has been cancelled.
 		if producer.ctx.Err() != nil {
@@ -228,6 +245,8 @@ func (producer *Producer) Publish(
 		case producer.publishQueue <- order:
 		case <-producer.ctx.Done():
 			return fmt.Errorf("publisher cancelled: %w", producer.ctx.Err())
+		case <-ctx.Done():
+			return fmt.Errorf("message cancelled: %w", err)
 		}
 
 		return nil
@@ -239,7 +258,12 @@ func (producer *Producer) Publish(
 	}
 
 	// Block until we have a final result, then return it.
-	return <-order.result
+	select {
+	case result := <-order.result:
+		return result
+	case <-ctx.Done():
+		return fmt.Errorf("message cancelled: %w", err)
+	}
 }
 
 // Run the producer, this method blocks until the producer has been shut down.
@@ -285,7 +309,7 @@ func (producer *Producer) Run() error {
 		defer complete.Done()
 		// Unlock the lock, allowing new publishers to encounter the closed context and
 		// error without panicking on a closed channel.
-		defer producer.publishLock.Unlock()
+		defer producer.publishQueueLock.Unlock()
 		// Close the publish Queue, allowing the publish routine to wrap up and spin
 		// down.
 		defer close(producer.publishQueue)
@@ -293,7 +317,7 @@ func (producer *Producer) Run() error {
 		// placing any new messages into the internal Queue, and will allow any in the
 		// process of doing so to finish before we close that Queue, avoiding panics
 		// from sending to a closed channel.
-		defer producer.publishLock.Lock()
+		defer producer.publishQueueLock.Lock()
 
 		// Wait for the producer context to be cancelled.
 		<-producer.ctx.Done()
@@ -355,13 +379,13 @@ func NewProducer(amqpChannel *amqp.Channel, opts *ProducerOpts) *Producer {
 	}
 
 	return &Producer{
-		ctx:           ctx,
-		ctxCancel:     cancel,
-		publishLock:   new(sync.RWMutex),
-		channel:       amqpChannel,
-		publishEvents: make(chan data.Confirmation, opts.internalQueueCapacity),
-		publishQueue:  make(chan *publishOrder, opts.internalQueueCapacity),
-		confirmQueue:  make(chan *publishOrder, opts.internalQueueCapacity),
-		opts:          *opts,
+		ctx:              ctx,
+		ctxCancel:        cancel,
+		publishQueueLock: new(sync.RWMutex),
+		channel:          amqpChannel,
+		publishEvents:    make(chan data.Confirmation, opts.internalQueueCapacity),
+		publishQueue:     make(chan *publishOrder, opts.internalQueueCapacity),
+		confirmQueue:     make(chan *publishOrder, opts.internalQueueCapacity),
+		opts:             *opts,
 	}
 }

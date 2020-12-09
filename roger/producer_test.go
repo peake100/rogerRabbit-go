@@ -2,6 +2,7 @@
 package roger_test
 
 import (
+	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/roger"
@@ -48,6 +49,7 @@ func (suite *ProducerSuite) TestProducerBasicLifetime() {
 		defer close(published)
 
 		err := producer.Publish(
+			context.Background(),
 			"",
 			"",
 			false,
@@ -107,6 +109,7 @@ func (suite *ProducerSuite) TestProducerPublish() {
 		go func(index int) {
 			defer publishWork.Done()
 			err := producer.Publish(
+				context.Background(),
 				"",
 				queueName,
 				false,
