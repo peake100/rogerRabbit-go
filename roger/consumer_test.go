@@ -5,8 +5,8 @@ package roger
 import (
 	"context"
 	"fmt"
-	"github.com/peake100/rogerRabbit-go/amqp"
-	"github.com/peake100/rogerRabbit-go/amqp/data"
+	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
+	"github.com/peake100/rogerRabbit-go/amqpTest"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 	"sync"
@@ -60,7 +60,7 @@ func (consumer *BasicTestConsumer) SetupChannel(
 }
 
 func (consumer *BasicTestConsumer) HandleDelivery(
-	ctx context.Context, delivery data.Delivery, logger zerolog.Logger,
+	ctx context.Context, delivery dataModels.Delivery, logger zerolog.Logger,
 ) (err error, requeue bool) {
 
 	// Check whether all messages have been received, then signal receipt.
@@ -91,7 +91,7 @@ func (consumer *BasicTestConsumer) Cleanup(amqpChannel AmqpRouteManager) error {
 }
 
 type ConsumerSuite struct {
-	amqp.ChannelSuiteBase
+	amqpTest.ChannelSuiteBase
 }
 
 func (suite *ConsumerSuite) TestConsumeBasicLifecycle() {
@@ -99,7 +99,7 @@ func (suite *ConsumerSuite) TestConsumeBasicLifecycle() {
 
 	queueName := "test_consume_basic_lifecycle"
 
-	_, err := suite.ChannelPublish.QueueInspect(queueName)
+	_, err := suite.ChannelPublish().QueueInspect(queueName)
 	suite.EqualError(
 		err,
 		"Exception (404) Reason: \"NOT_FOUND - no queue"+
@@ -116,7 +116,7 @@ func (suite *ConsumerSuite) TestConsumeBasicLifecycle() {
 		SetupComplete:        make(chan struct{}),
 	}
 
-	consumer := NewConsumer(suite.ChannelConsume, nil)
+	consumer := NewConsumer(suite.ChannelConsume(), nil)
 	suite.T().Cleanup(consumer.StartShutdown)
 
 	consumer.RegisterProcessor(processor)
@@ -137,7 +137,7 @@ func (suite *ConsumerSuite) TestConsumeBasicLifecycle() {
 		suite.T().FailNow()
 	}
 
-	_, err = suite.ChannelPublish.QueueInspect(queueName)
+	_, err = suite.ChannelPublish().QueueInspect(queueName)
 	suite.NoError(err, "queue created")
 
 	consumer.StartShutdown()
@@ -151,7 +151,7 @@ func (suite *ConsumerSuite) TestConsumeBasicLifecycle() {
 
 	// Check that shutting down the consumer triggered the processor cleanup and
 	// deleting the queue.
-	_, err = suite.ChannelPublish.QueueInspect(queueName)
+	_, err = suite.ChannelPublish().QueueInspect(queueName)
 	suite.EqualError(
 		err,
 		"Exception (404) Reason: \"NOT_FOUND - no queue"+
@@ -176,7 +176,7 @@ func (suite *ConsumerSuite) TestConsumeBasicMessages() {
 		SetupComplete:        make(chan struct{}),
 	}
 
-	consumer := NewConsumer(suite.ChannelConsume, nil)
+	consumer := NewConsumer(suite.ChannelConsume(), nil)
 	suite.T().Cleanup(consumer.StartShutdown)
 
 	consumer.RegisterProcessor(processor)

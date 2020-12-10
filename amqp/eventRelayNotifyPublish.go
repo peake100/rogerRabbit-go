@@ -2,7 +2,7 @@ package amqp
 
 import (
 	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
-	"github.com/peake100/rogerRabbit-go/amqp/data"
+	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
@@ -10,7 +10,7 @@ import (
 // Relays Deliveries across channel disconnects.
 type notifyPublishRelay struct {
 	// Delivery channel to pass deliveries back to the client.
-	CallerConfirmations chan<- data.Confirmation
+	CallerConfirmations chan<- dataModels.Confirmation
 
 	// The current delivery channel coming from the broker.
 	brokerConfirmations <-chan streadway.Confirmation
@@ -50,7 +50,7 @@ func (relay *notifyPublishRelay) SetupForRelayLeg(newChannel *streadway.Channel)
 	return nil
 }
 
-func (relay *notifyPublishRelay) logConfirmation(confirmation data.Confirmation) {
+func (relay *notifyPublishRelay) logConfirmation(confirmation dataModels.Confirmation) {
 	relay.logger.Debug().
 		Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
 		Bool("ACK", confirmation.Ack).
@@ -62,7 +62,7 @@ func (relay *notifyPublishRelay) RunRelayLeg() (done bool, err error) {
 	// Range over the confirmations from the broker.
 	for brokerConf := range relay.brokerConfirmations {
 		// Apply the offset to the delivery tag.
-		confirmation := data.Confirmation{
+		confirmation := dataModels.Confirmation{
 			Confirmation:     brokerConf,
 			DisconnectOrphan: false,
 		}
@@ -82,7 +82,7 @@ func (relay *notifyPublishRelay) Shutdown() error {
 }
 
 func newNotifyPublishRelay(
-	callerConfirmations chan<- data.Confirmation,
+	callerConfirmations chan<- dataModels.Confirmation,
 	middleware []amqpMiddleware.NotifyPublishEvent,
 ) *notifyPublishRelay {
 	// Create the relay

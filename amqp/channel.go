@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
-	"github.com/peake100/rogerRabbit-go/amqp/data"
+	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
 	"github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
@@ -828,7 +828,7 @@ the channel or connection is closed, the message will not get requeued.
 func (channel *Channel) Get(
 	queue string,
 	autoAck bool,
-) (msg data.Delivery, ok bool, err error) {
+) (msg dataModels.Delivery, ok bool, err error) {
 	args := &amqpMiddleware.ArgsGet{
 		Queue:   queue,
 		AutoAck: autoAck,
@@ -915,7 +915,7 @@ the returned chan is closed.
 */
 func (channel *Channel) Consume(
 	queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args Table,
-) (deliveryChan <-chan data.Delivery, err error) {
+) (deliveryChan <-chan dataModels.Delivery, err error) {
 	consumeArgs := &consumeArgs{
 		queue:     queue,
 		consumer:  consumer,
@@ -926,7 +926,7 @@ func (channel *Channel) Consume(
 		args:      args,
 		// Make a buffered channel so we don't cause latency from waiting for queues to
 		// be ready
-		callerDeliveryChan: make(chan data.Delivery, 16),
+		callerDeliveryChan: make(chan dataModels.Delivery, 16),
 	}
 	deliveryChan = consumeArgs.callerDeliveryChan
 
@@ -1082,8 +1082,8 @@ Channel.Close() or Connection.Close().
 
 */
 func (channel *Channel) NotifyPublish(
-	confirm chan data.Confirmation,
-) chan data.Confirmation {
+	confirm chan dataModels.Confirmation,
+) chan dataModels.Confirmation {
 	// Setup and launch the event relay that will handle these events across multiple
 	// connections.
 	args := &amqpMiddleware.ArgsNotifyPublish{Confirm: confirm}
@@ -1109,7 +1109,7 @@ mainLoop:
 }
 
 func notifyConfirmHandleAckAndNack(
-	confirmation data.Confirmation, ack, nack chan uint64, logger zerolog.Logger,
+	confirmation dataModels.Confirmation, ack, nack chan uint64, logger zerolog.Logger,
 ) {
 	if confirmation.Ack {
 		if logger.Debug().Enabled() {
@@ -1148,7 +1148,7 @@ func (channel *Channel) NotifyConfirm(
 	ack, nack chan uint64,
 ) (chan uint64, chan uint64) {
 	confirmsEvents := channel.NotifyPublish(
-		make(chan data.Confirmation, cap(ack)+cap(nack)),
+		make(chan dataModels.Confirmation, cap(ack)+cap(nack)),
 	)
 	logger := channel.logger.With().
 		Str("EVENT_TYPE", "NOTIFY_CONFIRM").
@@ -1174,7 +1174,7 @@ func (channel *Channel) NotifyConfirmOrOrphaned(
 	ack, nack, orphaned chan uint64,
 ) (chan uint64, chan uint64, chan uint64) {
 	confirmsEvents := channel.NotifyPublish(
-		make(chan data.Confirmation, cap(ack)+cap(nack)+cap(orphaned)),
+		make(chan dataModels.Confirmation, cap(ack)+cap(nack)+cap(orphaned)),
 	)
 	logger := channel.logger.With().
 		Str("EVENT_TYPE", "NOTIFY_CONFIRM_OR_ORPHAN").
@@ -1187,7 +1187,7 @@ func (channel *Channel) NotifyConfirmOrOrphaned(
 
 func (channel *Channel) runNotifyConfirmOrOrphaned(
 	ack, nack, orphaned chan uint64,
-	confirmEvents <-chan data.Confirmation,
+	confirmEvents <-chan dataModels.Confirmation,
 	logger zerolog.Logger,
 ) {
 	// Close channels on exit
@@ -1416,19 +1416,56 @@ type ChannelTestingDefaultMiddlewares struct {
 
 // Holds testing information and methods for channels.
 type ChannelTesting struct {
-	*transportTester
+	*transportTesting
 
+	channel *Channel
 	// The middleware objects registered to the channel during channel creation.
 	DefaultMiddlewares *ChannelTestingDefaultMiddlewares
 }
 
+// Returns a tester for the RogerConnection feeding this channel.
+func (tester *ChannelTesting) ConnTest() *transportTesting {
+	blocks := int32(0)
+
+	return &transportTesting{
+		t:       tester.t,
+		manager: tester.channel.transportChannel.rogerConn.transportManager,
+		blocks:  &blocks,
+	}
+}
+
+// Returns the current underlying amqp/streadway channel being used.
+func (tester *ChannelTesting) UnderlyingChannel() *streadway.Channel {
+	if tester.channel.transportChannel == nil {
+		return nil
+	}
+	return tester.channel.transportChannel.Channel
+}
+
+// Returns the current underlying amqp/streadway connection being used.
+func (tester *ChannelTesting) UnderlyingConnection() *streadway.Connection {
+	return tester.channel.transportChannel.rogerConn.transportConn.Connection
+}
+
+// Returns the current underlying amqp/streadway connection being used.
+func (tester *ChannelTesting) ReconnectionCount() uint64 {
+	return tester.channel.reconnectCount
+}
+
 // Test methods for the transport
 func (channel *Channel) Test(t *testing.T) *ChannelTesting {
-	return &ChannelTesting{
-		transportTester: &transportTester{
-			t,
-			channel.transportManager,
+	blocks := int32(0)
+
+	chanTester := &ChannelTesting{
+		transportTesting: &transportTesting{
+			t:       t,
+			manager: channel.transportManager,
+			blocks:  &blocks,
 		},
+		channel:            channel,
 		DefaultMiddlewares: channel.transportChannel.defaultMiddlewares,
 	}
+
+	t.Cleanup(chanTester.cleanup)
+	return chanTester
 }

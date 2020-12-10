@@ -3,7 +3,7 @@ package amqp
 import (
 	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
-	"github.com/peake100/rogerRabbit-go/amqp/data"
+	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
@@ -214,12 +214,10 @@ func (builder *middlewareBaseBuilder) createBaseHandlerPublish() (
 func (builder *middlewareBaseBuilder) createBaseHandlerGet() (
 	handler amqpMiddleware.HandlerGet,
 ) {
-	handler = func(
-		args *amqpMiddleware.ArgsGet,
-	) (msg data.Delivery, ok bool, err error) {
+	handler = func(args *amqpMiddleware.ArgsGet) (msg Delivery, ok bool, err error) {
 		var msgOrig streadway.Delivery
 		msgOrig, ok, err = builder.underlyingChan.Get(args.Queue, args.AutoAck)
-		msg = data.NewDelivery(msgOrig, builder.channel)
+		msg = dataModels.NewDelivery(msgOrig, builder.channel)
 		return msg, ok, err
 	}
 
@@ -259,7 +257,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerReject() (
 func (builder *middlewareBaseBuilder) createBaseHandlerNotifyPublish() (
 	handler amqpMiddleware.HandlerNotifyPublish,
 ) {
-	handler = func(args *amqpMiddleware.ArgsNotifyPublish) chan data.Confirmation {
+	handler = func(args *amqpMiddleware.ArgsNotifyPublish) chan Confirmation {
 		channel := builder.channel
 
 		relay := newNotifyPublishRelay(

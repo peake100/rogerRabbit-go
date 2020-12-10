@@ -1,7 +1,7 @@
 package amqp
 
-import "github.com/peake100/rogerRabbit-go/amqp/data"
+import "github.com/peake100/rogerRabbit-go/amqp/dataModels"
 
-type Confirmation = data.Confirmation
+type Confirmation = dataModels.Confirmation
 
-type Delivery = data.Delivery
+type Delivery = dataModels.Delivery

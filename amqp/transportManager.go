@@ -8,6 +8,7 @@ import (
 	streadway "github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -33,60 +34,108 @@ type transportReconnect interface {
 	cleanup() error
 }
 
-type transportTester struct {
+type reconnectSignaler struct {
+	t               *testing.T
+	reconnectSignal chan struct{}
+}
+
+// Blocks until a reconnection of the underlying transport occurs. Once the first
+// reconnection event occurs, this object will no longer block and a new signaler will
+// need to be created for the next re-connection.
+func (signaler *reconnectSignaler) WaitOnReconnect(ctx context.Context) {
+	select {
+	case <-signaler.reconnectSignal:
+	case <-ctx.Done():
+		signaler.t.Error(
+			"context cancelled before reconnection occurred: %w", ctx.Err(),
+		)
+		signaler.t.FailNow()
+	}
+}
+
+// Provides testing methods for testing channels and connections.
+type transportTesting struct {
 	t       *testing.T
 	manager *transportManager
+	// The number of times a connection has been blocked from being acquired.
+	blocks *int32
+}
+
+// The lock which controls access to the channel / connection
+func (tester *transportTesting) TransportLock() *sync.RWMutex {
+	return tester.manager.transportLock
+}
+
+// Block a transport from reconnecting. If too few calls to UnblockReconnect() are
+// made, the block will be removed at the end of the test.
+func (tester *transportTesting) BlockReconnect() {
+	atomic.AddInt32(tester.blocks, 1)
+	tester.manager.transportLock.RLock()
+}
+
+// Unblock the transport from reconnecting after calling BlockReconnect()
+func (tester *transportTesting) UnblockReconnect() {
+	defer tester.manager.transportLock.RUnlock()
+	atomic.AddInt32(tester.blocks, -1)
+}
+
+func (tester *transportTesting) cleanup() {
+	blocks := *tester.blocks
+	for i := int32(0); i < blocks; i++ {
+		tester.manager.transportLock.RUnlock()
+	}
+}
+
+// Returns a signaler that can be used to wait on the next reconnection event of the
+// transport.
+func (tester *transportTesting) SignalOnReconnect() *reconnectSignaler {
+	// Signal that the connection has been re-established
+	reconnected := make(chan struct{})
+
+	// Grab the cond lock
+	tester.manager.reconnectCond.L.Lock()
+
+	// Launch a routine to close the channel after the wait.
+	go func() {
+		defer tester.manager.reconnectCond.L.Unlock()
+		defer close(reconnected)
+		tester.manager.reconnectCond.Wait()
+	}()
+
+	signaler := &reconnectSignaler{
+		t:               tester.t,
+		reconnectSignal: reconnected,
+	}
+
+	return signaler
+}
+
+// Closes the underlying transport to signal a disconnect.
+func (tester *transportTesting) DisconnectTransport() {
+	err := tester.manager.transport.Close()
+	if !assert.NoError(tester.t, err, "close underlying transport") {
+		tester.t.FailNow()
+	}
 }
 
 // Force a disconnect of the channel or connection and waits for a reconnection to
 // occur or ctx to cancel. If a nil context is passed, a context with a 3-second timeout
 // will be used instead
-func (tester *transportTester) ForceReconnect(ctx context.Context) {
+func (tester *transportTesting) ForceReconnect(ctx context.Context) {
 	if ctx == nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 	}
 
-	connectionEstablished := make(chan struct{})
-	waitingOnReconnect := make(chan struct{})
+	// Register a channel to be closed when a reconnection occurs
+	reconnected := tester.SignalOnReconnect()
 
-	// Launch a goroutine to wait on a reconnectMiddleware
-	go func() {
-		// Signal that the connection has been re-established
-		defer close(connectionEstablished)
+	// Disconnect the transport
+	tester.DisconnectTransport()
 
-		// Grab the cond lock
-		tester.manager.reconnectCond.L.Lock()
-		defer tester.manager.reconnectCond.L.Unlock()
-
-		// Signal to our main function that we have spun up our wait
-		close(waitingOnReconnect)
-		tester.manager.reconnectCond.Wait()
-	}()
-
-	select {
-	case <-waitingOnReconnect:
-	case <-ctx.Done():
-		tester.t.Error(
-			"context cancelled before we could wait on cond: %w", ctx.Err(),
-		)
-		tester.t.FailNow()
-	}
-
-	err := tester.manager.transport.Close()
-	if !assert.NoError(tester.t, err, "close underlying transport") {
-		tester.t.FailNow()
-	}
-
-	select {
-	case <-connectionEstablished:
-	case <-ctx.Done():
-		tester.t.Error(
-			"context cancelled before reconnection occured: %w", ctx.Err(),
-		)
-		tester.t.FailNow()
-	}
+	// Wait for the connection to be re-connected.
+	reconnected.WaitOnReconnect(ctx)
 }
 
 // Handles lifetime of underlying transport method, such as reconnections, closures,
@@ -213,7 +262,7 @@ func (manager *transportManager) sendConnectNotifications(err error) {
 	defer manager.notificationSubscriberLock.Unlock()
 	// Notify all our close subscribers.
 	for _, receiver := range manager.notificationSubscribersConnect {
-		// We are going to send the close error (if any) and close the ChannelConsume.
+		// We are going to send the close error (if any) and close the channelConsume.
 		receiver <- err
 	}
 }
@@ -245,7 +294,7 @@ func (manager *transportManager) sendCloseNotifications(err *streadway.Error) {
 	defer manager.notificationSubscriberLock.Unlock()
 	// Notify all our close subscribers.
 	for _, receiver := range manager.notificationSubscriberClose {
-		// We are going to send the close error (if any) and close the ChannelConsume.
+		// We are going to send the close error (if any) and close the channelConsume.
 		receiver <- err
 		// This event is only sent once, so we can
 		close(receiver)
@@ -393,8 +442,8 @@ func (manager *transportManager) IsClosed() bool {
 }
 
 // Test methods for the transport
-func (manager *transportManager) Test(t *testing.T) *transportTester {
-	return &transportTester{
+func (manager *transportManager) Test(t *testing.T) *transportTesting {
+	return &transportTesting{
 		t:       t,
 		manager: manager,
 	}

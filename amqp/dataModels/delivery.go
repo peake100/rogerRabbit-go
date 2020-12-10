@@ -1,4 +1,4 @@
-package data
+package dataModels
 
 import streadway "github.com/streadway/amqp"
 

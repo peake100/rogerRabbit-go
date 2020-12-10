@@ -60,3 +60,11 @@ type Config struct {
 	// be used.
 	Logger zerolog.Logger
 }
+
+// Get the default config for Dial() as it is in the streadway application.
+func DefaultConfig() *Config {
+	return &Config{
+		Heartbeat: defaultHeartbeat,
+		Locale:    defaultLocale,
+	}
+}

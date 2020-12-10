@@ -1,7 +1,7 @@
 package amqpMiddleware
 
 import (
-	"github.com/peake100/rogerRabbit-go/amqp/data"
+	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
 	streadway "github.com/streadway/amqp"
 )
 
@@ -117,9 +117,9 @@ type ArgsReject struct {
 }
 
 type ArgsNotifyPublish struct {
-	Confirm chan data.Confirmation
+	Confirm chan dataModels.Confirmation
 }
 
 type EventNotifyPublish struct {
-	Confirmation data.Confirmation
+	Confirmation dataModels.Confirmation
 }

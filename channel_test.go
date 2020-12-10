@@ -1,12 +1,14 @@
 //revive:disable
 
-package amqp
+package rogerRabbit_test
 
 import (
 	"context"
 	"fmt"
-	"github.com/peake100/rogerRabbit-go/amqp/data"
+	"github.com/peake100/rogerRabbit-go/amqp"
+	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
 	"github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"
+	"github.com/peake100/rogerRabbit-go/amqpTest"
 	streadway "github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -24,31 +26,30 @@ import (
 // Some of these tests need to be run in order. Testify runs suite tests in alphabetical
 // order, so we are going to number them in the order they need to run.
 type ChannelLifetimeSuite struct {
-	ChannelSuiteBase
+	amqpTest.ChannelSuiteBase
 }
 
 func (suite *ChannelLifetimeSuite) Test0010_GetChannel() {
-	channel, err := suite.ConnConsume.Channel()
-	if !suite.NoError(err, "get ChannelConsume") {
-		// Fail the entire suite if we cannot get the ChannelConsume.
-		suite.FailNow("failed to fetch ChannelConsume.")
+	channel, err := suite.ConnConsume().Channel()
+	if !suite.NoError(err, "get channelConsume") {
+		// Fail the entire suite if we cannot get the channelConsume.
+		suite.FailNow("failed to fetch channelConsume.")
 	}
 
-	// Stash this ChannelConsume for future tests.
-	suite.ChannelConsume = channel
+	testing := channel.Test(suite.T())
 
-	if !suite.NotNil(channel, "ChannelConsume is not nil") {
-		suite.FailNow("ChannelConsume was nil")
+	if !suite.NotNil(channel, "channelConsume is not nil") {
+		suite.FailNow("channelConsume was nil")
 	}
 
 	if !suite.NotNil(
-		channel.transportChannel, "underlying ChannelConsume is not nil",
+		testing.UnderlyingChannel(), "underlying channelConsume is not nil",
 	) {
-		suite.FailNow("underlying ChannelConsume was nil")
+		suite.FailNow("underlying channelConsume was nil")
 	}
 
-	// To test if the ChannelConsume is open we are going to declare a queue on it.
-	_, err = channel.transportChannel.QueueDeclare(
+	// To test if the channelConsume is open we are going to declare a queue on it.
+	_, err = testing.UnderlyingChannel().QueueDeclare(
 		"test queue",
 		false,
 		true,
@@ -61,30 +62,32 @@ func (suite *ChannelLifetimeSuite) Test0010_GetChannel() {
 }
 
 func (suite *ChannelLifetimeSuite) Test0020_Reestablish_ChannelClose() {
-	// Cache the current ChannelConsume
-	currentChan := suite.ChannelConsume.transportChannel.Channel
+	chanTesting := suite.ChannelConsumeTester()
+	// Cache the current channelConsume
+	currentChan := chanTesting.UnderlyingChannel()
 
-	// Close the ChannelConsume
-	suite.ChannelConsume.transportChannel.Close()
-
-	// Wait for reestablish
-	waitForReconnect(suite.T(), suite.ChannelConsume.transportManager, 2)
-
-	suite.ChannelConsume.transportLock.Lock()
-	suite.ChannelConsume.transportLock.Unlock()
+	// Close the channelConsume
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	chanTesting.ForceReconnect(ctx)
 
 	suite.False(
-		suite.ConnConsume.transportConn.IsClosed(), "connection is open",
+		chanTesting.UnderlyingConnection().IsClosed(),
+		"connection is open",
 	)
 
 	suite.NotSame(
 		currentChan,
-		suite.ChannelConsume.transportChannel.Channel,
-		"ChannelConsume was replaced",
+		chanTesting.UnderlyingChannel(),
+		"channelConsume was replaced",
 	)
 
-	// To test if the ChannelConsume is open we are going to declare a queue on it.
-	_, err := suite.ChannelConsume.transportChannel.QueueDeclare(
+	// Check that the original channel gives an closed error
+	_, err := currentChan.QueueInspect("some_queue")
+	suite.ErrorIs(err, streadway.ErrClosed, "original channel is closed")
+
+	// To test if the channelConsume is open we are going to declare a queue on it.
+	_, err = chanTesting.UnderlyingChannel().QueueDeclare(
 		"test queue",
 		false,
 		true,
@@ -97,39 +100,27 @@ func (suite *ChannelLifetimeSuite) Test0020_Reestablish_ChannelClose() {
 }
 
 func (suite *ChannelLifetimeSuite) Test0030_Reestablish_ConnectionClose() {
-	// Cache the current ChannelConsume
-	currentChan := suite.ChannelConsume.transportChannel.Channel
-	connCount := suite.ConnConsume.reconnectCount
+	// Cache the current channelConsume
+	chanTest := suite.ChannelConsumeTester()
 
-	// Close the connection
-	suite.ConnConsume.transportConn.Close()
+	currentChan := chanTest.UnderlyingChannel()
 
-	// Wait for reestablish
-	waitForReconnect(suite.T(), suite.ChannelConsume.transportManager, connCount+1)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	chanTest.ConnTest().ForceReconnect(ctx)
 
-	// try and see if the connection is open 10 times
-	wasOpen := false
-	for i := 0; i < 10; i++ {
-		suite.ChannelConsume.transportLock.RLock()
-		wasOpen = !suite.ConnConsume.transportConn.IsClosed()
-		suite.ChannelConsume.transportLock.RUnlock()
-		if wasOpen {
-			break
-		}
-		time.Sleep(1 * time.Second / 5)
-	}
-	suite.True(
-		wasOpen, "connection is open",
+	suite.False(
+		suite.ChannelConsume().IsClosed(), "connection is open",
 	)
 
 	suite.NotSame(
 		currentChan,
-		suite.ChannelConsume.transportChannel.Channel,
-		"ChannelConsume was replaced",
+		chanTest.UnderlyingChannel(),
+		"channelConsume was replaced",
 	)
 
-	// To test if the ChannelConsume is open we are going to declare a queue on it.
-	_, err := suite.ChannelConsume.transportChannel.QueueDeclare(
+	// To test if the channelConsume is open we are going to declare a queue on it.
+	_, err := chanTest.UnderlyingChannel().QueueDeclare(
 		"test queue",
 		false,
 		true,
@@ -142,11 +133,13 @@ func (suite *ChannelLifetimeSuite) Test0030_Reestablish_ConnectionClose() {
 }
 
 func (suite *ChannelLifetimeSuite) Test0040_Close() {
-	err := suite.ChannelConsume.Close()
-	suite.NoError(err, "close ChannelConsume")
+	chanTest := suite.ChannelConsumeTester()
 
-	// To test if the ChannelConsume is open we are going to declare a queue on it.
-	_, err = suite.ChannelConsume.transportChannel.QueueDeclare(
+	err := suite.ChannelConsume().Close()
+	suite.NoError(err, "close channelConsume")
+
+	// To test if the channelConsume is open we are going to declare a queue on it.
+	_, err = chanTest.UnderlyingChannel().QueueDeclare(
 		"test queue",
 		false,
 		true,
@@ -156,24 +149,23 @@ func (suite *ChannelLifetimeSuite) Test0040_Close() {
 	)
 
 	suite.ErrorIs(
-		err, streadway.ErrClosed, "closed error on closed ChannelConsume",
+		err, streadway.ErrClosed, "closed error on closed channelConsume",
 	)
 }
 
 func (suite *ChannelLifetimeSuite) Test0050_CloseAgain_Err() {
-	err := suite.ChannelConsume.Close()
+	suite.T().Cleanup(suite.ReplaceChannels)
+	err := suite.ChannelConsume().Close()
 	suite.ErrorIs(
-		err, streadway.ErrClosed, "closed error on closed ChannelConsume",
+		err, streadway.ErrClosed, "closed error on closed channelConsume",
 	)
 }
 
 func (suite *ChannelLifetimeSuite) Test0060_NewChannel() {
-	channel, err := suite.ConnConsume.Channel()
-	suite.NoError(err, "get ChannelConsume")
-	suite.ChannelConsume = channel
+	// To test if the channelConsume is open we are going to declare a queue on it.
+	chanTester := suite.ChannelConsumeTester()
 
-	// To test if the ChannelConsume is open we are going to declare a queue on it.
-	_, err = suite.ChannelConsume.transportChannel.QueueDeclare(
+	_, err := chanTester.UnderlyingChannel().QueueDeclare(
 		"test queue",
 		false,
 		true,
@@ -187,13 +179,15 @@ func (suite *ChannelLifetimeSuite) Test0060_NewChannel() {
 	)
 }
 
-// Test that closing the robust connection also permanently closes the ChannelConsume.
+// Test that closing the robust connection also permanently closes the channelConsume.
 func (suite *ChannelLifetimeSuite) Test0070_CloseConnection_ClosesChannel() {
-	err := suite.ConnConsume.Close()
+	err := suite.ConnConsume().Close()
 	suite.NoError(err, "close connection")
 
-	// To test if the ChannelConsume is open we are going to declare a queue on it.
-	_, err = suite.ChannelConsume.transportChannel.QueueDeclare(
+	chanTester := suite.ChannelConsumeTester()
+
+	// To test if the channelConsume is open we are going to declare a queue on it.
+	_, err = chanTester.UnderlyingChannel().QueueDeclare(
 		"test queue",
 		false,
 		true,
@@ -205,10 +199,10 @@ func (suite *ChannelLifetimeSuite) Test0070_CloseConnection_ClosesChannel() {
 	suite.ErrorIs(
 		err, streadway.ErrClosed, "declare queue returns closed err",
 	)
-	suite.ErrorIs(
-		suite.ConnConsume.ctx.Err(),
+	suite.True(
+		suite.ChannelConsume().IsClosed(),
 		context.Canceled,
-		"ChannelConsume context is cancelled",
+		"channelConsume context is cancelled",
 	)
 }
 
@@ -216,13 +210,13 @@ func TestChannelLifetime(t *testing.T) {
 	suite.Run(t, new(ChannelLifetimeSuite))
 }
 
-// Suite for testing ChannelConsume methods.
+// Suite for testing channelConsume methods.
 type ChannelMethodsSuite struct {
-	ChannelSuiteBase
+	amqpTest.ChannelSuiteBase
 }
 
 func (suite *ChannelMethodsSuite) Test0010_QueueDeclare() {
-	queue, err := suite.ChannelConsume.QueueDeclare(
+	queue, err := suite.ChannelConsume().QueueDeclare(
 		"test_channel_methods",
 		false,
 		true,
@@ -236,14 +230,14 @@ func (suite *ChannelMethodsSuite) Test0010_QueueDeclare() {
 }
 
 func (suite *ChannelMethodsSuite) Test0020_QueueInspect() {
-	queue, err := suite.ChannelConsume.QueueInspect("test_channel_methods")
+	queue, err := suite.ChannelConsume().QueueInspect("test_channel_methods")
 
 	suite.NoError(err, "inspect queue")
 	suite.Equal(queue.Name, "test_channel_methods")
 }
 
 func (suite *ChannelMethodsSuite) Test0030_QueueInspect_Err() {
-	_, err := suite.ChannelConsume.QueueInspect("not-a-real-queue")
+	_, err := suite.ChannelConsume().QueueInspect("not-a-real-queue")
 	suite.Error(err, "error inspecting queue")
 	suite.EqualError(err, "Exception (404) Reason: \"NOT_FOUND - no queue"+
 		" 'not-a-real-queue' in vhost '/'\"")
@@ -252,19 +246,19 @@ func (suite *ChannelMethodsSuite) Test0030_QueueInspect_Err() {
 // Since this test is being done after we got a channel error, we are also implicitly
 // testing that we have recovered from the error.
 func (suite *ChannelMethodsSuite) Test0040_QueueInspect_AfterErr() {
-	queue, err := suite.ChannelConsume.QueueInspect("test_channel_methods")
+	queue, err := suite.ChannelConsume().QueueInspect("test_channel_methods")
 
 	suite.NoError(err, "inspect queue")
 	suite.Equal(queue.Name, "test_channel_methods")
 }
 
 func (suite *ChannelMethodsSuite) Test0050_Publish() {
-	err := suite.ChannelConsume.Publish(
+	err := suite.ChannelConsume().Publish(
 		"",
 		"test_channel_methods",
 		true,
 		false,
-		Publishing{
+		amqp.Publishing{
 			Headers:         nil,
 			ContentType:     "plain/text",
 			ContentEncoding: "",
@@ -283,12 +277,12 @@ func (suite *ChannelMethodsSuite) Test0060_Get() {
 	timer := time.NewTimer(3 * time.Second)
 	defer timer.Stop()
 
-	var message data.Delivery
+	var message dataModels.Delivery
 	var ok bool
 	var err error
 
 	for {
-		message, ok, err = suite.ChannelConsume.Get(
+		message, ok, err = suite.ChannelConsume().Get(
 			"test_channel_methods", true,
 		)
 		if !suite.NoError(err, "get message") {
@@ -315,7 +309,7 @@ func (suite *ChannelMethodsSuite) Test0060_Get() {
 func (suite *ChannelMethodsSuite) Test0070_Consume_Basic() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
-	queue, err := suite.ChannelConsume.QueueDeclare(
+	queue, err := suite.ChannelConsume().QueueDeclare(
 		"test_channel_methods",
 		false,
 		true,
@@ -327,7 +321,7 @@ func (suite *ChannelMethodsSuite) Test0070_Consume_Basic() {
 		suite.T().FailNow()
 	}
 
-	messageChannel, err := suite.ChannelConsume.Consume(
+	messageChannel, err := suite.ChannelConsume().Consume(
 		queue.Name,
 		"",
 		true,
@@ -345,12 +339,12 @@ func (suite *ChannelMethodsSuite) Test0070_Consume_Basic() {
 
 		message := fmt.Sprintf("test consumer %v", i)
 
-		err = suite.ChannelPublish.Publish(
+		err = suite.ChannelPublish().Publish(
 			"",
 			"test_channel_methods",
 			true,
 			false,
-			Publishing{
+			amqp.Publishing{
 				Headers:         nil,
 				ContentType:     "plain/text",
 				ContentEncoding: "",
@@ -382,11 +376,11 @@ func (suite *ChannelMethodsSuite) Test0070_Consume_Basic() {
 		}
 	}
 
-	suite.T().Log("closing ChannelConsume")
+	suite.T().Log("closing channelConsume")
 
-	// Close the ChannelConsume and see if it closes our consumer
-	err = suite.ChannelConsume.Close()
-	if !suite.NoError(err, "close ChannelConsume") {
+	// Close the channelConsume and see if it closes our consumer
+	err = suite.ChannelConsume().Close()
+	if !suite.NoError(err, "close channelConsume") {
 		suite.T().FailNow()
 	}
 
@@ -394,7 +388,7 @@ func (suite *ChannelMethodsSuite) Test0070_Consume_Basic() {
 
 	select {
 	case _, ok := <-messageChannel:
-		suite.False(ok, "consumer ChannelConsume is closed")
+		suite.False(ok, "consumer channelConsume is closed")
 	case <-timeout.C:
 		suite.T().Errorf("timeout on consumer channeel close")
 		suite.T().FailNow()
@@ -407,7 +401,10 @@ func (suite *ChannelMethodsSuite) Test0080_Consume_OverDisconnect_Channel() {
 	queueName := "disconnect_consumer_test"
 	suite.CreateTestQueue(queueName, "", "")
 
-	messageChannel, err := suite.ChannelConsume.Consume(
+	chanTester := suite.ChannelConsumeTester()
+	connTester := chanTester.ConnTest()
+
+	messageChannel, err := suite.ChannelConsume().Consume(
 		queueName,
 		"",
 		true,
@@ -423,12 +420,12 @@ func (suite *ChannelMethodsSuite) Test0080_Consume_OverDisconnect_Channel() {
 	for i := 1; i <= 10; i++ {
 		message := fmt.Sprintf("test consumer %v", i)
 
-		err = suite.ChannelPublish.Publish(
+		err = suite.ChannelPublish().Publish(
 			"",
 			queueName,
 			true,
 			false,
-			Publishing{
+			amqp.Publishing{
 				Headers:         nil,
 				ContentType:     "plain/text",
 				ContentEncoding: "",
@@ -465,19 +462,19 @@ func (suite *ChannelMethodsSuite) Test0080_Consume_OverDisconnect_Channel() {
 			suite.T().FailNow()
 		}
 
-		// Force close either the ChannelConsume or the connection
+		// Force close either the channelConsume or the connection
 		if i%3 == 0 {
 			suite.T().Log("closing connection")
-			suite.ConnConsume.transportConn.Close()
+			connTester.DisconnectTransport()
 		} else if i%2 == 0 {
 			suite.T().Logf("closing channel")
-			suite.ChannelConsume.transportChannel.Close()
+			chanTester.DisconnectTransport()
 		}
 	}
 
-	// Close the ChannelConsume and see if it closes our consumer
-	err = suite.ChannelConsume.Close()
-	if !suite.NoError(err, "close ChannelConsume") {
+	// Close the channelConsume and see if it closes our consumer
+	err = suite.ChannelConsume().Close()
+	if !suite.NoError(err, "close channelConsume") {
 		suite.T().FailNow()
 	}
 
@@ -495,7 +492,7 @@ func (suite *ChannelMethodsSuite) Test0080_Consume_OverDisconnect_Channel() {
 // The last test set up a queue that is not a
 func (suite *ChannelMethodsSuite) Test0090_QueueDelete() {
 	queueName := "queue_delete_test"
-	_, err := suite.ChannelPublish.QueueDeclare(
+	_, err := suite.ChannelPublish().QueueDeclare(
 		queueName, false,
 		false,
 		false,
@@ -505,13 +502,13 @@ func (suite *ChannelMethodsSuite) Test0090_QueueDelete() {
 
 	suite.NoError(err, "declare queue")
 
-	deleteCount, err := suite.ChannelPublish.QueueDelete(
+	deleteCount, err := suite.ChannelPublish().QueueDelete(
 		queueName, false, false, true,
 	)
 	suite.NoError(err, "delete queue")
 	suite.Equalf(0, deleteCount, "0 messages deleted")
 
-	_, err = suite.ChannelPublish.QueueInspect(queueName)
+	_, err = suite.ChannelPublish().QueueInspect(queueName)
 	suite.Error(err, "inspect error")
 
 	var streadwayErr *streadway.Error
@@ -528,13 +525,13 @@ func (suite *ChannelMethodsSuite) Test0100_QueueDeclarePassive() {
 	queueName := "passive_declare_test"
 	// Cleanup the test by deleting this queue and not checking the error.
 	cleanup := func() {
-		suite.ChannelPublish.QueueDelete(
+		suite.ChannelPublish().QueueDelete(
 			queueName, false, false, false,
 		)
 	}
 	suite.T().Cleanup(cleanup)
 
-	_, err := suite.ChannelPublish.QueueDeclare(
+	_, err := suite.ChannelPublish().QueueDeclare(
 		queueName, false,
 		false,
 		false,
@@ -543,7 +540,7 @@ func (suite *ChannelMethodsSuite) Test0100_QueueDeclarePassive() {
 	)
 	suite.NoError(err, "declare queue")
 
-	_, err = suite.ChannelPublish.QueueDeclarePassive(
+	_, err = suite.ChannelPublish().QueueDeclarePassive(
 		queueName, false,
 		false,
 		false,
@@ -558,7 +555,7 @@ func (suite *ChannelMethodsSuite) Test0110_QueueDeclarePassive_Err() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
 	queueName := "passive_declare_test"
-	_, err := suite.ChannelPublish.QueueDeclarePassive(
+	_, err := suite.ChannelPublish().QueueDeclarePassive(
 		queueName, false,
 		false,
 		false,
@@ -570,7 +567,7 @@ func (suite *ChannelMethodsSuite) Test0110_QueueDeclarePassive_Err() {
 		"error should occur on passive declare of a non-existent queue",
 	)
 
-	var streadwayErr *Error
+	var streadwayErr *amqp.Error
 	suite.ErrorAs(err, &streadwayErr, "error is streadway error type")
 	suite.Equal(404, streadwayErr.Code, "error code")
 	suite.Equal(
@@ -584,14 +581,14 @@ func (suite *ChannelMethodsSuite) Test0120_QueueDeclare_RedeclareAfterDisconnect
 	queueName := "auto_redeclare_declare_test"
 	// Cleanup the test by deleting this queue and not checking the error.
 	cleanup := func() {
-		suite.ChannelPublish.QueueDelete(
+		suite.ChannelPublish().QueueDelete(
 			queueName, false, false, false,
 		)
 	}
 	suite.T().Cleanup(cleanup)
 
 	// Declare the queue
-	_, err := suite.ChannelPublish.QueueDeclare(
+	_, err := suite.ChannelPublish().QueueDeclare(
 		queueName,
 		false,
 		// Set auto-delete to true for a forced re-connection
@@ -602,22 +599,26 @@ func (suite *ChannelMethodsSuite) Test0120_QueueDeclare_RedeclareAfterDisconnect
 	)
 	suite.NoError(err, "declare queue")
 
+	chanTester := suite.ChannelPublishTester()
+
 	// grab the channel transport lock so our channel cannot reopen immediately.
-	suite.ChannelPublish.transportLock.Lock()
-	// close the channel manually
-	suite.ChannelPublish.transportChannel.Channel.Close()
+	chanTester.BlockReconnect()
+	chanTester.DisconnectTransport()
 
 	// Use the other connection to delete the queue
-	_, err = suite.ChannelConsume.QueueDelete(
+	_, err = suite.ChannelConsume().QueueDelete(
 		queueName, false, false, false,
 	)
 	suite.NoError(err, "delete queue")
 
-	// release our lock on the original channel so it reconnects
-	suite.ChannelPublish.transportLock.Unlock()
+	// Use the other connection to delete the queue
+	_, err = suite.ChannelConsume().QueueInspect(queueName)
+	suite.Error(err, "queue does not exist")
+
+	chanTester.UnblockReconnect()
 
 	// Check and see if the queue was re-declared
-	info, err := suite.ChannelPublish.QueueInspect(queueName)
+	info, err := suite.ChannelPublish().QueueInspect(queueName)
 	suite.NoError(err, "inspect queue")
 	suite.Equal(info.Name, queueName, "check Name")
 }
@@ -627,15 +628,17 @@ func (suite *ChannelMethodsSuite) Test0130_QueueDeclare_NoRedeclareAfterDelete()
 	queueName := "no_redeclare_test"
 	// Cleanup the test by deleting this queue and not checking the error.
 	cleanup := func() {
-		suite.ChannelPublish.QueueDelete(
+		suite.ChannelPublish().QueueDelete(
 			queueName, false, false, false,
 		)
 		suite.ReplaceChannels()
 	}
 	suite.T().Cleanup(cleanup)
 
+	chanTesting := suite.ChannelPublishTester()
+
 	// Declare the queue
-	_, err := suite.ChannelPublish.QueueDeclare(
+	_, err := suite.ChannelPublish().QueueDeclare(
 		queueName,
 		false,
 		false,
@@ -646,22 +649,24 @@ func (suite *ChannelMethodsSuite) Test0130_QueueDeclare_NoRedeclareAfterDelete()
 	suite.NoError(err, "declare queue")
 
 	// Verify it was created
-	_, err = suite.ChannelPublish.QueueInspect(queueName)
+	_, err = suite.ChannelPublish().QueueInspect(queueName)
 	suite.NoError(err, "inspect queue")
 
 	// Delete the queue
-	_, err = suite.ChannelPublish.QueueDelete(
+	_, err = suite.ChannelPublish().QueueDelete(
 		queueName, false, false, true,
 	)
 	suite.NoError(err, "delete queue")
 
 	// close the channel manually, forcing a re-connect
-	suite.ChannelPublish.transportChannel.Channel.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	chanTesting.ForceReconnect(ctx)
 
 	// Check and see if the queue was re-declared
-	_, err = suite.ChannelPublish.QueueInspect(queueName)
+	_, err = suite.ChannelPublish().QueueInspect(queueName)
 	suite.Error(err, "inspect queue")
-	var streadwayErr *Error
+	var streadwayErr *amqp.Error
 	suite.ErrorAs(err, &streadwayErr, "is streadway err")
 	suite.Equal(404, streadwayErr.Code, "error code is not found")
 	suite.Equal(
@@ -679,13 +684,13 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Basic() {
 	queueName := "notify_publish_basic"
 	suite.CreateTestQueue(queueName, "", "")
 
-	err := suite.ChannelPublish.Confirm(false)
+	err := suite.ChannelPublish().Confirm(false)
 	if !suite.NoError(err, "put into confirmation mode") {
 		suite.T().FailNow()
 	}
 	publishCount := 10
-	notifyPublish := make(chan data.Confirmation, publishCount)
-	suite.ChannelPublish.NotifyPublish(notifyPublish)
+	notifyPublish := make(chan dataModels.Confirmation, publishCount)
+	suite.ChannelPublish().NotifyPublish(notifyPublish)
 
 	allReceived := make(chan struct{})
 
@@ -694,12 +699,12 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Basic() {
 	go func() {
 		defer workersDone.Done()
 		for i := 0; i < publishCount; i++ {
-			err := suite.ChannelPublish.Publish(
+			err := suite.ChannelPublish().Publish(
 				"",
 				queueName,
 				true,
 				false,
-				Publishing{
+				amqp.Publishing{
 					Body: []byte(fmt.Sprintf("message %v", i)),
 				},
 			)
@@ -733,7 +738,7 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Basic() {
 		suite.T().Error("confirmations timeout")
 	}
 
-	err = suite.ChannelPublish.Close()
+	err = suite.ChannelPublish().Close()
 	suite.NoError(err, "close channel")
 
 	select {
@@ -752,13 +757,16 @@ func (suite *ChannelMethodsSuite) Test0150_NotifyPublish_Reconnections() {
 	queueName := "notify_publish_basic"
 	suite.CreateTestQueue(queueName, "", "")
 
-	err := suite.ChannelPublish.Confirm(false)
+	chanTesting := suite.ChannelPublishTester()
+	connTesting := chanTesting.ConnTest()
+
+	err := suite.ChannelPublish().Confirm(false)
 	if !suite.NoError(err, "put into confirmation mode") {
 		suite.T().FailNow()
 	}
 	publishCount := 10
-	notifyPublish := make(chan data.Confirmation, publishCount)
-	suite.ChannelPublish.NotifyPublish(notifyPublish)
+	notifyPublish := make(chan dataModels.Confirmation, publishCount)
+	suite.ChannelPublish().NotifyPublish(notifyPublish)
 
 	allReceived := make(chan struct{})
 
@@ -770,12 +778,12 @@ func (suite *ChannelMethodsSuite) Test0150_NotifyPublish_Reconnections() {
 	go func() {
 		defer workersDone.Done()
 		for i := 0; i < publishCount; i++ {
-			err := suite.ChannelPublish.Publish(
+			err := suite.ChannelPublish().Publish(
 				"",
 				queueName,
 				true,
 				false,
-				Publishing{
+				amqp.Publishing{
 					Body: []byte(fmt.Sprintf("message %v", i+1)),
 				},
 			)
@@ -790,10 +798,10 @@ func (suite *ChannelMethodsSuite) Test0150_NotifyPublish_Reconnections() {
 			// and close the channel or connection to force a reconnection
 			if i%3 == 0 {
 				suite.T().Log("closing connection")
-				suite.ConnPublish.transportConn.Close()
+				connTesting.DisconnectTransport()
 			} else if i%2 == 0 {
 				suite.T().Log("closing channel")
-				suite.ChannelPublish.transportChannel.Close()
+				chanTesting.DisconnectTransport()
 			}
 		}
 	}()
@@ -825,7 +833,7 @@ func (suite *ChannelMethodsSuite) Test0150_NotifyPublish_Reconnections() {
 		suite.T().Error("confirmations timeout")
 	}
 
-	err = suite.ChannelPublish.Close()
+	err = suite.ChannelPublish().Close()
 	suite.NoError(err, "close channel")
 
 	select {
@@ -846,7 +854,7 @@ func (suite *ChannelMethodsSuite) Test0160_NotifyConfirm() {
 	queueName := "notify_confirms_basic"
 	suite.CreateTestQueue(queueName, "", "")
 
-	err := suite.ChannelPublish.Confirm(false)
+	err := suite.ChannelPublish().Confirm(false)
 	if !suite.NoError(err, "put into confirmation mode") {
 		suite.T().FailNow()
 	}
@@ -854,18 +862,18 @@ func (suite *ChannelMethodsSuite) Test0160_NotifyConfirm() {
 	ackEvents, nackEvents := make(chan uint64, publishCount),
 		make(chan uint64, publishCount)
 
-	suite.ChannelPublish.NotifyConfirm(ackEvents, nackEvents)
+	suite.ChannelPublish().NotifyConfirm(ackEvents, nackEvents)
 
 	confirmations := new(sync.WaitGroup)
 
 	go func() {
 		for i := 0; i < publishCount; i++ {
-			err := suite.ChannelPublish.Publish(
+			err := suite.ChannelPublish().Publish(
 				"",
 				queueName,
 				true,
 				false,
-				Publishing{
+				amqp.Publishing{
 					Body: []byte(fmt.Sprintf("message %v", i+1)),
 				},
 			)
@@ -910,7 +918,7 @@ func (suite *ChannelMethodsSuite) Test0160_NotifyConfirm() {
 		}
 	}
 
-	err = suite.ChannelPublish.Close()
+	err = suite.ChannelPublish().Close()
 	suite.NoError(err, "close channel")
 
 	select {
@@ -936,7 +944,7 @@ func (suite *ChannelMethodsSuite) Test0170_NotifyReturn() {
 	// delivery return to occur
 	queueName := "test_notify_return"
 
-	err := suite.ChannelPublish.Confirm(false)
+	err := suite.ChannelPublish().Confirm(false)
 	if !suite.NoError(err, "put channel into confirm mode") {
 		suite.T().FailNow()
 	}
@@ -947,12 +955,12 @@ func (suite *ChannelMethodsSuite) Test0170_NotifyReturn() {
 
 	go func() {
 		for i := 0; i < publishCount; i++ {
-			err := suite.ChannelPublish.Publish(
+			err := suite.ChannelPublish().Publish(
 				"",
 				queueName,
 				true,
 				false,
-				Publishing{
+				amqp.Publishing{
 					Body: []byte(fmt.Sprintf("message %v", i)),
 				},
 			)
@@ -960,9 +968,12 @@ func (suite *ChannelMethodsSuite) Test0170_NotifyReturn() {
 		}
 	}()
 
-	returnEvents := suite.ChannelPublish.NotifyReturn(make(chan Return, publishCount))
+	returnEvents := suite.
+		ChannelPublish().
+		NotifyReturn(make(chan amqp.Return, publishCount))
+
 	returnsComplete := make(chan struct{})
-	returns := make([]Return, 0, publishCount)
+	returns := make([]amqp.Return, 0, publishCount)
 	go func() {
 		defer close(returnsComplete)
 
@@ -984,7 +995,7 @@ func (suite *ChannelMethodsSuite) Test0170_NotifyReturn() {
 	}
 
 	// close the channel
-	suite.ChannelPublish.Close()
+	suite.ChannelPublish().Close()
 
 	_, open := <-returnEvents
 	suite.False(open, "return event channel should be closed.")
@@ -1015,7 +1026,7 @@ func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
 
 	publishCount := 10
 
-	err := suite.ChannelPublish.Confirm(false)
+	err := suite.ChannelPublish().Confirm(false)
 	if !suite.NoError(err, "put publish chan into confirm mode") {
 		suite.T().FailNow()
 	}
@@ -1024,7 +1035,7 @@ func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
 	eventsNack := make(chan uint64, publishCount)
 	eventsOrphan := make(chan uint64, publishCount)
 
-	suite.ChannelPublish.NotifyConfirmOrOrphaned(
+	suite.ChannelPublish().NotifyConfirmOrOrphaned(
 		eventsAck, eventsNack, eventsOrphan,
 	)
 
@@ -1052,14 +1063,14 @@ func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
 
 			published.Wait()
 			published.Add(1)
-			err := suite.ChannelPublish.Publish(
+			err := suite.ChannelPublish().Publish(
 				"",
 				queueName,
 				true,
 				// RabbitMQ does not support immediate, this will result in a channel
 				// crash that will cause this message to be orphaned.
 				publishType == "ORPHAN",
-				Publishing{
+				amqp.Publishing{
 					Body: []byte(fmt.Sprintf("message %v", i)),
 				},
 			)
@@ -1117,25 +1128,25 @@ func (suite *ChannelMethodsSuite) Test0190_QueuePurge() {
 	queueName := "test_queue_purge"
 	suite.CreateTestQueue(queueName, "", "")
 
-	err := suite.ChannelPublish.Confirm(false)
+	err := suite.ChannelPublish().Confirm(false)
 	if !suite.NoError(err, "put channel into confirm mode") {
 		suite.T().FailNow()
 	}
 
 	publishCount := 2
-	notifyPublish := make(chan data.Confirmation, publishCount)
+	notifyPublish := make(chan dataModels.Confirmation, publishCount)
 
-	suite.ChannelPublish.NotifyPublish(notifyPublish)
+	suite.ChannelPublish().NotifyPublish(notifyPublish)
 
 	// publish 2 messages and wait for acks
 	go func() {
 		for i := 0; i < publishCount; i++ {
-			err := suite.ChannelPublish.Publish(
+			err := suite.ChannelPublish().Publish(
 				"",
 				queueName,
 				false,
 				false,
-				Publishing{
+				amqp.Publishing{
 					Body: []byte(fmt.Sprintf("message %v", i)),
 				},
 			)
@@ -1173,7 +1184,7 @@ func (suite *ChannelMethodsSuite) Test0190_QueuePurge() {
 	}
 
 	// Check that 2 messages get purged
-	count, err := suite.ChannelPublish.QueuePurge(queueName, false)
+	count, err := suite.ChannelPublish().QueuePurge(queueName, false)
 	if !suite.NoError(err, "purge queue") {
 		suite.T().FailNow()
 	}
@@ -1182,9 +1193,9 @@ func (suite *ChannelMethodsSuite) Test0190_QueuePurge() {
 }
 
 func (suite *ChannelMethodsSuite) Test0200_ExchangeDeclare() {
-	err := suite.ChannelPublish.ExchangeDeclare(
+	err := suite.ChannelPublish().ExchangeDeclare(
 		"test_exchange_basic",
-		ExchangeDirect,
+		amqp.ExchangeDirect,
 		false,
 		false,
 		false,
@@ -1198,9 +1209,9 @@ func (suite *ChannelMethodsSuite) Test0200_ExchangeDeclare() {
 }
 
 func (suite *ChannelMethodsSuite) Test0210_ExchangeDeclarePassive() {
-	err := suite.ChannelPublish.ExchangeDeclarePassive(
+	err := suite.ChannelPublish().ExchangeDeclarePassive(
 		"test_exchange_basic",
-		ExchangeDirect,
+		amqp.ExchangeDirect,
 		false,
 		false,
 		false,
@@ -1214,7 +1225,7 @@ func (suite *ChannelMethodsSuite) Test0210_ExchangeDeclarePassive() {
 }
 
 func (suite *ChannelMethodsSuite) Test0220_ExchangeDelete() {
-	err := suite.ChannelPublish.ExchangeDelete(
+	err := suite.ChannelPublish().ExchangeDelete(
 		"test_exchange_basic",
 		false,
 		false,
@@ -1228,9 +1239,9 @@ func (suite *ChannelMethodsSuite) Test0220_ExchangeDelete() {
 func (suite *ChannelMethodsSuite) Test0230_ExchangeDeclarePassive_Err() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
-	err := suite.ChannelPublish.ExchangeDeclarePassive(
+	err := suite.ChannelPublish().ExchangeDeclarePassive(
 		"test_exchange_basic",
-		ExchangeDirect,
+		amqp.ExchangeDirect,
 		false,
 		false,
 		false,
@@ -1246,31 +1257,31 @@ func (suite *ChannelMethodsSuite) Test0230_ExchangeDeclarePassive_Err() {
 func (suite *ChannelMethodsSuite) Test0240_QueueBind() {
 	exchangeName := "test_exchange_bind"
 	queueName := "test_queue_name"
-	suite.CreateTestExchange(exchangeName, ExchangeDirect)
+	suite.CreateTestExchange(exchangeName, amqp.ExchangeDirect)
 	suite.CreateTestQueue(queueName, "", "")
 
-	err := suite.ChannelPublish.QueueBind(
+	err := suite.ChannelPublish().QueueBind(
 		queueName, queueName, exchangeName, false, nil,
 	)
 	if !suite.NoError(err, "bind queue") {
 		suite.T().FailNow()
 	}
 
-	err = suite.ChannelPublish.Confirm(false)
+	err = suite.ChannelPublish().Confirm(false)
 	if !suite.NoError(err, "put channel into confirm mode") {
 		suite.T().FailNow()
 	}
 
-	confirmations := make(chan data.Confirmation, 5)
-	suite.ChannelPublish.NotifyPublish(confirmations)
+	confirmations := make(chan dataModels.Confirmation, 5)
+	suite.ChannelPublish().NotifyPublish(confirmations)
 
 	// lets test publishing and getting a message on the exchange
-	err = suite.ChannelPublish.Publish(
+	err = suite.ChannelPublish().Publish(
 		exchangeName,
 		queueName,
 		false,
 		false,
-		Publishing{
+		amqp.Publishing{
 			Body: []byte("some message"),
 		},
 	)
@@ -1288,7 +1299,7 @@ func (suite *ChannelMethodsSuite) Test0240_QueueBind() {
 		suite.T().FailNow()
 	}
 
-	_, ok, err := suite.ChannelPublish.Get(queueName, false)
+	_, ok, err := suite.ChannelPublish().Get(queueName, false)
 	if !suite.NoError(err, "error getting message") {
 		suite.T().FailNow()
 	}
@@ -1300,7 +1311,7 @@ func (suite *ChannelMethodsSuite) Test0240_QueueBind() {
 
 func (suite *ChannelMethodsSuite) Test0250_QueueUnbind() {
 	exchangeName := "test_queue_unbind_exchange"
-	suite.CreateTestExchange(exchangeName, ExchangeDirect)
+	suite.CreateTestExchange(exchangeName, amqp.ExchangeDirect)
 
 	queueName := "test_queue_unbind_queue"
 	suite.CreateTestQueue(queueName, exchangeName, queueName)
@@ -1308,7 +1319,7 @@ func (suite *ChannelMethodsSuite) Test0250_QueueUnbind() {
 	suite.T().Log("GOT HERE")
 
 	// unbind the queue
-	err := suite.ChannelPublish.QueueUnbind(
+	err := suite.ChannelPublish().QueueUnbind(
 		queueName, queueName, exchangeName, nil,
 	)
 
@@ -1322,13 +1333,13 @@ func (suite *ChannelMethodsSuite) Test0260_ExchangeBindUnbind() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
 	exchangeName1 := "test_exchange_bind1"
-	suite.CreateTestExchange(exchangeName1, ExchangeDirect)
+	suite.CreateTestExchange(exchangeName1, amqp.ExchangeDirect)
 
 	exchangeName2 := "test_exchange_bind2"
-	suite.CreateTestExchange(exchangeName2, ExchangeDirect)
+	suite.CreateTestExchange(exchangeName2, amqp.ExchangeDirect)
 
 	// unbind the queue
-	err := suite.ChannelPublish.ExchangeBind(
+	err := suite.ChannelPublish().ExchangeBind(
 		exchangeName2, "test_key", exchangeName1, false, nil,
 	)
 
@@ -1337,7 +1348,7 @@ func (suite *ChannelMethodsSuite) Test0260_ExchangeBindUnbind() {
 	}
 
 	// unbind the queue
-	err = suite.ChannelPublish.ExchangeUnbind(
+	err = suite.ChannelPublish().ExchangeUnbind(
 		exchangeName2, "test_key", exchangeName1, false, nil,
 	)
 
@@ -1351,7 +1362,7 @@ func (suite *ChannelMethodsSuite) Test0265_ExchangeRedeclareAfterDisconnect() {
 
 	exchangeName := "exchange_test_redeclare"
 	cleanup := func() {
-		suite.ChannelPublish.ExchangeDelete(
+		suite.ChannelPublish().ExchangeDelete(
 			exchangeName,
 			false,
 			false,
@@ -1360,9 +1371,9 @@ func (suite *ChannelMethodsSuite) Test0265_ExchangeRedeclareAfterDisconnect() {
 	suite.T().Cleanup(cleanup)
 
 	// Declare an exchange that gets auto-deleted
-	err := suite.ChannelPublish.ExchangeDeclare(
+	err := suite.ChannelPublish().ExchangeDeclare(
 		exchangeName,
-		ExchangeDirect,
+		amqp.ExchangeDirect,
 		false,
 		// Use AutoDelete to force a full re-declare after disconnect
 		true,
@@ -1375,7 +1386,7 @@ func (suite *ChannelMethodsSuite) Test0265_ExchangeRedeclareAfterDisconnect() {
 	}
 
 	// Delete the exchange on the other connection
-	err = suite.ChannelConsume.ExchangeDelete(
+	err = suite.ChannelConsume().ExchangeDelete(
 		exchangeName, false, false,
 	)
 	if !suite.NoError(err, "delete exchange") {
@@ -1385,12 +1396,12 @@ func (suite *ChannelMethodsSuite) Test0265_ExchangeRedeclareAfterDisconnect() {
 	// Force a reconnectMiddleware
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	suite.ChannelPublish.Test(suite.T()).ForceReconnect(ctx)
+	suite.ChannelPublish().Test(suite.T()).ForceReconnect(ctx)
 
 	// Check that the exchange exists again
-	err = suite.ChannelConsume.ExchangeDeclarePassive(
+	err = suite.ChannelConsume().ExchangeDeclarePassive(
 		exchangeName,
-		ExchangeDirect,
+		amqp.ExchangeDirect,
 		false,
 		true,
 		false,
@@ -1417,7 +1428,7 @@ func (suite *ChannelMethodsSuite) Test0270_AckMessage() {
 	}
 
 	// If the message was acked then the queue should be emtpy
-	_, ok, err := suite.ChannelConsume.Get(queueName, false)
+	_, ok, err := suite.ChannelConsume().Get(queueName, false)
 	if !suite.NoError(err, "get empty queue") {
 		suite.T().FailNow()
 	}
@@ -1444,7 +1455,7 @@ func (suite *ChannelMethodsSuite) Test0280_NackMessage() {
 	}
 
 	// If the message was nacked then the queue should be emtpy
-	_, ok, err := suite.ChannelConsume.Get(queueName, false)
+	_, ok, err := suite.ChannelConsume().Get(queueName, false)
 	if !suite.NoError(err, "get empty queue") {
 		suite.T().FailNow()
 	}
@@ -1471,7 +1482,7 @@ func (suite *ChannelMethodsSuite) Test0290_NackMessage_Requeue() {
 	}
 
 	// If the message was nacked then we should get the same message
-	redelivery, ok, err := suite.ChannelConsume.Get(queueName, false)
+	redelivery, ok, err := suite.ChannelConsume().Get(queueName, false)
 	if !suite.NoError(err, "get empty queue") {
 		suite.T().FailNow()
 	}
@@ -1500,7 +1511,7 @@ func (suite *ChannelMethodsSuite) Test0300_RejectMessage() {
 	}
 
 	// If the message was acked then the queue should be emtpy
-	_, ok, err := suite.ChannelConsume.Get(queueName, false)
+	_, ok, err := suite.ChannelConsume().Get(queueName, false)
 	if !suite.NoError(err, "get empty queue") {
 		suite.T().FailNow()
 	}
@@ -1527,7 +1538,7 @@ func (suite *ChannelMethodsSuite) Test0310_RejectMessage_Requeue() {
 	}
 
 	// If the message was nacked then we should get the same message
-	redelivery, ok, err := suite.ChannelConsume.Get(queueName, false)
+	redelivery, ok, err := suite.ChannelConsume().Get(queueName, false)
 	if !suite.NoError(err, "get empty queue") {
 		suite.T().FailNow()
 	}
@@ -1575,12 +1586,12 @@ func (suite *ChannelMethodsSuite) Test0320_Acknowledge_OrphanErr() {
 		// reconnectMiddleware, so we only need to publish it once
 		suite.PublishMessages(t, "", queueName, thisCase.publishCount)
 
-		var delivery data.Delivery
+		var delivery dataModels.Delivery
 		for i := 0; i < thisCase.publishCount; i++ {
 			delivery = suite.GetMessage(queueName, false)
 		}
 
-		suite.ChannelConsume.Test(t).ForceReconnect(nil)
+		suite.ChannelConsume().Test(t).ForceReconnect(nil)
 
 		var err error
 
@@ -1629,10 +1640,10 @@ func (suite *ChannelMethodsSuite) Test0320_Acknowledge_OrphanErr() {
 func (suite *ChannelMethodsSuite) Test0330_QoS_PrefetchCount() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
-	err := suite.ChannelConsume.Qos(10, 0, false)
+	err := suite.ChannelConsume().Qos(10, 0, false)
 	suite.NoError(err, "QoS")
 
-	qosMiddleware := suite.ChannelConsume.Test(suite.T()).DefaultMiddlewares.QoS
+	qosMiddleware := suite.ChannelConsume().Test(suite.T()).DefaultMiddlewares.QoS
 
 	suite.Equal(
 		10,
@@ -1649,14 +1660,14 @@ func (suite *ChannelMethodsSuite) Test0330_QoS_PrefetchCount() {
 func (suite *ChannelMethodsSuite) Test0340_QoS_OverReconnect() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
-	err := suite.ChannelConsume.Qos(10, 0, false)
+	err := suite.ChannelConsume().Qos(10, 0, false)
 	suite.NoError(err, "QoS")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	// Force a reconnectMiddleware
-	suite.ChannelConsume.Test(suite.T()).ForceReconnect(ctx)
+	suite.ChannelConsume().Test(suite.T()).ForceReconnect(ctx)
 
 	// TODO: Add some way to make sure the correct QoS was sent to the server, probably
 	//   by adding some mock functionality to the Tester object or monkey-patching.
@@ -1665,7 +1676,7 @@ func (suite *ChannelMethodsSuite) Test0340_QoS_OverReconnect() {
 func (suite *ChannelMethodsSuite) Test0350_QoS_PrefetchSize_Err() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
-	err := suite.ChannelConsume.Qos(0, 1024, false)
+	err := suite.ChannelConsume().Qos(0, 1024, false)
 	if !suite.Error(err, "QoS err") {
 		suite.T().FailNow()
 	}
@@ -1681,7 +1692,7 @@ func (suite *ChannelMethodsSuite) Test0350_QoS_PrefetchSize_Err() {
 func (suite *ChannelMethodsSuite) Test0360_Flow() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
-	err := suite.ChannelConsume.Flow(false)
+	err := suite.ChannelConsume().Flow(false)
 	suite.Error(err, "error deactivating flow")
 	suite.EqualError(
 		err, "Exception (540) Reason: \"NOT_IMPLEMENTED - active=false\"",
@@ -1692,7 +1703,7 @@ func (suite *ChannelMethodsSuite) Test0370_NotifyFlow() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
 	flowEvents := make(chan bool, 2)
-	suite.ChannelConsume.NotifyFlow(flowEvents)
+	suite.ChannelConsume().NotifyFlow(flowEvents)
 
 	// Check that we don't get flow notifications right off the bat
 	select {
@@ -1705,7 +1716,7 @@ func (suite *ChannelMethodsSuite) Test0370_NotifyFlow() {
 	// Force a reconnectMiddleware
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	suite.ChannelConsume.Test(suite.T()).ForceReconnect(ctx)
+	suite.ChannelConsume().Test(suite.T()).ForceReconnect(ctx)
 
 	// Check that we have a flow = false followed by a flow = true notification on
 	// reconnectMiddleware
@@ -1728,7 +1739,7 @@ func (suite *ChannelMethodsSuite) Test0370_NotifyFlow() {
 	}
 
 	// close the channel
-	err := suite.ChannelConsume.Close()
+	err := suite.ChannelConsume().Close()
 	suite.NoError(err, "close channel")
 
 	// Check that no further notifications are sent, and the event channel is closed
@@ -1748,10 +1759,10 @@ func (suite *ChannelMethodsSuite) Test0380_NotifyCancel() {
 	suite.CreateTestQueue(queueName, "", "")
 
 	cancelEvents := make(chan string, 10)
-	suite.ChannelConsume.NotifyCancel(cancelEvents)
+	suite.ChannelConsume().NotifyCancel(cancelEvents)
 
 	consumerName := "test_consumer"
-	messages, err := suite.ChannelConsume.Consume(
+	messages, err := suite.ChannelConsume().Consume(
 		queueName,
 		consumerName,
 		true,
@@ -1775,7 +1786,7 @@ func (suite *ChannelMethodsSuite) Test0380_NotifyCancel() {
 		suite.T().FailNow()
 	}
 
-	_, err = suite.ChannelConsume.QueueDelete(
+	_, err = suite.ChannelConsume().QueueDelete(
 		queueName, false, false, false,
 	)
 
@@ -1791,7 +1802,7 @@ func (suite *ChannelMethodsSuite) Test0380_NotifyCancel() {
 		suite.T().FailNow()
 	}
 
-	err = suite.ChannelConsume.Close()
+	err = suite.ChannelConsume().Close()
 	if !suite.NoError(err, "close channel") {
 		suite.T().FailNow()
 	}
@@ -1815,17 +1826,17 @@ func (suite *ChannelMethodsSuite) Test0390_TxMethodsPanic() {
 	testCases := []testCase{
 		{
 			name:        "Tx",
-			method:      suite.ChannelConsume.Tx,
+			method:      suite.ChannelConsume().Tx,
 			expectedErr: nil,
 		},
 		{
 			name:        "TxCommit",
-			method:      suite.ChannelConsume.TxCommit,
+			method:      suite.ChannelConsume().TxCommit,
 			expectedErr: nil,
 		},
 		{
 			name:        "TxRollback",
-			method:      suite.ChannelConsume.TxRollback,
+			method:      suite.ChannelConsume().TxRollback,
 			expectedErr: nil,
 		},
 	}
