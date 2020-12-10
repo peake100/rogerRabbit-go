@@ -35,7 +35,7 @@ type transportReconnect interface {
 }
 
 type reconnectSignaler struct {
-	t *testing.T
+	t               *testing.T
 	reconnectSignal chan struct{}
 }
 
@@ -58,7 +58,7 @@ type transportTesting struct {
 	t       *testing.T
 	manager *transportManager
 	// The number of times a connection has been blocked from being acquired.
-	blocks  *int32
+	blocks *int32
 }
 
 // The lock which controls access to the channel / connection
@@ -81,7 +81,7 @@ func (tester *transportTesting) UnblockReconnect() {
 
 func (tester *transportTesting) cleanup() {
 	blocks := *tester.blocks
-	for i:= int32(0) ; i < blocks ; i++ {
+	for i := int32(0); i < blocks; i++ {
 		tester.manager.transportLock.RUnlock()
 	}
 }

@@ -204,7 +204,7 @@ func TestConnection_NotifyOnClose_Reconnect_NoErr(t *testing.T) {
 	conn.NotifyClose(closeEvent)
 
 	// Force close the internal connection and wait for a reconnection to occur.
-	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	connTester.ForceReconnect(ctx)
 
@@ -254,7 +254,7 @@ func TestConnection_NotifyOnDial(t *testing.T) {
 	dialEvent := make(chan error, 1)
 	conn.NotifyDial(dialEvent)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	connTester.ForceReconnect(ctx)
 
@@ -393,7 +393,7 @@ func TestConnection_IsClosed(t *testing.T) {
 		t.FailNow()
 	}
 
-	func(){
+	func() {
 		// grab a lock on the transport so we don't auto-reconnectMiddleware
 		connTester.BlockReconnect()
 
@@ -407,7 +407,6 @@ func TestConnection_IsClosed(t *testing.T) {
 		// connection is down
 		assert.False(conn.IsClosed(), "connection is open")
 	}()
-
 
 	timeout := time.NewTimer(3 * time.Second)
 

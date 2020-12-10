@@ -1424,32 +1424,32 @@ type ChannelTesting struct {
 }
 
 // Returns a tester for the RogerConnection feeding this channel.
-func (testing *ChannelTesting) ConnTest() *transportTesting {
+func (tester *ChannelTesting) ConnTest() *transportTesting {
 	blocks := int32(0)
 
 	return &transportTesting{
-		t:       testing.t,
-		manager: testing.channel.transportChannel.rogerConn.transportManager,
+		t:       tester.t,
+		manager: tester.channel.transportChannel.rogerConn.transportManager,
 		blocks:  &blocks,
 	}
 }
 
 // Returns the current underlying amqp/streadway channel being used.
-func (testing *ChannelTesting) UnderlyingChannel() *streadway.Channel {
-	if testing.channel.transportChannel == nil {
+func (tester *ChannelTesting) UnderlyingChannel() *streadway.Channel {
+	if tester.channel.transportChannel == nil {
 		return nil
 	}
-	return testing.channel.transportChannel.Channel
+	return tester.channel.transportChannel.Channel
 }
 
 // Returns the current underlying amqp/streadway connection being used.
-func (testing *ChannelTesting) UnderlyingConnection() *streadway.Connection {
-	return testing.channel.transportChannel.rogerConn.transportConn.Connection
+func (tester *ChannelTesting) UnderlyingConnection() *streadway.Connection {
+	return tester.channel.transportChannel.rogerConn.transportConn.Connection
 }
 
 // Returns the current underlying amqp/streadway connection being used.
-func (testing *ChannelTesting) ReconnectionCount() uint64 {
-	return testing.channel.reconnectCount
+func (tester *ChannelTesting) ReconnectionCount() uint64 {
+	return tester.channel.reconnectCount
 }
 
 // Test methods for the transport

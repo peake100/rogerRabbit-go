@@ -214,9 +214,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerPublish() (
 func (builder *middlewareBaseBuilder) createBaseHandlerGet() (
 	handler amqpMiddleware.HandlerGet,
 ) {
-	handler = func(
-		args *amqpMiddleware.ArgsGet,
-	) (msg dataModels.Delivery, ok bool, err error) {
+	handler = func(args *amqpMiddleware.ArgsGet) (msg Delivery, ok bool, err error) {
 		var msgOrig streadway.Delivery
 		msgOrig, ok, err = builder.underlyingChan.Get(args.Queue, args.AutoAck)
 		msg = dataModels.NewDelivery(msgOrig, builder.channel)
@@ -259,7 +257,7 @@ func (builder *middlewareBaseBuilder) createBaseHandlerReject() (
 func (builder *middlewareBaseBuilder) createBaseHandlerNotifyPublish() (
 	handler amqpMiddleware.HandlerNotifyPublish,
 ) {
-	handler = func(args *amqpMiddleware.ArgsNotifyPublish) chan dataModels.Confirmation {
+	handler = func(args *amqpMiddleware.ArgsNotifyPublish) chan Confirmation {
 		channel := builder.channel
 
 		relay := newNotifyPublishRelay(

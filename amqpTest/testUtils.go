@@ -41,7 +41,7 @@ func GetTestConnection(t *testing.T) *amqp.Connection {
 
 type ChannelSuiteOpts struct {
 	dialAddress string
-	dialConfig *amqp.Config
+	dialConfig  *amqp.Config
 }
 
 // Embed into other suite types to have a connection and channel automatically set

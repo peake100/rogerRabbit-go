@@ -67,7 +67,7 @@ func (suite *ChannelLifetimeSuite) Test0020_Reestablish_ChannelClose() {
 	currentChan := chanTesting.UnderlyingChannel()
 
 	// Close the channelConsume
-	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	chanTesting.ForceReconnect(ctx)
 
@@ -105,7 +105,7 @@ func (suite *ChannelLifetimeSuite) Test0030_Reestablish_ConnectionClose() {
 
 	currentChan := chanTest.UnderlyingChannel()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	chanTest.ConnTest().ForceReconnect(ctx)
 
@@ -659,7 +659,7 @@ func (suite *ChannelMethodsSuite) Test0130_QueueDeclare_NoRedeclareAfterDelete()
 	suite.NoError(err, "delete queue")
 
 	// close the channel manually, forcing a re-connect
-	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	chanTesting.ForceReconnect(ctx)
 
