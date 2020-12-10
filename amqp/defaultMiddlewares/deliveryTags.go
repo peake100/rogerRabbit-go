@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
-	"github.com/peake100/rogerRabbit-go/amqp/data"
+	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
@@ -48,7 +48,7 @@ func (middleware *DeliveryTagsMiddleware) Get(
 ) (handler amqpMiddleware.HandlerGet) {
 	handler = func(
 		args *amqpMiddleware.ArgsGet,
-	) (msg data.Delivery, ok bool, err error) {
+	) (msg dataModels.Delivery, ok bool, err error) {
 		msg, ok, err = next(args)
 		if err != nil {
 			return msg, ok, err
@@ -172,7 +172,7 @@ func (middleware *DeliveryTagsMiddleware) Reject(
 func (middleware *DeliveryTagsMiddleware) ConsumeEvent(
 	next amqpMiddleware.HandlerConsumeEvent,
 ) (handler amqpMiddleware.HandlerConsumeEvent) {
-	handler = func(event data.Delivery) {
+	handler = func(event dataModels.Delivery) {
 		// Apply the offset to our delivery
 		event.TagOffset = middleware.tagConsumeOffset
 		event.DeliveryTag += middleware.tagConsumeOffset

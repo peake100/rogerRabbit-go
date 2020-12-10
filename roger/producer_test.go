@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
+	"github.com/peake100/rogerRabbit-go/amqpTest"
 	"github.com/peake100/rogerRabbit-go/roger"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -25,7 +26,7 @@ func init() {
 }
 
 type ProducerSuite struct {
-	amqp.ChannelSuiteBase
+	amqpTest.ChannelSuiteBase
 }
 
 func (suite *ProducerSuite) TestProducerBasicLifetime() {
@@ -34,7 +35,7 @@ func (suite *ProducerSuite) TestProducerBasicLifetime() {
 	queueName := "test_queue_producer_lifetime"
 	suite.CreateTestQueue(queueName, "", "")
 
-	producer := roger.NewProducer(suite.ChannelPublish, nil)
+	producer := roger.NewProducer(suite.ChannelPublish(), nil)
 	complete := make(chan struct{})
 
 	go func() {
@@ -86,7 +87,7 @@ func (suite *ProducerSuite) TestProducerPublish() {
 	queueName := "test_queue_producer_publish"
 	suite.CreateTestQueue(queueName, "", "")
 
-	producer := roger.NewProducer(suite.ChannelPublish, nil)
+	producer := roger.NewProducer(suite.ChannelPublish(), nil)
 
 	go func() {
 		err := producer.Run()
@@ -131,7 +132,7 @@ func (suite *ProducerSuite) TestProducerPublish() {
 
 	messages := [10]bool{}
 	for i := 0; i < publishCount; i++ {
-		msg, ok, err := suite.ChannelPublish.Get(queueName, true)
+		msg, ok, err := suite.ChannelPublish().Get(queueName, true)
 		suite.NoError(err, "get message")
 		suite.True(ok, "message existed")
 

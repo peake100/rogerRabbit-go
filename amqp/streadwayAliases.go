@@ -83,7 +83,7 @@ type (
 	// digits Scale == 2, Value == 12345, Decimal == 123.45
 	Decimal = streadway.Decimal
 
-	// Error captures the code and reason a ChannelConsume or connection has been closed
+	// Error captures the code and reason a channelConsume or connection has been closed
 	// by the server.
 	Error = streadway.Error
 

@@ -98,7 +98,7 @@ func (manager *transportManager) reconnect(ctx context.Context, retry bool) erro
 	// Broadcast that we have made a successful reconnection to any one-time listeners.
 	manager.reconnectCond.Broadcast()
 
-	// Register a notification ChannelConsume for the new connection's closure.
+	// Register a notification channelConsume for the new connection's closure.
 	closeChan := make(chan *streadway.Error, 1)
 	manager.transport.NotifyClose(closeChan)
 

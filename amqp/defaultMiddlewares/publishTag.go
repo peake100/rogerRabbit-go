@@ -3,7 +3,7 @@ package defaultMiddlewares
 import (
 	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
-	"github.com/peake100/rogerRabbit-go/amqp/data"
+	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
@@ -144,7 +144,7 @@ func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
 	// on re-connections to better mock the behavior of the original lib, where if the
 	// channel is forcibly closed, the final messages will not be confirmed.
 	for sentCount < middleware.tagOffset {
-		confirmation := data.Confirmation{
+		confirmation := dataModels.Confirmation{
 			Confirmation: streadway.Confirmation{
 				DeliveryTag: sentCount + 1,
 				Ack:         false,

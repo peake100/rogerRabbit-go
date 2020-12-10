@@ -2,7 +2,7 @@ package amqp
 
 import (
 	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
-	"github.com/peake100/rogerRabbit-go/amqp/data"
+	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
@@ -12,7 +12,7 @@ type consumeArgs struct {
 	queue, consumer                     string
 	autoAck, exclusive, noLocal, noWait bool
 	args                                Table
-	callerDeliveryChan                  chan data.Delivery
+	callerDeliveryChan                  chan dataModels.Delivery
 }
 
 // Relays Deliveries across channel disconnects.
@@ -20,7 +20,7 @@ type consumeRelay struct {
 	// Arguments to call on Consume
 	ConsumeArgs consumeArgs
 	// Delivery channel to pass deliveries back to the client.
-	CallerDeliveries chan<- data.Delivery
+	CallerDeliveries chan<- dataModels.Delivery
 
 	Acknowledger streadway.Acknowledger
 
@@ -32,7 +32,7 @@ type consumeRelay struct {
 }
 
 func (relay *consumeRelay) baseHandler() amqpMiddleware.HandlerConsumeEvent {
-	return func(event data.Delivery) {
+	return func(event dataModels.Delivery) {
 		relay.CallerDeliveries <- event
 	}
 }
@@ -68,7 +68,7 @@ func (relay *consumeRelay) RunRelayLeg() (done bool, err error) {
 	// Drain consumer events
 	for brokerDelivery := range relay.brokerDeliveries {
 		// Wrap the delivery and send on our way.
-		relay.handler(data.NewDelivery(brokerDelivery, relay.Acknowledger))
+		relay.handler(dataModels.NewDelivery(brokerDelivery, relay.Acknowledger))
 	}
 
 	return false, nil

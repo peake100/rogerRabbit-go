@@ -6,6 +6,7 @@ import (
 	"github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
+	"testing"
 )
 
 // Implements transport for *streadway.Connection.
@@ -54,7 +55,7 @@ type Connection struct {
 	*transportManager
 }
 
-// Gets a streadway ChannelConsume from the current connection.
+// Gets a streadway channelConsume from the current connection.
 func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 	channel *streadway.Channel, err error,
 ) {
@@ -66,7 +67,7 @@ func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 
 	err = conn.retryOperationOnClosed(ctx, operation, true)
 
-	// Return the ChannelConsume and error.
+	// Return the channelConsume and error.
 	return channel, err
 }
 
@@ -134,7 +135,7 @@ all errors until Channel.Close() is called.
 
 --
 
-Channel opens a unique, concurrent server ChannelConsume to process the bulk of AMQP
+Channel opens a unique, concurrent server channelConsume to process the bulk of AMQP
 messages.  Any error from methods on this receiver will render the receiver
 invalid and a new Channel should be opened.
 
@@ -151,7 +152,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 	manager := newTransportManager(conn.ctx, transportChan, "CHANNEL")
 	transportChan.logger = manager.logger
 
-	// Create our more robust ChannelConsume wrapper.
+	// Create our more robust channelConsume wrapper.
 	rogerChannel := &Channel{
 		transportChannel: transportChan,
 		transportManager: manager,
@@ -173,6 +174,18 @@ func (conn *Connection) Channel() (*Channel, error) {
 	}
 
 	return rogerChannel, nil
+}
+
+func (conn *Connection) Test(t *testing.T) *ConnectionTesting {
+	blocks := int32(0)
+	return &ConnectionTesting{
+		conn: conn,
+		transportTesting: transportTesting{
+			t:       t,
+			manager: conn.transportManager,
+			blocks:  &blocks,
+		},
+	}
 }
 
 // Get a new roger connection for a given url and connection config.
@@ -211,14 +224,6 @@ func newConnection(url string, config *Config) *Connection {
 	return conn
 }
 
-// Get the default config for Dial() as it is in the streadway application.
-func defaultConfig() *Config {
-	return &Config{
-		Heartbeat: defaultHeartbeat,
-		Locale:    defaultLocale,
-	}
-}
-
 // Dial accepts a string in the AMQP URI format and returns a new Connection
 // over TCP using PlainAuth.  Defaults to a server heartbeat interval of 10
 // seconds and sets the handshake deadline to 30 seconds. After handshake,
@@ -228,7 +233,7 @@ func defaultConfig() *Config {
 // scheme.  It is equivalent to calling DialTLS(amqp, nil).
 func Dial(url string) (*Connection, error) {
 	// Use the same default config as streadway/amqp.
-	config := defaultConfig()
+	config := DefaultConfig()
 
 	// Make our initial connection.
 	return DialConfig(url, *config)
@@ -255,7 +260,7 @@ func DialConfig(url string, config Config) (*Connection, error) {
 //
 // DialTLS uses the provided tls.Config when encountering an amqps:// scheme.
 func DialTLS(url string, amqps *tls.Config) (*Connection, error) {
-	config := defaultConfig()
+	config := DefaultConfig()
 	config.TLSClientConfig = amqps
 
 	return DialConfig(url, *config)
@@ -280,7 +285,7 @@ func DialCtx(
 	ctx context.Context, url string,
 ) (*Connection, error) {
 	// Use the same default config as streadway/amqp.
-	config := defaultConfig()
+	config := DefaultConfig()
 
 	// Dial the connection.
 	return DialConfigCtx(ctx, url, *config)
@@ -291,7 +296,7 @@ func DialCtx(
 func DialTLSCtx(
 	ctx context.Context, url string, amqps *tls.Config,
 ) (*Connection, error) {
-	config := defaultConfig()
+	config := DefaultConfig()
 	config.TLSClientConfig = amqps
 
 	return DialConfigCtx(ctx, url, *config)
