@@ -14,14 +14,14 @@ import (
 )
 
 const (
-	TestAddress = "amqp://localhost:57018"
+	TestDialAddress = "amqp://localhost:57018"
 )
 
 // Get a new connection for testing.
 func GetTestConnection(t *testing.T) *amqp.Connection {
 	assert := assert.New(t)
 
-	conn, err := amqp.DialCtx(context.Background(), TestAddress)
+	conn, err := amqp.DialCtx(context.Background(), TestDialAddress)
 	if !assert.NoError(err, "dial connection") {
 		t.FailNow()
 	}
@@ -61,7 +61,7 @@ type ChannelSuiteBase struct {
 func (suite *ChannelSuiteBase) dialConnection() *amqp.Connection {
 	address := suite.opts.dialAddress
 	if address == "" {
-		address = TestAddress
+		address = TestDialAddress
 	}
 
 	config := suite.opts.dialConfig
@@ -160,7 +160,7 @@ func (suite *ChannelSuiteBase) ReplaceChannels() {
 func (suite *ChannelSuiteBase) CreateTestQueue(
 	name string, exchange string, exchangeKey string,
 ) amqp.Queue {
-	_, err := suite.channelPublish.QueueDeclare(
+	_, err := suite.ChannelPublish().QueueDeclare(
 		name,
 		false,
 		false,
@@ -174,13 +174,13 @@ func (suite *ChannelSuiteBase) CreateTestQueue(
 	}
 
 	cleanup := func() {
-		_, _ = suite.channelPublish.QueueDelete(
+		_, _ = suite.ChannelPublish().QueueDelete(
 			name, false, false, false,
 		)
 	}
 	suite.T().Cleanup(cleanup)
 
-	queue, err := suite.channelConsume.QueueDeclare(
+	queue, err := suite.ChannelConsume().QueueDeclare(
 		name,
 		false,
 		false,
@@ -194,7 +194,7 @@ func (suite *ChannelSuiteBase) CreateTestQueue(
 	}
 
 	cleanup = func() {
-		_, _ = suite.channelConsume.QueueDelete(
+		_, _ = suite.ChannelConsume().QueueDelete(
 			name, false, false, false,
 		)
 	}
@@ -204,14 +204,14 @@ func (suite *ChannelSuiteBase) CreateTestQueue(
 		return queue
 	}
 
-	err = suite.channelPublish.QueueBind(
+	err = suite.ChannelPublish().QueueBind(
 		queue.Name, exchangeKey, exchange, false, nil,
 	)
 	if !suite.NoError(err, "error binding publish queue") {
 		suite.T().FailNow()
 	}
 
-	err = suite.channelConsume.QueueBind(
+	err = suite.ChannelConsume().QueueBind(
 		queue.Name, exchangeKey, exchange, false, nil,
 	)
 	if !suite.NoError(err, "error binding consume queue") {
@@ -355,30 +355,12 @@ func (suite *ChannelSuiteBase) GetMessage(
 }
 
 func (suite *ChannelSuiteBase) SetupSuite() {
-	// Get the test connection we are going to use for all of our tests
-	suite.connConsume = GetTestConnection(suite.T())
-	if suite.T().Failed() {
-		suite.FailNow("could not get consumer connection")
+	if suite.opts == nil {
+		suite.opts = &ChannelSuiteOpts{
+			dialAddress: TestDialAddress,
+			dialConfig:  amqp.DefaultConfig(),
+		}
 	}
-
-	suite.connPublish = GetTestConnection(suite.T())
-	if suite.T().Failed() {
-		suite.FailNow("could not get publisher connection")
-	}
-
-	channel, err := suite.connConsume.Channel()
-	if !suite.NoError(err, "open channelConsume for testing") {
-		suite.FailNow("failed to open test channelConsume")
-	}
-
-	suite.channelConsume = channel
-
-	channel, err = suite.connConsume.Channel()
-	if !suite.NoError(err, "open channelPublish for testing") {
-		suite.FailNow("failed to open test channelPublish")
-	}
-
-	suite.channelPublish = channel
 }
 
 func (suite *ChannelSuiteBase) TearDownSuite() {

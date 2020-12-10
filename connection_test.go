@@ -23,7 +23,7 @@ func Test0000_Dial_Succeed(t *testing.T) {
 
 	go func() {
 		defer close(connected)
-		conn, err = amqp.Dial(amqpTest.TestAddress)
+		conn, err = amqp.Dial(amqpTest.TestDialAddress)
 	}()
 
 	timeout := time.NewTimer(15 * time.Second)
@@ -62,7 +62,7 @@ func Test0010_DialCtx_Succeed(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	conn, err := amqp.DialCtx(ctx, amqpTest.TestAddress)
+	conn, err := amqp.DialCtx(ctx, amqpTest.TestDialAddress)
 	if err != nil {
 		return
 	}
@@ -99,7 +99,7 @@ func Test0030_Close(t *testing.T) {
 	dialCtx, dialCancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer dialCancel()
 
-	conn, err := amqp.DialCtx(dialCtx, amqpTest.TestAddress)
+	conn, err := amqp.DialCtx(dialCtx, amqpTest.TestDialAddress)
 	if !assert.NoError(err, "dial broker") {
 		t.FailNow()
 	}
