@@ -292,7 +292,7 @@ func (suite *ChannelSuiteBase) publishMessagesSend(
 	assert := assert.New(t)
 
 	for i := 0; i < count; i++ {
-		err := suite.channelPublish.Publish(
+		err := suite.ChannelPublish().Publish(
 			exchange,
 			key,
 			true,
@@ -335,13 +335,13 @@ func (suite *ChannelSuiteBase) PublishMessages(
 ) {
 	assert := assert.New(t)
 
-	err := suite.channelPublish.Confirm(false)
+	err := suite.ChannelPublish().Confirm(false)
 	if !assert.NoError(err, "put publish channel into confirm mode") {
 		t.FailNow()
 	}
 
 	confirmationEvents := make(chan dataModels.Confirmation, count)
-	suite.channelPublish.NotifyPublish(confirmationEvents)
+	suite.ChannelPublish().NotifyPublish(confirmationEvents)
 
 	go suite.publishMessagesSend(t, exchange, key, count)
 
