@@ -44,6 +44,25 @@ type ChannelSuiteOpts struct {
 	dialConfig  *amqp.Config
 }
 
+// The address to dial for our test connections. Default: amqp://localhost:57018
+func (opts *ChannelSuiteOpts) WithDialAddress(amqpURI string) *ChannelSuiteOpts {
+	opts.dialAddress = amqpURI
+	return opts
+}
+
+// The config to use for our dial. Default uses amqp.DefaultConfig()
+func (opts *ChannelSuiteOpts) WithDialConfig(config *amqp.Config) *ChannelSuiteOpts {
+	opts.dialConfig = config
+	return opts
+}
+
+// Returns a new ChannelSuiteOpts with default values
+func NewChannelSuiteOpts() *ChannelSuiteOpts {
+	return new(ChannelSuiteOpts).
+		WithDialAddress(TestDialAddress).
+		WithDialConfig(amqp.DefaultConfig())
+}
+
 // Embed into other suite types to have a connection and channel automatically set
 // up for testing on suite start, and closed on suite shutdown.
 type ChannelSuiteBase struct {
@@ -356,10 +375,7 @@ func (suite *ChannelSuiteBase) GetMessage(
 
 func (suite *ChannelSuiteBase) SetupSuite() {
 	if suite.Opts == nil {
-		suite.Opts = &ChannelSuiteOpts{
-			dialAddress: TestDialAddress,
-			dialConfig:  amqp.DefaultConfig(),
-		}
+		suite.Opts = NewChannelSuiteOpts()
 	}
 }
 
