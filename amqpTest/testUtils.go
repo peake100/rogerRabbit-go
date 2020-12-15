@@ -49,7 +49,7 @@ type ChannelSuiteOpts struct {
 type ChannelSuiteBase struct {
 	suite.Suite
 
-	opts *ChannelSuiteOpts
+	Opts *ChannelSuiteOpts
 
 	connConsume    *amqp.Connection
 	channelConsume *amqp.Channel
@@ -59,12 +59,12 @@ type ChannelSuiteBase struct {
 }
 
 func (suite *ChannelSuiteBase) dialConnection() *amqp.Connection {
-	address := suite.opts.dialAddress
+	address := suite.Opts.dialAddress
 	if address == "" {
 		address = TestDialAddress
 	}
 
-	config := suite.opts.dialConfig
+	config := suite.Opts.dialConfig
 	if config == nil {
 		config = amqp.DefaultConfig()
 	}
@@ -355,8 +355,8 @@ func (suite *ChannelSuiteBase) GetMessage(
 }
 
 func (suite *ChannelSuiteBase) SetupSuite() {
-	if suite.opts == nil {
-		suite.opts = &ChannelSuiteOpts{
+	if suite.Opts == nil {
+		suite.Opts = &ChannelSuiteOpts{
 			dialAddress: TestDialAddress,
 			dialConfig:  amqp.DefaultConfig(),
 		}
