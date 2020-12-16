@@ -262,7 +262,7 @@ func (producer *Producer) Publish(
 	case result := <-order.result:
 		return result
 	case <-ctx.Done():
-		return fmt.Errorf("message cancelled: %w", err)
+		return fmt.Errorf("message cancelled: %w", ctx.Err())
 	}
 }
 
