@@ -361,7 +361,7 @@ func (suite *ChannelSuiteBase) PublishMessages(
 func (suite *ChannelSuiteBase) GetMessage(
 	queueName string, autoAck bool,
 ) dataModels.Delivery {
-	delivery, ok, err := suite.channelConsume.Get(queueName, autoAck)
+	delivery, ok, err := suite.ChannelConsume().Get(queueName, autoAck)
 	if !suite.NoError(err, "get message") {
 		suite.T().FailNow()
 	}
