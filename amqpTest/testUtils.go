@@ -88,7 +88,10 @@ func (suite *ChannelSuiteBase) dialConnection() *amqp.Connection {
 		config = amqp.DefaultConfig()
 	}
 
-	conn, err := amqp.DialConfig(address, *config)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	conn, err := amqp.DialConfigCtx(ctx, address, *config)
 	if err != nil {
 		suite.T().Errorf("error dialing connection: %v", err)
 		suite.T().FailNow()
