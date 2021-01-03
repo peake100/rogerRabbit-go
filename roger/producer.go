@@ -383,11 +383,11 @@ func NewProducer(amqpChannel *amqp.Channel, opts *ProducerOpts) *Producer {
 		ctxCancel:        cancel,
 		publishQueueLock: new(sync.RWMutex),
 		channel:          amqpChannel,
-		publishEvents:    make(
+		publishEvents: make(
 			chan dataModels.Confirmation, opts.internalQueueCapacity,
 		),
-		publishQueue:     make(chan *publishOrder, opts.internalQueueCapacity),
-		confirmQueue:     make(chan *publishOrder, opts.internalQueueCapacity),
-		opts:             *opts,
+		publishQueue: make(chan *publishOrder, opts.internalQueueCapacity),
+		confirmQueue: make(chan *publishOrder, opts.internalQueueCapacity),
+		opts:         *opts,
 	}
 }

@@ -165,7 +165,7 @@ func (suite *ConsumerSuite) TestConsumeBasicMessages() {
 
 	queueName := "test_consume_basic"
 
-	suite.CreateTestQueue(queueName, "", "")
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	processor := &BasicTestConsumer{
 		QueueName:            queueName,

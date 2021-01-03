@@ -32,8 +32,8 @@ type consumeRelay struct {
 }
 
 func (relay *consumeRelay) baseHandler() amqpMiddleware.HandlerConsumeEvent {
-	return func(event dataModels.Delivery) {
-		relay.CallerDeliveries <- event
+	return func(event *amqpMiddleware.EventConsume) {
+		relay.CallerDeliveries <- event.Delivery
 	}
 }
 
@@ -68,7 +68,10 @@ func (relay *consumeRelay) RunRelayLeg() (done bool, err error) {
 	// Drain consumer events
 	for brokerDelivery := range relay.brokerDeliveries {
 		// Wrap the delivery and send on our way.
-		relay.handler(dataModels.NewDelivery(brokerDelivery, relay.Acknowledger))
+		event := &amqpMiddleware.EventConsume{
+			Delivery: dataModels.NewDelivery(brokerDelivery, relay.Acknowledger),
+		}
+		relay.handler(event)
 	}
 
 	return false, nil

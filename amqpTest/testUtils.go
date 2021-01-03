@@ -17,7 +17,8 @@ const (
 	TestDialAddress = "amqp://localhost:57018"
 )
 
-// Get a new connection for testing.
+// GetTestConnection creates a new connection to amqp://localhost:57018, where our
+// test broker will be listening.
 func GetTestConnection(t *testing.T) *amqp.Connection {
 	assert := assert.New(t)
 
@@ -39,32 +40,38 @@ func GetTestConnection(t *testing.T) *amqp.Connection {
 	return conn
 }
 
+// ChannelSuiteOpts is used to configure ChannelSuiteBase, which can be embedded
+// into a testify suite.Suite to gain a number of useful testing methods.
 type ChannelSuiteOpts struct {
 	dialAddress string
 	dialConfig  *amqp.Config
 }
 
-// The address to dial for our test connections. Default: amqp://localhost:57018
+// WithDialAddress configures the address to dial for our test connections.
+// Default: amqp://localhost:57018
 func (opts *ChannelSuiteOpts) WithDialAddress(amqpURI string) *ChannelSuiteOpts {
 	opts.dialAddress = amqpURI
 	return opts
 }
 
-// The config to use for our dial. Default uses amqp.DefaultConfig()
+// WithDialConfig sets the amqp.Config object to use when dialing the test brocker.
+// Default: amqp.DefaultConfig()
 func (opts *ChannelSuiteOpts) WithDialConfig(config *amqp.Config) *ChannelSuiteOpts {
 	opts.dialConfig = config
 	return opts
 }
 
-// Returns a new ChannelSuiteOpts with default values
+// NewChannelSuiteOpts returns a new ChannelSuiteOpts with default values
 func NewChannelSuiteOpts() *ChannelSuiteOpts {
 	return new(ChannelSuiteOpts).
 		WithDialAddress(TestDialAddress).
 		WithDialConfig(amqp.DefaultConfig())
 }
 
-// Embed into other suite types to have a connection and channel automatically set
-// up for testing on suite start, and closed on suite shutdown.
+// ChannelSuiteBase Embed into other suite types to have a connection and channel
+// automatically set up for testing on suite start, and closed on suite shutdown, as
+// well as a number of other helper methods for interacting with a test broker and
+// handling test setup / teardown.
 type ChannelSuiteBase struct {
 	suite.Suite
 
@@ -77,6 +84,7 @@ type ChannelSuiteBase struct {
 	channelPublish *amqp.Channel
 }
 
+// Dials the test connection.
 func (suite *ChannelSuiteBase) dialConnection() *amqp.Connection {
 	address := suite.Opts.dialAddress
 	if address == "" {
@@ -110,6 +118,8 @@ func (suite *ChannelSuiteBase) getChannel(conn *amqp.Connection) *amqp.Channel {
 	return channel
 }
 
+// ConnConsume returns an *amqp.Connection to be used for consuming methods. The
+// returned connection object will be the same each time this methods is called.
 func (suite *ChannelSuiteBase) ConnConsume() *amqp.Connection {
 	if suite.connConsume != nil {
 		return suite.connConsume
@@ -118,6 +128,9 @@ func (suite *ChannelSuiteBase) ConnConsume() *amqp.Connection {
 	return suite.connConsume
 }
 
+// ChannelConsume returns an *amqp.Channel to be used for consuming methods. The
+// returned channel object will be the same each time this methods is called, until
+// ReplaceChannels is called.
 func (suite *ChannelSuiteBase) ChannelConsume() *amqp.Channel {
 	if suite.channelConsume != nil {
 		return suite.channelConsume
@@ -126,11 +139,14 @@ func (suite *ChannelSuiteBase) ChannelConsume() *amqp.Channel {
 	return suite.channelConsume
 }
 
-// Returns a channel tester for the consume channel using the current test.
+// ChannelConsumeTester returns *amqp.ChannelTesting object for ChannelConsume with the
+// current suite.T().
 func (suite *ChannelSuiteBase) ChannelConsumeTester() *amqp.ChannelTesting {
 	return suite.ChannelConsume().Test(suite.T())
 }
 
+// ConnPublish returns an *amqp.Connection to be used for publishing methods. The
+// returned connection object will be the same each time this methods is called.
 func (suite *ChannelSuiteBase) ConnPublish() *amqp.Connection {
 	if suite.connPublish != nil {
 		return suite.connPublish
@@ -139,6 +155,9 @@ func (suite *ChannelSuiteBase) ConnPublish() *amqp.Connection {
 	return suite.connPublish
 }
 
+// ChannelPublish returns an *amqp.Channel to be used for consuming methods. The
+// returned channel object will be the same each time this methods is called, until
+// ReplaceChannels is called.
 func (suite *ChannelSuiteBase) ChannelPublish() *amqp.Channel {
 	if suite.channelPublish != nil {
 		return suite.channelPublish
@@ -147,12 +166,15 @@ func (suite *ChannelSuiteBase) ChannelPublish() *amqp.Channel {
 	return suite.channelPublish
 }
 
-// Returns a channel tester for the consume channel using the current test.
+// ChannelConsumeTester returns *amqp.ChannelTesting object for ChannelConsume with the
+// current suite.T().
 func (suite *ChannelSuiteBase) ChannelPublishTester() *amqp.ChannelTesting {
 	return suite.channelPublish.Test(suite.T())
 }
 
-// replace and close the current channelConsume for a fresh one.
+// ReplaceChannels replace and close the current ChannelConsume and ChannelPublish for
+// fresh ones. Most helpfully used as a cleanup function when persisting the current
+// channels to the next test method is not desirable.
 func (suite *ChannelSuiteBase) ReplaceChannels() {
 	if suite.channelConsume != nil {
 		_ = suite.channelConsume.Close()
@@ -176,13 +198,14 @@ func (suite *ChannelSuiteBase) ReplaceChannels() {
 	suite.channelPublish = channel
 }
 
-// Creates a basic test queue on both test channels, and deletes registers them for
-// deletion at the end of the test. The created queue can be optionally bound to an
-// exchange (which should have been previously created with CreateTestExchange).
-func (suite *ChannelSuiteBase) CreateTestQueue(
-	name string, exchange string, exchangeKey string,
+func (suite *ChannelSuiteBase) createSingleTestQueue(
+	name string,
+	exchange string,
+	exchangeKey string,
+	cleanup bool,
+	channel *amqp.Channel,
 ) amqp.Queue {
-	_, err := suite.ChannelPublish().QueueDeclare(
+	queue, err := channel.QueueDeclare(
 		name,
 		false,
 		false,
@@ -191,61 +214,57 @@ func (suite *ChannelSuiteBase) CreateTestQueue(
 		nil,
 	)
 
-	if !suite.NoError(err, "create publish queue") {
+	if !suite.NoError(err, "create queue") {
 		suite.T().FailNow()
 	}
 
-	cleanup := func() {
-		_, _ = suite.ChannelPublish().QueueDelete(
-			name, false, false, false,
-		)
+	if cleanup {
+		suite.T().Cleanup(func() {
+			_, _ = channel.QueueDelete(
+				name, false, false, false,
+			)
+		})
 	}
-	suite.T().Cleanup(cleanup)
-
-	queue, err := suite.ChannelConsume().QueueDeclare(
-		name,
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
-
-	if !suite.NoError(err, "create consume queue") {
-		suite.T().FailNow()
-	}
-
-	cleanup = func() {
-		_, _ = suite.ChannelConsume().QueueDelete(
-			name, false, false, false,
-		)
-	}
-	suite.T().Cleanup(cleanup)
-
 	if exchange == "" || exchangeKey == "" {
 		return queue
 	}
 
-	err = suite.ChannelPublish().QueueBind(
+	err = channel.QueueBind(
 		queue.Name, exchangeKey, exchange, false, nil,
 	)
-	if !suite.NoError(err, "error binding publish queue") {
-		suite.T().FailNow()
-	}
-
-	err = suite.ChannelConsume().QueueBind(
-		queue.Name, exchangeKey, exchange, false, nil,
-	)
-	if !suite.NoError(err, "error binding consume queue") {
+	if !suite.NoError(err, "error binding queue") {
 		suite.T().FailNow()
 	}
 
 	return queue
 }
 
-// Creates a basic test exchange on both test channels, and deletes registers them for
-// deletion at the end of the test
-func (suite *ChannelSuiteBase) CreateTestExchange(name string, kind string) {
+// CreateTestQueue creates a basic test queue on both ChannelConsume and ChannelPublish.
+// The created queue can be optionally bound to an exchange (which should have been
+// previously created with CreateTestExchange).
+//
+// If cleanup is true, then a cleanup function will be registered on the current
+// suite.T() to delete the queues at the end of the test.
+func (suite *ChannelSuiteBase) CreateTestQueue(
+	name string, exchange string, exchangeKey string, cleanup bool,
+) amqp.Queue {
+	queue := suite.createSingleTestQueue(
+		name, exchange, exchangeKey, cleanup, suite.ChannelPublish(),
+	)
+	_ = suite.createSingleTestQueue(
+		name, exchange, exchangeKey, cleanup, suite.ChannelConsume(),
+	)
+
+	return queue
+}
+
+// CreateTestExchange creates a basic test exchange on both test channels.
+//
+// If cleanup is set to true, a cleanup function will be registered with the current
+// suite.T() that will delete the exchange at the end of the test.
+func (suite *ChannelSuiteBase) CreateTestExchange(
+	name string, kind string, cleanup bool,
+) {
 	err := suite.channelPublish.ExchangeDeclare(
 		name,
 		kind,
@@ -260,12 +279,13 @@ func (suite *ChannelSuiteBase) CreateTestExchange(name string, kind string) {
 		suite.T().FailNow()
 	}
 
-	cleanup := func() {
-		_ = suite.channelPublish.ExchangeDelete(
-			name, false, false,
-		)
+	if cleanup {
+		suite.T().Cleanup(func() {
+			_ = suite.channelPublish.ExchangeDelete(
+				name, false, false,
+			)
+		})
 	}
-	suite.T().Cleanup(cleanup)
 
 	err = suite.channelConsume.ExchangeDeclare(
 		name,
@@ -281,12 +301,13 @@ func (suite *ChannelSuiteBase) CreateTestExchange(name string, kind string) {
 		suite.T().FailNow()
 	}
 
-	cleanup = func() {
-		_ = suite.channelConsume.ExchangeDelete(
-			name, false, false,
-		)
+	if cleanup {
+		suite.T().Cleanup(func() {
+			_ = suite.channelConsume.ExchangeDelete(
+				name, false, false,
+			)
+		})
 	}
-	suite.T().Cleanup(cleanup)
 }
 
 func (suite *ChannelSuiteBase) publishMessagesSend(
@@ -331,8 +352,11 @@ func (suite *ChannelSuiteBase) publishMessagesConfirm(
 	}
 }
 
-// Published messages on the given exchange and Key, waits for confirmations, then
-// returns. Test is failed immediately if any of these steps fails.
+// PublishMessages publishes messages on the given exchange and Key, waits for
+// confirmations, then returns. Test is failed immediately if any of these steps fails.
+//
+// Messages bodies are simply the index of the message starting at 0, so publishing
+// 3 messages would result with a message bodies '0', '1', and '2'.
 func (suite *ChannelSuiteBase) PublishMessages(
 	t *testing.T, exchange string, key string, count int,
 ) {
@@ -359,8 +383,8 @@ func (suite *ChannelSuiteBase) PublishMessages(
 	}
 }
 
-// get a single message, failing the test immediately if there is not a message waiting
-// or the get message fails.
+// GetMessage gets a single message, failing the test immediately if there is not a
+// message waiting or the get message fails.
 func (suite *ChannelSuiteBase) GetMessage(
 	queueName string, autoAck bool,
 ) dataModels.Delivery {
@@ -376,12 +400,16 @@ func (suite *ChannelSuiteBase) GetMessage(
 	return delivery
 }
 
+// SetupSuite implements, suite.SetupAllSuite, and sets suite.Opts to
+// NewChannelSuiteOpts if no other opts has been provided.
 func (suite *ChannelSuiteBase) SetupSuite() {
 	if suite.Opts == nil {
 		suite.Opts = NewChannelSuiteOpts()
 	}
 }
 
+// TearDownSuite implements suite.TearDownAllSuite, and closes all open test connections
+// and channels created form this suite's helper methods.
 func (suite *ChannelSuiteBase) TearDownSuite() {
 	if suite.connConsume != nil {
 		defer suite.connConsume.Close()

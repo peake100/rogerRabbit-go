@@ -5,7 +5,8 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
-// Store queue declare information for re-establishing queues on disconnect.
+// ArgsQueueDeclare stores args to amqp.Channel.QueueDeclare() for middleware to
+// inspect.
 type ArgsQueueDeclare struct {
 	Name       string
 	Durable    bool
@@ -15,7 +16,8 @@ type ArgsQueueDeclare struct {
 	Args       streadway.Table
 }
 
-// Arguments passed to channel delete.
+// ArgsQueueDelete stores args to amqp.Channel.QueueDelete() for middleware to
+// inspect.
 type ArgsQueueDelete struct {
 	Name     string
 	IfUnused bool
@@ -23,7 +25,8 @@ type ArgsQueueDelete struct {
 	NoWait   bool
 }
 
-// Store queue bind information for re-establishing bindings on disconnect.
+// ArgsQueueBind stores args to amqp.Channel.QueueBind() for middleware to
+// inspect.
 type ArgsQueueBind struct {
 	Name     string
 	Key      string
@@ -32,6 +35,8 @@ type ArgsQueueBind struct {
 	Args     streadway.Table
 }
 
+// ArgsQueueUnbind stores args to amqp.Channel.QueueUnbind() for middleware to
+// inspect.
 type ArgsQueueUnbind struct {
 	Name     string
 	Key      string
@@ -39,7 +44,8 @@ type ArgsQueueUnbind struct {
 	Args     streadway.Table
 }
 
-// Store exchange declare information for re-establishing queues on disconnect.
+// ArgsExchangeDeclare stores args to amqp.Channel.ExchangeDeclare() for middleware to
+// inspect.
 type ArgsExchangeDeclare struct {
 	Name       string
 	Kind       string
@@ -50,13 +56,16 @@ type ArgsExchangeDeclare struct {
 	Args       streadway.Table
 }
 
+// ArgsExchangeDelete stores args to amqp.Channel.ExchangeDelete() for middleware to
+// inspect.
 type ArgsExchangeDelete struct {
 	Name     string
 	IfUnused bool
 	NoWait   bool
 }
 
-// Store exchange bind information for re-establishing bindings on disconnect.
+// ArgsExchangeBind stores args to amqp.Channel.ExchangeBind() for middleware to
+// inspect.
 type ArgsExchangeBind struct {
 	Destination string
 	Key         string
@@ -65,6 +74,8 @@ type ArgsExchangeBind struct {
 	Args        streadway.Table
 }
 
+// ArgsExchangeUnbind stores args to amqp.Channel.ExchangeUnbind() for middleware to
+// inspect.
 type ArgsExchangeUnbind struct {
 	Destination string
 	Key         string
@@ -73,20 +84,24 @@ type ArgsExchangeUnbind struct {
 	Args        streadway.Table
 }
 
+// ArgsQoS stores args to amqp.Channel.QoS() for middleware to inspect.
 type ArgsQoS struct {
 	PrefetchCount int
 	PrefetchSize  int
 	Global        bool
 }
 
+// ArgsFlow stores args to amqp.Channel.Flow() for middleware to inspect.
 type ArgsFlow struct {
 	Active bool
 }
 
+// ArgsConfirms stores args to amqp.Channel.Confirms() for middleware to inspect.
 type ArgsConfirms struct {
 	NoWait bool
 }
 
+// ArgsPublish stores args to amqp.Channel.Publish() for middleware to inspect.
 type ArgsPublish struct {
 	Exchange  string
 	Key       string
@@ -95,31 +110,45 @@ type ArgsPublish struct {
 	Msg       streadway.Publishing
 }
 
+// ArgsGet stores args to amqp.Channel.Get() for middleware to inspect.
 type ArgsGet struct {
 	Queue   string
 	AutoAck bool
 }
 
+// ArgsAck stores args to amqp.Channel.Ack() for middleware to inspect.
 type ArgsAck struct {
 	Tag      uint64
 	Multiple bool
 }
 
+// ArgsNack stores args to amqp.Channel.Nack() for middleware to inspect.
 type ArgsNack struct {
 	Tag      uint64
 	Multiple bool
 	Requeue  bool
 }
 
+// ArgsReject stores args to amqp.Channel.Reject() for middleware to inspect.
 type ArgsReject struct {
 	Tag     uint64
 	Requeue bool
 }
 
+// ArgsNotifyPublish stores args to amqp.Channel.NotifyPublish() for middleware to
+// inspect.
 type ArgsNotifyPublish struct {
 	Confirm chan dataModels.Confirmation
 }
 
+// EventNotifyPublish passes event information from a  to amqp.Channel.NotifyPublish()
+// event for middleware to inspect / modify before the event is passed to the caller.
 type EventNotifyPublish struct {
 	Confirmation dataModels.Confirmation
+}
+
+// EventConsume passes event information from a  to amqp.Channel.Consume()
+// event for middleware to inspect / modify before the event is passed to the caller.
+type EventConsume struct {
+	Delivery dataModels.Delivery
 }

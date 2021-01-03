@@ -399,7 +399,7 @@ func (suite *ChannelMethodsSuite) Test0080_Consume_OverDisconnect_Channel() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
 	queueName := "disconnect_consumer_test"
-	suite.CreateTestQueue(queueName, "", "")
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	chanTester := suite.ChannelConsumeTester()
 	connTester := chanTester.ConnTest()
@@ -682,7 +682,7 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Basic() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
 	queueName := "notify_publish_basic"
-	suite.CreateTestQueue(queueName, "", "")
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	err := suite.ChannelPublish().Confirm(false)
 	if !suite.NoError(err, "put into confirmation mode") {
@@ -755,7 +755,7 @@ func (suite *ChannelMethodsSuite) Test0150_NotifyPublish_Reconnections() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
 	queueName := "notify_publish_basic"
-	suite.CreateTestQueue(queueName, "", "")
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	chanTesting := suite.ChannelPublishTester()
 	connTesting := chanTesting.ConnTest()
@@ -852,7 +852,7 @@ func (suite *ChannelMethodsSuite) Test0160_NotifyConfirm() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
 	queueName := "notify_confirms_basic"
-	suite.CreateTestQueue(queueName, "", "")
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	err := suite.ChannelPublish().Confirm(false)
 	if !suite.NoError(err, "put into confirmation mode") {
@@ -1022,7 +1022,7 @@ func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
 	nackQueueName := "test_confirm_nack"
 
 	// Set up the ack queue
-	suite.CreateTestQueue(ackQueueName, "", "")
+	suite.CreateTestQueue(ackQueueName, "", "", true)
 
 	publishCount := 10
 
@@ -1126,7 +1126,7 @@ func (suite *ChannelMethodsSuite) Test0190_QueuePurge() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
 	queueName := "test_queue_purge"
-	suite.CreateTestQueue(queueName, "", "")
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	err := suite.ChannelPublish().Confirm(false)
 	if !suite.NoError(err, "put channel into confirm mode") {
@@ -1257,8 +1257,8 @@ func (suite *ChannelMethodsSuite) Test0230_ExchangeDeclarePassive_Err() {
 func (suite *ChannelMethodsSuite) Test0240_QueueBind() {
 	exchangeName := "test_exchange_bind"
 	queueName := "test_queue_name"
-	suite.CreateTestExchange(exchangeName, amqp.ExchangeDirect)
-	suite.CreateTestQueue(queueName, "", "")
+	suite.CreateTestExchange(exchangeName, amqp.ExchangeDirect, true)
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	err := suite.ChannelPublish().QueueBind(
 		queueName, queueName, exchangeName, false, nil,
@@ -1311,10 +1311,10 @@ func (suite *ChannelMethodsSuite) Test0240_QueueBind() {
 
 func (suite *ChannelMethodsSuite) Test0250_QueueUnbind() {
 	exchangeName := "test_queue_unbind_exchange"
-	suite.CreateTestExchange(exchangeName, amqp.ExchangeDirect)
+	suite.CreateTestExchange(exchangeName, amqp.ExchangeDirect, true)
 
 	queueName := "test_queue_unbind_queue"
-	suite.CreateTestQueue(queueName, exchangeName, queueName)
+	suite.CreateTestQueue(queueName, exchangeName, queueName, true)
 
 	suite.T().Log("GOT HERE")
 
@@ -1333,10 +1333,10 @@ func (suite *ChannelMethodsSuite) Test0260_ExchangeBindUnbind() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
 	exchangeName1 := "test_exchange_bind1"
-	suite.CreateTestExchange(exchangeName1, amqp.ExchangeDirect)
+	suite.CreateTestExchange(exchangeName1, amqp.ExchangeDirect, true)
 
 	exchangeName2 := "test_exchange_bind2"
-	suite.CreateTestExchange(exchangeName2, amqp.ExchangeDirect)
+	suite.CreateTestExchange(exchangeName2, amqp.ExchangeDirect, true)
 
 	// unbind the queue
 	err := suite.ChannelPublish().ExchangeBind(
@@ -1415,7 +1415,7 @@ func (suite *ChannelMethodsSuite) Test0270_AckMessage() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
 	queueName := "queue_test_consume_ack"
-	suite.CreateTestQueue(queueName, "", "")
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	// Publish 1 message
 	suite.PublishMessages(suite.T(), "", queueName, 1)
@@ -1441,8 +1441,8 @@ func (suite *ChannelMethodsSuite) Test0270_AckMessage() {
 func (suite *ChannelMethodsSuite) Test0280_NackMessage() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
-	queueName := "queue_test_consume_ack"
-	suite.CreateTestQueue(queueName, "", "")
+	queueName := "queue_test_consume_nack"
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	// Publish 1 message
 	suite.PublishMessages(suite.T(), "", queueName, 1)
@@ -1468,8 +1468,8 @@ func (suite *ChannelMethodsSuite) Test0280_NackMessage() {
 func (suite *ChannelMethodsSuite) Test0290_NackMessage_Requeue() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
-	queueName := "queue_test_consume_ack"
-	suite.CreateTestQueue(queueName, "", "")
+	queueName := "queue_test_consume_nack_requeue"
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	// Publish 1 message
 	suite.PublishMessages(suite.T(), "", queueName, 1)
@@ -1497,8 +1497,8 @@ func (suite *ChannelMethodsSuite) Test0290_NackMessage_Requeue() {
 func (suite *ChannelMethodsSuite) Test0300_RejectMessage() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
-	queueName := "queue_test_consume_ack"
-	suite.CreateTestQueue(queueName, "", "")
+	queueName := "queue_test_consume_reject"
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	// Publish 1 message
 	suite.PublishMessages(suite.T(), "", queueName, 1)
@@ -1524,8 +1524,8 @@ func (suite *ChannelMethodsSuite) Test0300_RejectMessage() {
 func (suite *ChannelMethodsSuite) Test0310_RejectMessage_Requeue() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
-	queueName := "queue_test_consume_ack"
-	suite.CreateTestQueue(queueName, "", "")
+	queueName := "queue_test_consume_reject_requeue"
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	// Publish 1 message
 	suite.PublishMessages(suite.T(), "", queueName, 1)
@@ -1572,8 +1572,8 @@ func (suite *ChannelMethodsSuite) Test0320_Acknowledge_OrphanErr() {
 		},
 	}
 
-	queueName := "queue_test_consume_ack"
-	suite.CreateTestQueue(queueName, "", "")
+	queueName := "queue_test_consume_ack_orphan"
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	var thisCase testCase
 
@@ -1756,7 +1756,7 @@ func (suite *ChannelMethodsSuite) Test0380_NotifyCancel() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
 	queueName := "test_notify_cancel"
-	suite.CreateTestQueue(queueName, "", "")
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	cancelEvents := make(chan string, 10)
 	suite.ChannelConsume().NotifyCancel(cancelEvents)

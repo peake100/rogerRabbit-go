@@ -172,10 +172,10 @@ func (middleware *DeliveryTagsMiddleware) Reject(
 func (middleware *DeliveryTagsMiddleware) ConsumeEvent(
 	next amqpMiddleware.HandlerConsumeEvent,
 ) (handler amqpMiddleware.HandlerConsumeEvent) {
-	handler = func(event dataModels.Delivery) {
+	handler = func(event *amqpMiddleware.EventConsume) {
 		// Apply the offset to our delivery
-		event.TagOffset = middleware.tagConsumeOffset
-		event.DeliveryTag += middleware.tagConsumeOffset
+		event.Delivery.TagOffset = middleware.tagConsumeOffset
+		event.Delivery.DeliveryTag += middleware.tagConsumeOffset
 
 		// Increment the counter
 		atomic.AddUint64(middleware.tagConsumeCount, 1)

@@ -33,7 +33,7 @@ func (suite *ProducerSuite) TestProducerBasicLifetime() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
 	queueName := "test_queue_producer_lifetime"
-	suite.CreateTestQueue(queueName, "", "")
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	producer := roger.NewProducer(suite.ChannelPublish(), nil)
 	complete := make(chan struct{})
@@ -85,7 +85,7 @@ func (suite *ProducerSuite) TestProducerPublish() {
 	publishCount := 10
 
 	queueName := "test_queue_producer_publish"
-	suite.CreateTestQueue(queueName, "", "")
+	suite.CreateTestQueue(queueName, "", "", true)
 
 	producer := roger.NewProducer(suite.ChannelPublish(), nil)
 
