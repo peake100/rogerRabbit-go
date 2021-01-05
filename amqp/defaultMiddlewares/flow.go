@@ -18,10 +18,13 @@ type FlowMiddleware struct {
 	activeLock *sync.Mutex
 }
 
+// Active returns whether flow is currently active. For testing.
 func (middleware *FlowMiddleware) Active() bool {
 	return middleware.active
 }
 
+// Reconnect sets amqp.Channel.Flow(flow=false) on the underlying channel as soon as a
+// reconnection occurs if the user has paused the flow on the channel.
 func (middleware *FlowMiddleware) Reconnect(
 	next amqpMiddleware.HandlerReconnect,
 ) (handler amqpMiddleware.HandlerReconnect) {
@@ -43,6 +46,8 @@ func (middleware *FlowMiddleware) Reconnect(
 	}
 }
 
+// Flow captures calls to *amqp.Channel.Flow() so channels can be paused on reconnect if
+// the user has paused the channel.
 func (middleware *FlowMiddleware) Flow(
 	next amqpMiddleware.HandlerFlow,
 ) (handler amqpMiddleware.HandlerFlow) {
@@ -60,6 +65,7 @@ func (middleware *FlowMiddleware) Flow(
 	}
 }
 
+// NewFlowMiddleware creates a new FlowMiddleware for a channel.
 func NewFlowMiddleware() *FlowMiddleware {
 	return &FlowMiddleware{
 		active:     true,

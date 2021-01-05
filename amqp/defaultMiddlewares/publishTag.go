@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 )
 
-// The publish tags middleware keeps track of client-facing and internal Publishing
+// PublishTagsMiddleware keeps track of client-facing and internal Publishing
 // DeliveryTags and applies the correct offset so tags are continuous, even over
 // re-connections.
 type PublishTagsMiddleware struct {
@@ -36,17 +36,23 @@ type PublishTagsMiddleware struct {
 	tagOffset uint64
 
 	// List of functions to send outstanding orphans
-	sendOrphans []func()
+	sendOrphans     []func()
+	sendOrphansLock *sync.Mutex
 }
 
+// PublishCount returns the number of messages published that this middleware has
+// counted.
 func (middleware *PublishTagsMiddleware) PublishCount() uint64 {
 	return *middleware.publishCount
 }
 
+// TagOffset returns the current tag offset.
 func (middleware *PublishTagsMiddleware) TagOffset() uint64 {
 	return middleware.tagOffset
 }
 
+// reconnectSendOrphans sends NACK NotifyPublish events to all listeners with Orphan
+// set to true.
 func (middleware *PublishTagsMiddleware) reconnectSendOrphans() {
 	// Send any orphans we are waiting on.
 	sendsDone := new(sync.WaitGroup)
@@ -63,6 +69,9 @@ func (middleware *PublishTagsMiddleware) reconnectSendOrphans() {
 	sendsDone.Wait()
 }
 
+// Reconnect is called during a channel reconnection events. We update the current
+// offset based on the current publish count, and send orphan events to all
+// amqp.Channel.NotifyPublish() listeners.
 func (middleware *PublishTagsMiddleware) Reconnect(
 	next amqpMiddleware.HandlerReconnect,
 ) (handler amqpMiddleware.HandlerReconnect) {
@@ -92,6 +101,8 @@ func (middleware *PublishTagsMiddleware) Reconnect(
 	return handler
 }
 
+// Confirm captures a channel being set to confirmation mode. If a channel is not in
+// confirmation mode, then publish tags are not tracked.
 func (middleware *PublishTagsMiddleware) Confirm(
 	next amqpMiddleware.HandlerConfirm,
 ) (handler amqpMiddleware.HandlerConfirm) {
@@ -108,6 +119,8 @@ func (middleware *PublishTagsMiddleware) Confirm(
 	return handler
 }
 
+// Publish is invoked on amqp.Channel.Publish(), and increments out publish count if our
+// channel is in confirmation mode.
 func (middleware *PublishTagsMiddleware) Publish(
 	next amqpMiddleware.HandlerPublish,
 ) (handler amqpMiddleware.HandlerPublish) {
@@ -128,6 +141,8 @@ func (middleware *PublishTagsMiddleware) Publish(
 	return handler
 }
 
+// sends orphan confirmations to a single NotifyPublish listener, invoking all
+// middleware a normal call would make.
 func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
 	next amqpMiddleware.HandlerNotifyPublishEvent,
 	sentCount uint64,
@@ -158,6 +173,8 @@ func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
 	return sentCount
 }
 
+// NotifyPublishEvent is invoked when a channel passed to amqp.Channel.NotifyPublish is
+// sent an event.
 func (middleware *PublishTagsMiddleware) NotifyPublishEvent(
 	next amqpMiddleware.HandlerNotifyPublishEvent,
 ) (handler amqpMiddleware.HandlerNotifyPublishEvent) {
@@ -166,11 +183,21 @@ func (middleware *PublishTagsMiddleware) NotifyPublishEvent(
 	sent := middleware.tagOffset
 	first := true
 
+	// Create a send orphans function, capturing.the number of sent notifications.
 	sendOrphans := func() {
 		sent = middleware.notifyPublishEventOrphans(next, sent)
 	}
-	middleware.sendOrphans = append(middleware.sendOrphans, sendOrphans)
 
+	// Add this function to our orphan sender functions invoked on a restart.
+	// We use a closure here to release the lock as soon a possible, while maintaining
+	// the guarantees of defer.
+	func() {
+		middleware.sendOrphansLock.Lock()
+		middleware.sendOrphans = append(middleware.sendOrphans, sendOrphans)
+		defer middleware.sendOrphansLock.Unlock()
+	}()
+
+	// Return the middleware.
 	return func(event *amqpMiddleware.EventNotifyPublish) {
 		// If this is the first ever delivery we have received, update sent to
 		// be equal to it's current value + this delivery tag - 1.
@@ -182,12 +209,14 @@ func (middleware *PublishTagsMiddleware) NotifyPublishEvent(
 			first = false
 		}
 
+		// Apply the offset to the delivery tag.
 		event.Confirmation.DeliveryTag += middleware.tagOffset
 		next(event)
 		sent++
 	}
 }
 
+// NewPublishTagsMiddleware creates a new PublishTagsMiddleware.
 func NewPublishTagsMiddleware() *PublishTagsMiddleware {
 	count := uint64(0)
 	return &PublishTagsMiddleware{
