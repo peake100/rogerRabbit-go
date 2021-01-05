@@ -11,31 +11,41 @@ import (
 	"testing"
 )
 
-// Implements transport for *streadway.Channel.
+// transportChannel implements transport for *streadway.Channel.
 type transportChannel struct {
 	// The current, underlying channel object.
 	*streadway.Channel
 
-	// The roger connection we will use to re-establish dropped channels.
+	// rogerConn us the roger Connection we will use to re-establish dropped channels.
 	rogerConn *Connection
 
-	// Holds all registered handlers.
-	handlers           *channelHandlers
+	// handlers Holds all registered handlers and methods for registering new
+	// middleware.
+	handlers *channelHandlers
+
+	// defaultMiddlewares holds our default middlewares for testing purposes:
+	//	TODO: maybe turn this into a map and return a key when middleware is registered
+	// 	  so non-default middlewares can also be accessed for testing.
 	defaultMiddlewares *ChannelTestingDefaultMiddlewares
 
-	// Sync object for communicating with relays
+	// relaySync has all necessary sync objects for controlling the advancement of
+	// all registered eventRelays.
 	relaySync channelRelaySync
 
-	// Logger for the channel transport
+	// logger for the channel transport
 	logger zerolog.Logger
 }
 
+// cleanup implements transport and releases a WorkGroup that allows event relays
+// to fully close
 func (transport *transportChannel) cleanup() error {
 	// Release this lock so event processors can close.
 	defer transport.relaySync.shared.runSetup.Done()
 	return nil
 }
 
+// tryReconnect implements transport and makes a single attempt to re-establish a
+// channel.
 func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	// Wait for all event processors processing events from the previous channel to be
 	// ready.
@@ -74,33 +84,37 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	return nil
 }
 
-// Channel is a drop-in replacement for streadway/amqp.Channel, with the exception
-// that it automatically recovers from unexpected disconnections.
-//
-// Unless otherwise noted at the beginning of their descriptions, all methods work
-// exactly as their streadway counterparts, but will automatically re-attempt on
-// ErrClosed errors. All other errors will be returned as normal. Descriptions have
-// been copy-pasted from the streadway library for convenience.
-//
-// Unlike streadway/amqp.Channel, this channel will remain open when an error is
-// returned. Under the hood, the old, closed, channel will be replaced with a new,
-// fresh, one -- so operation will continue as normal.
+/*
+Channel represents an AMQP channel. Used as a context for valid message
+exchange.  Errors on methods with this Channel as a receiver means this channel
+should be discarded and a new channel established.
+
+---
+
+ROGER NOTE: Channel is a drop-in replacement for streadway/amqp.Channel, with the
+exception that it automatically recovers from unexpected disconnections.
+
+Unless otherwise noted at the beginning of their descriptions, all methods work
+exactly as their streadway counterparts, but will automatically re-attempt on
+ErrClosed errors. All other errors will be returned as normal. Descriptions have
+been copy-pasted from the streadway library for convenience.
+
+Unlike streadway/amqp.Channel, this channel will remain open when an error is
+returned. Under the hood, the old, closed, channel will be replaced with a new,
+fresh, one -- so operation will continue as normal.
+*/
+
 type Channel struct {
-	// A transport object that contains our current underlying connection.
+	// transportChannel is the the transport object that contains our current underlying
+	// connection.
 	transportChannel *transportChannel
 
-	// Manages the lifetime of the connection: such as automatic reconnects, connection
-	// status events, and closing.
+	// transportManager embedded object. Manages the lifetime of the connection: such as
+	// automatic reconnects, connection status events, and closing.
 	*transportManager
 }
 
 /*
-ROGER NOTE: Tags will bew continuous, even in the event of a re-connect. The channel
-will take care of matching up caller-facing delivery tags to the current channel's
-underlying tag.
-
---
-
 Confirm puts this channel into confirm mode so that the client can ensure all
 publishings have successfully been received by the server.  After entering this
 mode, the server will send a basic.ack or basic.nack message with the deliver
@@ -124,6 +138,11 @@ persisting the message if necessary.
 When NoWait is true, the client will not wait for a response.  A channel
 exception could occur if the server does not support this method.
 
+---
+
+ROGER NOTE: Tags will bew continuous, even in the event of a re-connect. The channel
+will take care of matching up caller-facing delivery tags to the current channel's
+underlying tag.
 */
 func (channel *Channel) Confirm(noWait bool) error {
 	args := &amqpMiddleware.ArgsConfirms{NoWait: noWait}
@@ -205,7 +224,6 @@ pause its publishings when `false` is sent on that channel.
 Note: RabbitMQ prefers to use TCP push back to control flow for all channels on
 a connection, so under high volume scenarios, it's wise to open separate
 Connections for publishings and deliveries.
-
 */
 func (channel *Channel) Flow(active bool) error {
 	args := &amqpMiddleware.ArgsFlow{
@@ -220,16 +238,6 @@ func (channel *Channel) Flow(active bool) error {
 }
 
 /*
-ROGER NOTE: Queues declared with a roger channel will be automatically re-declared
-upon channel disconnect recovery. Calling channel.QueueDelete() will remove the queue
-from the list of queues to be re-declared in case of a disconnect.
-
-This may cases where queues deleted by other producers / consumers are
-automatically re-declared. Future updates will introduce more control over when and
-how queues are re-declared on reconnection.
-
---
-
 QueueDeclare declares a queue to hold messages and deliver to consumers.
 Declaring creates a queue if it doesn't already exist, or ensures that an
 existing queue matches the same parameters.
@@ -281,6 +289,15 @@ or attempting to modify an existing queue from a different connection.
 When the error return value is not nil, you can assume the queue could not be
 declared with these parameters, and the channel will be closed.
 
+---
+
+ROGER NOTE: Queues declared with a roger channel will be automatically re-declared
+upon channel disconnect recovery. Calling channel.QueueDelete() will remove the queue
+from the list of queues to be re-declared in case of a disconnect.
+
+This may cases where queues deleted by other producers / consumers are
+automatically re-declared. Future updates will introduce more control over when and
+how queues are re-declared on reconnection.
 */
 func (channel *Channel) QueueDeclare(
 	name string,
@@ -500,6 +517,10 @@ from the server.  The purged message publishCount will not be meaningful. If the
 could not be deleted, a channel exception will be raised and the channel will
 be closed.
 
+---
+
+ROGER NOTE: Calling QueueDelete will remove a queue from the list of queues to be
+re-declared on reconnections of the underlying streadway/amqp.Channel object.
 */
 func (channel *Channel) QueueDelete(
 	name string, ifUnused, ifEmpty, noWait bool,
@@ -522,16 +543,6 @@ func (channel *Channel) QueueDelete(
 }
 
 /*
-ROGER NOTE: Exchanges declared with a roger channel will be automatically re-declared
-upon channel disconnect recovery. Calling channel.ExchangeDelete() will remove the
-exchange from the list of exchanges to be re-declared in case of a disconnect.
-
-This may cases where exchanges deleted by other producers / consumers are
-automatically re-declared. Future updates will introduce more control over when and
-how exchanges are re-declared on reconnection.
-
---
-
 ExchangeDeclare declares an exchange on the server. If the exchange does not
 already exist, the server will create it.  If the exchange exists, the server
 verifies that it is of the provided type, durability and auto-delete flags.
@@ -582,6 +593,16 @@ to respond to any exceptions.
 
 Optional amqp.Table of arguments that are specific to the server's implementation of
 the exchange can be sent for exchange types that require extra parameters.
+
+---
+
+ROGER NOTE: Exchanges declared with a roger channel will be automatically re-declared
+upon channel disconnect recovery. Calling channel.ExchangeDelete() will remove the
+exchange from the list of exchanges to be re-declared in case of a disconnect.
+
+This may cases where exchanges deleted by other producers / consumers are
+automatically re-declared. Future updates may introduce more control over when and
+how exchanges are re-declared on reconnection.
 */
 func (channel *Channel) ExchangeDeclare(
 	name, kind string, durable, autoDelete, internal, noWait bool, args Table,
@@ -609,13 +630,11 @@ func (channel *Channel) ExchangeDeclare(
 }
 
 /*
-
 ExchangeDeclarePassive is functionally and parametrically equivalent to
 ExchangeDeclare, except that it sets the "passive" attribute to true. A passive
 exchange is assumed by RabbitMQ to already exist, and attempting to connect to a
 non-existent exchange will cause RabbitMQ to throw an exception. This function
 can be used to detect the existence of an exchange.
-
 */
 func (channel *Channel) ExchangeDeclarePassive(
 	name, kind string, durable, autoDelete, internal, noWait bool, args Table,
@@ -650,6 +669,12 @@ not the sole owner of the exchange.
 When NoWait is true, do not wait for a server confirmation that the exchange has
 been deleted.  Failing to delete the channel could close the channel.  Add a
 NotifyClose listener to respond to these channel exceptions.
+
+---
+
+ROGER NOTE: Calling ExchangeDelete will remove am exchange from the list of exchanges
+or relevant bindings to be re-declared on reconnections of the underlying
+ streadway/amqp.Channel object.
 */
 func (channel *Channel) ExchangeDelete(
 	name string, ifUnused, noWait bool,
@@ -698,6 +723,10 @@ error occurs the channel will be closed.  Add a listener to NotifyClose to
 handle these errors.
 
 Optional arguments specific to the exchanges bound can also be specified.
+
+---
+
+ROGER NOTE: All bindings will be remembered and re-declared on reconnection events.
 */
 func (channel *Channel) ExchangeBind(
 	destination, key, source string, noWait bool, args Table,
@@ -731,6 +760,11 @@ NotifyClose to handle these errors.
 Optional arguments that are specific to the type of exchanges bound can also be
 provided.  These must match the same arguments specified in ExchangeBind to
 identify the binding.
+
+---
+
+ROGER NOTE: All relevant bindings will be removed from the list of bindings to declare
+on reconnect.
 */
 func (channel *Channel) ExchangeUnbind(
 	destination, key, source string, noWait bool, args Table,
@@ -783,6 +817,12 @@ confirmations start at 1.  Exit when all publishings are confirmed.
 When Publish does not return an error and the channel is in confirm mode, the
 internal counter for DeliveryTags with the first confirmation starts at 1.
 
+---
+
+ROGER NOTE: Roger Channel objects will expose a continuous set of confirmation and
+delivery tags to the user, even over disconnects, adjusting a messages confirmation tag
+to match it's actual underlying tag relative to the current channel is all handled for
+you.
 */
 func (channel *Channel) Publish(
 	exchange string,
@@ -824,6 +864,12 @@ When autoAck is true, the server will automatically acknowledge this message so
 you don't have to.  But if you are unable to fully process this message before
 the channel or connection is closed, the message will not get requeued.
 
+---
+
+ROGER NOTE: Roger Channel objects will expose a continuous set of confirmation and
+delivery tags to the user, even over disconnects, adjusting a messages confirmation tag
+to match it's actual underlying tag relative to the current channel is all handled for
+you.
 */
 func (channel *Channel) Get(
 	queue string,
@@ -850,13 +896,6 @@ func (channel *Channel) Get(
 }
 
 /*
-ROGER NOTE: Unlike the normal consume method, re-connections are handled automatically
-on channel errors. Delivery tags will appear un-interrupted to the consumer, and the
-roger channel will track the lineup of caller-facing delivery tags to the delivery
-tags of the current underlying channel.
-
---
-
 Consume immediately starts delivering queued messages.
 
 Begin receiving on the returned chan Delivery before any other operation on the
@@ -912,6 +951,12 @@ be dropped.
 When the consumer tag is cancelled, all inflight messages will be delivered until
 the returned chan is closed.
 
+---
+
+ROGER NOTE: Unlike the normal consume method, re-connections are handled automatically
+on channel errors. Delivery tags will appear un-interrupted to the consumer, and the
+roger channel will track the lineup of caller-facing delivery tags to the delivery
+tags of the current underlying channel.
 */
 func (channel *Channel) Consume(
 	queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args Table,
@@ -948,6 +993,16 @@ func (channel *Channel) Consume(
 }
 
 /*
+Ack acknowledges a delivery by its delivery tag when having been consumed with
+Channel.Consume or Channel.Get.
+
+Ack acknowledges all message received prior to the delivery tag when multiple
+is true.
+
+See also Delivery.Ack
+
+---
+
 ROGER NOTE: If a tag (or a tag range when acking multiple tags) is from a previously
 disconnected channel, a ErrCantAcknowledgeOrphans will be returned, which is a new error
 type specific to the Roger implementation.
@@ -956,16 +1011,6 @@ When acking multiple tags, it is possible that some of the tags will be from a c
 underlying channel, and therefore be orphaned, and some will be from the current
 channel, and therefore be successful. In such cases, the ErrCantAcknowledgeOrphans will
 still be returned, and can be checked for which tag ranges could not be acked.
-
---
-
-Ack acknowledges a delivery by its delivery tag when having been consumed with
-Channel.Consume or Channel.Get.
-
-Ack acknowledges all message received prior to the delivery tag when multiple
-is true.
-
-See also Delivery.Ack
 */
 func (channel *Channel) Ack(tag uint64, multiple bool) error {
 	args := &amqpMiddleware.ArgsAck{
@@ -981,6 +1026,14 @@ func (channel *Channel) Ack(tag uint64, multiple bool) error {
 }
 
 /*
+Nack negatively acknowledges a delivery by its delivery tag.  Prefer this
+method to notify the server that you were not able to process this delivery and
+it must be redelivered or dropped.
+
+See also Delivery.Nack
+
+---
+
 ROGER NOTE: If a tag (or a tag range when nacking multiple tags) is from a previously
 disconnected channel, a ErrCantAcknowledgeOrphans will be returned, which is a new error
 type specific to the Roger implementation.
@@ -990,13 +1043,6 @@ underlying channel, and therefore be orphaned, and some will be from the current
 channel, and therefore be successful. In such cases, the ErrCantAcknowledgeOrphans will
 still be returned, and can be checked for which tag ranges could not be nacked.
 
---
-
-Nack negatively acknowledges a delivery by its delivery tag.  Prefer this
-method to notify the server that you were not able to process this delivery and
-it must be redelivered or dropped.
-
-See also Delivery.Nack
 */
 func (channel *Channel) Nack(tag uint64, multiple bool, requeue bool) error {
 	args := &amqpMiddleware.ArgsNack{
@@ -1013,6 +1059,14 @@ func (channel *Channel) Nack(tag uint64, multiple bool, requeue bool) error {
 }
 
 /*
+Reject negatively acknowledges a delivery by its delivery tag.  Prefer Nack
+over Reject when communicating with a RabbitMQ server because you can Nack
+multiple messages, reducing the amount of protocol messages to exchange.
+
+See also Delivery.Reject
+
+---
+
 ROGER NOTE: If a tag (or a tag range when rejecting multiple tags) is from a previously
 disconnected channel, a ErrCantAcknowledgeOrphans will be returned, which is a new error
 type specific to the Roger implementation.
@@ -1021,14 +1075,6 @@ When nacking multiple tags, it is possible that some of the tags will be from a 
 underlying channel, and therefore be orphaned, and some will be from the current
 channel, and therefore be successful. In such cases, the ErrCantAcknowledgeOrphans will
 still be returned, and can be checked for which tag ranges could not be rejected.
-
---
-
-Reject negatively acknowledges a delivery by its delivery tag.  Prefer Nack
-over Reject when communicating with a RabbitMQ server because you can Nack
-multiple messages, reducing the amount of protocol messages to exchange.
-
-See also Delivery.Reject
 */
 func (channel *Channel) Reject(tag uint64, requeue bool) error {
 	args := &amqpMiddleware.ArgsReject{
@@ -1044,21 +1090,6 @@ func (channel *Channel) Reject(tag uint64, requeue bool) error {
 }
 
 /*
-ROGER NOTE: It is possible that if a channel is disconnected unexpectedly, there may
-have been confirmations in flight that did not reach the client. In cases where a
-channel connection is re-established, ant missing delivery tags will be reported nacked,
-but an additional DisconnectOrphan field will be set to `true`. It is possible that
-such messages DID reach the broker, but the Ack messages were lost in the disconnect
-event.
-
-It's also possible that an orphan is caused from a problem with publishing the message
-in the first place. For instance, publishing with the ``immediate`` flag set to false
-if the broker does not support it, or if a queue was not declared correctly. If you are
-getting a lot of orphaned messages, make sure to check what disconnect errors you are
-receiving.
-
---
-
 NotifyPublish registers a listener for reliable publishing. Receives from this
 chan for every publish after Channel.Confirm will be in order starting with
 DeliveryTag 1.
@@ -1080,6 +1111,20 @@ or Channel while confirms are in-flight.
 It's advisable to wait for all Confirmations to arrive before calling
 Channel.Close() or Connection.Close().
 
+---
+
+ROGER NOTE: It is possible that if a channel is disconnected unexpectedly, there may
+have been confirmations in flight that did not reach the client. In cases where a
+channel connection is re-established, ant missing delivery tags will be reported nacked,
+but an additional DisconnectOrphan field will be set to `true`. It is possible that
+such messages DID reach the broker, but the Ack messages were lost in the disconnect
+event.
+
+It's also possible that an orphan is caused from a problem with publishing the message
+in the first place. For instance, publishing with the ``immediate`` flag set to false
+if the broker does not support it, or if a queue was not declared correctly. If you are
+getting a lot of orphaned messages, make sure to check what disconnect errors you are
+receiving.
 */
 func (channel *Channel) NotifyPublish(
 	confirm chan dataModels.Confirmation,
@@ -1090,7 +1135,8 @@ func (channel *Channel) NotifyPublish(
 	return channel.transportChannel.handlers.notifyPublish(args)
 }
 
-// Closes confirmation tag channels for NotifyConfirm and NotifyConfirmOrOrphaned.
+// notifyConfirmCloseConfirmChannels closes confirmation tag channels for NotifyConfirm
+// and NotifyConfirmOrOrphaned.
 func notifyConfirmCloseConfirmChannels(tagChannels ...chan uint64) {
 mainLoop:
 	// Iterate over the channels and close them. We'll need to make sure we don't close
@@ -1108,6 +1154,8 @@ mainLoop:
 	}
 }
 
+// notifyConfirmHandleAckAndNack handles splitting confirmations between the ack and
+// nack channels.
 func notifyConfirmHandleAckAndNack(
 	confirmation dataModels.Confirmation, ack, nack chan uint64, logger zerolog.Logger,
 ) {
@@ -1133,16 +1181,16 @@ func notifyConfirmHandleAckAndNack(
 }
 
 /*
-ROGER NOTE: the nack channel will receive both tags that were explicitly nacked by the
-server AND tags that were orphaned due to a connection loss. If you wish to handle
-Orphaned tags separately, use the new method NotifyConfirmOrOrphaned.
-
---
-
 NotifyConfirm calls NotifyPublish and starts a goroutine sending
 ordered Ack and Nack DeliveryTag to the respective channels.
 
 For strict ordering, use NotifyPublish instead.
+
+---
+
+ROGER NOTE: the nack channel will receive both tags that were explicitly nacked by the
+server AND tags that were orphaned due to a connection loss. If you wish to handle
+Orphaned tags separately, use the new method NotifyConfirmOrOrphaned.
 */
 func (channel *Channel) NotifyConfirm(
 	ack, nack chan uint64,
@@ -1185,6 +1233,8 @@ func (channel *Channel) NotifyConfirmOrOrphaned(
 	return ack, nack, orphaned
 }
 
+// runNotifyConfirmOrOrphaned should be launched as a goroutine and handles sending
+// NotifyConfirmOrOrphaned to the caller.
 func (channel *Channel) runNotifyConfirmOrOrphaned(
 	ack, nack, orphaned chan uint64,
 	confirmEvents <-chan dataModels.Confirmation,
@@ -1211,12 +1261,6 @@ func (channel *Channel) runNotifyConfirmOrOrphaned(
 }
 
 /*
-ROGER NOTE: Because this channel survives over unexpected server disconnects, it is
-possible that returns in-flight to the client from the broker will be dropped, and
-therefore will be missed. You can subscribe to disconnection events through
-
---
-
 NotifyReturn registers a listener for basic.return methods.  These can be sent
 from the server when a publish is undeliverable either from the mandatory or
 immediate flags.
@@ -1224,6 +1268,11 @@ immediate flags.
 A return struct has a copy of the Publishing along with some error
 information about why the publishing failed.
 
+---
+
+ROGER NOTE: Because this channel survives over unexpected server disconnects, it is
+possible that returns in-flight to the client from the broker will be dropped, and
+therefore will be missed. You can subscribe to disconnection events through.
 */
 func (channel *Channel) NotifyReturn(returns chan Return) chan Return {
 	relay := &notifyReturnRelay{
@@ -1244,7 +1293,6 @@ from the server when a queue is deleted or when consuming from a mirrored queue
 where the master has just failed (and was moved to another node).
 
 The subscription tag is returned to the listener.
-
 */
 func (channel *Channel) NotifyCancel(cancellations chan string) chan string {
 	relay := &notifyCancelRelay{
@@ -1261,15 +1309,6 @@ func (channel *Channel) NotifyCancel(cancellations chan string) chan string {
 }
 
 /*
-ROGER NOTE: Flow notification will be received when an unexpected disconnection occurs.
-If the broker disconnects, a ``false`` notification will be sent unless the last
-notification from the broker was ``false``, and when the connection is re-acquired, a
-``true`` notification will be sent before resuming relaying notification from the
-broker. This means that NotifyFlow can be a useful tool for dealing with disconnects,
-even when using RabbitMQ.
-
---
-
 NotifyFlow registers a listener for basic.flow methods sent by the server.
 When `false` is sent on one of the listener channels, all publishers should
 pause until a `true` is sent.
@@ -1301,6 +1340,14 @@ including acknowledgments from deliveries.  Use different Connections if you
 desire to interleave consumers and producers in the same process to avoid your
 basic.ack messages from getting rate limited with your basic.publish messages.
 
+---
+
+ROGER NOTE: Flow notification will be received when an unexpected disconnection occurs.
+If the broker disconnects, a ``false`` notification will be sent unless the last
+notification from the broker was ``false``, and when the connection is re-acquired, a
+``true`` notification will be sent before resuming relaying notification from the
+broker. This means that NotifyFlow can be a useful tool for dealing with disconnects,
+even when using RabbitMQ.
 */
 func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool {
 	relay := &notifyFlowRelay{
@@ -1327,15 +1374,6 @@ func panicTransactionMessage(methodName string) error {
 }
 
 /*
-ROGER NOTE: transactions are not currently implemented, and calling any of the Tx
-methods will result in a panic. The author of this library is not familiar with the
-intricacies of amqp transactions, and how a channel in a transaction state should
-behave over a disconnect.
-
-PRs to add this functionality are welcome.
-
---
-
 Tx puts the channel into transaction mode on the server.  All publishings and
 acknowledgments following this method will be atomically committed or rolled
 back for a single queue.  Call either Channel.TxCommit or Channel.TxRollback to
@@ -1350,59 +1388,65 @@ the channel is in a transaction is not defined.
 Once a channel has been put into transaction mode, it cannot be taken out of
 transaction mode.  Use a different channel for non-transactional semantics.
 
+---
+
+ROGER NOTE: transactions are not currently implemented, and calling any of the Tx
+methods will result in a panic. The author of this library is not familiar with the
+intricacies of amqp transactions, and how a channel in a transaction state should
+behave over a disconnect.
+
+PRs to add this functionality are welcome.
 */
 func (channel *Channel) Tx() error {
 	panic(panicTransactionMessage("Tx"))
 }
 
 /*
+TxCommit atomically commits all publishings and acknowledgments for a single
+queue and immediately start a new transaction.
+
+Calling this method without having called Channel.Tx is an error.
+
+---
+
 ROGER NOTE: transactions are not currently implemented, and calling any of the Tx
 methods will result in a panic. The author of this library is not familiar with the
 intricacies of amqp transactions, and how a channel in a transaction state should
 behave over a disconnect.
 
 PRs to add this functionality are welcome.
-
---
-
-TxCommit atomically commits all publishings and acknowledgments for a single
-queue and immediately start a new transaction.
-
-Calling this method without having called Channel.Tx is an error.
-
 */
 func (channel *Channel) TxCommit() error {
 	panic(panicTransactionMessage("TxCommit"))
 }
 
 /*
+TxRollback atomically rolls back all publishings and acknowledgments for a
+single queue and immediately start a new transaction.
+
+Calling this method without having called Channel.Tx is an error.
+
 ROGER NOTE: transactions are not currently implemented, and calling any of the Tx
 methods will result in a panic. The author of this library is not familiar with the
 intricacies of amqp transactions, and how a channel in a transaction state should
 behave over a disconnect.
 
 PRs to add this functionality are welcome.
-
---
-
-TxRollback atomically rolls back all publishings and acknowledgments for a
-single queue and immediately start a new transaction.
-
-Calling this method without having called Channel.Tx is an error.
-
 */
 func (channel *Channel) TxRollback() error {
 	panic(panicTransactionMessage("TxRollback"))
 }
 
 /*
-Namespace object with methods for registering middleware. Middleware will be called
-in the order it is registered.
+Middleware is a namespace object with methods for registering middleware. Middleware
+will be called in the order it is registered.
 */
 func (channel *Channel) Middleware() *channelHandlers {
 	return channel.transportChannel.handlers
 }
 
+// ChannelTestingDefaultMiddlewares holds default middleware for inspection during
+// tests.
 type ChannelTestingDefaultMiddlewares struct {
 	QoS     *defaultMiddlewares.QoSMiddleware
 	Flow    *defaultMiddlewares.FlowMiddleware
@@ -1414,27 +1458,31 @@ type ChannelTestingDefaultMiddlewares struct {
 	DeliveryTags *defaultMiddlewares.DeliveryTagsMiddleware
 }
 
-// Holds testing information and methods for channels.
+// ChannelTesting exposes a number of methods designed for testing.
 type ChannelTesting struct {
-	*transportTesting
+	// TransportTesting embedded common methods between Connections and Channels.
+	*TransportTesting
 
+	// channel is the roger Channel to be tested.
 	channel *Channel
-	// The middleware objects registered to the channel during channel creation.
+
+	// DefaultMiddlewares holds middleware objects registered to the channel during
+	// channel creation.
 	DefaultMiddlewares *ChannelTestingDefaultMiddlewares
 }
 
-// Returns a tester for the RogerConnection feeding this channel.
-func (tester *ChannelTesting) ConnTest() *transportTesting {
+// ConnTest returns a tester for the RogerConnection feeding this channel.
+func (tester *ChannelTesting) ConnTest() *TransportTesting {
 	blocks := int32(0)
 
-	return &transportTesting{
+	return &TransportTesting{
 		t:       tester.t,
 		manager: tester.channel.transportChannel.rogerConn.transportManager,
 		blocks:  &blocks,
 	}
 }
 
-// Returns the current underlying amqp/streadway channel being used.
+// UnderlyingChannel returns the current underlying streadway/amqp.Channel being used.
 func (tester *ChannelTesting) UnderlyingChannel() *streadway.Channel {
 	if tester.channel.transportChannel == nil {
 		return nil
@@ -1442,22 +1490,23 @@ func (tester *ChannelTesting) UnderlyingChannel() *streadway.Channel {
 	return tester.channel.transportChannel.Channel
 }
 
-// Returns the current underlying amqp/streadway connection being used.
+// UnderlyingConnection returns the current underlying streadway/amqp.Connection being
+// used to feed this Channel.
 func (tester *ChannelTesting) UnderlyingConnection() *streadway.Connection {
 	return tester.channel.transportChannel.rogerConn.transportConn.Connection
 }
 
-// Returns the current underlying amqp/streadway connection being used.
+// ReconnectionCount returns the number of times this channel has been reconnected.
 func (tester *ChannelTesting) ReconnectionCount() uint64 {
 	return tester.channel.reconnectCount
 }
 
-// Test methods for the transport
+// Test returns an object with methods for testing the Channel.
 func (channel *Channel) Test(t *testing.T) *ChannelTesting {
 	blocks := int32(0)
 
 	chanTester := &ChannelTesting{
-		transportTesting: &transportTesting{
+		TransportTesting: &TransportTesting{
 			t:       t,
 			manager: channel.transportManager,
 			blocks:  &blocks,

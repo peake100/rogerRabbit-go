@@ -4,7 +4,7 @@ import streadway "github.com/streadway/amqp"
 
 type ConnectionTesting struct {
 	conn *Connection
-	transportTesting
+	TransportTesting
 }
 
 // Returns the current underlying streadway/amqp connection object.

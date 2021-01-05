@@ -179,7 +179,7 @@ func (conn *Connection) Test(t *testing.T) *ConnectionTesting {
 	blocks := int32(0)
 	return &ConnectionTesting{
 		conn: conn,
-		transportTesting: transportTesting{
+		TransportTesting: TransportTesting{
 			t:       t,
 			manager: conn.transportManager,
 			blocks:  &blocks,

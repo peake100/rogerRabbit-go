@@ -54,7 +54,7 @@ func (signaler *reconnectSignaler) WaitOnReconnect(ctx context.Context) {
 }
 
 // Provides testing methods for testing channels and connections.
-type transportTesting struct {
+type TransportTesting struct {
 	t       *testing.T
 	manager *transportManager
 	// The number of times a connection has been blocked from being acquired.
@@ -62,24 +62,24 @@ type transportTesting struct {
 }
 
 // The lock which controls access to the channel / connection
-func (tester *transportTesting) TransportLock() *sync.RWMutex {
+func (tester *TransportTesting) TransportLock() *sync.RWMutex {
 	return tester.manager.transportLock
 }
 
 // Block a transport from reconnecting. If too few calls to UnblockReconnect() are
 // made, the block will be removed at the end of the test.
-func (tester *transportTesting) BlockReconnect() {
+func (tester *TransportTesting) BlockReconnect() {
 	atomic.AddInt32(tester.blocks, 1)
 	tester.manager.transportLock.RLock()
 }
 
 // Unblock the transport from reconnecting after calling BlockReconnect()
-func (tester *transportTesting) UnblockReconnect() {
+func (tester *TransportTesting) UnblockReconnect() {
 	defer tester.manager.transportLock.RUnlock()
 	atomic.AddInt32(tester.blocks, -1)
 }
 
-func (tester *transportTesting) cleanup() {
+func (tester *TransportTesting) cleanup() {
 	blocks := *tester.blocks
 	for i := int32(0); i < blocks; i++ {
 		tester.manager.transportLock.RUnlock()
@@ -88,7 +88,7 @@ func (tester *transportTesting) cleanup() {
 
 // Returns a signaler that can be used to wait on the next reconnection event of the
 // transport.
-func (tester *transportTesting) SignalOnReconnect() *reconnectSignaler {
+func (tester *TransportTesting) SignalOnReconnect() *reconnectSignaler {
 	// Signal that the connection has been re-established
 	reconnected := make(chan struct{})
 
@@ -111,7 +111,7 @@ func (tester *transportTesting) SignalOnReconnect() *reconnectSignaler {
 }
 
 // Closes the underlying transport to signal a disconnect.
-func (tester *transportTesting) DisconnectTransport() {
+func (tester *TransportTesting) DisconnectTransport() {
 	err := tester.manager.transport.Close()
 	if !assert.NoError(tester.t, err, "close underlying transport") {
 		tester.t.FailNow()
@@ -121,7 +121,7 @@ func (tester *transportTesting) DisconnectTransport() {
 // Force a disconnect of the channel or connection and waits for a reconnection to
 // occur or ctx to cancel. If a nil context is passed, a context with a 3-second timeout
 // will be used instead
-func (tester *transportTesting) ForceReconnect(ctx context.Context) {
+func (tester *TransportTesting) ForceReconnect(ctx context.Context) {
 	if ctx == nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
@@ -442,8 +442,8 @@ func (manager *transportManager) IsClosed() bool {
 }
 
 // Test methods for the transport
-func (manager *transportManager) Test(t *testing.T) *transportTesting {
-	return &transportTesting{
+func (manager *transportManager) Test(t *testing.T) *TransportTesting {
+	return &TransportTesting{
 		t:       t,
 		manager: manager,
 	}
