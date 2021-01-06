@@ -7,24 +7,25 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
-// Relays Deliveries across channel disconnects.
+// notifyPublishRelay implements eventRelay for Channel.NotifyPublish.
 type notifyPublishRelay struct {
-	// Delivery channel to pass deliveries back to the client.
+	// CallerConfirmations is the Delivery channel to pass deliveries back to the
+	// client.
 	CallerConfirmations chan<- dataModels.Confirmation
 
-	// The current delivery channel coming from the broker.
+	// brokerConfirmations is the current delivery channel coming from the broker.
 	brokerConfirmations <-chan streadway.Confirmation
 
-	// Middleware for notify publish.
+	// middleware is Middleware for notify publish.
 	middleware []amqpMiddleware.NotifyPublishEvent
-	// Handler for notify publish events.
+	// handler for notify publish events.
 	handler amqpMiddleware.HandlerNotifyPublishEvent
 
-	// Logger
+	// logger is the Logger for our event relay.
 	logger zerolog.Logger
 }
 
-// Creates the innermost handler for the event send
+// baseHandler creates the innermost handler for the event send.
 func (relay *notifyPublishRelay) baseHandler() (
 	handler amqpMiddleware.HandlerNotifyPublishEvent,
 ) {
@@ -33,12 +34,15 @@ func (relay *notifyPublishRelay) baseHandler() (
 	}
 }
 
+// Logger implements eventRelay and sets up our logger.
 func (relay *notifyPublishRelay) Logger(parent zerolog.Logger) zerolog.Logger {
 	logger := parent.With().Str("EVENT_TYPE", "NOTIFY_PUBLISH").Logger()
 	relay.logger = logger
 	return relay.logger
 }
 
+// SetupForRelayLeg implements eventRelay, and sets up a new source event channel from
+// streadway/amqp.Channel.NotifyPublish.
 func (relay *notifyPublishRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
 	// Get our broker channel. We will make it with the same capacity of the channel the
 	// caller sent into it.
@@ -50,6 +54,7 @@ func (relay *notifyPublishRelay) SetupForRelayLeg(newChannel *streadway.Channel)
 	return nil
 }
 
+// logConfirmation logs a confirmation message in debug mode.
 func (relay *notifyPublishRelay) logConfirmation(confirmation dataModels.Confirmation) {
 	relay.logger.Debug().
 		Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
@@ -58,6 +63,8 @@ func (relay *notifyPublishRelay) logConfirmation(confirmation dataModels.Confirm
 		Msg("publish confirmation event sent")
 }
 
+// RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyPublish
+// events to the original caller.
 func (relay *notifyPublishRelay) RunRelayLeg() (done bool, err error) {
 	// Range over the confirmations from the broker.
 	for brokerConf := range relay.brokerConfirmations {
@@ -76,11 +83,13 @@ func (relay *notifyPublishRelay) RunRelayLeg() (done bool, err error) {
 	return false, nil
 }
 
+// Shutdown implements eventRelay, and closes the caller-facing event channel.
 func (relay *notifyPublishRelay) Shutdown() error {
 	close(relay.CallerConfirmations)
 	return nil
 }
 
+// newNotifyPublishRelay creates a new notifyPublishRelay.
 func newNotifyPublishRelay(
 	callerConfirmations chan<- dataModels.Confirmation,
 	middleware []amqpMiddleware.NotifyPublishEvent,

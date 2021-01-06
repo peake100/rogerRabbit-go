@@ -5,7 +5,7 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
-// Relays return notification to the cl
+// notifyPublishRelay implements eventRelay for Channel.NotifyReturn.
 type notifyReturnRelay struct {
 	// The channel we are relaying returns to from the broker
 	CallerReturns chan<- Return
@@ -17,12 +17,15 @@ type notifyReturnRelay struct {
 	logger zerolog.Logger
 }
 
+// Logger implements eventRelay and sets up our logger.
 func (relay *notifyReturnRelay) Logger(parent zerolog.Logger) zerolog.Logger {
 	logger := parent.With().Str("EVENT_TYPE", "NOTIFY_RETURN").Logger()
 	relay.logger = logger
 	return relay.logger
 }
 
+// SetupForRelayLeg implements eventRelay, and sets up a new source event channel from
+// streadway/amqp.Channel.NotifyReturn.
 func (relay *notifyReturnRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
 	brokerChannel := make(chan Return, cap(relay.CallerReturns))
 	relay.brokerReturns = brokerChannel
@@ -30,6 +33,8 @@ func (relay *notifyReturnRelay) SetupForRelayLeg(newChannel *streadway.Channel) 
 	return nil
 }
 
+// RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyReturn
+// events to the original caller.
 func (relay *notifyReturnRelay) RunRelayLeg() (done bool, err error) {
 	for thisReturn := range relay.brokerReturns {
 		if relay.logger.Debug().Enabled() {
@@ -47,6 +52,7 @@ func (relay *notifyReturnRelay) RunRelayLeg() (done bool, err error) {
 	return false, nil
 }
 
+// Shutdown implements eventRelay, and closes the caller-facing event channel.
 func (relay *notifyReturnRelay) Shutdown() error {
 	defer close(relay.CallerReturns)
 	return nil

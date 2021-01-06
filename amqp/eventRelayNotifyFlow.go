@@ -6,31 +6,36 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
+// notifyFlowRelay implements eventRelay for Channel.NotifyFlow.
 type notifyFlowRelay struct {
-	// Context of the current channel
+	// ChannelCtx is the context of the current channel
 	ChannelCtx context.Context
 
-	// The channel we are relaying returns to from the broker
+	// CallerFlow is the channel we are relaying returns to from the broker
 	CallerFlow chan<- bool
 
-	// The current broker channel we are pulling from.
+	// brokerFlow is the current broker channel we are pulling from.
 	brokerFlow <-chan bool
 
-	// Whether this relay has been setup before.
+	// setup is whether this relay has been setup before.
 	setup bool
-	// The last notification from the broker.
-	lastNotification bool
 
-	// Logger
+	// lastEvent is the value of the last event sent from the broker.
+	lastEvent bool
+
+	// logger is the Logger for this relay.
 	logger zerolog.Logger
 }
 
+// Logger implements eventRelay and sets up our logger.
 func (relay *notifyFlowRelay) Logger(parent zerolog.Logger) zerolog.Logger {
 	logger := parent.With().Str("EVENT_TYPE", "NOTIFY_CANCEL").Logger()
 	relay.logger = logger
 	return relay.logger
 }
 
+// SetupForRelayLeg implements eventRelay, and sets up a new source event channel from
+// streadway/amqp.Channel.NotifyFlow.
 func (relay *notifyFlowRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
 	// Check if this is our initial setup
 	if relay.setup {
@@ -43,7 +48,7 @@ func (relay *notifyFlowRelay) SetupForRelayLeg(newChannel *streadway.Channel) er
 	}
 
 	// Set the last notification to true.
-	relay.lastNotification = true
+	relay.lastEvent = true
 
 	brokerChannel := make(chan bool, cap(relay.CallerFlow))
 	relay.brokerFlow = brokerChannel
@@ -52,6 +57,8 @@ func (relay *notifyFlowRelay) SetupForRelayLeg(newChannel *streadway.Channel) er
 	return nil
 }
 
+// RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyFlow
+// events to the original caller.
 func (relay *notifyFlowRelay) RunRelayLeg() (done bool, err error) {
 	for thisFlow := range relay.brokerFlow {
 		if relay.logger.Debug().Enabled() {
@@ -61,20 +68,21 @@ func (relay *notifyFlowRelay) RunRelayLeg() (done bool, err error) {
 		}
 
 		relay.CallerFlow <- thisFlow
-		relay.lastNotification = thisFlow
+		relay.lastEvent = thisFlow
 	}
 
 	// Turn flow to false on broker disconnection if the roger channel has not been
 	// closed and the last notification sent was a ``true`` (we don't want to send two
 	// falses in a row).
-	if relay.ChannelCtx.Err() == nil && relay.lastNotification {
+	if relay.ChannelCtx.Err() == nil && relay.lastEvent {
 		relay.CallerFlow <- false
-		relay.lastNotification = false
+		relay.lastEvent = false
 	}
 
 	return false, nil
 }
 
+// Shutdown implements eventRelay, and closes the caller-facing event channel.
 func (relay *notifyFlowRelay) Shutdown() error {
 	defer close(relay.CallerFlow)
 	return nil

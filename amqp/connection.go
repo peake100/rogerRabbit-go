@@ -8,22 +8,27 @@ import (
 	"testing"
 )
 
-// Implements transport for *streadway.Connection.
+// transportConnection implements transport for streadway/amqp.Connection.
 type transportConnection struct {
+	// Embedded streadway/amqp.Connection
 	*streadway.Connection
+
+	// dialURL is the address to dial for the broker.
 	dialURL string
 
-	// The config option passed to this connection
+	// dialConfig is the Config passed to our constructor method.
 	dialConfig *Config
 
-	// Teh streadway config extracted from the settings on dialConfig
+	// streadwayConfig is extracted from the settings on dialConfig.
 	streadwayConfig *streadway.Config
 }
 
+// cleanup implements transportManager. Does nothing for transportConnection.
 func (transport *transportConnection) cleanup() error {
 	return nil
 }
 
+// tryReconnect implements transportManager and tries to re-dial the broker one time.
 func (transport *transportConnection) tryReconnect(ctx context.Context) error {
 	conn, err := streadway.DialConfig(transport.dialURL, *transport.streadwayConfig)
 	if err != nil {
@@ -34,8 +39,16 @@ func (transport *transportConnection) tryReconnect(ctx context.Context) error {
 	return nil
 }
 
-// A robust connection acts as a normal connection except that is automatically
-// re-dials the broker when the underlying connection is lost.
+// Connection manages the serialization and deserialization of frames from IO
+// and dispatches the frames to the appropriate channel.  All RPC methods and
+// asynchronous Publishing, Delivery, Ack, Nack and Return messages are
+// multiplexed on this channel.  There must always be active receivers for
+// every asynchronous message on this connection.
+//
+// ---
+//
+// ROGER NOTE: A robust connection acts as a normal connection except that is
+// automatically re-dials the broker when the underlying connection is lost.
 //
 // Unless otherwise noted at the beginning of their descriptions, all methods work
 // exactly as their streadway counterparts, but will automatically re-attempt on
@@ -46,15 +59,17 @@ func (transport *transportConnection) tryReconnect(ctx context.Context) error {
 // automatically suppress and re-establish connection for, but in these early days,
 // ErrClosed seems like a good place to start.
 type Connection struct {
-	// A transport object that contains our current underlying connection.
+	// transportConn is a transport object that contains our current underlying
+	// connection.
 	transportConn *transportConnection
 
-	// Manages the lifetime of the connection: such as automatic reconnects, connection
-	// status events, and closing.
+	// transportManager manages the lifetime of the connection: such as automatic
+	// reconnects, connection status events, and closing.
 	*transportManager
 }
 
-// Gets a streadway channelConsume from the current connection.
+// getStreadwayChannel gets a streadway/amqp.Channel from the current underlying
+// connection.
 func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 	channel *streadway.Channel, err error,
 ) {
@@ -70,6 +85,7 @@ func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 	return channel, err
 }
 
+// newChannelApplyDefaultMiddleware applies the default middleware to a new Channel.
 func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 	if config.NoDefaultMiddleware {
 		return
@@ -129,15 +145,14 @@ func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 }
 
 /*
-ROGER NOTE: Unlike the normal channels, roger channels will automatically reconnect on
-all errors until Channel.Close() is called.
-
---
-
 Channel opens a unique, concurrent server channelConsume to process the bulk of AMQP
 messages.  Any error from methods on this receiver will render the receiver
 invalid and a new Channel should be opened.
 
+---
+
+ROGER NOTE: Unlike the normal channels, roger channels will automatically reconnect on
+all errors until Channel.Close() is called.
 */
 func (conn *Connection) Channel() (*Channel, error) {
 	transportChan := &transportChannel{
@@ -175,6 +190,8 @@ func (conn *Connection) Channel() (*Channel, error) {
 	return rogerChannel, nil
 }
 
+// Test returns a ConnectionTesting object with a number of helper methods for testing
+// Connection objects.
 func (conn *Connection) Test(t *testing.T) *ConnectionTesting {
 	blocks := int32(0)
 	return &ConnectionTesting{
@@ -187,7 +204,7 @@ func (conn *Connection) Test(t *testing.T) *ConnectionTesting {
 	}
 }
 
-// Get a new roger connection for a given url and connection config.
+// newConnection gets a new roger connection for a given url and connection config.
 func newConnection(url string, config *Config) *Connection {
 	streadwayConfig := &streadway.Config{
 		SASL:            config.SASL,

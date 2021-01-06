@@ -5,42 +5,88 @@ import (
 	"sync"
 )
 
+// channelHandlers hols a Channel's method handlers with applied middleware.
 type channelHandlers struct {
-	// METHODS MIDDLEWARE
+	// LIFETIME HANDLERS
+	// ----------------
 
+	// reconnect is the handler invoked on a reconnection event.
 	reconnect amqpMiddleware.HandlerReconnect
 
+	// MODE HANDLERS
+	// -------------
+
+	// qos is the handler for Channel.Qos
 	qos     amqpMiddleware.HandlerQoS
+	// flow is the handler for Channel.Flow
 	flow    amqpMiddleware.HandlerFlow
+	// confirm is the handler for Channel.Confirm
 	confirm amqpMiddleware.HandlerConfirm
 
+	// QUEUE HANDLERS
+	// --------------
+
+	// queueDeclare is the handler for Channel.QueueDeclare
 	queueDeclare amqpMiddleware.HandlerQueueDeclare
+	// queueDelete is the handler for Channel.QueueDelete
 	queueDelete  amqpMiddleware.HandlerQueueDelete
+	// queueBind is the handler for Channel.QueueBind
 	queueBind    amqpMiddleware.HandlerQueueBind
+	// queueUnbind is the handler for Channel.QueueUnbind
 	queueUnbind  amqpMiddleware.HandlerQueueUnbind
 
+	// EXCHANGE HANDLERS
+	// -----------------
+
+	// exchangeDeclare is the handler for Channel.ExchangeDeclare
 	exchangeDeclare amqpMiddleware.HandlerExchangeDeclare
+	// exchangeDelete is the handler for Channel.ExchangeDelete
 	exchangeDelete  amqpMiddleware.HandlerExchangeDelete
+	// exchangeBind is the handler for Channel.ExchangeBind
 	exchangeBind    amqpMiddleware.HandlerExchangeBind
+	// exchangeUnbind is the handler for Channel.ExchangeUnbind
 	exchangeUnbind  amqpMiddleware.HandlerExchangeUnbind
 
+	// NOTIFY HANDLERS
+	// ---------------
+
+	// notifyPublish is the handler for Channel.NotifyPublish
 	notifyPublish amqpMiddleware.HandlerNotifyPublish
 
+	// MESSAGING HANDLERS
+	// ------------------
+
+	// publish is the handler for Channel.Publish
 	publish amqpMiddleware.HandlerPublish
+	// get is the handler for Channel.Get
 	get     amqpMiddleware.HandlerGet
 
+	// ACK HANDLERS
+	// ------------
+
+	// ack is the handler for Channel.Ack
 	ack    amqpMiddleware.HandlerAck
+	// nack is the handler for Channel.Nack
 	nack   amqpMiddleware.HandlerNack
+	// reject is the handler for Channel.Reject
 	reject amqpMiddleware.HandlerReject
 
-	// EVENTS MIDDLEWARE
+	// EVENT MIDDLEWARE
+	// ----------------
 
+	// notifyPublishEventMiddleware is middleware to be registered on a
+	// notifyPublishRelay.
 	notifyPublishEventMiddleware []amqpMiddleware.NotifyPublishEvent
+	// consumeEventMiddleware is middleware to be registered on a
+	// consumeRelay.
 	consumeEventMiddleware       []amqpMiddleware.ConsumeEvent
 
+	// lock should be acquired when adding a middleware to a handler to avoid race
+	// conditions.
 	lock *sync.RWMutex
 }
 
+// AddReconnect adds a new middleware to be invoked on a Channel reconnection event.
 func (handlers *channelHandlers) AddReconnect(middleware amqpMiddleware.Reconnect) {
 	handlers.lock.Lock()
 	defer handlers.lock.Unlock()
@@ -48,6 +94,7 @@ func (handlers *channelHandlers) AddReconnect(middleware amqpMiddleware.Reconnec
 	handlers.reconnect = middleware(handlers.reconnect)
 }
 
+// AddQoS adds a new middleware to be invoked on Channel.Qos method calls.
 func (handlers *channelHandlers) AddQoS(
 	middleware amqpMiddleware.QoS,
 ) {
@@ -57,6 +104,7 @@ func (handlers *channelHandlers) AddQoS(
 	handlers.qos = middleware(handlers.qos)
 }
 
+// AddFlow adds a new middleware to be invoked on Channel.Flow method calls.
 func (handlers *channelHandlers) AddFlow(
 	middleware amqpMiddleware.Flow,
 ) {
@@ -66,6 +114,7 @@ func (handlers *channelHandlers) AddFlow(
 	handlers.flow = middleware(handlers.flow)
 }
 
+// AddConfirm adds a new middleware to be invoked on Channel.Confirm method calls.
 func (handlers *channelHandlers) AddConfirm(
 	middleware amqpMiddleware.Confirm,
 ) {
@@ -75,6 +124,8 @@ func (handlers *channelHandlers) AddConfirm(
 	handlers.confirm = middleware(handlers.confirm)
 }
 
+// AddQueueDeclare adds a new middleware to be invoked on Channel.QueueDeclare method
+// calls.
 func (handlers *channelHandlers) AddQueueDeclare(
 	middleware amqpMiddleware.QueueDeclare,
 ) {
@@ -84,6 +135,8 @@ func (handlers *channelHandlers) AddQueueDeclare(
 	handlers.queueDeclare = middleware(handlers.queueDeclare)
 }
 
+// AddQueueDelete adds a new middleware to be invoked on Channel.QueueDelete method
+// calls.
 func (handlers *channelHandlers) AddQueueDelete(middleware amqpMiddleware.QueueDelete) {
 	handlers.lock.Lock()
 	defer handlers.lock.Unlock()
@@ -91,6 +144,8 @@ func (handlers *channelHandlers) AddQueueDelete(middleware amqpMiddleware.QueueD
 	handlers.queueDelete = middleware(handlers.queueDelete)
 }
 
+// AddQueueBind adds a new middleware to be invoked on Channel.QueueBind method
+// calls.
 func (handlers *channelHandlers) AddQueueBind(middleware amqpMiddleware.QueueBind) {
 	handlers.lock.Lock()
 	defer handlers.lock.Unlock()
@@ -98,6 +153,8 @@ func (handlers *channelHandlers) AddQueueBind(middleware amqpMiddleware.QueueBin
 	handlers.queueBind = middleware(handlers.queueBind)
 }
 
+// AddQueueUnbind adds a new middleware to be invoked on Channel.QueueUnbind method
+// calls.
 func (handlers *channelHandlers) AddQueueUnbind(middleware amqpMiddleware.QueueUnbind) {
 	handlers.lock.Lock()
 	defer handlers.lock.Unlock()
@@ -105,6 +162,8 @@ func (handlers *channelHandlers) AddQueueUnbind(middleware amqpMiddleware.QueueU
 	handlers.queueUnbind = middleware(handlers.queueUnbind)
 }
 
+// AddExchangeDeclare adds a new middleware to be invoked on Channel.ExchangeDeclare
+// method calls.
 func (handlers *channelHandlers) AddExchangeDeclare(
 	middleware amqpMiddleware.ExchangeDeclare,
 ) {
@@ -114,6 +173,8 @@ func (handlers *channelHandlers) AddExchangeDeclare(
 	handlers.exchangeDeclare = middleware(handlers.exchangeDeclare)
 }
 
+// AddExchangeDelete adds a new middleware to be invoked on Channel.ExchangeDelete
+// method calls.
 func (handlers *channelHandlers) AddExchangeDelete(
 	middleware amqpMiddleware.ExchangeDelete,
 ) {
@@ -123,6 +184,8 @@ func (handlers *channelHandlers) AddExchangeDelete(
 	handlers.exchangeDelete = middleware(handlers.exchangeDelete)
 }
 
+// AddExchangeBind adds a new middleware to be invoked on Channel.ExchangeBind
+// method calls.
 func (handlers *channelHandlers) AddExchangeBind(
 	middleware amqpMiddleware.ExchangeBind,
 ) {
@@ -132,6 +195,8 @@ func (handlers *channelHandlers) AddExchangeBind(
 	handlers.exchangeBind = middleware(handlers.exchangeBind)
 }
 
+// AddExchangeUnbind adds a new middleware to be invoked on Channel.ExchangeUnbind
+// method calls.
 func (handlers *channelHandlers) AddExchangeUnbind(
 	middleware amqpMiddleware.ExchangeUnbind,
 ) {
@@ -141,6 +206,7 @@ func (handlers *channelHandlers) AddExchangeUnbind(
 	handlers.exchangeUnbind = middleware(handlers.exchangeUnbind)
 }
 
+// AddPublish adds a new middleware to be invoked on Channel.Publish method calls.
 func (handlers *channelHandlers) AddPublish(
 	middleware amqpMiddleware.Publish,
 ) {
@@ -150,6 +216,7 @@ func (handlers *channelHandlers) AddPublish(
 	handlers.publish = middleware(handlers.publish)
 }
 
+// AddGet adds a new middleware to be invoked on Channel.Get method calls.
 func (handlers *channelHandlers) AddGet(
 	middleware amqpMiddleware.Get,
 ) {
@@ -159,6 +226,7 @@ func (handlers *channelHandlers) AddGet(
 	handlers.get = middleware(handlers.get)
 }
 
+// AddAck adds a new middleware to be invoked on Channel.Ack method calls.
 func (handlers *channelHandlers) AddAck(
 	middleware amqpMiddleware.Ack,
 ) {
@@ -168,6 +236,7 @@ func (handlers *channelHandlers) AddAck(
 	handlers.ack = middleware(handlers.ack)
 }
 
+// AddNack adds a new middleware to be invoked on Channel.Nack method calls.
 func (handlers *channelHandlers) AddNack(
 	middleware amqpMiddleware.Nack,
 ) {
@@ -177,6 +246,7 @@ func (handlers *channelHandlers) AddNack(
 	handlers.nack = middleware(handlers.nack)
 }
 
+// AddReject adds a new middleware to be invoked on Channel.Reject method calls.
 func (handlers *channelHandlers) AddReject(
 	middleware amqpMiddleware.Reject,
 ) {
@@ -186,6 +256,8 @@ func (handlers *channelHandlers) AddReject(
 	handlers.reject = middleware(handlers.reject)
 }
 
+// AddNotifyPublish adds a new middleware to be invoked on Channel.NotifyPublish method
+// calls.
 func (handlers *channelHandlers) AddNotifyPublish(
 	middleware amqpMiddleware.NotifyPublish,
 ) {
@@ -195,6 +267,8 @@ func (handlers *channelHandlers) AddNotifyPublish(
 	handlers.notifyPublish = middleware(handlers.notifyPublish)
 }
 
+// AddNotifyPublishEvent adds a new middleware to be invoked on events sent to callers
+// of Channel.NotifyPublish.
 func (handlers *channelHandlers) AddNotifyPublishEvent(
 	middleware amqpMiddleware.NotifyPublishEvent,
 ) {
@@ -206,6 +280,8 @@ func (handlers *channelHandlers) AddNotifyPublishEvent(
 	)
 }
 
+// AddConsumeEvent adds a new middleware to be invoked on events sent to callers
+// of Channel.Consume.
 func (handlers *channelHandlers) AddConsumeEvent(
 	middleware amqpMiddleware.ConsumeEvent,
 ) {
@@ -217,6 +293,7 @@ func (handlers *channelHandlers) AddConsumeEvent(
 	)
 }
 
+// newChannelHandlers created a new channelHandlers with all base handlers added.
 func newChannelHandlers(conn *Connection, channel *Channel) *channelHandlers {
 	baseBuilder := &middlewareBaseBuilder{
 		connection: conn,

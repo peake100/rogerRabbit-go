@@ -7,15 +7,15 @@ import (
 	"time"
 )
 
-// ROGER NOTE: This config object is a re-implementation of streadway/amqp.Config. We
-// any code that can declare such a config will work with this type. In the future this
-// type may add additional options for rogerRabbit.
-//
-// ---
-//
 // Config is used in DialConfig and Open to specify the desired tuning
 // parameters used during a connection open handshake.  The negotiated tuning
 // will be stored in the returned connection's Config field.
+//
+// ---
+//
+// ROGER NOTE: This config object is a re-implementation of streadway/amqp.Config. We
+// any code that can declare such a config will work with this type. In the future this
+// type may add additional options for rogerRabbit.
 type Config struct {
 	// The SASL mechanisms to try in the client request, and the successful
 	// mechanism used on the Connection object.
@@ -61,7 +61,8 @@ type Config struct {
 	Logger zerolog.Logger
 }
 
-// Get the default config for Dial() as it is in the streadway application.
+// DefaultConfig returns the default config for Dial() as it is in the streadway
+// application.
 func DefaultConfig() *Config {
 	return &Config{
 		Heartbeat: defaultHeartbeat,

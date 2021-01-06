@@ -7,7 +7,7 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
-// Holds args for consume operation
+// consumeArgs holds args for consume operation
 type consumeArgs struct {
 	queue, consumer                     string
 	autoAck, exclusive, noLocal, noWait bool
@@ -15,28 +15,31 @@ type consumeArgs struct {
 	callerDeliveryChan                  chan dataModels.Delivery
 }
 
-// Relays Deliveries across channel disconnects.
+// consumeRelay implements eventRelay for Channel.Consume.
 type consumeRelay struct {
-	// Arguments to call on Consume
+	// ConsumeArgs are arguments to call on Channel.Consume
 	ConsumeArgs consumeArgs
-	// Delivery channel to pass deliveries back to the client.
+	// CallerDeliveries is the delivery channel to pass deliveries back to the client.
 	CallerDeliveries chan<- dataModels.Delivery
 
+	// Acknowledger is the robust Channel this relay is sending events for.
 	Acknowledger streadway.Acknowledger
 
-	// The current delivery channel coming from the broker.
+	// brokerDeliveries is the current delivery channel coming from the broker.
 	brokerDeliveries <-chan streadway.Delivery
 
-	// The handler with middleware we will call to pass events to the caller.
+	// handler with middleware we will call to pass events to the caller.
 	handler amqpMiddleware.HandlerConsumeEvent
 }
 
+// baseHandler returns the base handler to be wrapped in middleware.
 func (relay *consumeRelay) baseHandler() amqpMiddleware.HandlerConsumeEvent {
 	return func(event *amqpMiddleware.EventConsume) {
 		relay.CallerDeliveries <- event.Delivery
 	}
 }
 
+// Logger sets up the logger for this relay.
 func (relay *consumeRelay) Logger(parent zerolog.Logger) zerolog.Logger {
 	return parent.With().
 		Str("EVENT_TYPE", "CONSUME").
@@ -44,6 +47,8 @@ func (relay *consumeRelay) Logger(parent zerolog.Logger) zerolog.Logger {
 		Logger()
 }
 
+// SetupForRelayLeg implements eventRelay and sets up a new broker Consume channel to
+// relay events from.
 func (relay *consumeRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
 	brokerDeliveries, err := newChannel.Consume(
 		relay.ConsumeArgs.queue,
@@ -64,6 +69,8 @@ func (relay *consumeRelay) SetupForRelayLeg(newChannel *streadway.Channel) error
 	return nil
 }
 
+// RunRelayLeg implements eventRelay and relays all deliveries from the current
+// underlying streadway/amqp.Channel to the caller.
 func (relay *consumeRelay) RunRelayLeg() (done bool, err error) {
 	// Drain consumer events
 	for brokerDelivery := range relay.brokerDeliveries {
@@ -77,11 +84,14 @@ func (relay *consumeRelay) RunRelayLeg() (done bool, err error) {
 	return false, nil
 }
 
+// Shutdown implements eventRelay and closes the caller channel.
 func (relay *consumeRelay) Shutdown() error {
 	close(relay.CallerDeliveries)
 	return nil
 }
 
+// newConsumeRelay creates a new consumeRelay to relay Channel.Consume events to the
+// caller.
 func newConsumeRelay(
 	consumeArgs *consumeArgs,
 	acknowledger Acknowledger,
