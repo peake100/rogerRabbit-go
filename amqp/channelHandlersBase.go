@@ -265,8 +265,8 @@ func (builder *middlewareBaseBuilder) createBaseHandlerAck() (
 	return handler
 }
 
-// createBaseHandlerNack returns the base handler for Channel.Nack that invokes the method
-// of the underlying streadway/amqp.Channel.
+// createBaseHandlerNack returns the base handler for Channel.Nack that invokes the
+// method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerNack() (
 	handler amqpMiddleware.HandlerNack,
 ) {
@@ -277,8 +277,8 @@ func (builder *middlewareBaseBuilder) createBaseHandlerNack() (
 	return handler
 }
 
-// createBaseHandlerReject returns the base handler for Channel.Nack that invokes the method
-// of the underlying streadway/amqp.Reject.
+// createBaseHandlerReject returns the base handler for Channel.Nack that invokes the
+// method of the underlying streadway/amqp.Reject.
 func (builder *middlewareBaseBuilder) createBaseHandlerReject() (
 	handler amqpMiddleware.HandlerReject,
 ) {

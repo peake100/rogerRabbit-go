@@ -24,8 +24,8 @@ type transportChannel struct {
 	handlers *channelHandlers
 
 	// defaultMiddlewares holds our default middlewares for testing purposes:
-	//	TODO: maybe turn this into a map and return a key when middleware is registered
-	// 	  so non-default middlewares can also be accessed for testing.
+	//	TODO: maybe turn this into a map and return a key when middleware is
+	//	 registered so non-default middlewares can also be accessed for testing.
 	defaultMiddlewares *ChannelTestingDefaultMiddlewares
 
 	// relaySync has all necessary sync objects for controlling the advancement of

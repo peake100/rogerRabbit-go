@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	// TestDialAddress is the default address for a test broker.
 	TestDialAddress = "amqp://localhost:57018"
 )
 
@@ -84,7 +85,7 @@ type ChannelSuiteBase struct {
 	channelPublish *amqp.Channel
 }
 
-// Dials the test connection.
+// dialConnection dials the test connection.
 func (suite *ChannelSuiteBase) dialConnection() *amqp.Connection {
 	address := suite.Opts.dialAddress
 	if address == "" {
@@ -108,6 +109,7 @@ func (suite *ChannelSuiteBase) dialConnection() *amqp.Connection {
 	return conn
 }
 
+// getChannel gets a new channel from conn.
 func (suite *ChannelSuiteBase) getChannel(conn *amqp.Connection) *amqp.Channel {
 	channel, err := conn.Channel()
 	if err != nil {

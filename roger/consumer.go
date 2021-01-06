@@ -12,8 +12,8 @@ import (
 	"sync"
 )
 
-// Interface that only exposes the Queue and exchange methods for a channel. These
-// are the only methods we want SetupChannel to have access to.
+// AmqpRouteManager is an interface that only exposes the Queue and exchange methods for
+// a channel. These are the only methods we want SetupChannel to have access to.
 type AmqpRouteManager interface {
 	QueueDeclare(
 		name string,
@@ -42,41 +42,45 @@ type AmqpRouteManager interface {
 	ExchangeDelete(name string, ifUnused, noWait bool) (err error)
 }
 
-// Args the consumer will be created with.
+// ConsumeArgs are the args the consumer will be created with.
 type ConsumeArgs struct {
-	// The Queue to consume from
+	// Queue is the name of the Queue to consume from
 	Queue string
-	// The consumer name to identify this consumer with the broker.
+	// ConsumerName identifies this consumer with the broker.
 	ConsumerName string
-	// Whether the broker should ack messages automatically as it sends them. Otherwise
-	// the consumer will handle acking messages.
+	// AutoAck is whether the broker should ack messages automatically as it sends them.
+	// Otherwise the consumer will handle acking messages.
 	AutoAck bool
-	// Whether this consumer should be the exclusive consumer for this Queue.
+	// Exclusive is whether this consumer should be the exclusive consumer for this
+	// Queue.
 	Exclusive bool
-	// Additional args to pass to the amqp.Channel.Consume() method.
+	// Args are additional args to pass to the amqp.Channel.Consume() method.
 	Args amqp.Table
 }
 
-// Interface for handling consuming from a route. Implementors of this interface will
-// be registered with a consumer.
+// AmqpDeliveryProcessor is an interface for handling consuming from a route.
+// Implementors of this interface will be registered with a consumer.
 type AmqpDeliveryProcessor interface {
-	// The amqp route key handler should be made with
+	// ConsumeArgs returns the args that amqp.Channel.Consume should be called with.
 	ConsumeArgs() *ConsumeArgs
-	// This method is called before the consumer is created, and is designed to let
+
+	// SetupChannel is called before the consumer is created, and is designed to let
 	// this handler declare any exchanges or queues necessary to handle deliveries.
 	SetupChannel(ctx context.Context, amqpChannel AmqpRouteManager) error
-	// This method will be called once per delivery. Returning a non-nil err will result
-	// in it being logged and the delivery being nacked. If requeue is true, the nacked
-	// delivery will be requeued. If err is nil, requeue is ignored.
+
+	// HandleDelivery will be called once per delivery. Returning a non-nil err will
+	// result in it being logged and the delivery being nacked. If requeue is true, the
+	// nacked delivery will be requeued. If err is nil, requeue is ignored.
 	HandleDelivery(
 		ctx context.Context, delivery dataModels.Delivery, logger zerolog.Logger,
 	) (err error, requeue bool)
 
-	// Run at shutdown to allow the route handler to clean up any necessary resources.
+	// Cleanup is called at shutdown to allow the route handler to clean up any
+	// necessary resources.
 	Cleanup(amqpChannel AmqpRouteManager) error
 }
 
-// Options for running a consumer.
+// ConsumerOpts holds options for running a consumer.
 type ConsumerOpts struct {
 	// The maximum number of workers that can be active at one time.
 	maxWorkers int
@@ -85,21 +89,21 @@ type ConsumerOpts struct {
 	logger zerolog.Logger
 }
 
-// The maximum number of workers that can be running at the same time. If 0 or less,
-// no limit will be used. Default: 0.
+// WithMaxWorkers sets the maximum number of workers that can be running at the same
+// time. If 0 or less, no limit will be used. Default: 0.
 func (opts *ConsumerOpts) WithMaxWorkers(max int) *ConsumerOpts {
 	opts.maxWorkers = max
 	return opts
 }
 
-// Zerolog logger to use for logging. Defaults to a fresh logger with the global
-// settings applied.
+// WithLogger sets a zerolog.Logger to use for logging. Defaults to a fresh logger with
+// the global settings applied.
 func (opts *ConsumerOpts) WithLogger(logger zerolog.Logger) *ConsumerOpts {
 	opts.logger = logger
 	return opts
 }
 
-// Returns new ConsumerOpts object with default settings.
+// NewConsumerOpts returns new ConsumerOpts object with default settings.
 func NewConsumerOpts() *ConsumerOpts {
 	return new(ConsumerOpts).WithLogger(log.Logger)
 }
@@ -131,7 +135,8 @@ type Consumer struct {
 	logger zerolog.Logger
 }
 
-// Register a consumer handler. Will panic if called after consumer start.
+// RegisterProcessor registers a consumer handler. Will panic if called after consumer
+// start.
 func (consumer *Consumer) RegisterProcessor(
 	processor AmqpDeliveryProcessor,
 ) {
@@ -145,7 +150,7 @@ func (consumer *Consumer) RegisterProcessor(
 	consumer.processors = append(consumer.processors, processor)
 }
 
-// Handle a single delivery.
+// handleDelivery handles a single delivery.
 func (consumer *Consumer) handleDelivery(
 	handler AmqpDeliveryProcessor,
 	delivery dataModels.Delivery,
@@ -201,7 +206,8 @@ func (consumer *Consumer) handleDelivery(
 	}
 }
 
-// Runs an individual consumer.
+// runProcessor runs an individual consumer pulling from an amqp.Channel.Consume
+// channel.
 func (consumer *Consumer) runProcessor(
 	handler AmqpDeliveryProcessor,
 	complete *sync.WaitGroup,
@@ -277,7 +283,7 @@ deliveriesLoop:
 	}
 }
 
-// runs all the channel setups from our registered processors.
+// runHandlerSetups runs all the amqp.Channel setups from our registered processors.
 func (consumer *Consumer) runHandlerSetups() error {
 	// Let all the processors run their setup script and return an error if.
 	for _, thisHandler := range consumer.processors {
@@ -343,12 +349,13 @@ func (consumer *Consumer) Run() error {
 	return nil
 }
 
-// Start the shutdown of the Consumer. This method will return immediately. It does
-// not block until shutdown is complete.
+// StartShutdown beings shutdown of the Consumer. This method will return immediately,
+// it does not block until shutdown is complete.
 func (consumer *Consumer) StartShutdown() {
 	defer consumer.cancelCtx()
 }
 
+// NewConsumer returns a new consumer using the passed amqp.Channel.
 func NewConsumer(
 	channel *amqp.Channel, opts *ConsumerOpts,
 ) *Consumer {
