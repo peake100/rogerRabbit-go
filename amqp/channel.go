@@ -55,7 +55,7 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	if debugEnabled {
 		logger.Debug().Msg("waiting for event relays to finish")
 	}
-	transport.relaySync.WaitForRelayLegComplete()
+	transport.relaySync.WaitOnLegComplete()
 
 	if debugEnabled {
 		logger.Debug().Msg("getting new channel")
@@ -73,13 +73,13 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	if debugEnabled {
 		logger.Debug().Msg("advancing event relays to setup")
 	}
-	transport.relaySync.StartSetup()
-	transport.relaySync.WaitForRelaySetupComplete()
+	transport.relaySync.AllowSetup()
+	transport.relaySync.WaitOnSetup()
 
 	if debugEnabled {
 		logger.Debug().Msg("restarting event relay processing")
 	}
-	transport.relaySync.StartRelays()
+	transport.relaySync.AllowRelayLegRun()
 
 	return nil
 }
