@@ -40,7 +40,7 @@ type transportReconnect interface {
 // TestReconnectSignaler allows us to block until a reconnection occurs during a test.
 type TestReconnectSignaler struct {
 	// The test we are using.
-	t               *testing.T
+	t *testing.T
 
 	// reconnectSignal will close when a reconnection occurs.
 	reconnectSignal chan struct{}

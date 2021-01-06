@@ -17,9 +17,9 @@ type channelHandlers struct {
 	// -------------
 
 	// qos is the handler for Channel.Qos
-	qos     amqpMiddleware.HandlerQoS
+	qos amqpMiddleware.HandlerQoS
 	// flow is the handler for Channel.Flow
-	flow    amqpMiddleware.HandlerFlow
+	flow amqpMiddleware.HandlerFlow
 	// confirm is the handler for Channel.Confirm
 	confirm amqpMiddleware.HandlerConfirm
 
@@ -29,11 +29,11 @@ type channelHandlers struct {
 	// queueDeclare is the handler for Channel.QueueDeclare
 	queueDeclare amqpMiddleware.HandlerQueueDeclare
 	// queueDelete is the handler for Channel.QueueDelete
-	queueDelete  amqpMiddleware.HandlerQueueDelete
+	queueDelete amqpMiddleware.HandlerQueueDelete
 	// queueBind is the handler for Channel.QueueBind
-	queueBind    amqpMiddleware.HandlerQueueBind
+	queueBind amqpMiddleware.HandlerQueueBind
 	// queueUnbind is the handler for Channel.QueueUnbind
-	queueUnbind  amqpMiddleware.HandlerQueueUnbind
+	queueUnbind amqpMiddleware.HandlerQueueUnbind
 
 	// EXCHANGE HANDLERS
 	// -----------------
@@ -41,11 +41,11 @@ type channelHandlers struct {
 	// exchangeDeclare is the handler for Channel.ExchangeDeclare
 	exchangeDeclare amqpMiddleware.HandlerExchangeDeclare
 	// exchangeDelete is the handler for Channel.ExchangeDelete
-	exchangeDelete  amqpMiddleware.HandlerExchangeDelete
+	exchangeDelete amqpMiddleware.HandlerExchangeDelete
 	// exchangeBind is the handler for Channel.ExchangeBind
-	exchangeBind    amqpMiddleware.HandlerExchangeBind
+	exchangeBind amqpMiddleware.HandlerExchangeBind
 	// exchangeUnbind is the handler for Channel.ExchangeUnbind
-	exchangeUnbind  amqpMiddleware.HandlerExchangeUnbind
+	exchangeUnbind amqpMiddleware.HandlerExchangeUnbind
 
 	// NOTIFY HANDLERS
 	// ---------------
@@ -59,15 +59,15 @@ type channelHandlers struct {
 	// publish is the handler for Channel.Publish
 	publish amqpMiddleware.HandlerPublish
 	// get is the handler for Channel.Get
-	get     amqpMiddleware.HandlerGet
+	get amqpMiddleware.HandlerGet
 
 	// ACK HANDLERS
 	// ------------
 
 	// ack is the handler for Channel.Ack
-	ack    amqpMiddleware.HandlerAck
+	ack amqpMiddleware.HandlerAck
 	// nack is the handler for Channel.Nack
-	nack   amqpMiddleware.HandlerNack
+	nack amqpMiddleware.HandlerNack
 	// reject is the handler for Channel.Reject
 	reject amqpMiddleware.HandlerReject
 
@@ -79,7 +79,7 @@ type channelHandlers struct {
 	notifyPublishEventMiddleware []amqpMiddleware.NotifyPublishEvent
 	// consumeEventMiddleware is middleware to be registered on a
 	// consumeRelay.
-	consumeEventMiddleware       []amqpMiddleware.ConsumeEvent
+	consumeEventMiddleware []amqpMiddleware.ConsumeEvent
 
 	// lock should be acquired when adding a middleware to a handler to avoid race
 	// conditions.
