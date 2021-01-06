@@ -220,8 +220,10 @@ func (middleware *PublishTagsMiddleware) NotifyPublishEvent(
 func NewPublishTagsMiddleware() *PublishTagsMiddleware {
 	count := uint64(0)
 	return &PublishTagsMiddleware{
-		confirmMode:  false,
-		publishCount: &count,
-		tagOffset:    0,
+		confirmMode:     false,
+		publishCount:    &count,
+		tagOffset:       0,
+		sendOrphans:     nil,
+		sendOrphansLock: new(sync.Mutex),
 	}
 }
