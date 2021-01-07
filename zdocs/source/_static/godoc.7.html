@@ -83,6 +83,8 @@
 			<dd><a href="godoc.7.html#pkg-overview" class="overviewLink">Overview</a></dd>
 			<dd><a href="godoc.7.html#pkg-index" class="indexLink">Index</a></dd>
 			
+				<dd><a href="godoc.7.html#pkg-examples" class="examplesLink">Examples</a></dd>
+			
 			
 			</dl>
 		</div>
@@ -216,6 +218,16 @@ top of the amqp package.
 			</dl>
 			</div><!-- #manual-nav -->
 
+		
+		<div id="pkg-examples">
+			<h3>Examples</h3>
+			<div class="js-expandAll expandAll collapsed">(Expand All)</div>
+			<dl>
+			
+			<dd><a class="exampleLink" href="godoc.7.html#example_NewProducer">NewProducer</a></dd>
+			
+			</dl>
+		</div>
 		
 
 		
@@ -704,7 +716,122 @@ by the producer. There is no need to do so before passing it to this method.
 If opts is nil, default options will be used.
 </p>
 
-				
+				<div id="example_NewProducer" class="toggle">
+	<div class="collapsed">
+		<p class="exampleHeading toggleButton">▹ <span class="text">Example</span></p>
+	</div>
+	<div class="expanded">
+		<p class="exampleHeading toggleButton">▾ <span class="text">Example</span></p>
+		
+		
+		
+			<p>Code:</p>
+			<pre class="code"><span class="comment">// Get a new connection to our test broker.</span>
+connection, err := amqp.Dial(amqpTest.TestDialAddress)
+if err != nil {
+    panic(err)
+}
+defer connection.Close()
+
+<span class="comment">// Get a new channel from our robust connection for publishing. The channel is</span>
+<span class="comment">// created with our default middleware.</span>
+channel, err := connection.Channel()
+if err != nil {
+    panic(err)
+}
+
+<span class="comment">// Declare a queue to produce to</span>
+queue, err := channel.QueueDeclare(
+    &#34;example_confirmation_producer&#34;, <span class="comment">// name</span>
+    false,                           <span class="comment">// durable</span>
+    true,                            <span class="comment">// autoDelete</span>
+    false,                           <span class="comment">// exclusive</span>
+    false,                           <span class="comment">// noWait</span>
+    nil,                             <span class="comment">// args</span>
+)
+
+<span class="comment">// Create a new producer using our channel. Passing nil to opts will result in</span>
+<span class="comment">// default opts being used. By default, a Producer will put the passed channel in</span>
+<span class="comment">// confirmation mode, and each time publish is called, will block until a</span>
+<span class="comment">// confirmation from the server has been received.</span>
+producer := NewProducer(channel, nil)
+producerComplete := make(chan struct{})
+
+<span class="comment">// Run the producer in it&#39;s own goroutine.</span>
+go func() {
+    <span class="comment">// Signal this routine has exited on exit.</span>
+    defer close(producerComplete)
+
+    err = producer.Run()
+    if err != nil {
+        panic(err)
+    }
+}()
+
+messagesPublished := new(sync.WaitGroup)
+for i := 0; i &lt; 10; i++ {
+
+    messagesPublished.Add(1)
+
+    <span class="comment">// Publish each message in it&#39;s own goroutine.</span>
+    go func() {
+        <span class="comment">// Release our WaitGroup on exit.</span>
+        defer messagesPublished.Done()
+
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        defer cancel()
+
+        <span class="comment">// Publish a message, this method will block until we get a publication</span>
+        <span class="comment">// confirmation from the broker OR ctx expires.</span>
+        err = producer.Publish(
+            ctx,
+            &#34;&#34;,
+            queue.Name,
+            false,
+            false,
+            amqp.Publishing{
+                Body: []byte(&#34;test message&#34;),
+            },
+        )
+
+        fmt.Println(&#34;Message Published!&#34;)
+
+        if err != nil {
+            panic(err)
+        }
+    }()
+}
+
+<span class="comment">// Wait for all our messages to be published</span>
+messagesPublished.Wait()
+
+<span class="comment">// Start the shutdown of the producer</span>
+producer.StartShutdown()
+
+<span class="comment">// Wait for the producer to exit.</span>
+&lt;-producerComplete
+
+<span class="comment">// exit.</span>
+
+<span class="comment"></pre>
+			
+			<p>Output:</p>
+			<pre class="output">Message Published!
+Message Published!
+Message Published!
+Message Published!
+Message Published!
+Message Published!
+Message Published!
+Message Published!
+Message Published!
+Message Published!
+</pre>
+			
+		
+	</div>
+</div>
+
 				
 			
 

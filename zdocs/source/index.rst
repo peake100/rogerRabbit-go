@@ -13,6 +13,7 @@ Roger, Rabbit is broken into two packages:
    :caption: Contents:
 
    ./amqp.rst
+   ./roger.rst
 
 API Documentation
 -----------------
