@@ -13,19 +13,20 @@ enhancements:
     - **Confirmation Producers**: handles broker confirmation on publish before
       returning.
     - **Consumer Framework**: Register http-like handlers to consume from queues, with
-      nack-on-error, max concurrent worker, and other boilerplate  
+      nack-on-error, max concurrent worker, and other boilerplate
+      
+## Getting Started
+
+For quickstart and full API documentation:
+[read the docs](https://peake100.github.io/rogerRabbit-go/).
+
+For library development guide,
+[read the docs](https://illuscio-dev.github.io/islelib-go/).
 
 ## Acknowledgements
 
 This library is built on top of [streadway/amqp](https://github.com/streadway/amqp) and
 would not be possible without such an amazing foundation.
-
-## Getting Started
-For quickstart and full API documentation:
-[read the docs](https://peake100.github.io/rogerRabbit-go/).
-
-For library development guide, 
-[read the docs](https://illuscio-dev.github.io/islelib-go/).
 
 ### Prerequisites
 
