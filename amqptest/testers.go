@@ -1,4 +1,4 @@
-package amqpTest
+package amqptest
 
 import "github.com/peake100/rogerRabbit-go/amqp"
 

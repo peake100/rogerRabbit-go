@@ -2,8 +2,8 @@ package amqp
 
 import (
 	"context"
-	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
-	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
+	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
@@ -20,7 +20,7 @@ type middlewareBaseBuilder struct {
 // reconnection.
 func (builder *middlewareBaseBuilder) createBaseHandlerReconnect(
 	connection *Connection,
-) (handler amqpMiddleware.HandlerReconnect) {
+) (handler amqpmiddleware.HandlerReconnect) {
 	handler = func(
 		ctx context.Context, logger zerolog.Logger,
 	) (*streadway.Channel, error) {
@@ -38,9 +38,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerReconnect(
 // createBaseHandlerQueueDeclare returns the base handler for Channel.QueueDeclare
 // that invokes the method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerQueueDeclare() (
-	handler amqpMiddleware.HandlerQueueDeclare,
+	handler amqpmiddleware.HandlerQueueDeclare,
 ) {
-	handler = func(args *amqpMiddleware.ArgsQueueDeclare) (Queue, error) {
+	handler = func(args *amqpmiddleware.ArgsQueueDeclare) (Queue, error) {
 		return builder.underlyingChan.QueueDeclare(
 			args.Name,
 			args.Durable,
@@ -57,9 +57,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerQueueDeclare() (
 // createBaseHandlerQueueDelete returns the base handler for Channel.QueueDelete
 // that invokes the method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerQueueDelete() (
-	handler amqpMiddleware.HandlerQueueDelete,
+	handler amqpmiddleware.HandlerQueueDelete,
 ) {
-	handler = func(args *amqpMiddleware.ArgsQueueDelete) (int, error) {
+	handler = func(args *amqpmiddleware.ArgsQueueDelete) (int, error) {
 		return builder.underlyingChan.QueueDelete(
 			args.Name,
 			args.IfUnused,
@@ -74,9 +74,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerQueueDelete() (
 // createBaseHandlerQueueBind returns the base handler for Channel.QueueBind
 // that invokes the method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerQueueBind() (
-	handler amqpMiddleware.HandlerQueueBind,
+	handler amqpmiddleware.HandlerQueueBind,
 ) {
-	handler = func(args *amqpMiddleware.ArgsQueueBind) error {
+	handler = func(args *amqpmiddleware.ArgsQueueBind) error {
 		return builder.underlyingChan.QueueBind(
 			args.Name,
 			args.Key,
@@ -92,9 +92,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerQueueBind() (
 // createBaseHandlerQueueUnbind returns the base handler for Channel.QueueUnbind
 // that invokes the method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerQueueUnbind() (
-	handler amqpMiddleware.HandlerQueueUnbind,
+	handler amqpmiddleware.HandlerQueueUnbind,
 ) {
-	handler = func(args *amqpMiddleware.ArgsQueueUnbind) error {
+	handler = func(args *amqpmiddleware.ArgsQueueUnbind) error {
 		return builder.underlyingChan.QueueUnbind(
 			args.Name,
 			args.Key,
@@ -109,9 +109,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerQueueUnbind() (
 // createBaseHandlerExchangeDeclare returns the base handler for Channel.ExchangeDeclare
 // that invokes the method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerExchangeDeclare() (
-	handler amqpMiddleware.HandlerExchangeDeclare,
+	handler amqpmiddleware.HandlerExchangeDeclare,
 ) {
-	handler = func(args *amqpMiddleware.ArgsExchangeDeclare) error {
+	handler = func(args *amqpmiddleware.ArgsExchangeDeclare) error {
 		return builder.underlyingChan.ExchangeDeclare(
 			args.Name,
 			args.Kind,
@@ -129,9 +129,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerExchangeDeclare() (
 // createBaseHandlerExchangeDelete returns the base handler for Channel.ExchangeDelete
 // that invokes the method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerExchangeDelete() (
-	handler amqpMiddleware.HandlerExchangeDelete,
+	handler amqpmiddleware.HandlerExchangeDelete,
 ) {
-	handler = func(args *amqpMiddleware.ArgsExchangeDelete) error {
+	handler = func(args *amqpmiddleware.ArgsExchangeDelete) error {
 		return builder.underlyingChan.ExchangeDelete(
 			args.Name,
 			args.IfUnused,
@@ -145,9 +145,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerExchangeDelete() (
 // createBaseHandlerExchangeBind returns the base handler for Channel.ExchangeBind
 // that invokes the method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerExchangeBind() (
-	handler amqpMiddleware.HandlerExchangeBind,
+	handler amqpmiddleware.HandlerExchangeBind,
 ) {
-	handler = func(args *amqpMiddleware.ArgsExchangeBind) error {
+	handler = func(args *amqpmiddleware.ArgsExchangeBind) error {
 		return builder.underlyingChan.ExchangeBind(
 			args.Destination,
 			args.Key,
@@ -163,9 +163,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerExchangeBind() (
 // createBaseHandlerExchangeUnbind returns the base handler for Channel.ExchangeUnbind
 // that invokes the method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerExchangeUnbind() (
-	handler amqpMiddleware.HandlerExchangeUnbind,
+	handler amqpmiddleware.HandlerExchangeUnbind,
 ) {
-	handler = func(args *amqpMiddleware.ArgsExchangeUnbind) error {
+	handler = func(args *amqpmiddleware.ArgsExchangeUnbind) error {
 		return builder.underlyingChan.ExchangeUnbind(
 			args.Destination,
 			args.Key,
@@ -181,9 +181,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerExchangeUnbind() (
 // createBaseHandlerQoS returns the base handler for Channel.Qos that invokes the method
 // of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerQoS() (
-	handler amqpMiddleware.HandlerQoS,
+	handler amqpmiddleware.HandlerQoS,
 ) {
-	handler = func(args *amqpMiddleware.ArgsQoS) error {
+	handler = func(args *amqpmiddleware.ArgsQoS) error {
 		return builder.underlyingChan.Qos(
 			args.PrefetchCount,
 			args.PrefetchSize,
@@ -197,9 +197,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerQoS() (
 // createBaseHandlerFlow returns the base handler for Channel.Flow that invokes the
 // method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerFlow() (
-	handler amqpMiddleware.HandlerFlow,
+	handler amqpmiddleware.HandlerFlow,
 ) {
-	handler = func(args *amqpMiddleware.ArgsFlow) error {
+	handler = func(args *amqpmiddleware.ArgsFlow) error {
 		return builder.underlyingChan.Flow(args.Active)
 	}
 
@@ -209,9 +209,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerFlow() (
 // createBaseHandlerConfirm returns the base handler for Channel.Confirm that invokes
 // the method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerConfirm() (
-	handler amqpMiddleware.HandlerConfirm,
+	handler amqpmiddleware.HandlerConfirm,
 ) {
-	handler = func(args *amqpMiddleware.ArgsConfirms) error {
+	handler = func(args *amqpmiddleware.ArgsConfirms) error {
 		return builder.underlyingChan.Confirm(
 			args.NoWait,
 		)
@@ -223,9 +223,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerConfirm() (
 // createBaseHandlerPublish returns the base handler for Channel.Publish that invokes
 // the method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerPublish() (
-	handler amqpMiddleware.HandlerPublish,
+	handler amqpmiddleware.HandlerPublish,
 ) {
-	handler = func(args *amqpMiddleware.ArgsPublish) error {
+	handler = func(args *amqpmiddleware.ArgsPublish) error {
 		return builder.underlyingChan.Publish(
 			args.Exchange,
 			args.Key,
@@ -241,12 +241,12 @@ func (builder *middlewareBaseBuilder) createBaseHandlerPublish() (
 // createBaseHandlerGet returns the base handler for Channel.Get that invokes the method
 // of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerGet() (
-	handler amqpMiddleware.HandlerGet,
+	handler amqpmiddleware.HandlerGet,
 ) {
-	handler = func(args *amqpMiddleware.ArgsGet) (msg Delivery, ok bool, err error) {
+	handler = func(args *amqpmiddleware.ArgsGet) (msg Delivery, ok bool, err error) {
 		var msgOrig streadway.Delivery
 		msgOrig, ok, err = builder.underlyingChan.Get(args.Queue, args.AutoAck)
-		msg = dataModels.NewDelivery(msgOrig, builder.channel)
+		msg = datamodels.NewDelivery(msgOrig, builder.channel)
 		return msg, ok, err
 	}
 
@@ -256,9 +256,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerGet() (
 // createBaseHandlerAck returns the base handler for Channel.Ack that invokes the method
 // of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerAck() (
-	handler amqpMiddleware.HandlerAck,
+	handler amqpmiddleware.HandlerAck,
 ) {
-	handler = func(args *amqpMiddleware.ArgsAck) error {
+	handler = func(args *amqpmiddleware.ArgsAck) error {
 		return builder.underlyingChan.Ack(args.Tag, args.Multiple)
 	}
 
@@ -268,9 +268,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerAck() (
 // createBaseHandlerNack returns the base handler for Channel.Nack that invokes the
 // method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerNack() (
-	handler amqpMiddleware.HandlerNack,
+	handler amqpmiddleware.HandlerNack,
 ) {
-	handler = func(args *amqpMiddleware.ArgsNack) error {
+	handler = func(args *amqpmiddleware.ArgsNack) error {
 		return builder.underlyingChan.Nack(args.Tag, args.Multiple, args.Requeue)
 	}
 
@@ -280,9 +280,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerNack() (
 // createBaseHandlerReject returns the base handler for Channel.Nack that invokes the
 // method of the underlying streadway/amqp.Reject.
 func (builder *middlewareBaseBuilder) createBaseHandlerReject() (
-	handler amqpMiddleware.HandlerReject,
+	handler amqpmiddleware.HandlerReject,
 ) {
-	handler = func(args *amqpMiddleware.ArgsReject) error {
+	handler = func(args *amqpmiddleware.ArgsReject) error {
 		return builder.underlyingChan.Reject(args.Tag, args.Requeue)
 	}
 
@@ -292,9 +292,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerReject() (
 // createBaseHandlerNotifyPublish returns the base handler for Channel.NotifyPublish
 // that invokes the method of the underlying streadway/amqp.Reject.
 func (builder *middlewareBaseBuilder) createBaseHandlerNotifyPublish() (
-	handler amqpMiddleware.HandlerNotifyPublish,
+	handler amqpmiddleware.HandlerNotifyPublish,
 ) {
-	handler = func(args *amqpMiddleware.ArgsNotifyPublish) chan Confirmation {
+	handler = func(args *amqpmiddleware.ArgsNotifyPublish) chan Confirmation {
 		channel := builder.channel
 
 		relay := newNotifyPublishRelay(

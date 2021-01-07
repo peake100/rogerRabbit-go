@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
-	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
-	"github.com/peake100/rogerRabbit-go/amqpTest"
+	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
+	"github.com/peake100/rogerRabbit-go/amqptest"
 	streadway "github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -25,7 +25,7 @@ import (
 // Some of these tests need to be run in order. Testify runs suite tests in alphabetical
 // order, so we are going to number them in the order they need to run.
 type ChannelLifetimeSuite struct {
-	amqpTest.AmqpSuite
+	amqptest.AmqpSuite
 }
 
 func (suite *ChannelLifetimeSuite) Test0010_GetChannel() {
@@ -211,7 +211,7 @@ func TestChannelLifetime(t *testing.T) {
 
 // Suite for testing channelConsume methods.
 type ChannelMethodsSuite struct {
-	amqpTest.AmqpSuite
+	amqptest.AmqpSuite
 }
 
 func (suite *ChannelMethodsSuite) Test0010_QueueDeclare() {
@@ -276,7 +276,7 @@ func (suite *ChannelMethodsSuite) Test0060_Get() {
 	timer := time.NewTimer(3 * time.Second)
 	defer timer.Stop()
 
-	var message dataModels.Delivery
+	var message datamodels.Delivery
 	var ok bool
 	var err error
 
@@ -688,7 +688,7 @@ func (suite *ChannelMethodsSuite) Test0140_NotifyPublish_Basic() {
 		suite.T().FailNow()
 	}
 	publishCount := 10
-	notifyPublish := make(chan dataModels.Confirmation, publishCount)
+	notifyPublish := make(chan datamodels.Confirmation, publishCount)
 	suite.ChannelPublish().NotifyPublish(notifyPublish)
 
 	allReceived := make(chan struct{})
@@ -764,7 +764,7 @@ func (suite *ChannelMethodsSuite) Test0150_NotifyPublish_Reconnections() {
 		suite.T().FailNow()
 	}
 	publishCount := 10
-	notifyPublish := make(chan dataModels.Confirmation, publishCount)
+	notifyPublish := make(chan datamodels.Confirmation, publishCount)
 	suite.ChannelPublish().NotifyPublish(notifyPublish)
 
 	allReceived := make(chan struct{})
@@ -1133,7 +1133,7 @@ func (suite *ChannelMethodsSuite) Test0190_QueuePurge() {
 	}
 
 	publishCount := 2
-	notifyPublish := make(chan dataModels.Confirmation, publishCount)
+	notifyPublish := make(chan datamodels.Confirmation, publishCount)
 
 	suite.ChannelPublish().NotifyPublish(notifyPublish)
 
@@ -1271,7 +1271,7 @@ func (suite *ChannelMethodsSuite) Test0240_QueueBind() {
 		suite.T().FailNow()
 	}
 
-	confirmations := make(chan dataModels.Confirmation, 5)
+	confirmations := make(chan datamodels.Confirmation, 5)
 	suite.ChannelPublish().NotifyPublish(confirmations)
 
 	// lets test publishing and getting a message on the exchange
@@ -1585,7 +1585,7 @@ func (suite *ChannelMethodsSuite) Test0320_Acknowledge_OrphanErr() {
 		// reconnectMiddleware, so we only need to publish it once
 		suite.PublishMessages(t, "", queueName, thisCase.publishCount)
 
-		var delivery dataModels.Delivery
+		var delivery datamodels.Delivery
 		for i := 0; i < thisCase.publishCount; i++ {
 			delivery = suite.GetMessage(queueName, false)
 		}

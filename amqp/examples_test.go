@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
-	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
-	"github.com/peake100/rogerRabbit-go/amqpTest"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
+	"github.com/peake100/rogerRabbit-go/amqptest"
 	streadway "github.com/streadway/amqp"
 	"sync"
 	"testing"
@@ -19,7 +19,7 @@ func ExampleChannel_reconnect() {
 	//
 	// DialCtx is a new function that allows the Dial function to keep attempting
 	// re-dials to the broker until the passed context expires.
-	connection, err := amqp.DialCtx(context.Background(), amqpTest.TestDialAddress)
+	connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -74,7 +74,7 @@ func ExampleChannel_reconnect() {
 
 func ExampleChannel_Consume_deliveryTags() {
 	// Get a new connection to our test broker.
-	connection, err := amqp.DialCtx(context.Background(), amqpTest.TestDialAddress)
+	connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -208,7 +208,7 @@ func ExampleChannel_Consume_deliveryTags() {
 
 func ExampleChannel_Consume_orphan() {
 	// Get a new connection to our test broker.
-	connection, err := amqp.DialCtx(context.Background(), amqpTest.TestDialAddress)
+	connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -294,7 +294,7 @@ func ExampleChannel_Consume_orphan() {
 // Publication tags remain continuous, even across disconnection events.
 func ExampleChannel_Publish_tagContinuity() {
 	// Get a new connection to our test broker.
-	connection, err := amqp.DialCtx(context.Background(), amqpTest.TestDialAddress)
+	connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -410,7 +410,7 @@ func ExampleChannel_Publish_tagContinuity() {
 // Declared queues are re-declared on disconnect.
 func ExampleChannel_QueueDeclare_reDeclare() {
 	// Get a new connection to our test broker.
-	connection, err := amqp.DialCtx(context.Background(), amqpTest.TestDialAddress)
+	connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -478,9 +478,9 @@ func ExampleChannel_QueueDeclare_reDeclare() {
 func ExampleChannel_Middleware() {
 	// define our new middleware
 	queueDeclareMiddleware := func(
-		next amqpMiddleware.HandlerQueueDeclare,
-	) amqpMiddleware.HandlerQueueDeclare {
-		return func(args *amqpMiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+		next amqpmiddleware.HandlerQueueDeclare,
+	) amqpmiddleware.HandlerQueueDeclare {
+		return func(args *amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
 			fmt.Println("MIDDLEWARE INVOKED FOR QUEUE")
 			fmt.Println("QUEUE NAME :", args.Name)
 			fmt.Println("AUTO-DELETE:", args.AutoDelete)
@@ -489,7 +489,7 @@ func ExampleChannel_Middleware() {
 	}
 
 	// Get a new connection to our test broker.
-	connection, err := amqp.DialCtx(context.Background(), amqpTest.TestDialAddress)
+	connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -526,7 +526,7 @@ func ExampleChannel_Middleware() {
 
 func ExampleChannel_Test() {
 	// Get a new connection to our test broker.
-	connection, err := amqp.DialCtx(context.Background(), amqpTest.TestDialAddress)
+	connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 	if err != nil {
 		panic(err)
 	}

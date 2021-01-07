@@ -1,10 +1,10 @@
-package defaultMiddlewares
+package defaultmiddlewares
 
 import (
 	"context"
 	"fmt"
-	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
-	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
+	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
@@ -27,8 +27,8 @@ type DeliveryTagsMiddleware struct {
 // Reconnect establishes our current delivery tag offset based on how many deliveries
 // have been consumed across all of our connections so far.
 func (middleware *DeliveryTagsMiddleware) Reconnect(
-	next amqpMiddleware.HandlerReconnect,
-) (handler amqpMiddleware.HandlerReconnect) {
+	next amqpmiddleware.HandlerReconnect,
+) (handler amqpmiddleware.HandlerReconnect) {
 	handler = func(
 		ctx context.Context, logger zerolog.Logger,
 	) (*streadway.Channel, error) {
@@ -49,11 +49,11 @@ func (middleware *DeliveryTagsMiddleware) Reconnect(
 // Get applies our current delivery tag offset and increments our delivery count
 // whenever amqp.Channel.Get() is called.
 func (middleware *DeliveryTagsMiddleware) Get(
-	next amqpMiddleware.HandlerGet,
-) (handler amqpMiddleware.HandlerGet) {
+	next amqpmiddleware.HandlerGet,
+) (handler amqpmiddleware.HandlerGet) {
 	handler = func(
-		args *amqpMiddleware.ArgsGet,
-	) (msg dataModels.Delivery, ok bool, err error) {
+		args *amqpmiddleware.ArgsGet,
+	) (msg datamodels.Delivery, ok bool, err error) {
 		msg, ok, err = next(args)
 		if err != nil {
 			return msg, ok, err
@@ -147,9 +147,9 @@ func (middleware *DeliveryTagsMiddleware) runAckMethod(
 // tag back to the original value for the underlying channel, as well as returning
 // errors on an attempt to ACK an orphan.
 func (middleware *DeliveryTagsMiddleware) Ack(
-	next amqpMiddleware.HandlerAck,
-) (handler amqpMiddleware.HandlerAck) {
-	handler = func(args *amqpMiddleware.ArgsAck) error {
+	next amqpmiddleware.HandlerAck,
+) (handler amqpmiddleware.HandlerAck) {
+	handler = func(args *amqpmiddleware.ArgsAck) error {
 		method := func() error {
 			return next(args)
 		}
@@ -163,9 +163,9 @@ func (middleware *DeliveryTagsMiddleware) Ack(
 // delivery tag back to the original value for the underlying channel, as well as
 // returning errors on an attempt to NACK an orphan.
 func (middleware *DeliveryTagsMiddleware) Nack(
-	next amqpMiddleware.HandlerNack,
-) (handler amqpMiddleware.HandlerNack) {
-	handler = func(args *amqpMiddleware.ArgsNack) error {
+	next amqpmiddleware.HandlerNack,
+) (handler amqpmiddleware.HandlerNack) {
+	handler = func(args *amqpmiddleware.ArgsNack) error {
 		method := func() error {
 			return next(args)
 		}
@@ -179,9 +179,9 @@ func (middleware *DeliveryTagsMiddleware) Nack(
 // delivery tag back to the original value for the underlying channel, as well as
 // returning errors on an attempt to NACK an orphan.
 func (middleware *DeliveryTagsMiddleware) Reject(
-	next amqpMiddleware.HandlerReject,
-) (handler amqpMiddleware.HandlerReject) {
-	handler = func(args *amqpMiddleware.ArgsReject) error {
+	next amqpmiddleware.HandlerReject,
+) (handler amqpmiddleware.HandlerReject) {
+	handler = func(args *amqpmiddleware.ArgsReject) error {
 		method := func() error {
 			return next(args)
 		}
@@ -194,9 +194,9 @@ func (middleware *DeliveryTagsMiddleware) Reject(
 // ConsumeEvent is invoked whenever an event is sent to a caller of
 // amqp.Channel.Consume(), and handles applying the delivery tag offset.
 func (middleware *DeliveryTagsMiddleware) ConsumeEvent(
-	next amqpMiddleware.HandlerConsumeEvent,
-) (handler amqpMiddleware.HandlerConsumeEvent) {
-	handler = func(event *amqpMiddleware.EventConsume) {
+	next amqpmiddleware.HandlerConsumeEvent,
+) (handler amqpmiddleware.HandlerConsumeEvent) {
+	handler = func(event *amqpmiddleware.EventConsume) {
 		// Apply the offset to our delivery
 		event.Delivery.TagOffset = middleware.tagConsumeOffset
 		event.Delivery.DeliveryTag += middleware.tagConsumeOffset

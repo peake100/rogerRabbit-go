@@ -1,9 +1,9 @@
-package defaultMiddlewares
+package defaultmiddlewares
 
 import (
 	"context"
 	"fmt"
-	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
@@ -23,8 +23,8 @@ func (middleware *ConfirmsMiddleware) ConfirmsOn() bool {
 // Reconnect puts the new, underlying connection into confirmation mode if Confirm()
 // has been called.
 func (middleware *ConfirmsMiddleware) Reconnect(
-	next amqpMiddleware.HandlerReconnect,
-) (handler amqpMiddleware.HandlerReconnect) {
+	next amqpmiddleware.HandlerReconnect,
+) (handler amqpmiddleware.HandlerReconnect) {
 	return func(
 		ctx context.Context,
 		logger zerolog.Logger,
@@ -48,9 +48,9 @@ func (middleware *ConfirmsMiddleware) Reconnect(
 // Confirm captures called to amqp.Channel.Confirm() and remembers that all subsequent
 // underlying channels should be put into confirmation mode upon reconnect.
 func (middleware *ConfirmsMiddleware) Confirm(
-	next amqpMiddleware.HandlerConfirm,
-) (handler amqpMiddleware.HandlerConfirm) {
-	return func(args *amqpMiddleware.ArgsConfirms) error {
+	next amqpmiddleware.HandlerConfirm,
+) (handler amqpmiddleware.HandlerConfirm) {
+	return func(args *amqpmiddleware.ArgsConfirms) error {
 		err := next(args)
 		if err != nil {
 			return err

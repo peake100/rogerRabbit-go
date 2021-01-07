@@ -2,7 +2,7 @@ package amqp
 
 import (
 	"context"
-	"github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"
+	"github.com/peake100/rogerRabbit-go/amqp/defaultmiddlewares"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"testing"
@@ -95,25 +95,25 @@ func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 	middlewareStorage := channel.transportChannel.defaultMiddlewares
 
 	// Qos middleware
-	qosMiddleware := defaultMiddlewares.NewQosMiddleware()
+	qosMiddleware := defaultmiddlewares.NewQosMiddleware()
 	handlers.AddReconnect(qosMiddleware.Reconnect)
 	handlers.AddQoS(qosMiddleware.Qos)
 	middlewareStorage.QoS = qosMiddleware
 
 	// Flow middleware
-	flowMiddleware := defaultMiddlewares.NewFlowMiddleware()
+	flowMiddleware := defaultmiddlewares.NewFlowMiddleware()
 	handlers.AddReconnect(flowMiddleware.Reconnect)
 	handlers.AddFlow(flowMiddleware.Flow)
 	middlewareStorage.Flow = flowMiddleware
 
 	// Confirmation middleware
-	confirmMiddleware := defaultMiddlewares.NewConfirmMiddleware()
+	confirmMiddleware := defaultmiddlewares.NewConfirmMiddleware()
 	handlers.AddReconnect(confirmMiddleware.Reconnect)
 	handlers.AddConfirm(confirmMiddleware.Confirm)
 	middlewareStorage.Confirm = confirmMiddleware
 
 	// Publish Tags middleware
-	publishTagsMiddleware := defaultMiddlewares.NewPublishTagsMiddleware()
+	publishTagsMiddleware := defaultmiddlewares.NewPublishTagsMiddleware()
 	handlers.AddReconnect(publishTagsMiddleware.Reconnect)
 	handlers.AddConfirm(publishTagsMiddleware.Confirm)
 	handlers.AddPublish(publishTagsMiddleware.Publish)
@@ -121,7 +121,7 @@ func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 	middlewareStorage.PublishTags = publishTagsMiddleware
 
 	// Delivery Tags middleware
-	deliveryTagsMiddleware := defaultMiddlewares.NewDeliveryTagsMiddleware()
+	deliveryTagsMiddleware := defaultmiddlewares.NewDeliveryTagsMiddleware()
 	handlers.AddReconnect(deliveryTagsMiddleware.Reconnect)
 	handlers.AddGet(deliveryTagsMiddleware.Get)
 	handlers.AddConsumeEvent(deliveryTagsMiddleware.ConsumeEvent)
@@ -131,7 +131,7 @@ func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 	middlewareStorage.DeliveryTags = deliveryTagsMiddleware
 
 	// Route declaration middleware
-	declarationMiddleware := defaultMiddlewares.NewRouteDeclarationMiddleware()
+	declarationMiddleware := defaultmiddlewares.NewRouteDeclarationMiddleware()
 	handlers.AddReconnect(declarationMiddleware.Reconnect)
 	handlers.AddQueueDeclare(declarationMiddleware.QueueDeclare)
 	handlers.AddQueueDelete(declarationMiddleware.QueueDelete)

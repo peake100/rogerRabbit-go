@@ -5,8 +5,8 @@ package roger
 import (
 	"context"
 	"fmt"
-	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
-	"github.com/peake100/rogerRabbit-go/amqpTest"
+	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
+	"github.com/peake100/rogerRabbit-go/amqptest"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 	"sync"
@@ -60,7 +60,7 @@ func (consumer *BasicTestConsumer) SetupChannel(
 }
 
 func (consumer *BasicTestConsumer) HandleDelivery(
-	ctx context.Context, delivery dataModels.Delivery, logger zerolog.Logger,
+	ctx context.Context, delivery datamodels.Delivery, logger zerolog.Logger,
 ) (err error, requeue bool) {
 
 	// Check whether all messages have been received, then signal receipt.
@@ -91,7 +91,7 @@ func (consumer *BasicTestConsumer) Cleanup(amqpChannel AmqpRouteManager) error {
 }
 
 type ConsumerSuite struct {
-	amqpTest.AmqpSuite
+	amqptest.AmqpSuite
 }
 
 func (suite *ConsumerSuite) TestConsumeBasicLifecycle() {

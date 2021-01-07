@@ -1,9 +1,9 @@
 package amqp
 
-import "github.com/peake100/rogerRabbit-go/amqp/dataModels"
+import "github.com/peake100/rogerRabbit-go/amqp/datamodels"
 
-// Confirmation is an alias to dataModels.Confirmation.
-type Confirmation = dataModels.Confirmation
+// Confirmation is an alias to datamodels.Confirmation.
+type Confirmation = datamodels.Confirmation
 
-// Delivery is an alias to dataModels.Delivery.
-type Delivery = dataModels.Delivery
+// Delivery is an alias to datamodels.Delivery.
+type Delivery = datamodels.Delivery

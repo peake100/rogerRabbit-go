@@ -1,8 +1,8 @@
-package amqpMiddleware
+package amqpmiddleware
 
 import (
 	"context"
-	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
+	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
@@ -60,7 +60,7 @@ type HandlerConfirm func(args *ArgsConfirms) error
 type HandlerPublish func(args *ArgsPublish) error
 
 // HandlerGet: signature for handlers invoked when amqp.Channel.Get() is called.
-type HandlerGet func(args *ArgsGet) (msg dataModels.Delivery, ok bool, err error)
+type HandlerGet func(args *ArgsGet) (msg datamodels.Delivery, ok bool, err error)
 
 // HandlerAck: signature for handlers invoked when amqp.Channel.Ack() is called.
 type HandlerAck func(args *ArgsAck) error
@@ -73,7 +73,7 @@ type HandlerReject func(args *ArgsReject) error
 
 // HandlerNotifyPublish: signature for handlers invoked when
 // amqp.Channel.NotifyPublish() is called.
-type HandlerNotifyPublish func(args *ArgsNotifyPublish) chan dataModels.Confirmation
+type HandlerNotifyPublish func(args *ArgsNotifyPublish) chan datamodels.Confirmation
 
 // HandlerNotifyPublishEvent: signature for handlers invoked when an event from a
 // amqp.Channel.NotifyPublish() is being processed before beings sent to the caller.

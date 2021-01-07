@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
-	"github.com/peake100/rogerRabbit-go/amqpTest"
+	"github.com/peake100/rogerRabbit-go/amqptest"
 	"github.com/peake100/rogerRabbit-go/roger"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -26,7 +26,7 @@ func init() {
 }
 
 type ProducerSuite struct {
-	amqpTest.AmqpSuite
+	amqptest.AmqpSuite
 }
 
 func (suite *ProducerSuite) TestProducerBasicLifetime() {

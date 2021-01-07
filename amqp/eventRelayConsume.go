@@ -1,8 +1,8 @@
 package amqp
 
 import (
-	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
-	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
+	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
@@ -12,7 +12,7 @@ type consumeArgs struct {
 	queue, consumer                     string
 	autoAck, exclusive, noLocal, noWait bool
 	args                                Table
-	callerDeliveryChan                  chan dataModels.Delivery
+	callerDeliveryChan                  chan datamodels.Delivery
 }
 
 // consumeRelay implements eventRelay for Channel.Consume.
@@ -20,7 +20,7 @@ type consumeRelay struct {
 	// ConsumeArgs are arguments to call on Channel.Consume
 	ConsumeArgs consumeArgs
 	// CallerDeliveries is the delivery channel to pass deliveries back to the client.
-	CallerDeliveries chan<- dataModels.Delivery
+	CallerDeliveries chan<- datamodels.Delivery
 
 	// Acknowledger is the robust Channel this relay is sending events for.
 	Acknowledger streadway.Acknowledger
@@ -29,12 +29,12 @@ type consumeRelay struct {
 	brokerDeliveries <-chan streadway.Delivery
 
 	// handler with middleware we will call to pass events to the caller.
-	handler amqpMiddleware.HandlerConsumeEvent
+	handler amqpmiddleware.HandlerConsumeEvent
 }
 
 // baseHandler returns the base handler to be wrapped in middleware.
-func (relay *consumeRelay) baseHandler() amqpMiddleware.HandlerConsumeEvent {
-	return func(event *amqpMiddleware.EventConsume) {
+func (relay *consumeRelay) baseHandler() amqpmiddleware.HandlerConsumeEvent {
+	return func(event *amqpmiddleware.EventConsume) {
 		relay.CallerDeliveries <- event.Delivery
 	}
 }
@@ -75,8 +75,8 @@ func (relay *consumeRelay) RunRelayLeg() (done bool, err error) {
 	// Drain consumer events
 	for brokerDelivery := range relay.brokerDeliveries {
 		// Wrap the delivery and send on our way.
-		event := &amqpMiddleware.EventConsume{
-			Delivery: dataModels.NewDelivery(brokerDelivery, relay.Acknowledger),
+		event := &amqpmiddleware.EventConsume{
+			Delivery: datamodels.NewDelivery(brokerDelivery, relay.Acknowledger),
 		}
 		relay.handler(event)
 	}
@@ -95,7 +95,7 @@ func (relay *consumeRelay) Shutdown() error {
 func newConsumeRelay(
 	consumeArgs *consumeArgs,
 	acknowledger Acknowledger,
-	middleware []amqpMiddleware.ConsumeEvent,
+	middleware []amqpmiddleware.ConsumeEvent,
 ) *consumeRelay {
 	relay := &consumeRelay{
 		ConsumeArgs:      *consumeArgs,

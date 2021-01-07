@@ -1,9 +1,9 @@
-package defaultMiddlewares
+package defaultmiddlewares
 
 import (
 	"context"
-	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
-	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
+	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
@@ -73,8 +73,8 @@ func (middleware *PublishTagsMiddleware) reconnectSendOrphans() {
 // offset based on the current publish count, and send orphan events to all
 // amqp.Channel.NotifyPublish() listeners.
 func (middleware *PublishTagsMiddleware) Reconnect(
-	next amqpMiddleware.HandlerReconnect,
-) (handler amqpMiddleware.HandlerReconnect) {
+	next amqpmiddleware.HandlerReconnect,
+) (handler amqpmiddleware.HandlerReconnect) {
 	handler = func(
 		ctx context.Context, logger zerolog.Logger,
 	) (*streadway.Channel, error) {
@@ -104,9 +104,9 @@ func (middleware *PublishTagsMiddleware) Reconnect(
 // Confirm captures a channel being set to confirmation mode. If a channel is not in
 // confirmation mode, then publish tags are not tracked.
 func (middleware *PublishTagsMiddleware) Confirm(
-	next amqpMiddleware.HandlerConfirm,
-) (handler amqpMiddleware.HandlerConfirm) {
-	handler = func(args *amqpMiddleware.ArgsConfirms) error {
+	next amqpmiddleware.HandlerConfirm,
+) (handler amqpmiddleware.HandlerConfirm) {
+	handler = func(args *amqpmiddleware.ArgsConfirms) error {
 		err := next(args)
 		if err != nil {
 			return err
@@ -122,9 +122,9 @@ func (middleware *PublishTagsMiddleware) Confirm(
 // Publish is invoked on amqp.Channel.Publish(), and increments out publish count if our
 // channel is in confirmation mode.
 func (middleware *PublishTagsMiddleware) Publish(
-	next amqpMiddleware.HandlerPublish,
-) (handler amqpMiddleware.HandlerPublish) {
-	handler = func(args *amqpMiddleware.ArgsPublish) error {
+	next amqpmiddleware.HandlerPublish,
+) (handler amqpmiddleware.HandlerPublish) {
+	handler = func(args *amqpmiddleware.ArgsPublish) error {
 		err := next(args)
 		if err != nil || !middleware.confirmMode {
 			return err
@@ -144,7 +144,7 @@ func (middleware *PublishTagsMiddleware) Publish(
 // sends orphan confirmations to a single NotifyPublish listener, invoking all
 // middleware a normal call would make.
 func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
-	next amqpMiddleware.HandlerNotifyPublishEvent,
+	next amqpmiddleware.HandlerNotifyPublishEvent,
 	sentCount uint64,
 ) uint64 {
 	// The goal of this library is to simulate the behavior of streadway/amqp. Since
@@ -159,14 +159,14 @@ func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
 	// on re-connections to better mock the behavior of the original lib, where if the
 	// channel is forcibly closed, the final messages will not be confirmed.
 	for sentCount < middleware.tagOffset {
-		confirmation := dataModels.Confirmation{
+		confirmation := datamodels.Confirmation{
 			Confirmation: streadway.Confirmation{
 				DeliveryTag: sentCount + 1,
 				Ack:         false,
 			},
 			DisconnectOrphan: true,
 		}
-		next(&amqpMiddleware.EventNotifyPublish{Confirmation: confirmation})
+		next(&amqpmiddleware.EventNotifyPublish{Confirmation: confirmation})
 		sentCount++
 	}
 
@@ -176,8 +176,8 @@ func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
 // NotifyPublishEvent is invoked when a channel passed to amqp.Channel.NotifyPublish is
 // sent an event.
 func (middleware *PublishTagsMiddleware) NotifyPublishEvent(
-	next amqpMiddleware.HandlerNotifyPublishEvent,
-) (handler amqpMiddleware.HandlerNotifyPublishEvent) {
+	next amqpmiddleware.HandlerNotifyPublishEvent,
+) (handler amqpmiddleware.HandlerNotifyPublishEvent) {
 	// We need to know the total number of confirmation that have been sent. We can
 	// start with the current tag offset.
 	sent := middleware.tagOffset
@@ -198,7 +198,7 @@ func (middleware *PublishTagsMiddleware) NotifyPublishEvent(
 	}()
 
 	// Return the middleware.
-	return func(event *amqpMiddleware.EventNotifyPublish) {
+	return func(event *amqpmiddleware.EventNotifyPublish) {
 		// If this is the first ever delivery we have received, update sent to
 		// be equal to it's current value + this delivery tag - 1.
 		//

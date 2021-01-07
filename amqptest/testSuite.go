@@ -1,12 +1,12 @@
 //revive:disable:import-shadowing
 
-package amqpTest
+package amqptest
 
 import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
-	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
+	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -315,7 +315,7 @@ func (suite *AmqpSuite) publishMessagesSend(
 func (suite *AmqpSuite) publishMessagesConfirm(
 	t *testing.T,
 	count int,
-	confirmationEvents <-chan dataModels.Confirmation,
+	confirmationEvents <-chan datamodels.Confirmation,
 	allConfirmed chan struct{},
 ) {
 	assert := assert.New(t)
@@ -347,7 +347,7 @@ func (suite *AmqpSuite) PublishMessages(
 		t.FailNow()
 	}
 
-	confirmationEvents := make(chan dataModels.Confirmation, count)
+	confirmationEvents := make(chan datamodels.Confirmation, count)
 	suite.ChannelPublish().NotifyPublish(confirmationEvents)
 
 	go suite.publishMessagesSend(t, exchange, key, count)
@@ -367,7 +367,7 @@ func (suite *AmqpSuite) PublishMessages(
 // message waiting or the get message fails.
 func (suite *AmqpSuite) GetMessage(
 	queueName string, autoAck bool,
-) dataModels.Delivery {
+) datamodels.Delivery {
 	delivery, ok, err := suite.ChannelConsume().Get(queueName, autoAck)
 	if !suite.NoError(err, "get message") {
 		suite.T().FailNow()

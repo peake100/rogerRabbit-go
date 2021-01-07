@@ -1,9 +1,9 @@
-package defaultMiddlewares
+package defaultmiddlewares
 
 import (
 	"context"
 	"fmt"
-	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
@@ -14,13 +14,13 @@ import (
 // settings.
 type QoSMiddleware struct {
 	// qosArgs is the latest args passed to QoS()
-	qosArgs amqpMiddleware.ArgsQoS
+	qosArgs amqpmiddleware.ArgsQoS
 	// isSet is whether qosArgs has been set.
 	isSet bool
 }
 
 // QosArgs returns current args. For testing.
-func (middleware *QoSMiddleware) QosArgs() amqpMiddleware.ArgsQoS {
+func (middleware *QoSMiddleware) QosArgs() amqpmiddleware.ArgsQoS {
 	return middleware.qosArgs
 }
 
@@ -32,8 +32,8 @@ func (middleware *QoSMiddleware) IsSet() bool {
 // Reconnect is called whenever the underlying channel is reconnected. This middleware
 // re-applies any QoS calls to the channel.
 func (middleware *QoSMiddleware) Reconnect(
-	next amqpMiddleware.HandlerReconnect,
-) (handler amqpMiddleware.HandlerReconnect) {
+	next amqpmiddleware.HandlerReconnect,
+) (handler amqpmiddleware.HandlerReconnect) {
 	return func(
 		ctx context.Context,
 		logger zerolog.Logger,
@@ -61,9 +61,9 @@ func (middleware *QoSMiddleware) Reconnect(
 // Qos is called in amqp.Channel.Qos(). Saves the QoS settings passed to the QoS
 // function
 func (middleware *QoSMiddleware) Qos(
-	next amqpMiddleware.HandlerQoS,
-) (handler amqpMiddleware.HandlerQoS) {
-	return func(args *amqpMiddleware.ArgsQoS) error {
+	next amqpmiddleware.HandlerQoS,
+) (handler amqpmiddleware.HandlerQoS) {
+	return func(args *amqpmiddleware.ArgsQoS) error {
 		err := next(args)
 		if err != nil {
 			return err
@@ -78,7 +78,7 @@ func (middleware *QoSMiddleware) Qos(
 // NewQosMiddleware creates a new QoSMiddleware.
 func NewQosMiddleware() *QoSMiddleware {
 	return &QoSMiddleware{
-		qosArgs: amqpMiddleware.ArgsQoS{},
+		qosArgs: amqpmiddleware.ArgsQoS{},
 		isSet:   false,
 	}
 }

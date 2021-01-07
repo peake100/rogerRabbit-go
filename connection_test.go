@@ -5,7 +5,7 @@ package rogerRabbit_test
 import (
 	"context"
 	"github.com/peake100/rogerRabbit-go/amqp"
-	"github.com/peake100/rogerRabbit-go/amqpTest"
+	"github.com/peake100/rogerRabbit-go/amqptest"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	streadway "github.com/streadway/amqp"
@@ -34,7 +34,7 @@ func Test0000_Dial_Succeed(t *testing.T) {
 
 	go func() {
 		defer close(connected)
-		conn, err = amqp.Dial(amqpTest.TestDialAddress)
+		conn, err = amqp.Dial(amqptest.TestDialAddress)
 	}()
 
 	timeout := time.NewTimer(15 * time.Second)
@@ -73,7 +73,7 @@ func Test0010_DialCtx_Succeed(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	conn, err := amqp.DialCtx(ctx, amqpTest.TestDialAddress)
+	conn, err := amqp.DialCtx(ctx, amqptest.TestDialAddress)
 	if err != nil {
 		return
 	}
@@ -110,7 +110,7 @@ func Test0030_Close(t *testing.T) {
 	dialCtx, dialCancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer dialCancel()
 
-	conn, err := amqp.DialCtx(dialCtx, amqpTest.TestDialAddress)
+	conn, err := amqp.DialCtx(dialCtx, amqptest.TestDialAddress)
 	if !assert.NoError(err, "dial broker") {
 		t.FailNow()
 	}
@@ -139,7 +139,7 @@ func Test0030_Close(t *testing.T) {
 func Test0040_Connection_Reconnect(t *testing.T) {
 	assert := assert.New(t)
 
-	conn := amqpTest.GetTestConnection(t)
+	conn := amqptest.GetTestConnection(t)
 	connTester := conn.Test(t)
 
 	// Reconnect 10 times
@@ -186,7 +186,7 @@ func Test0040_Connection_Reconnect(t *testing.T) {
 func TestConnection_NotifyOnClose_NoReconnect_NoErr(t *testing.T) {
 	assert := assert.New(t)
 
-	conn := amqpTest.GetTestConnection(t)
+	conn := amqptest.GetTestConnection(t)
 
 	closeEvent := make(chan *streadway.Error, 1)
 	conn.NotifyClose(closeEvent)
@@ -208,7 +208,7 @@ func TestConnection_NotifyOnClose_NoReconnect_NoErr(t *testing.T) {
 func TestConnection_NotifyOnClose_Reconnect_NoErr(t *testing.T) {
 	assert := assert.New(t)
 
-	conn := amqpTest.GetTestConnection(t)
+	conn := amqptest.GetTestConnection(t)
 	connTester := conn.Test(t)
 
 	closeEvent := make(chan *streadway.Error, 1)
@@ -240,7 +240,7 @@ func TestConnection_NotifyOnClose_Reconnect_NoErr(t *testing.T) {
 }
 
 func TestConnection_NotifyOnClose_AlreadyClosed(t *testing.T) {
-	conn := amqpTest.GetTestConnection(t)
+	conn := amqptest.GetTestConnection(t)
 	err := conn.Close()
 	if !assert.NoError(t, err, "close connection") {
 		t.FailNow()
@@ -259,7 +259,7 @@ func TestConnection_NotifyOnClose_AlreadyClosed(t *testing.T) {
 func TestConnection_NotifyOnDial(t *testing.T) {
 	assert := assert.New(t)
 
-	conn := amqpTest.GetTestConnection(t)
+	conn := amqptest.GetTestConnection(t)
 	connTester := conn.Test(t)
 
 	dialEvent := make(chan error, 1)
@@ -292,7 +292,7 @@ func TestConnection_NotifyOnDial(t *testing.T) {
 func TestConnection_NotifyOnDial_AlreadyClosed(t *testing.T) {
 	assert := assert.New(t)
 
-	conn := amqpTest.GetTestConnection(t)
+	conn := amqptest.GetTestConnection(t)
 	conn.Close()
 
 	eventChan := make(chan error, 1)
@@ -310,7 +310,7 @@ func TestConnection_NotifyOnDial_AlreadyClosed(t *testing.T) {
 func TestConnection_NotifyOnDisconnect(t *testing.T) {
 	assert := assert.New(t)
 
-	conn := amqpTest.GetTestConnection(t)
+	conn := amqptest.GetTestConnection(t)
 
 	disconnectEvent := make(chan error, 2)
 	err := conn.NotifyDisconnect(disconnectEvent)
@@ -371,7 +371,7 @@ func TestConnection_NotifyOnDisconnect(t *testing.T) {
 func TestConnection_NotifyOnDisconnect_AlreadyClosed(t *testing.T) {
 	assert := assert.New(t)
 
-	conn := amqpTest.GetTestConnection(t)
+	conn := amqptest.GetTestConnection(t)
 	conn.Close()
 
 	eventChan := make(chan error, 1)
@@ -390,7 +390,7 @@ func TestConnection_NotifyOnDisconnect_AlreadyClosed(t *testing.T) {
 func TestConnection_IsClosed(t *testing.T) {
 	assert := assert.New(t)
 
-	conn := amqpTest.GetTestConnection(t)
+	conn := amqptest.GetTestConnection(t)
 	connTester := conn.Test(t)
 
 	// Check that we report the connection as open on creation

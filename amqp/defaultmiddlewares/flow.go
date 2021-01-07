@@ -1,9 +1,9 @@
-package defaultMiddlewares
+package defaultmiddlewares
 
 import (
 	"context"
 	"fmt"
-	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
@@ -26,8 +26,8 @@ func (middleware *FlowMiddleware) Active() bool {
 // Reconnect sets amqp.Channel.Flow(flow=false) on the underlying channel as soon as a
 // reconnection occurs if the user has paused the flow on the channel.
 func (middleware *FlowMiddleware) Reconnect(
-	next amqpMiddleware.HandlerReconnect,
-) (handler amqpMiddleware.HandlerReconnect) {
+	next amqpmiddleware.HandlerReconnect,
+) (handler amqpmiddleware.HandlerReconnect) {
 	return func(
 		ctx context.Context, logger zerolog.Logger,
 	) (*streadway.Channel, error) {
@@ -49,9 +49,9 @@ func (middleware *FlowMiddleware) Reconnect(
 // Flow captures calls to *amqp.Channel.Flow() so channels can be paused on reconnect if
 // the user has paused the channel.
 func (middleware *FlowMiddleware) Flow(
-	next amqpMiddleware.HandlerFlow,
-) (handler amqpMiddleware.HandlerFlow) {
-	return func(args *amqpMiddleware.ArgsFlow) error {
+	next amqpmiddleware.HandlerFlow,
+) (handler amqpmiddleware.HandlerFlow) {
+	return func(args *amqpmiddleware.ArgsFlow) error {
 		middleware.activeLock.Lock()
 		defer middleware.activeLock.Unlock()
 

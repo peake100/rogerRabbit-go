@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
-	"github.com/peake100/rogerRabbit-go/amqpTest"
+	"github.com/peake100/rogerRabbit-go/amqptest"
 	"github.com/peake100/rogerRabbit-go/roger"
 	"sync"
 	"time"
@@ -12,7 +12,7 @@ import (
 
 func ExampleNewProducer() {
 	// Get a new connection to our test broker.
-	connection, err := amqp.DialCtx(context.Background(), amqpTest.TestDialAddress)
+	connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 	if err != nil {
 		panic(err)
 	}

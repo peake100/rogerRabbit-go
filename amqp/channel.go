@@ -3,9 +3,9 @@ package amqp
 import (
 	"context"
 	"fmt"
-	"github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware"
-	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
-	"github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
+	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
+	"github.com/peake100/rogerRabbit-go/amqp/defaultmiddlewares"
 	"github.com/rs/zerolog"
 	"testing"
 )
@@ -144,7 +144,7 @@ will take care of matching up caller-facing delivery tags to the current channel
 underlying tag.
 */
 func (channel *Channel) Confirm(noWait bool) error {
-	args := &amqpMiddleware.ArgsConfirms{NoWait: noWait}
+	args := &amqpmiddleware.ArgsConfirms{NoWait: noWait}
 
 	op := func() error {
 		return channel.transportChannel.handlers.confirm(args)
@@ -189,7 +189,7 @@ greater as described by benchmarks on RabbitMQ.
 http://www.rabbitmq.com/blog/2012/04/25/rabbitmq-performance-measurements-part-2/
 */
 func (channel *Channel) Qos(prefetchCount, prefetchSize int, global bool) error {
-	args := &amqpMiddleware.ArgsQoS{
+	args := &amqpmiddleware.ArgsQoS{
 		PrefetchCount: prefetchCount,
 		PrefetchSize:  prefetchSize,
 		Global:        global,
@@ -225,7 +225,7 @@ a connection, so under high volume scenarios, it's wise to open separate
 Connections for publishings and deliveries.
 */
 func (channel *Channel) Flow(active bool) error {
-	args := &amqpMiddleware.ArgsFlow{
+	args := &amqpmiddleware.ArgsFlow{
 		Active: active,
 	}
 
@@ -308,7 +308,7 @@ func (channel *Channel) QueueDeclare(
 ) (queue Queue, err error) {
 	// Run an an operation to get automatic retries on channel dis-connections.
 	// We need to remember to re-declare this queue on reconnectMiddleware
-	queueArgs := &amqpMiddleware.ArgsQueueDeclare{
+	queueArgs := &amqpmiddleware.ArgsQueueDeclare{
 		Name:       name,
 		Durable:    durable,
 		AutoDelete: autoDelete,
@@ -432,7 +432,7 @@ closed with an error.
 func (channel *Channel) QueueBind(
 	name, key, exchange string, noWait bool, args Table,
 ) error {
-	bindArgs := &amqpMiddleware.ArgsQueueBind{
+	bindArgs := &amqpmiddleware.ArgsQueueBind{
 		Name:     name,
 		Key:      key,
 		Exchange: exchange,
@@ -460,7 +460,7 @@ unbind the queue from the default exchange.
 
 */
 func (channel *Channel) QueueUnbind(name, key, exchange string, args Table) error {
-	unbindArgs := &amqpMiddleware.ArgsQueueUnbind{
+	unbindArgs := &amqpmiddleware.ArgsQueueUnbind{
 		Name:     name,
 		Key:      key,
 		Exchange: exchange,
@@ -524,7 +524,7 @@ re-declared on reconnections of the underlying streadway/amqp.Channel object.
 func (channel *Channel) QueueDelete(
 	name string, ifUnused, ifEmpty, noWait bool,
 ) (count int, err error) {
-	deleteArgs := &amqpMiddleware.ArgsQueueDelete{
+	deleteArgs := &amqpmiddleware.ArgsQueueDelete{
 		Name:     name,
 		IfUnused: ifUnused,
 		IfEmpty:  ifEmpty,
@@ -606,7 +606,7 @@ how exchanges are re-declared on reconnection.
 func (channel *Channel) ExchangeDeclare(
 	name, kind string, durable, autoDelete, internal, noWait bool, args Table,
 ) (err error) {
-	exchangeArgs := &amqpMiddleware.ArgsExchangeDeclare{
+	exchangeArgs := &amqpmiddleware.ArgsExchangeDeclare{
 		Name:       name,
 		Kind:       kind,
 		Durable:    durable,
@@ -678,7 +678,7 @@ or relevant bindings to be re-declared on reconnections of the underlying
 func (channel *Channel) ExchangeDelete(
 	name string, ifUnused, noWait bool,
 ) (err error) {
-	deleteArgs := &amqpMiddleware.ArgsExchangeDelete{
+	deleteArgs := &amqpmiddleware.ArgsExchangeDelete{
 		Name:     name,
 		IfUnused: ifUnused,
 		NoWait:   noWait,
@@ -730,7 +730,7 @@ ROGER NOTE: All bindings will be remembered and re-declared on reconnection even
 func (channel *Channel) ExchangeBind(
 	destination, key, source string, noWait bool, args Table,
 ) (err error) {
-	bindArgs := &amqpMiddleware.ArgsExchangeBind{
+	bindArgs := &amqpmiddleware.ArgsExchangeBind{
 		Destination: destination,
 		Key:         key,
 		Source:      source,
@@ -768,7 +768,7 @@ on reconnect.
 func (channel *Channel) ExchangeUnbind(
 	destination, key, source string, noWait bool, args Table,
 ) (err error) {
-	unbindArgs := &amqpMiddleware.ArgsExchangeUnbind{
+	unbindArgs := &amqpmiddleware.ArgsExchangeUnbind{
 		Destination: destination,
 		Key:         key,
 		Source:      source,
@@ -830,7 +830,7 @@ func (channel *Channel) Publish(
 	immediate bool,
 	msg Publishing,
 ) (err error) {
-	args := &amqpMiddleware.ArgsPublish{
+	args := &amqpmiddleware.ArgsPublish{
 		Exchange:  exchange,
 		Key:       key,
 		Mandatory: mandatory,
@@ -873,8 +873,8 @@ you.
 func (channel *Channel) Get(
 	queue string,
 	autoAck bool,
-) (msg dataModels.Delivery, ok bool, err error) {
-	args := &amqpMiddleware.ArgsGet{
+) (msg datamodels.Delivery, ok bool, err error) {
+	args := &amqpmiddleware.ArgsGet{
 		Queue:   queue,
 		AutoAck: autoAck,
 	}
@@ -959,7 +959,7 @@ tags of the current underlying channel.
 */
 func (channel *Channel) Consume(
 	queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args Table,
-) (deliveryChan <-chan dataModels.Delivery, err error) {
+) (deliveryChan <-chan datamodels.Delivery, err error) {
 	consumeArgs := &consumeArgs{
 		queue:     queue,
 		consumer:  consumer,
@@ -970,7 +970,7 @@ func (channel *Channel) Consume(
 		args:      args,
 		// Make a buffered channel so we don't cause latency from waiting for queues to
 		// be ready
-		callerDeliveryChan: make(chan dataModels.Delivery, 16),
+		callerDeliveryChan: make(chan datamodels.Delivery, 16),
 	}
 	deliveryChan = consumeArgs.callerDeliveryChan
 
@@ -1012,7 +1012,7 @@ channel, and therefore be successful. In such cases, the ErrCantAcknowledgeOrpha
 still be returned, and can be checked for which tag ranges could not be acked.
 */
 func (channel *Channel) Ack(tag uint64, multiple bool) error {
-	args := &amqpMiddleware.ArgsAck{
+	args := &amqpmiddleware.ArgsAck{
 		Tag:      tag,
 		Multiple: multiple,
 	}
@@ -1044,7 +1044,7 @@ still be returned, and can be checked for which tag ranges could not be nacked.
 
 */
 func (channel *Channel) Nack(tag uint64, multiple bool, requeue bool) error {
-	args := &amqpMiddleware.ArgsNack{
+	args := &amqpmiddleware.ArgsNack{
 		Tag:      tag,
 		Multiple: multiple,
 		Requeue:  requeue,
@@ -1076,7 +1076,7 @@ channel, and therefore be successful. In such cases, the ErrCantAcknowledgeOrpha
 still be returned, and can be checked for which tag ranges could not be rejected.
 */
 func (channel *Channel) Reject(tag uint64, requeue bool) error {
-	args := &amqpMiddleware.ArgsReject{
+	args := &amqpmiddleware.ArgsReject{
 		Tag:     tag,
 		Requeue: requeue,
 	}
@@ -1126,11 +1126,11 @@ getting a lot of orphaned messages, make sure to check what disconnect errors yo
 receiving.
 */
 func (channel *Channel) NotifyPublish(
-	confirm chan dataModels.Confirmation,
-) chan dataModels.Confirmation {
+	confirm chan datamodels.Confirmation,
+) chan datamodels.Confirmation {
 	// Setup and launch the event relay that will handle these events across multiple
 	// connections.
-	args := &amqpMiddleware.ArgsNotifyPublish{Confirm: confirm}
+	args := &amqpmiddleware.ArgsNotifyPublish{Confirm: confirm}
 	return channel.transportChannel.handlers.notifyPublish(args)
 }
 
@@ -1156,7 +1156,7 @@ mainLoop:
 // notifyConfirmHandleAckAndNack handles splitting confirmations between the ack and
 // nack channels.
 func notifyConfirmHandleAckAndNack(
-	confirmation dataModels.Confirmation, ack, nack chan uint64, logger zerolog.Logger,
+	confirmation datamodels.Confirmation, ack, nack chan uint64, logger zerolog.Logger,
 ) {
 	if confirmation.Ack {
 		if logger.Debug().Enabled() {
@@ -1195,7 +1195,7 @@ func (channel *Channel) NotifyConfirm(
 	ack, nack chan uint64,
 ) (chan uint64, chan uint64) {
 	confirmsEvents := channel.NotifyPublish(
-		make(chan dataModels.Confirmation, cap(ack)+cap(nack)),
+		make(chan datamodels.Confirmation, cap(ack)+cap(nack)),
 	)
 	logger := channel.logger.With().
 		Str("EVENT_TYPE", "NOTIFY_CONFIRM").
@@ -1221,7 +1221,7 @@ func (channel *Channel) NotifyConfirmOrOrphaned(
 	ack, nack, orphaned chan uint64,
 ) (chan uint64, chan uint64, chan uint64) {
 	confirmsEvents := channel.NotifyPublish(
-		make(chan dataModels.Confirmation, cap(ack)+cap(nack)+cap(orphaned)),
+		make(chan datamodels.Confirmation, cap(ack)+cap(nack)+cap(orphaned)),
 	)
 	logger := channel.logger.With().
 		Str("EVENT_TYPE", "NOTIFY_CONFIRM_OR_ORPHAN").
@@ -1236,7 +1236,7 @@ func (channel *Channel) NotifyConfirmOrOrphaned(
 // NotifyConfirmOrOrphaned to the caller.
 func (channel *Channel) runNotifyConfirmOrOrphaned(
 	ack, nack, orphaned chan uint64,
-	confirmEvents <-chan dataModels.Confirmation,
+	confirmEvents <-chan datamodels.Confirmation,
 	logger zerolog.Logger,
 ) {
 	// Close channels on exit
@@ -1447,14 +1447,14 @@ func (channel *Channel) Middleware() *channelHandlers {
 // ChannelTestingDefaultMiddlewares holds default middleware for inspection during
 // tests.
 type ChannelTestingDefaultMiddlewares struct {
-	QoS     *defaultMiddlewares.QoSMiddleware
-	Flow    *defaultMiddlewares.FlowMiddleware
-	Confirm *defaultMiddlewares.ConfirmsMiddleware
+	QoS     *defaultmiddlewares.QoSMiddleware
+	Flow    *defaultmiddlewares.FlowMiddleware
+	Confirm *defaultmiddlewares.ConfirmsMiddleware
 
-	RouteDeclaration *defaultMiddlewares.RouteDeclarationMiddleware
+	RouteDeclaration *defaultmiddlewares.RouteDeclarationMiddleware
 
-	PublishTags  *defaultMiddlewares.PublishTagsMiddleware
-	DeliveryTags *defaultMiddlewares.DeliveryTagsMiddleware
+	PublishTags  *defaultmiddlewares.PublishTagsMiddleware
+	DeliveryTags *defaultmiddlewares.DeliveryTagsMiddleware
 }
 
 // ChannelTesting exposes a number of methods designed for testing.

@@ -1,6 +1,6 @@
 //revive:disable:import-shadowing
 
-package amqpTest
+package amqptest
 
 import (
 	"context"

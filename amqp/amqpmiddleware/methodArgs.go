@@ -1,7 +1,7 @@
-package amqpMiddleware
+package amqpmiddleware
 
 import (
-	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
+	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
 	streadway "github.com/streadway/amqp"
 )
 
@@ -138,17 +138,17 @@ type ArgsReject struct {
 // ArgsNotifyPublish stores args to amqp.Channel.NotifyPublish() for middleware to
 // inspect.
 type ArgsNotifyPublish struct {
-	Confirm chan dataModels.Confirmation
+	Confirm chan datamodels.Confirmation
 }
 
 // EventNotifyPublish passes event information from a  to amqp.Channel.NotifyPublish()
 // event for middleware to inspect / modify before the event is passed to the caller.
 type EventNotifyPublish struct {
-	Confirmation dataModels.Confirmation
+	Confirmation datamodels.Confirmation
 }
 
 // EventConsume passes event information from a  to amqp.Channel.Consume()
 // event for middleware to inspect / modify before the event is passed to the caller.
 type EventConsume struct {
-	Delivery dataModels.Delivery
+	Delivery datamodels.Delivery
 }

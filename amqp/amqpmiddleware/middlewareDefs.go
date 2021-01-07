@@ -1,4 +1,4 @@
-package amqpMiddleware
+package amqpmiddleware
 
 // Middleware definitions for channel methods.
 
