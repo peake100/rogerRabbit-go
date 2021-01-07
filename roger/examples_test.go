@@ -12,7 +12,7 @@ import (
 
 func ExampleNewProducer() {
 	// Get a new connection to our test broker.
-	connection, err := amqp.Dial(amqpTest.TestDialAddress)
+	connection, err := amqp.DialCtx(context.Background(), amqpTest.TestDialAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -28,11 +28,11 @@ func ExampleNewProducer() {
 	// Declare a queue to produce to
 	queue, err := channel.QueueDeclare(
 		"example_confirmation_producer", // name
-		false, // durable
-		true, // autoDelete
-		false, // exclusive
-		false, // noWait
-		nil, // args
+		false,                           // durable
+		true,                            // autoDelete
+		false,                           // exclusive
+		false,                           // noWait
+		nil,                             // args
 	)
 
 	// Create a new producer using our channel. Passing nil to opts will result in
@@ -54,7 +54,7 @@ func ExampleNewProducer() {
 	}()
 
 	messagesPublished := new(sync.WaitGroup)
-	for i := 0 ; i < 10 ; i++ {
+	for i := 0; i < 10; i++ {
 
 		messagesPublished.Add(1)
 
@@ -63,7 +63,7 @@ func ExampleNewProducer() {
 			// Release our WaitGroup on exit.
 			defer messagesPublished.Done()
 
-			ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
 			// Publish a message, this method will block until we get a publication

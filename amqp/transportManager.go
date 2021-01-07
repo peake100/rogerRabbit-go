@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	streadway "github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -197,6 +198,13 @@ var repeatErrCodes = [3]int{
 func isRepeatErr(err error) bool {
 	// If there was an error, check and see if it is an error we should try again
 	// on.
+
+	// If this is an io.EOF error, there was probably an aborted connection during
+	// broker startup. We can try again with a new channel.
+	if errors.Is(err, io.EOF) {
+		return true
+	}
+
 	var streadwayErr *streadway.Error
 	if errors.As(err, &streadwayErr) {
 		for _, repeatCode := range repeatErrCodes {
