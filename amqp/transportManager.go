@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// The transport interface is a common interface between the *streadway.Connection and
+// transport is an interface is a common interface between the *streadway.Connection and
 // *streadway.Channel. We want o abstract away identical operations we need to implement
 // on both of them
 type transport interface {
@@ -21,28 +21,35 @@ type transport interface {
 	Close() error
 }
 
-// Interface we need to implement for a transport capable of being reconnected
+// transportReconnect is the interface we need to implement for a transport capable of
+// being reconnected
 type transportReconnect interface {
 	transport
-	// We need to implement this method for both Connection and Channel. This method
+
+	// tryReconnect is needed for both Connection and Channel. This method
 	// attempts to re-establish a connection for the underlying object exactly once.
 	tryReconnect(ctx context.Context) error
-	// Clean up any resources. Called on final close AFTER the main context is cancelled
-	// but before the current underlying connection is closed. NOTE: re-connects will
-	// NOT once this method is called, so cleanup implementation must be able to handle
-	// a disconnected underlying connection.
+
+	// cleanup releases any resources. Called on final close AFTER the main context is
+	// cancelled but before the current underlying connection is closed. NOTE:
+	// re-connects will NOT occur once this method is called, so cleanup implementation
+	// must be able to handle a disconnected underlying connection.
 	cleanup() error
 }
 
-type reconnectSignaler struct {
-	t               *testing.T
+// TestReconnectSignaler allows us to block until a reconnection occurs during a test.
+type TestReconnectSignaler struct {
+	// The test we are using.
+	t *testing.T
+
+	// reconnectSignal will close when a reconnection occurs.
 	reconnectSignal chan struct{}
 }
 
-// Blocks until a reconnection of the underlying transport occurs. Once the first
-// reconnection event occurs, this object will no longer block and a new signaler will
-// need to be created for the next re-connection.
-func (signaler *reconnectSignaler) WaitOnReconnect(ctx context.Context) {
+// WaitOnReconnect blocks until a reconnection of the underlying transport occurs. Once
+// the first reconnection event occurs, this object will no longer block and a new
+// signaler will need to be created for the next re-connection.
+func (signaler *TestReconnectSignaler) WaitOnReconnect(ctx context.Context) {
 	select {
 	case <-signaler.reconnectSignal:
 	case <-ctx.Done():
@@ -53,42 +60,47 @@ func (signaler *reconnectSignaler) WaitOnReconnect(ctx context.Context) {
 	}
 }
 
-// Provides testing methods for testing channels and connections.
-type transportTesting struct {
+// TransportTesting provides testing methods for testing Channel and Connection.
+type TransportTesting struct {
 	t       *testing.T
 	manager *transportManager
 	// The number of times a connection has been blocked from being acquired.
 	blocks *int32
 }
 
-// The lock which controls access to the channel / connection
-func (tester *transportTesting) TransportLock() *sync.RWMutex {
+// TransportLock is the underlying lock which controls access to the channel /
+// connection. When held for read or write, a reconnection of the underlying transport
+// cannot occur.
+func (tester *TransportTesting) TransportLock() *sync.RWMutex {
 	return tester.manager.transportLock
 }
 
-// Block a transport from reconnecting. If too few calls to UnblockReconnect() are
-// made, the block will be removed at the end of the test.
-func (tester *transportTesting) BlockReconnect() {
+// BlockReconnect blocks a transport from reconnecting. If too few calls to
+// UnblockReconnect() are made, the block will be removed at the end of the test.
+func (tester *TransportTesting) BlockReconnect() {
 	atomic.AddInt32(tester.blocks, 1)
 	tester.manager.transportLock.RLock()
 }
 
-// Unblock the transport from reconnecting after calling BlockReconnect()
-func (tester *transportTesting) UnblockReconnect() {
+// UnblockReconnect unblocks the transport from reconnecting after calling
+// BlockReconnect()
+func (tester *TransportTesting) UnblockReconnect() {
 	defer tester.manager.transportLock.RUnlock()
 	atomic.AddInt32(tester.blocks, -1)
 }
 
-func (tester *transportTesting) cleanup() {
+// cleanup calls UnblockReconnect the required number of times to unblock the channel
+// from reconnecting during test cleanup.
+func (tester *TransportTesting) cleanup() {
 	blocks := *tester.blocks
 	for i := int32(0); i < blocks; i++ {
 		tester.manager.transportLock.RUnlock()
 	}
 }
 
-// Returns a signaler that can be used to wait on the next reconnection event of the
-// transport.
-func (tester *transportTesting) SignalOnReconnect() *reconnectSignaler {
+// SignalOnReconnect returns a signaler that can be used to wait on the next
+// reconnection event of the transport.
+func (tester *TransportTesting) SignalOnReconnect() *TestReconnectSignaler {
 	// Signal that the connection has been re-established
 	reconnected := make(chan struct{})
 
@@ -102,7 +114,7 @@ func (tester *transportTesting) SignalOnReconnect() *reconnectSignaler {
 		tester.manager.reconnectCond.Wait()
 	}()
 
-	signaler := &reconnectSignaler{
+	signaler := &TestReconnectSignaler{
 		t:               tester.t,
 		reconnectSignal: reconnected,
 	}
@@ -110,18 +122,18 @@ func (tester *transportTesting) SignalOnReconnect() *reconnectSignaler {
 	return signaler
 }
 
-// Closes the underlying transport to signal a disconnect.
-func (tester *transportTesting) DisconnectTransport() {
+// DisconnectTransport closes the underlying transport to force a reconnection.
+func (tester *TransportTesting) DisconnectTransport() {
 	err := tester.manager.transport.Close()
 	if !assert.NoError(tester.t, err, "close underlying transport") {
 		tester.t.FailNow()
 	}
 }
 
-// Force a disconnect of the channel or connection and waits for a reconnection to
-// occur or ctx to cancel. If a nil context is passed, a context with a 3-second timeout
-// will be used instead
-func (tester *transportTesting) ForceReconnect(ctx context.Context) {
+// ForceReconnect forces a disconnect of the channel or connection and waits for a
+// reconnection to occur or ctx to cancel. If a nil context is passed, a context with
+// a 3-second timeout will be used instead.
+func (tester *TransportTesting) ForceReconnect(ctx context.Context) {
 	if ctx == nil {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
@@ -138,9 +150,9 @@ func (tester *transportTesting) ForceReconnect(ctx context.Context) {
 	reconnected.WaitOnReconnect(ctx)
 }
 
-// Handles lifetime of underlying transport method, such as reconnections, closures,
-// and connection status subscribers. To be embedded into the Connection and Channel
-// types for free implementation of common methods.
+// transportManager handles lifetime of underlying transport method, such as
+// reconnections, closures, and connection status subscribers. To be embedded into the
+// Connection and Channel types for free implementation of common methods.
 type transportManager struct {
 	// The master context of the robust connection. Cancellation of this context
 	// should keep the connection from re-dialing and close the current connection.
@@ -173,14 +185,15 @@ type transportManager struct {
 	logger zerolog.Logger
 }
 
-// Errors that should cause an automatic reattempt of an operation. We want to
-// automatically re-run any operations that fail
+// repeatErrCodes are errors that should cause an automatic reattempt of an operation.
+// We want to automatically re-run any operations that fail
 var repeatErrCodes = [3]int{
 	streadway.ChannelError,
 	streadway.UnexpectedFrame,
 	streadway.FrameError,
 }
 
+// isRepeatErr returns true if err is an error we should reattempt an operation on.
 func isRepeatErr(err error) bool {
 	// If there was an error, check and see if it is an error we should try again
 	// on.
@@ -196,6 +209,8 @@ func isRepeatErr(err error) bool {
 	return false
 }
 
+// retryOperationOnClosedSingle attempts a Connection or Channel channel method a single
+// time.
 func (manager *transportManager) retryOperationOnClosedSingle(
 	ctx context.Context,
 	operation func() error,
@@ -230,9 +245,10 @@ func (manager *transportManager) retryOperationOnClosedSingle(
 	return err
 }
 
-// Repeats operation until a non-closed error is returned or ctx expires. This is a
-// helper method for implementing methods like Channel.QueueBind, in which we want
-// to retry the operation if our underlying transport mechanism has connection issues.
+// retryOperationOnClosed repeats operation / method call until a non-closed error is
+// returned or ctx expires. This is a helper method for implementing methods like
+// Channel.QueueBind, in which we want to retry the operation if our underlying
+// transport mechanism has connection issues.
 func (manager *transportManager) retryOperationOnClosed(
 	ctx context.Context,
 	operation func() error,
@@ -256,7 +272,8 @@ func (manager *transportManager) retryOperationOnClosed(
 	}
 }
 
-// Sends results of a dial attempt to all NotifyOnDial subscribers.
+// sendConnectNotifications sends results of a dial attempt to all
+// transportManager.NotifyDial subscribers.
 func (manager *transportManager) sendConnectNotifications(err error) {
 	manager.notificationSubscriberLock.Lock()
 	defer manager.notificationSubscriberLock.Unlock()
@@ -267,8 +284,8 @@ func (manager *transportManager) sendConnectNotifications(err error) {
 	}
 }
 
-// Sends the error from NotifyOnClose of the underlying connection when a disconnect
-// occurs to all NotifyOnDisconnect subscribers.
+// sendDisconnectNotifications sends the error from NotifyClose of the underlying
+// connection when a disconnect occurs to all NotifyOnDisconnect subscribers.
 func (manager *transportManager) sendDisconnectNotifications(err *streadway.Error) {
 	manager.notificationSubscriberLock.Lock()
 	defer manager.notificationSubscriberLock.Unlock()
@@ -284,7 +301,7 @@ func (manager *transportManager) sendDisconnectNotifications(err *streadway.Erro
 	}
 }
 
-// Sends notification to all NotifyOnClose subscribers.
+// sendCloseNotifications sends notification to all NotifyOnClose subscribers.
 func (manager *transportManager) sendCloseNotifications(err *streadway.Error) {
 	if manager.logger.Debug().Enabled() {
 		manager.logger.Debug().Msg("sending close notifications")
@@ -305,13 +322,13 @@ func (manager *transportManager) sendCloseNotifications(err *streadway.Error) {
 	}
 }
 
-// As NotifyClose on streadway Connection/Channel. Subscribers to Close events will not
-// be notified when a reconnection occurs under the hood, only when the roger Connection
-// or Channel is closed by calling the Close method. This mirrors the streadway
-// implementation, where Close events are only sent once when the transport object
-// becomes unusable.
+// NotifyClose is as NotifyClose on streadway Connection/Channel.NotifyClose.
+// Subscribers to Close events will not be notified when a reconnection occurs under
+// the hood, only when the roger Connection or Channel is closed by calling the Close
+// method. This mirrors the streadway implementation, where Close events are only sent
+// once when the transport object becomes unusable.
 //
-// For finer grained connection status, see NotifyDial and NotifyDisconnect, which
+// For finer-grained connection status, see NotifyDial and NotifyDisconnect, which
 // will both send individual events when the connection is lost or re-acquired.
 func (manager *transportManager) NotifyClose(
 	receiver chan *streadway.Error,
@@ -332,9 +349,9 @@ func (manager *transportManager) NotifyClose(
 	return receiver
 }
 
-// New for robust Roger Transport objects. NotifyDial will send all subscribers an
-// event notification every time we try to re-acquire a connection. This will include
-// both failure AND successes.
+// NotifyDial is new for robust Roger Transport objects. NotifyDial will send all
+// subscribers an event notification every time we try to re-acquire a connection. This
+// will include both failure AND successes.
 func (manager *transportManager) NotifyDial(
 	receiver chan error,
 ) error {
@@ -354,8 +371,9 @@ func (manager *transportManager) NotifyDial(
 	return nil
 }
 
-// New for robust Roger Transport objects. NotifyDisconnect will send all subscribers an
-// event notification every time a connection is lost.
+// NotifyDisconnect is new for robust Roger Transport objects. NotifyDisconnect will
+// send all subscribers an event notification every time the underlying connection is
+// lost.
 func (manager *transportManager) NotifyDisconnect(
 	receiver chan error,
 ) error {
@@ -375,6 +393,8 @@ func (manager *transportManager) NotifyDisconnect(
 	return nil
 }
 
+// cancelCtxCloseTransport cancels the main context and closes the underlying connection
+// during shutdown.
 func (manager *transportManager) cancelCtxCloseTransport() {
 	// Grab the notification subscriber lock so new subscribers will not get added
 	// without seeing the context cancel.
@@ -427,28 +447,29 @@ func (manager *transportManager) Close() error {
 	return manager.transport.cleanup()
 }
 
+// IsClosed returns true if the connection is marked as closed, otherwise false
+// is returned.
+//
+// --
+//
 // ROGER NOTE: unlike streadway/amqp, which only implements IsClosed() on connection
 // objects, rogerRabbit makes IsClosed() available on both connections and channels.
 // IsClosed() will return false until the connection / channel is shut down, even if the
 // underlying connection is currently disconnected and waiting to reconnectMiddleware.
-//
-// --
-//
-// IsClosed returns true if the connection is marked as closed, otherwise false
-// is returned.
 func (manager *transportManager) IsClosed() bool {
 	// If the context is cancelled, the transport is closed.
 	return manager.ctx.Err() != nil
 }
 
 // Test methods for the transport
-func (manager *transportManager) Test(t *testing.T) *transportTesting {
-	return &transportTesting{
+func (manager *transportManager) Test(t *testing.T) *TransportTesting {
+	return &TransportTesting{
 		t:       t,
 		manager: manager,
 	}
 }
 
+// newTransportManager returns a new transportManager for a given transport.
 func newTransportManager(
 	ctx context.Context,
 	transport transportReconnect,

@@ -1,4 +1,4 @@
-package amqp
+package amqp_test
 
 import (
 	"github.com/rs/zerolog"
@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// init sets up our logger for testing.
 func init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMicro
 

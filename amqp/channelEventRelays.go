@@ -5,23 +5,29 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
-// Interface that an event relay should implement to handle continuous relaying of
-// events from the underlying channels to the client without interruption. The
-// boilerplate of handling all the synchronization locks will be handled for any
-// relay passed to Channel.setupAndLaunchEventRelay()
+// eventRelay is a common interface for relaying events from the underlying channels to
+// the client without interruption. The boilerplate of handling all the synchronization
+// locks will be handled for any relay passed to Channel.setupAndLaunchEventRelay()
 type eventRelay interface {
-	// Setup logger for event relay.
+	// Logger sets up logger for event relay.
 	Logger(parent zerolog.Logger) zerolog.Logger
-	// Use a streadway.Channel() to set up relaying messages from this channel to the
-	// client.
+
+	// SetupForRelayLeg is called once when the relay is first instantiated, and each
+	// time there is a reconnection of the underlying channel. The raw
+	// streadway/amqp.Channel is passed in for any alterations / inspections that need
+	// to be made for the next leg.
 	SetupForRelayLeg(newChannel *streadway.Channel) error
-	// Run the relay until all events from the channel passed to SetupRelayLeg() are
-	// exhausted,
+
+	// RunRelayLeg runs the relay until all events from the streadway/amqp.Channel
+	// passed to SetupForRelayLeg() are exhausted,
 	RunRelayLeg() (done bool, err error)
-	// shutdown the relay. This will usually involve closing the client-facing channel.
+
+	// Shutdown is called to exit the relay. This will usually involve closing the
+	// client-facing channel.
 	Shutdown() error
 }
 
+// shutdownRelay handles all the boilerplate of calling eventRelay.Shutdown.
 func shutdownRelay(relay eventRelay, relaySync *relaySync, relayLogger zerolog.Logger) {
 	// Release any outstanding WaitGroups we are holding on exit
 	defer relaySync.Complete()
@@ -37,6 +43,8 @@ func shutdownRelay(relay eventRelay, relaySync *relaySync, relayLogger zerolog.L
 	}
 }
 
+// runEventRelayCycleSetup handles the boilerplate of setting up a relay for the next
+// leg.
 func (channel *Channel) runEventRelayCycleSetup(
 	relay eventRelay,
 	relaySync *relaySync,
@@ -49,8 +57,9 @@ func (channel *Channel) runEventRelayCycleSetup(
 	if legLogger.Debug().Enabled() {
 		legLogger.Debug().Msg("relay waiting for new connection")
 	}
-	relaySync.WaitForSetup()
+	relaySync.WaitToSetup()
 
+	// If the relay is done, return rather than setting up for the next leg.
 	if relaySync.IsDone() {
 		return nil
 	}
@@ -59,7 +68,7 @@ func (channel *Channel) runEventRelayCycleSetup(
 	if legLogger.Debug().Enabled() {
 		legLogger.Debug().Msg("setting up relay leg")
 	}
-	setupErr = relay.SetupForRelayLeg(channel.transportChannel.Channel)
+	setupErr = relay.SetupForRelayLeg(channel.transportChannel.BasicChannel)
 	if setupErr != nil {
 		legLogger.Err(setupErr).Msg("error setting up event relay leg")
 	}
@@ -67,6 +76,8 @@ func (channel *Channel) runEventRelayCycleSetup(
 	return setupErr
 }
 
+// runEventRelayCycleLeg handles the boilerplate of running an event relay leg (relaying
+// all events from a single underlying streadway/ampq.Channel)
 func (channel *Channel) runEventRelayCycleLeg(
 	relay eventRelay, relaySync *relaySync, legLogger zerolog.Logger,
 ) {
@@ -85,6 +96,7 @@ func (channel *Channel) runEventRelayCycleLeg(
 	}
 }
 
+// runEventRelayCycle runs a single, full cycle of setting up and running a relay leg.
 func (channel *Channel) runEventRelayCycle(
 	relay eventRelay, relaySync *relaySync, legLogger zerolog.Logger,
 ) {
@@ -95,7 +107,7 @@ func (channel *Channel) runEventRelayCycle(
 	}
 
 	if !relaySync.IsDone() {
-		relaySync.WaitForRunLeg()
+		relaySync.WaitToRunLeg()
 	}
 
 	// Whether or not we run the leg, reset our sync to mark the run as complete.
@@ -107,7 +119,8 @@ func (channel *Channel) runEventRelayCycle(
 	}
 }
 
-// launch as goroutine to run an event relay after it's initial setup.
+// runEventRelay should be launched as goroutine to run an event relay after it's
+// initial setup.
 func (channel *Channel) runEventRelay(
 	relay eventRelay, relaySync *relaySync, relayLogger zerolog.Logger,
 ) {
@@ -126,6 +139,7 @@ func (channel *Channel) runEventRelay(
 	}
 }
 
+// setupAndLaunchEventRelay sets up a new relay and launches a goroutine to run it
 func (channel *Channel) setupAndLaunchEventRelay(relay eventRelay) error {
 	logger := relay.Logger(channel.logger).
 		With().
@@ -133,9 +147,9 @@ func (channel *Channel) setupAndLaunchEventRelay(relay eventRelay) error {
 		Logger()
 
 	// Launch the runner
-	relaySync := newRelaySync(channel.transportChannel.relaySync.shared)
-	go channel.runEventRelay(relay, relaySync, logger)
-	err := relaySync.WaitForInit(channel.ctx)
+	thisSync := newRelaySync(channel.transportChannel.relaySync.shared)
+	go channel.runEventRelay(relay, thisSync, logger)
+	err := thisSync.WaitForInit(channel.ctx)
 	if err != nil {
 		return err
 	}

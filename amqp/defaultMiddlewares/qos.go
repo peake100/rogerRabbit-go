@@ -8,28 +8,29 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
-// Saves most recent QoS settings and re-applies them on restart.
+// QoSMiddleware saves most recent QoS settings and re-applies them on restart.
 //
 // This method is currently racy if multiple goroutines call QoS with different
 // settings.
 type QoSMiddleware struct {
-	// The latest args passed to QoS()
+	// qosArgs is the latest args passed to QoS()
 	qosArgs amqpMiddleware.ArgsQoS
-	// Whether qosArgs has been isSet.
+	// isSet is whether qosArgs has been set.
 	isSet bool
 }
 
-// Get current args. For testing.
+// QosArgs returns current args. For testing.
 func (middleware *QoSMiddleware) QosArgs() amqpMiddleware.ArgsQoS {
 	return middleware.qosArgs
 }
 
-// Whether the QoS has been set. For testing.
+// IsSet returns whether the QoS has been set. For testing.
 func (middleware *QoSMiddleware) IsSet() bool {
 	return middleware.isSet
 }
 
-// Re-applies QoS settings on reconnect
+// Reconnect is called whenever the underlying channel is reconnected. This middleware
+// re-applies any QoS calls to the channel.
 func (middleware *QoSMiddleware) Reconnect(
 	next amqpMiddleware.HandlerReconnect,
 ) (handler amqpMiddleware.HandlerReconnect) {
@@ -57,7 +58,8 @@ func (middleware *QoSMiddleware) Reconnect(
 	}
 }
 
-// Saves the QoS settings passed to the QoS function
+// Qos is called in amqp.Channel.Qos(). Saves the QoS settings passed to the QoS
+// function
 func (middleware *QoSMiddleware) Qos(
 	next amqpMiddleware.HandlerQoS,
 ) (handler amqpMiddleware.HandlerQoS) {
@@ -73,6 +75,7 @@ func (middleware *QoSMiddleware) Qos(
 	}
 }
 
+// NewQosMiddleware creates a new QoSMiddleware.
 func NewQosMiddleware() *QoSMiddleware {
 	return &QoSMiddleware{
 		qosArgs: amqpMiddleware.ArgsQoS{},

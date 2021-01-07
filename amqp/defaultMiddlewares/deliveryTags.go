@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 )
 
+// DeliveryTagsMiddleware creates continuous delivery tags across reconnections.
 type DeliveryTagsMiddleware struct {
 	// As tagPublishCount, but for delivery tags of delivered messages.
 	tagConsumeCount *uint64
@@ -23,6 +24,8 @@ type DeliveryTagsMiddleware struct {
 	orphanCheckLock *sync.Mutex
 }
 
+// Reconnect establishes our current delivery tag offset based on how many deliveries
+// have been consumed across all of our connections so far.
 func (middleware *DeliveryTagsMiddleware) Reconnect(
 	next amqpMiddleware.HandlerReconnect,
 ) (handler amqpMiddleware.HandlerReconnect) {
@@ -43,6 +46,8 @@ func (middleware *DeliveryTagsMiddleware) Reconnect(
 	return handler
 }
 
+// Get applies our current delivery tag offset and increments our delivery count
+// whenever amqp.Channel.Get() is called.
 func (middleware *DeliveryTagsMiddleware) Get(
 	next amqpMiddleware.HandlerGet,
 ) (handler amqpMiddleware.HandlerGet) {
@@ -66,6 +71,7 @@ func (middleware *DeliveryTagsMiddleware) Get(
 	return handler
 }
 
+// Determines whether an ACK, NACK, etc request includes orphan tags.
 func (middleware *DeliveryTagsMiddleware) containsOrphans(
 	tag uint64, multiple bool,
 ) bool {
@@ -89,11 +95,13 @@ func (middleware *DeliveryTagsMiddleware) containsOrphans(
 	return true
 }
 
+// Updates the latest multi-tag ack.
 func (middleware *DeliveryTagsMiddleware) updateOrphanTracking(tag uint64) {
 	// Set the latest multi-ack tag to this tag.
 	middleware.tagLatestMultiAck = tag
 }
 
+// Returns an error if an ACK, NACK, etc request involves orphans.
 func (middleware *DeliveryTagsMiddleware) resolveOrphans(
 	tag uint64, multiple bool,
 ) error {
@@ -117,9 +125,12 @@ func (middleware *DeliveryTagsMiddleware) resolveOrphans(
 	)
 }
 
+// Generic method for running an ACK, NACK, or REJECT request with orphan handling.
 func (middleware *DeliveryTagsMiddleware) runAckMethod(
 	method func() error, tag uint64, multiple bool,
 ) error {
+	// If the tag is from this connection, we will handle it, otherwise we know right
+	// off the bat it's an orphan.
 	if tag > middleware.tagConsumeOffset {
 		err := method()
 		if err != nil {
@@ -127,9 +138,14 @@ func (middleware *DeliveryTagsMiddleware) runAckMethod(
 		}
 	}
 
+	// Resolve whether the above command involved an orphan delivery, and if so, return
+	// an error.
 	return middleware.resolveOrphans(tag, multiple)
 }
 
+// Ack is invoked when amqp.Channel.Ack() is called, and handles converting the delivery
+// tag back to the original value for the underlying channel, as well as returning
+// errors on an attempt to ACK an orphan.
 func (middleware *DeliveryTagsMiddleware) Ack(
 	next amqpMiddleware.HandlerAck,
 ) (handler amqpMiddleware.HandlerAck) {
@@ -143,6 +159,9 @@ func (middleware *DeliveryTagsMiddleware) Ack(
 	return handler
 }
 
+// Nack is invoked when amqp.Channel.Nack() is called, and handles converting the
+// delivery tag back to the original value for the underlying channel, as well as
+// returning errors on an attempt to NACK an orphan.
 func (middleware *DeliveryTagsMiddleware) Nack(
 	next amqpMiddleware.HandlerNack,
 ) (handler amqpMiddleware.HandlerNack) {
@@ -156,6 +175,9 @@ func (middleware *DeliveryTagsMiddleware) Nack(
 	return handler
 }
 
+// Reject is invoked when amqp.Channel.Reject() is called, and handles converting the
+// delivery tag back to the original value for the underlying channel, as well as
+// returning errors on an attempt to NACK an orphan.
 func (middleware *DeliveryTagsMiddleware) Reject(
 	next amqpMiddleware.HandlerReject,
 ) (handler amqpMiddleware.HandlerReject) {
@@ -169,13 +191,15 @@ func (middleware *DeliveryTagsMiddleware) Reject(
 	return handler
 }
 
+// ConsumeEvent is invoked whenever an event is sent to a caller of
+// amqp.Channel.Consume(), and handles applying the delivery tag offset.
 func (middleware *DeliveryTagsMiddleware) ConsumeEvent(
 	next amqpMiddleware.HandlerConsumeEvent,
 ) (handler amqpMiddleware.HandlerConsumeEvent) {
-	handler = func(event dataModels.Delivery) {
+	handler = func(event *amqpMiddleware.EventConsume) {
 		// Apply the offset to our delivery
-		event.TagOffset = middleware.tagConsumeOffset
-		event.DeliveryTag += middleware.tagConsumeOffset
+		event.Delivery.TagOffset = middleware.tagConsumeOffset
+		event.Delivery.DeliveryTag += middleware.tagConsumeOffset
 
 		// Increment the counter
 		atomic.AddUint64(middleware.tagConsumeCount, 1)
@@ -186,6 +210,7 @@ func (middleware *DeliveryTagsMiddleware) ConsumeEvent(
 	return handler
 }
 
+// NewDeliveryTagsMiddleware creates a new DeliveryTagsMiddleware for an amqp.Channel.
 func NewDeliveryTagsMiddleware() *DeliveryTagsMiddleware {
 	tagConsumeCount := uint64(0)
 
@@ -197,10 +222,11 @@ func NewDeliveryTagsMiddleware() *DeliveryTagsMiddleware {
 	}
 }
 
-// Returned when an acknowledgement method (ack, nack, reject) cannot be completed
-// because the original channel it was consumed from has been closed and replaced with a
-// new one. When part of a multi-ack, it's possible that SOME tags will be orphaned and
-// some will succeed, this error contains detailed information on both groups
+// ErrCantAcknowledgeOrphans is returned when an acknowledgement method
+// (ack, nack, reject) cannot be completed because the original channel it was consumed
+// from has been closed and replaced with a new one. When part of a multi-ack, it's
+// possible that SOME tags will be orphaned and some will succeed, this error contains
+// detailed information on both groups
 type ErrCantAcknowledgeOrphans struct {
 	// The first tag that could not be acknowledged because it's original channel
 	// had been closed
@@ -219,28 +245,25 @@ type ErrCantAcknowledgeOrphans struct {
 	SuccessTagLast uint64
 }
 
-// The number of tags orphaned (will always be 1 or greater or there would be no error).
-func (err *ErrCantAcknowledgeOrphans) OrphanCount() uint64 {
+// OrphanCount returns number of tags orphaned (will always be 1 or greater or there
+// would be no error).
+func (err ErrCantAcknowledgeOrphans) OrphanCount() uint64 {
 	if err.OrphanTagFirst == 0 {
 		return 0
 	}
 	return err.OrphanTagLast - err.OrphanTagFirst + 1
 }
 
-// The number of tags successfully acknowledged.
-func (err *ErrCantAcknowledgeOrphans) SuccessCount() uint64 {
+// SuccessCount returns the number of tags successfully acknowledged.
+func (err ErrCantAcknowledgeOrphans) SuccessCount() uint64 {
 	if err.SuccessTagFirst == 0 {
 		return 0
 	}
 	return err.SuccessTagLast - err.SuccessTagFirst + 1
 }
 
-// Implements builtins.error
-func (err *ErrCantAcknowledgeOrphans) Error() string {
-	if err == nil {
-		return ""
-	}
-
+// Error implements builtins.error
+func (err ErrCantAcknowledgeOrphans) Error() string {
 	successDetails := ""
 	if err.SuccessCount() > 0 {
 		successDetails = fmt.Sprintf(
@@ -258,16 +281,16 @@ func (err *ErrCantAcknowledgeOrphans) Error() string {
 	)
 }
 
-// Make a new error when one or more tags cannot be acknowledged because they have been
-// orphaned. This method assumes that there is an error to report, and will always
-// result in a non-nil error object.
+// NewErrCantAcknowledgeOrphans creates a new error when one or more tags cannot be
+// acknowledged because they have been orphaned. This method assumes that there is an
+// error to report, and will always result in a non-nil error object.
 func NewErrCantAcknowledgeOrphans(
 	latestAck uint64,
 	thisAck uint64,
 	offset uint64,
 	multiple bool,
 ) error {
-	err := new(ErrCantAcknowledgeOrphans)
+	err := ErrCantAcknowledgeOrphans{}
 
 	// If only a single tag was involved, then it is the first and last orphan tag and
 	// there were no success tags.

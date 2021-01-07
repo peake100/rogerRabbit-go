@@ -5,6 +5,7 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
+// reconnectRedialOnce attempts to reconnect the transport a single time.
 func (manager *transportManager) reconnectRedialOnce(ctx context.Context) error {
 	// Make the connection.
 	if manager.logger.Debug().Enabled() {
@@ -43,6 +44,8 @@ func (manager *transportManager) reconnectRedialOnce(ctx context.Context) error 
 	return nil
 }
 
+// reconnectRedial tries to reconnect the transport until successful or ctx is
+// cancelled.
 func (manager *transportManager) reconnectRedial(
 	ctx context.Context, retry bool,
 ) error {
@@ -61,6 +64,8 @@ func (manager *transportManager) reconnectRedial(
 	}
 }
 
+// reconnectListenForClose listens for a close event from the underlying transport, and
+// starts the reconnection process.
 func (manager *transportManager) reconnectListenForClose(
 	closeChan <-chan *streadway.Error,
 ) {
@@ -84,6 +89,8 @@ func (manager *transportManager) reconnectListenForClose(
 	_ = manager.reconnect(manager.ctx, true)
 }
 
+// reconnect establishes a new underlying connection and sets up a listener for it's
+// closure.
 func (manager *transportManager) reconnect(ctx context.Context, retry bool) error {
 	// Lock access to the connection and don't unlock until we have reconnected.
 	manager.transportLock.Lock()

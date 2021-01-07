@@ -96,7 +96,19 @@
 			<div class="expanded">
 				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
 				<p>
-Here we describe the package rogerRabbit general for the API docs.
+Roger, Rabbit is broken into two packages:
+</p>
+<p>
+- amqp: A drop-in replacement for streadway/amqp with automatic re-dials,
+</p>
+<pre>method middleware, and more
+</pre>
+<p>
+- roger: Higher level abstractions for publishing and consuming messages.
+</p>
+<p>
+Other packages are used for development organizational purposes and can be ignored by
+end users.
 </p>
 
 				
@@ -128,7 +140,7 @@ Here we describe the package rogerRabbit general for the API docs.
 			<p>
 			<span style="font-size:90%">
 			
-				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/doc_api.go">doc_api.go</a>
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/doc.go">doc.go</a>
 			
 			</span>
 			</p>
@@ -171,11 +183,11 @@ Here we describe the package rogerRabbit general for the API docs.
 				<tr>
 				
 					<td class="pkg-name" style="padding-left: 0px;">
-						<a href="godoc.7.html">amqp</a>
+						<a href="godoc.8.html">amqp</a>
 					</td>
 				
 					<td class="pkg-synopsis">
-						In this file we are going ot create type aliases for all streadway types we are NOT re-implementing
+						package amqp is a drop-in replacement package for https://github.com/streadway/amqp with automatic redials, method middleware, and more.
 					</td>
 				</tr>
 			
@@ -186,18 +198,18 @@ Here we describe the package rogerRabbit general for the API docs.
 					</td>
 				
 					<td class="pkg-synopsis">
-						
+						amqpMiddleware package defines middleware signatures for methods on *amqp.Channel.
 					</td>
 				</tr>
 			
 				<tr>
 				
 					<td class="pkg-name" style="padding-left: 20px;">
-						<a href="godoc.4.html">data</a>
+						<a href="godoc.4.html">dataModels</a>
 					</td>
 				
 					<td class="pkg-synopsis">
-						
+						dataModels package contains a few data models that are used by both the amqp package and the middleware package.
 					</td>
 				</tr>
 			
@@ -208,6 +220,17 @@ Here we describe the package rogerRabbit general for the API docs.
 					</td>
 				
 					<td class="pkg-synopsis">
+						defaultMiddlewares houses the default middleware for amqp.Channel that allow features like continuous delivery tag values across channel disconnects.
+					</td>
+				</tr>
+			
+				<tr>
+				
+					<td class="pkg-name" style="padding-left: 0px;">
+						<a href="godoc.6.html">amqpTest</a>
+					</td>
+				
+					<td class="pkg-synopsis">
 						
 					</td>
 				</tr>
@@ -215,11 +238,11 @@ Here we describe the package rogerRabbit general for the API docs.
 				<tr>
 				
 					<td class="pkg-name" style="padding-left: 0px;">
-						<a href="godoc.6.html">roger</a>
+						<a href="godoc.7.html">roger</a>
 					</td>
 				
 					<td class="pkg-synopsis">
-						
+						package roger reduces messaging boilerplate with higher-level abstractions that build on top of the amqp package.
 					</td>
 				</tr>
 			

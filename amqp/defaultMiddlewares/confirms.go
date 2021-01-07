@@ -8,21 +8,20 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
-// Saves most recent QoS settings and re-applies them on restart.
-//
-// This method is currently racy if multiple goroutines call QoS with different
-// settings.
+// ConfirmsMiddleware saves most recent amqp.Channel.Confirm() settings and re-applies
+// them on restart.
 type ConfirmsMiddleware struct {
 	// Whether qosArgs has been isSet.
 	confirmsOn bool
 }
 
-// Whether the QoS has been set. For testing.
+// ConfirmsOn returns whether Confirm() has been called on this channel. For testing.
 func (middleware *ConfirmsMiddleware) ConfirmsOn() bool {
 	return middleware.confirmsOn
 }
 
-// Re-applies QoS settings on reconnect
+// Reconnect puts the new, underlying connection into confirmation mode if Confirm()
+// has been called.
 func (middleware *ConfirmsMiddleware) Reconnect(
 	next amqpMiddleware.HandlerReconnect,
 ) (handler amqpMiddleware.HandlerReconnect) {
@@ -46,7 +45,8 @@ func (middleware *ConfirmsMiddleware) Reconnect(
 	}
 }
 
-// Saves the QoS settings passed to the QoS function
+// Confirm captures called to amqp.Channel.Confirm() and remembers that all subsequent
+// underlying channels should be put into confirmation mode upon reconnect.
 func (middleware *ConfirmsMiddleware) Confirm(
 	next amqpMiddleware.HandlerConfirm,
 ) (handler amqpMiddleware.HandlerConfirm) {
@@ -62,6 +62,7 @@ func (middleware *ConfirmsMiddleware) Confirm(
 	}
 }
 
+// NewConfirmMiddleware creates a new *ConfirmsMiddleware to register with a channel.
 func NewConfirmMiddleware() *ConfirmsMiddleware {
 	return &ConfirmsMiddleware{
 		confirmsOn: false,
