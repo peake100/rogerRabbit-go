@@ -26,7 +26,7 @@ func init() {
 }
 
 type ProducerSuite struct {
-	amqpTest.ChannelSuiteBase
+	amqpTest.AmqpSuite
 }
 
 func (suite *ProducerSuite) TestProducerBasicLifetime() {

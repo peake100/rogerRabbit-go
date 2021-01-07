@@ -7,14 +7,13 @@ import (
 	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
 	"github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"
 	"github.com/rs/zerolog"
-	streadway "github.com/streadway/amqp"
 	"testing"
 )
 
 // transportChannel implements transport for *streadway.Channel.
 type transportChannel struct {
 	// The current, underlying channel object.
-	*streadway.Channel
+	*BasicChannel
 
 	// rogerConn us the roger Connection we will use to re-establish dropped channels.
 	rogerConn *Connection
@@ -68,7 +67,7 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	}
 
 	// Set up the new channel
-	transport.Channel = channel
+	transport.BasicChannel = channel
 	// Allow the relays to advance to the setup stage.
 	if debugEnabled {
 		logger.Debug().Msg("advancing event relays to setup")
@@ -305,7 +304,7 @@ func (channel *Channel) QueueDeclare(
 	autoDelete bool,
 	exclusive bool,
 	noWait bool,
-	args streadway.Table,
+	args Table,
 ) (queue Queue, err error) {
 	// Run an an operation to get automatic retries on channel dis-connections.
 	// We need to remember to re-declare this queue on reconnectMiddleware
@@ -1483,17 +1482,17 @@ func (tester *ChannelTesting) ConnTest() *TransportTesting {
 }
 
 // UnderlyingChannel returns the current underlying streadway/amqp.Channel being used.
-func (tester *ChannelTesting) UnderlyingChannel() *streadway.Channel {
+func (tester *ChannelTesting) UnderlyingChannel() *BasicChannel {
 	if tester.channel.transportChannel == nil {
 		return nil
 	}
-	return tester.channel.transportChannel.Channel
+	return tester.channel.transportChannel.BasicChannel
 }
 
 // UnderlyingConnection returns the current underlying streadway/amqp.Connection being
 // used to feed this Channel.
-func (tester *ChannelTesting) UnderlyingConnection() *streadway.Connection {
-	return tester.channel.transportChannel.rogerConn.transportConn.Connection
+func (tester *ChannelTesting) UnderlyingConnection() *BasicConnection {
+	return tester.channel.transportChannel.rogerConn.transportConn.BasicConnection
 }
 
 // ReconnectionCount returns the number of times this channel has been reconnected.

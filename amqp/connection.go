@@ -11,7 +11,7 @@ import (
 // transportConnection implements transport for streadway/amqp.Connection.
 type transportConnection struct {
 	// Embedded streadway/amqp.Connection
-	*streadway.Connection
+	*BasicConnection
 
 	// dialURL is the address to dial for the broker.
 	dialURL string
@@ -20,7 +20,7 @@ type transportConnection struct {
 	dialConfig *Config
 
 	// streadwayConfig is extracted from the settings on dialConfig.
-	streadwayConfig *streadway.Config
+	streadwayConfig *BasicConfig
 }
 
 // cleanup implements transportManager. Does nothing for transportConnection.
@@ -35,7 +35,7 @@ func (transport *transportConnection) tryReconnect(ctx context.Context) error {
 		return err
 	}
 
-	transport.Connection = conn
+	transport.BasicConnection = conn
 	return nil
 }
 
@@ -71,7 +71,7 @@ type Connection struct {
 // getStreadwayChannel gets a streadway/amqp.Channel from the current underlying
 // connection.
 func (conn *Connection) getStreadwayChannel(ctx context.Context) (
-	channel *streadway.Channel, err error,
+	channel *BasicChannel, err error,
 ) {
 	operation := func() error {
 		var channelErr error
@@ -156,7 +156,7 @@ all errors until Channel.Close() is called.
 */
 func (conn *Connection) Channel() (*Channel, error) {
 	transportChan := &transportChannel{
-		Channel:            nil,
+		BasicChannel:       nil,
 		rogerConn:          conn,
 		handlers:           nil,
 		defaultMiddlewares: new(ChannelTestingDefaultMiddlewares),
@@ -220,21 +220,21 @@ func newConnection(url string, config *Config) *Connection {
 
 	// Create our robust connection object
 	transportConn := &transportConnection{
-		Connection:      nil,
+		BasicConnection: nil,
 		dialURL:         url,
 		dialConfig:      config,
 		streadwayConfig: streadwayConfig,
 	}
 
-	transportManager := newTransportManager(
+	manager := newTransportManager(
 		context.Background(), transportConn, "CONNECTION",
 	)
 	// Use the logger from the config
-	transportManager.logger = config.Logger
+	manager.logger = config.Logger
 
 	conn := &Connection{
 		transportConn:    transportConn,
-		transportManager: transportManager,
+		transportManager: manager,
 	}
 
 	return conn

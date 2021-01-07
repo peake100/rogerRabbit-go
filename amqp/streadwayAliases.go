@@ -73,6 +73,21 @@ type (
 	// mechanisms to be used during connection tuning.
 	Authentication = streadway.Authentication
 
+	// BasicChannel is an alias to streadway/amqp.Channel, and is made available to
+	// avoid having to import both amqp packages if access to the base Channel type
+	// is desired
+	BasicChannel = streadway.Channel
+
+	// BasicConfig is an alias to streadway/amqp.Config, and is made available to
+	// avoid having to import both amqp packages if access to the base Config type
+	// is desired
+	BasicConfig = streadway.Config
+
+	// BasicConnection is an alias to streadway/amqp.Connection, and is made available
+	// to avoid having to import both amqp packages if access to the base Connection
+	// type is desired
+	BasicConnection = streadway.Connection
+
 	// Blocking notifies the server's TCP flow control of the Connection.  When a
 	// server hits a memory or disk alarm it will block all connections until the
 	// resources are reclaimed.  Use NotifyBlock on the Connection to receive these

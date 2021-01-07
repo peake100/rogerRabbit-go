@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#375EAB">
 
-  <title>roger - Go Documentation Server</title>
+  <title>amqpTest - Go Documentation Server</title>
 
 <link type="text/css" rel="stylesheet" href="style.css">
 
@@ -43,7 +43,7 @@
 
 
   <h1>
-    Package roger
+    Package amqpTest
     <span class="text-muted"></span>
   </h1>
 
@@ -77,7 +77,7 @@
 		
 		<div id="short-nav">
 			<dl>
-			<dd><code>import "github.com/peake100/rogerRabbit-go/roger"</code></dd>
+			<dd><code>import "github.com/peake100/rogerRabbit-go/amqpTest"</code></dd>
 			</dl>
 			<dl>
 			<dd><a href="godoc.6.html#pkg-overview" class="overviewLink">Overview</a></dd>
@@ -109,103 +109,80 @@
 			<div id="manual-nav">
 			<dl>
 			
+				<dd><a href="godoc.6.html#pkg-constants">Constants</a></dd>
 			
 			
 			
 				
-				<dd><a href="godoc.6.html#AmqpDeliveryProcessor">type AmqpDeliveryProcessor</a></dd>
+				<dd><a href="godoc.6.html#GetTestConnection">func GetTestConnection(t *testing.T) *amqp.Connection</a></dd>
+			
+			
+				
+				<dd><a href="godoc.6.html#AmqpSuite">type AmqpSuite</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ChannelConsume">func (suite *AmqpSuite) ChannelConsume() *amqp.Channel</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ChannelConsumeTester">func (suite *AmqpSuite) ChannelConsumeTester() *amqp.ChannelTesting</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ChannelPublish">func (suite *AmqpSuite) ChannelPublish() *amqp.Channel</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ChannelPublishTester">func (suite *AmqpSuite) ChannelPublishTester() *amqp.ChannelTesting</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ConnConsume">func (suite *AmqpSuite) ConnConsume() *amqp.Connection</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ConnPublish">func (suite *AmqpSuite) ConnPublish() *amqp.Connection</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.CreateTestExchange">func (suite *AmqpSuite) CreateTestExchange(name string, kind string, cleanup bool)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.CreateTestQueue">func (suite *AmqpSuite) CreateTestQueue(name string, exchange string, exchangeKey string, cleanup bool) amqp.Queue</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.GetMessage">func (suite *AmqpSuite) GetMessage(queueName string, autoAck bool) dataModels.Delivery</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.PublishMessages">func (suite *AmqpSuite) PublishMessages(t *testing.T, exchange string, key string, count int)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ReplaceChannels">func (suite *AmqpSuite) ReplaceChannels()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.SetupSuite">func (suite *AmqpSuite) SetupSuite()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.TearDownSuite">func (suite *AmqpSuite) TearDownSuite()</a></dd>
+				
+			
+				
+				<dd><a href="godoc.6.html#ChannelSuiteOpts">type ChannelSuiteOpts</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#NewChannelSuiteOpts">func NewChannelSuiteOpts() *ChannelSuiteOpts</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#ChannelSuiteOpts.WithDialAddress">func (opts *ChannelSuiteOpts) WithDialAddress(amqpURI string) *ChannelSuiteOpts</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#ChannelSuiteOpts.WithDialConfig">func (opts *ChannelSuiteOpts) WithDialConfig(config *amqp.Config) *ChannelSuiteOpts</a></dd>
+				
+			
+				
+				<dd><a href="godoc.6.html#ChannelTesting">type ChannelTesting</a></dd>
 				
 				
 			
 				
-				<dd><a href="godoc.6.html#AmqpRouteManager">type AmqpRouteManager</a></dd>
+				<dd><a href="godoc.6.html#ConnectionTesting">type ConnectionTesting</a></dd>
 				
-				
-			
-				
-				<dd><a href="godoc.6.html#ConsumeArgs">type ConsumeArgs</a></dd>
-				
-				
-			
-				
-				<dd><a href="godoc.6.html#Consumer">type Consumer</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#NewConsumer">func NewConsumer(channel *amqp.Channel, opts *ConsumerOpts) *Consumer</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#Consumer.RegisterProcessor">func (consumer *Consumer) RegisterProcessor(processor AmqpDeliveryProcessor)</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#Consumer.Run">func (consumer *Consumer) Run() error</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#Consumer.StartShutdown">func (consumer *Consumer) StartShutdown()</a></dd>
-				
-			
-				
-				<dd><a href="godoc.6.html#ConsumerOpts">type ConsumerOpts</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#NewConsumerOpts">func NewConsumerOpts() *ConsumerOpts</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#ConsumerOpts.WithLogger">func (opts *ConsumerOpts) WithLogger(logger zerolog.Logger) *ConsumerOpts</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#ConsumerOpts.WithMaxWorkers">func (opts *ConsumerOpts) WithMaxWorkers(max int) *ConsumerOpts</a></dd>
-				
-			
-				
-				<dd><a href="godoc.6.html#ErrProducerNack">type ErrProducerNack</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#ErrProducerNack.Error">func (err ErrProducerNack) Error() string</a></dd>
-				
-			
-				
-				<dd><a href="godoc.6.html#ErrProducerPublish">type ErrProducerPublish</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#ErrProducerPublish.Error">func (err ErrProducerPublish) Error() string</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#ErrProducerPublish.Unwrap">func (err ErrProducerPublish) Unwrap() error</a></dd>
-				
-			
-				
-				<dd><a href="godoc.6.html#Producer">type Producer</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#NewProducer">func NewProducer(amqpChannel *amqp.Channel, opts *ProducerOpts) *Producer</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#Producer.Publish">func (producer *Producer) Publish(exchange string, key string, mandatory bool, immediate bool, msg amqp.Publishing) (err error)</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#Producer.Run">func (producer *Producer) Run() error</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#Producer.StartShutdown">func (producer *Producer) StartShutdown()</a></dd>
-				
-			
-				
-				<dd><a href="godoc.6.html#ProducerOpts">type ProducerOpts</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#NewProducerOpts">func NewProducerOpts() *ProducerOpts</a></dd>
-				
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#ProducerOpts.WithConfirmPublish">func (opts *ProducerOpts) WithConfirmPublish(confirm bool) *ProducerOpts</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#ProducerOpts.WithInternalQueueCapacity">func (opts *ProducerOpts) WithInternalQueueCapacity(size int) *ProducerOpts</a></dd>
 				
 			
 			
@@ -219,9 +196,11 @@
 			<p>
 			<span style="font-size:90%">
 			
-				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go">consumer.go</a>
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go">testSuite.go</a>
 			
-				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go">producer.go</a>
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testUtils.go">testUtils.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testers.go">testers.go</a>
 			
 			</span>
 			</p>
@@ -232,152 +211,58 @@
 		
 
 		
+			<h2 id="pkg-constants">Constants</h2>
+			
+				
+				<pre>const (
+    <span class="comment">// TestDialAddress is the default address for a test broker.</span>
+    <span id="TestDialAddress">TestDialAddress</span> = &#34;amqp://localhost:57018&#34;
+)</pre>
+			
 		
 		
 		
 			
 			
-			<h2 id="AmqpDeliveryProcessor">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=1969:2804#L52">AmqpDeliveryProcessor</a>
-				<a class="permalink" href="godoc.6.html#AmqpDeliveryProcessor">&#xb6;</a>
+			<h2 id="GetTestConnection">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testUtils.go?s=410:463#L9">GetTestConnection</a>
+				<a class="permalink" href="godoc.6.html#GetTestConnection">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func GetTestConnection(t *<a href="http://localhost:6161/pkg/testing/">testing</a>.<a href="http://localhost:6161/pkg/testing/#T">T</a>) *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Connection">Connection</a></pre>
+			<p>
+GetTestConnection creates a new connection to amqp://localhost:57018, where our
+test broker will be listening.
+</p>
+<p>
+t.FailNot() is called on any errors.
+</p>
+
+			
+			
+
+		
+		
+			
+			
+			<h2 id="AmqpSuite">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=1492:2079#L38">AmqpSuite</a>
+				<a class="permalink" href="godoc.6.html#AmqpSuite">&#xb6;</a>
 				
 				
 			</h2>
 			<p>
-Interface for handling consuming from a route. Implementors of this interface will
-be registered with a consumer.
+AmqpSuite Embed into other suite types to have a connection and channel
+automatically set up for testing on suite start, and closed on suite shutdown, as
+well as a number of other helper methods for interacting with a test broker and
+handling test setup / teardown.
 </p>
 
-			<pre>type AmqpDeliveryProcessor interface {
-    <span class="comment">// The amqp route key handler should be made with</span>
-    ConsumeArgs() *<a href="godoc.6.html#ConsumeArgs">ConsumeArgs</a>
-    <span class="comment">// This method is called before the consumer is created, and is designed to let</span>
-    <span class="comment">// this handler declare any exchanges or queues necessary to handle deliveries.</span>
-    SetupChannel(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, amqpChannel <a href="godoc.6.html#AmqpRouteManager">AmqpRouteManager</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a>
-    <span class="comment">// This method will be called once per delivery. Returning a non-nil err will result</span>
-    <span class="comment">// in it being logged and the delivery being nacked. If requeue is true, the nacked</span>
-    <span class="comment">// delivery will be requeued. If err is nil, requeue is ignored.</span>
-    HandleDelivery(
-        ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, delivery <a href="godoc.4.html">data</a>.<a href="godoc.4.html#Delivery">Delivery</a>, logger <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Logger">Logger</a>,
-    ) (err <a href="http://localhost:6161/pkg/builtin/#error">error</a>, requeue <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>)
+			<pre>type AmqpSuite struct {
+    <span class="comment">// Suite is the embedded suite type.</span>
+    <a href="http://localhost:6161/pkg/github.com/stretchr/testify/suite/">suite</a>.<a href="http://localhost:6161/pkg/github.com/stretchr/testify/suite/#Suite">Suite</a>
 
-    <span class="comment">// Run at shutdown to allow the route handler to clean up any necessary resources.</span>
-    Cleanup(amqpChannel <a href="godoc.6.html#AmqpRouteManager">AmqpRouteManager</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a>
-}</pre>
-
-			
-
-			
-
-			
-			
-			
-
-			
-
-			
-		
-			
-			
-			<h2 id="AmqpRouteManager">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=394:1326#L7">AmqpRouteManager</a>
-				<a class="permalink" href="godoc.6.html#AmqpRouteManager">&#xb6;</a>
-				
-				
-			</h2>
-			<p>
-Interface that only exposes the Queue and exchange methods for a channel. These
-are the only methods we want SetupChannel to have access to.
-</p>
-
-			<pre>type AmqpRouteManager interface {
-    QueueDeclare(
-        name <a href="http://localhost:6161/pkg/builtin/#string">string</a>,
-        durable <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
-        autoDelete <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
-        exclusive <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
-        noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
-        args <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Table">Table</a>,
-    ) (queue <a href="godoc.7.html">amqp</a>.<a href="godoc.7.html#Queue">Queue</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
-    QueueDeclarePassive(
-        name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, durable, autoDelete, exclusive, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.7.html">amqp</a>.<a href="godoc.7.html#Table">Table</a>,
-    ) (queue <a href="godoc.7.html">amqp</a>.<a href="godoc.7.html#Queue">Queue</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
-    QueueInspect(name <a href="http://localhost:6161/pkg/builtin/#string">string</a>) (queue <a href="godoc.7.html">amqp</a>.<a href="godoc.7.html#Queue">Queue</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
-    QueueBind(name, key, exchange <a href="http://localhost:6161/pkg/builtin/#string">string</a>, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.7.html">amqp</a>.<a href="godoc.7.html#Table">Table</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a>
-    QueueDelete(name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, ifUnused, ifEmpty, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>) (count <a href="http://localhost:6161/pkg/builtin/#int">int</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
-
-    ExchangeDeclare(
-        name, kind <a href="http://localhost:6161/pkg/builtin/#string">string</a>, durable, autoDelete, internal, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.7.html">amqp</a>.<a href="godoc.7.html#Table">Table</a>,
-    ) (err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
-    ExchangeDeclarePassive(
-        name, kind <a href="http://localhost:6161/pkg/builtin/#string">string</a>, durable, autoDelete, internal, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.7.html">amqp</a>.<a href="godoc.7.html#Table">Table</a>,
-    ) (err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
-    ExchangeBind(
-        destination, key, source <a href="http://localhost:6161/pkg/builtin/#string">string</a>, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.7.html">amqp</a>.<a href="godoc.7.html#Table">Table</a>,
-    ) (err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
-    ExchangeDelete(name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, ifUnused, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>) (err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
-}</pre>
-
-			
-
-			
-
-			
-			
-			
-
-			
-
-			
-		
-			
-			
-			<h2 id="ConsumeArgs">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=1371:1847#L36">ConsumeArgs</a>
-				<a class="permalink" href="godoc.6.html#ConsumeArgs">&#xb6;</a>
-				
-				
-			</h2>
-			<p>
-Args the consumer will be created with.
-</p>
-
-			<pre>type ConsumeArgs struct {
-    <span class="comment">// The Queue to consume from</span>
-<span id="ConsumeArgs.Queue"></span>    Queue <a href="http://localhost:6161/pkg/builtin/#string">string</a>
-    <span class="comment">// The consumer name to identify this consumer with the broker.</span>
-<span id="ConsumeArgs.ConsumerName"></span>    ConsumerName <a href="http://localhost:6161/pkg/builtin/#string">string</a>
-    <span class="comment">// Whether the broker should ack messages automatically as it sends them. Otherwise</span>
-    <span class="comment">// the consumer will handle acking messages.</span>
-<span id="ConsumeArgs.AutoAck"></span>    AutoAck <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
-    <span class="comment">// Whether this consumer should be the exclusive consumer for this Queue.</span>
-<span id="ConsumeArgs.Exclusive"></span>    Exclusive <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
-    <span class="comment">// Additional args to pass to the amqp.Channel.Consume() method.</span>
-<span id="ConsumeArgs.Args"></span>    Args <a href="godoc.7.html">amqp</a>.<a href="godoc.7.html#Table">Table</a>
-}
-</pre>
-
-			
-
-			
-
-			
-			
-			
-
-			
-
-			
-		
-			
-			
-			<h2 id="Consumer">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3668:4342#L98">Consumer</a>
-				<a class="permalink" href="godoc.6.html#Consumer">&#xb6;</a>
-				
-				
-			</h2>
-			<p>
-Consumer is a service helper for consuming messages from one or more queues.
-</p>
-
-			<pre>type Consumer struct {
+<span id="AmqpSuite.Opts"></span>    <span class="comment">// Opts is our Options object and can be set on suite instantiation or during setup.</span>
+    Opts *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a>
     <span class="comment">// contains filtered or unexported fields</span>
 }
 </pre>
@@ -391,32 +276,121 @@ Consumer is a service helper for consuming messages from one or more queues.
 			
 
 			
-				
-				<h3 id="NewConsumer">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=10051:10124#L342">NewConsumer</a>
-					<a class="permalink" href="godoc.6.html#NewConsumer">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func NewConsumer(
-    channel *<a href="godoc.7.html">amqp</a>.<a href="godoc.7.html#Channel">Channel</a>, opts *<a href="godoc.6.html#ConsumerOpts">ConsumerOpts</a>,
-) *<a href="godoc.6.html#Consumer">Consumer</a></pre>
-				
-				
-				
-			
 
 			
 				
-				<h3 id="Consumer.RegisterProcessor">func (*Consumer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=4419:4499#L125">RegisterProcessor</a>
-					<a class="permalink" href="godoc.6.html#Consumer.RegisterProcessor">&#xb6;</a>
+				<h3 id="AmqpSuite.ChannelConsume">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=3420:3474#L104">ChannelConsume</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.ChannelConsume">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (consumer *<a href="godoc.6.html#Consumer">Consumer</a>) RegisterProcessor(
-    processor <a href="godoc.6.html#AmqpDeliveryProcessor">AmqpDeliveryProcessor</a>,
+				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelConsume() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Channel">Channel</a></pre>
+				<p>
+ChannelConsume returns an *amqp.Channel to be used for consuming methods. The
+returned channel object will be the same each time this methods is called, until
+ReplaceChannels is called.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="AmqpSuite.ChannelConsumeTester">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=3748:3815#L114">ChannelConsumeTester</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.ChannelConsumeTester">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelConsumeTester() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#ChannelTesting">ChannelTesting</a></pre>
+				<p>
+ChannelConsumeTester returns *amqp.ChannelTesting object for ChannelConsume with the
+current suite.T().
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="AmqpSuite.ChannelPublish">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=4417:4471#L131">ChannelPublish</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.ChannelPublish">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelPublish() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Channel">Channel</a></pre>
+				<p>
+ChannelPublish returns an *amqp.Channel to be used for consuming methods. The
+returned channel object will be the same each time this methods is called, until
+ReplaceChannels is called.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="AmqpSuite.ChannelPublishTester">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=4745:4812#L141">ChannelPublishTester</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.ChannelPublishTester">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelPublishTester() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#ChannelTesting">ChannelTesting</a></pre>
+				<p>
+ChannelConsumeTester returns *amqp.ChannelTesting object for ChannelConsume with the
+current suite.T().
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="AmqpSuite.ConnConsume">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=3034:3088#L93">ConnConsume</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.ConnConsume">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ConnConsume() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Connection">Connection</a></pre>
+				<p>
+ConnConsume returns an *amqp.Connection to be used for consuming methods. The
+returned connection object will be the same each time this methods is called.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="AmqpSuite.ConnPublish">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=4031:4085#L120">ConnPublish</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.ConnPublish">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ConnPublish() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Connection">Connection</a></pre>
+				<p>
+ConnPublish returns an *amqp.Connection to be used for publishing methods. The
+returned connection object will be the same each time this methods is called.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="AmqpSuite.CreateTestExchange">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=7299:7385#L235">CreateTestExchange</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.CreateTestExchange">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) CreateTestExchange(
+    name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, kind <a href="http://localhost:6161/pkg/builtin/#string">string</a>, cleanup <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
 )</pre>
 				<p>
-Register a consumer handler. Will panic if called after consumer start.
+CreateTestExchange creates a basic test exchange on both test channels.
+</p>
+<p>
+If cleanup is set to true, a cleanup function will be registered with the current
+suite.T() that will delete the exchange at the end of the test.
 </p>
 
 				
@@ -424,14 +398,22 @@ Register a consumer handler. Will panic if called after consumer start.
 				
 			
 				
-				<h3 id="Consumer.Run">func (*Consumer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=8755:8792#L293">Run</a>
-					<a class="permalink" href="godoc.6.html#Consumer.Run">&#xb6;</a>
+				<h3 id="AmqpSuite.CreateTestQueue">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=6723:6841#L218">CreateTestQueue</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.CreateTestQueue">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (consumer *<a href="godoc.6.html#Consumer">Consumer</a>) Run() <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) CreateTestQueue(
+    name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, exchange <a href="http://localhost:6161/pkg/builtin/#string">string</a>, exchangeKey <a href="http://localhost:6161/pkg/builtin/#string">string</a>, cleanup <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
+) <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Queue">Queue</a></pre>
 				<p>
-Run the consumer. This method blocks until the consumer has completed shutdown.
+CreateTestQueue creates a basic test queue on both ChannelConsume and ChannelPublish.
+The created queue can be optionally bound to an exchange (which should have been
+previously created with CreateTestExchange).
+</p>
+<p>
+If cleanup is true, then a cleanup function will be registered on the current
+suite.T() to delete the queues at the end of the test.
 </p>
 
 				
@@ -439,15 +421,88 @@ Run the consumer. This method blocks until the consumer has completed shutdown.
 				
 			
 				
-				<h3 id="Consumer.StartShutdown">func (*Consumer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=9976:10017#L338">StartShutdown</a>
-					<a class="permalink" href="godoc.6.html#Consumer.StartShutdown">&#xb6;</a>
+				<h3 id="AmqpSuite.GetMessage">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=9989:10079#L358">GetMessage</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.GetMessage">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (consumer *<a href="godoc.6.html#Consumer">Consumer</a>) StartShutdown()</pre>
+				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) GetMessage(
+    queueName <a href="http://localhost:6161/pkg/builtin/#string">string</a>, autoAck <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
+) <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Delivery">Delivery</a></pre>
 				<p>
-Start the shutdown of the Consumer. This method will return immediately. It does
-not block until shutdown is complete.
+GetMessage gets a single message, failing the test immediately if there is not a
+message waiting or the get message fails.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="AmqpSuite.PublishMessages">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=9138:9235#L330">PublishMessages</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.PublishMessages">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) PublishMessages(
+    t *<a href="http://localhost:6161/pkg/testing/">testing</a>.<a href="http://localhost:6161/pkg/testing/#T">T</a>, exchange <a href="http://localhost:6161/pkg/builtin/#string">string</a>, key <a href="http://localhost:6161/pkg/builtin/#string">string</a>, count <a href="http://localhost:6161/pkg/builtin/#int">int</a>,
+)</pre>
+				<p>
+PublishMessages publishes messages on the given exchange and Key, waits for
+confirmations, then returns. Test is failed immediately if any of these steps fails.
+</p>
+<p>
+Messages bodies are simply the index of the message starting at 0, so publishing
+3 messages would result with a message bodies &#39;0&#39;, &#39;1&#39;, and &#39;2&#39;.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="AmqpSuite.ReplaceChannels">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=5089:5130#L148">ReplaceChannels</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.ReplaceChannels">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ReplaceChannels()</pre>
+				<p>
+ReplaceChannels replace and close the current ChannelConsume and ChannelPublish for
+fresh ones. Most helpfully used as a cleanup function when persisting the current
+channels to the next test method is not desirable.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="AmqpSuite.SetupSuite">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=10438:10474#L375">SetupSuite</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.SetupSuite">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) SetupSuite()</pre>
+				<p>
+SetupSuite implements, suite.SetupAllSuite, and sets suite.Opts to
+NewChannelSuiteOpts if no other opts has been provided.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="AmqpSuite.TearDownSuite">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=10691:10730#L383">TearDownSuite</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.TearDownSuite">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) TearDownSuite()</pre>
+				<p>
+TearDownSuite implements suite.TearDownAllSuite, and closes all open test connections
+and channels created form this suite&#39;s helper methods.
 </p>
 
 				
@@ -457,16 +512,17 @@ not block until shutdown is complete.
 		
 			
 			
-			<h2 id="ConsumerOpts">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=2841:2993#L70">ConsumerOpts</a>
-				<a class="permalink" href="godoc.6.html#ConsumerOpts">&#xb6;</a>
+			<h2 id="ChannelSuiteOpts">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=422:500#L8">ChannelSuiteOpts</a>
+				<a class="permalink" href="godoc.6.html#ChannelSuiteOpts">&#xb6;</a>
 				
 				
 			</h2>
 			<p>
-Options for running a consumer.
+ChannelSuiteOpts is used to configure AmqpSuite, which can be embedded
+into a testify suite.Suite to gain a number of useful testing methods.
 </p>
 
-			<pre>type ConsumerOpts struct {
+			<pre>type ChannelSuiteOpts struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }
 </pre>
@@ -481,14 +537,14 @@ Options for running a consumer.
 
 			
 				
-				<h3 id="NewConsumerOpts">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3497:3533#L93">NewConsumerOpts</a>
-					<a class="permalink" href="godoc.6.html#NewConsumerOpts">&#xb6;</a>
+				<h3 id="NewChannelSuiteOpts">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=1058:1102#L28">NewChannelSuiteOpts</a>
+					<a class="permalink" href="godoc.6.html#NewChannelSuiteOpts">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func NewConsumerOpts() *<a href="godoc.6.html#ConsumerOpts">ConsumerOpts</a></pre>
+				<pre>func NewChannelSuiteOpts() *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a></pre>
 				<p>
-Returns new ConsumerOpts object with default settings.
+NewChannelSuiteOpts returns a new ChannelSuiteOpts with default values
 </p>
 
 				
@@ -497,15 +553,15 @@ Returns new ConsumerOpts object with default settings.
 
 			
 				
-				<h3 id="ConsumerOpts.WithLogger">func (*ConsumerOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3325:3398#L87">WithLogger</a>
-					<a class="permalink" href="godoc.6.html#ConsumerOpts.WithLogger">&#xb6;</a>
+				<h3 id="ChannelSuiteOpts.WithDialAddress">func (*ChannelSuiteOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=613:692#L15">WithDialAddress</a>
+					<a class="permalink" href="godoc.6.html#ChannelSuiteOpts.WithDialAddress">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (opts *<a href="godoc.6.html#ConsumerOpts">ConsumerOpts</a>) WithLogger(logger <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Logger">Logger</a>) *<a href="godoc.6.html#ConsumerOpts">ConsumerOpts</a></pre>
+				<pre>func (opts *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a>) WithDialAddress(amqpURI <a href="http://localhost:6161/pkg/builtin/#string">string</a>) *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a></pre>
 				<p>
-Zerolog logger to use for logging. Defaults to a fresh logger with the global
-settings applied.
+WithDialAddress configures the address to dial for our test connections.
+Default: amqp://localhost:57018
 </p>
 
 				
@@ -513,15 +569,15 @@ settings applied.
 				
 			
 				
-				<h3 id="ConsumerOpts.WithMaxWorkers">func (*ConsumerOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3118:3181#L80">WithMaxWorkers</a>
-					<a class="permalink" href="godoc.6.html#ConsumerOpts.WithMaxWorkers">&#xb6;</a>
+				<h3 id="ChannelSuiteOpts.WithDialConfig">func (*ChannelSuiteOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=856:939#L22">WithDialConfig</a>
+					<a class="permalink" href="godoc.6.html#ChannelSuiteOpts.WithDialConfig">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (opts *<a href="godoc.6.html#ConsumerOpts">ConsumerOpts</a>) WithMaxWorkers(max <a href="http://localhost:6161/pkg/builtin/#int">int</a>) *<a href="godoc.6.html#ConsumerOpts">ConsumerOpts</a></pre>
+				<pre>func (opts *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a>) WithDialConfig(config *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Config">Config</a>) *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a></pre>
 				<p>
-The maximum number of workers that can be running at the same time. If 0 or less,
-no limit will be used. Default: 0.
+WithDialConfig sets the amqp.Config object to use when dialing the test brocker.
+Default: amqp.DefaultConfig()
 </p>
 
 				
@@ -531,22 +587,16 @@ no limit will be used. Default: 0.
 		
 			
 			
-			<h2 id="ErrProducerNack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=587:826#L17">ErrProducerNack</a>
-				<a class="permalink" href="godoc.6.html#ErrProducerNack">&#xb6;</a>
+			<h2 id="ChannelTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testers.go?s=271:312#L1">ChannelTesting</a>
+				<a class="permalink" href="godoc.6.html#ChannelTesting">&#xb6;</a>
 				
 				
 			</h2>
 			<p>
-Error returned when trying to publish through the broker channel results in an error.
+ChannelTesting exposes some internals of the Channel type for testing.
 </p>
 
-			<pre>type ErrProducerNack struct {
-    <span class="comment">// Whether this nack was a result of being an orphaned message. Orphaned messages</span>
-    <span class="comment">// MAY have been successfully published, but there is no way to know for sure that</span>
-    <span class="comment">// the broker received it.</span>
-<span id="ErrProducerNack.Orphan"></span>    Orphan <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
-}
-</pre>
+			<pre>type ChannelTesting = <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#ChannelTesting">ChannelTesting</a></pre>
 
 			
 
@@ -558,35 +608,20 @@ Error returned when trying to publish through the broker channel results in an e
 
 			
 
-			
-				
-				<h3 id="ErrProducerNack.Error">func (ErrProducerNack) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=828:869#L24">Error</a>
-					<a class="permalink" href="godoc.6.html#ErrProducerNack.Error">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func (err <a href="godoc.6.html#ErrProducerNack">ErrProducerNack</a>) Error() <a href="http://localhost:6161/pkg/builtin/#string">string</a></pre>
-				
-				
-				
-				
 			
 		
 			
 			
-			<h2 id="ErrProducerPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=233:282#L2">ErrProducerPublish</a>
-				<a class="permalink" href="godoc.6.html#ErrProducerPublish">&#xb6;</a>
+			<h2 id="ConnectionTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testers.go?s=148:195#L1">ConnectionTesting</a>
+				<a class="permalink" href="godoc.6.html#ConnectionTesting">&#xb6;</a>
 				
 				
 			</h2>
 			<p>
-Error returned when trying to publish through the broker channel results in an error.
+ConnectionTesting exposes some internals of the Connection type for testing.
 </p>
 
-			<pre>type ErrProducerPublish struct {
-<span id="ErrProducerPublish.AmqpErr"></span>    AmqpErr <a href="http://localhost:6161/pkg/builtin/#error">error</a>
-}
-</pre>
+			<pre>type ConnectionTesting = <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#ConnectionTesting">ConnectionTesting</a></pre>
 
 			
 
@@ -598,226 +633,6 @@ Error returned when trying to publish through the broker channel results in an e
 
 			
 
-			
-				
-				<h3 id="ErrProducerPublish.Error">func (ErrProducerPublish) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=354:398#L10">Error</a>
-					<a class="permalink" href="godoc.6.html#ErrProducerPublish.Error">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func (err <a href="godoc.6.html#ErrProducerPublish">ErrProducerPublish</a>) Error() <a href="http://localhost:6161/pkg/builtin/#string">string</a></pre>
-				
-				
-				
-				
-			
-				
-				<h3 id="ErrProducerPublish.Unwrap">func (ErrProducerPublish) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=284:328#L6">Unwrap</a>
-					<a class="permalink" href="godoc.6.html#ErrProducerPublish.Unwrap">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func (err <a href="godoc.6.html#ErrProducerPublish">ErrProducerPublish</a>) Unwrap() <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
-				
-				
-				
-				
-			
-		
-			
-			
-			<h2 id="Producer">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=2581:3375#L82">Producer</a>
-				<a class="permalink" href="godoc.6.html#Producer">&#xb6;</a>
-				
-				
-			</h2>
-			<p>
-Producer is a wrapper for an amqp channel that handles the boilerplate of confirming
-publishings, retrying nacked messages, and other useful quality of life features.
-</p>
-
-			<pre>type Producer struct {
-    <span class="comment">// contains filtered or unexported fields</span>
-}
-</pre>
-
-			
-
-			
-
-			
-			
-			
-
-			
-				
-				<h3 id="NewProducer">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=10664:10737#L340">NewProducer</a>
-					<a class="permalink" href="godoc.6.html#NewProducer">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func NewProducer(amqpChannel *<a href="godoc.7.html">amqp</a>.<a href="godoc.7.html#Channel">Channel</a>, opts *<a href="godoc.6.html#ProducerOpts">ProducerOpts</a>) *<a href="godoc.6.html#Producer">Producer</a></pre>
-				<p>
-Create a new producer using the given amqpChannel and opts.
-</p>
-<p>
-amqpChannel should be a fresh channel that has been configured with the correct
-queues for the producer. It should have no messages published through it before it
-is passed to this method.
-</p>
-<p>
-Once the channel is passed to the producer, the producer should be considered to
-own it. No additional operations should be done through amqpChannel once it is
-passed to this method. The channel will be closed upon producer shutdown. A single
-channel should NOT be passed to multiple producers.
-</p>
-<p>
-If opts.confirmPublish is set to true, the channel will be put into confirm mode
-by the producer. There is no need to do so before passing it to this method.
-</p>
-<p>
-If opts is nil, default options will be used.
-</p>
-
-				
-				
-			
-
-			
-				
-				<h3 id="Producer.Publish">func (*Producer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=5565:5700#L179">Publish</a>
-					<a class="permalink" href="godoc.6.html#Producer.Publish">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func (producer *<a href="godoc.6.html#Producer">Producer</a>) Publish(
-    exchange <a href="http://localhost:6161/pkg/builtin/#string">string</a>,
-    key <a href="http://localhost:6161/pkg/builtin/#string">string</a>,
-    mandatory <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
-    immediate <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
-    msg <a href="godoc.7.html">amqp</a>.<a href="godoc.7.html#Publishing">Publishing</a>,
-) (err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
-				<p>
-Publish a message. This method is goroutine safe, even when confirming publications
-with the broker.
-</p>
-
-				
-				
-				
-			
-				
-				<h3 id="Producer.Run">func (*Producer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=7126:7163#L236">Run</a>
-					<a class="permalink" href="godoc.6.html#Producer.Run">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func (producer *<a href="godoc.6.html#Producer">Producer</a>) Run() <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
-				<p>
-Run the producer, this method blocks until the producer has been shut down.
-</p>
-
-				
-				
-				
-			
-				
-				<h3 id="Producer.StartShutdown">func (*Producer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=9587:9628#L313">StartShutdown</a>
-					<a class="permalink" href="godoc.6.html#Producer.StartShutdown">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func (producer *<a href="godoc.6.html#Producer">Producer</a>) StartShutdown()</pre>
-				<p>
-Begin the shutdown of the producer. This method may exit before remaining work is
-completed.
-</p>
-
-				
-				
-				
-			
-		
-			
-			
-			<h2 id="ProducerOpts">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=1523:1708#L53">ProducerOpts</a>
-				<a class="permalink" href="godoc.6.html#ProducerOpts">&#xb6;</a>
-				
-				
-			</h2>
-			<p>
-Options for amqp Producer
-</p>
-
-			<pre>type ProducerOpts struct {
-    <span class="comment">// contains filtered or unexported fields</span>
-}
-</pre>
-
-			
-
-			
-
-			
-			
-			
-
-			
-				
-				<h3 id="NewProducerOpts">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=9742:9778#L319">NewProducerOpts</a>
-					<a class="permalink" href="godoc.6.html#NewProducerOpts">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func NewProducerOpts() *<a href="godoc.6.html#ProducerOpts">ProducerOpts</a></pre>
-				<p>
-Returns a new ProducerOpts with default options.
-</p>
-
-				
-				
-			
-
-			
-				
-				<h3 id="ProducerOpts.WithConfirmPublish">func (*ProducerOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=1938:2010#L65">WithConfirmPublish</a>
-					<a class="permalink" href="godoc.6.html#ProducerOpts.WithConfirmPublish">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func (opts *<a href="godoc.6.html#ProducerOpts">ProducerOpts</a>) WithConfirmPublish(confirm <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>) *<a href="godoc.6.html#ProducerOpts">ProducerOpts</a></pre>
-				<p>
-Whether to confirm publications with the broker before returning on a &#34;Publish&#34; call
-When true, all called to Producer.Publish() will block until a publish confirmation
-is received from the broker.
-</p>
-<p>
-Default: true.
-</p>
-
-				
-				
-				
-			
-				
-				<h3 id="ProducerOpts.WithInternalQueueCapacity">func (*ProducerOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=2279:2354#L75">WithInternalQueueCapacity</a>
-					<a class="permalink" href="godoc.6.html#ProducerOpts.WithInternalQueueCapacity">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func (opts *<a href="godoc.6.html#ProducerOpts">ProducerOpts</a>) WithInternalQueueCapacity(size <a href="http://localhost:6161/pkg/builtin/#int">int</a>) *<a href="godoc.6.html#ProducerOpts">ProducerOpts</a></pre>
-				<p>
-Internally, the producer stores incoming publication requests and published requests
-waiting for a broker acknowledgement in go channels. This options sets the size
-for those internal queues.
-</p>
-<p>
-Default: 64
-</p>
-
-				
-				
-				
 			
 		
 	

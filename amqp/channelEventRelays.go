@@ -68,7 +68,7 @@ func (channel *Channel) runEventRelayCycleSetup(
 	if legLogger.Debug().Enabled() {
 		legLogger.Debug().Msg("setting up relay leg")
 	}
-	setupErr = relay.SetupForRelayLeg(channel.transportChannel.Channel)
+	setupErr = relay.SetupForRelayLeg(channel.transportChannel.BasicChannel)
 	if setupErr != nil {
 		legLogger.Err(setupErr).Msg("error setting up event relay leg")
 	}

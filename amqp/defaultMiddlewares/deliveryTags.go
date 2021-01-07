@@ -247,7 +247,7 @@ type ErrCantAcknowledgeOrphans struct {
 
 // OrphanCount returns number of tags orphaned (will always be 1 or greater or there
 // would be no error).
-func (err *ErrCantAcknowledgeOrphans) OrphanCount() uint64 {
+func (err ErrCantAcknowledgeOrphans) OrphanCount() uint64 {
 	if err.OrphanTagFirst == 0 {
 		return 0
 	}
@@ -255,7 +255,7 @@ func (err *ErrCantAcknowledgeOrphans) OrphanCount() uint64 {
 }
 
 // SuccessCount returns the number of tags successfully acknowledged.
-func (err *ErrCantAcknowledgeOrphans) SuccessCount() uint64 {
+func (err ErrCantAcknowledgeOrphans) SuccessCount() uint64 {
 	if err.SuccessTagFirst == 0 {
 		return 0
 	}
@@ -263,11 +263,7 @@ func (err *ErrCantAcknowledgeOrphans) SuccessCount() uint64 {
 }
 
 // Error implements builtins.error
-func (err *ErrCantAcknowledgeOrphans) Error() string {
-	if err == nil {
-		return ""
-	}
-
+func (err ErrCantAcknowledgeOrphans) Error() string {
 	successDetails := ""
 	if err.SuccessCount() > 0 {
 		successDetails = fmt.Sprintf(
@@ -294,7 +290,7 @@ func NewErrCantAcknowledgeOrphans(
 	offset uint64,
 	multiple bool,
 ) error {
-	err := new(ErrCantAcknowledgeOrphans)
+	err := ErrCantAcknowledgeOrphans{}
 
 	// If only a single tag was involved, then it is the first and last orphan tag and
 	// there were no success tags.

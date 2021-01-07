@@ -91,7 +91,7 @@ func (consumer *BasicTestConsumer) Cleanup(amqpChannel AmqpRouteManager) error {
 }
 
 type ConsumerSuite struct {
-	amqpTest.ChannelSuiteBase
+	amqpTest.AmqpSuite
 }
 
 func (suite *ConsumerSuite) TestConsumeBasicLifecycle() {

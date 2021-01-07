@@ -8,6 +8,12 @@ Roger, Rabbit is broken into two packages:
 
 - rogerRabbit/roger: Higher level abstractions for publishing and consuming messages.
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   ./amqp.rst
+
 API Documentation
 -----------------
 

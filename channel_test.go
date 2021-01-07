@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/amqp/dataModels"
-	"github.com/peake100/rogerRabbit-go/amqp/defaultMiddlewares"
 	"github.com/peake100/rogerRabbit-go/amqpTest"
 	streadway "github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +25,7 @@ import (
 // Some of these tests need to be run in order. Testify runs suite tests in alphabetical
 // order, so we are going to number them in the order they need to run.
 type ChannelLifetimeSuite struct {
-	amqpTest.ChannelSuiteBase
+	amqpTest.AmqpSuite
 }
 
 func (suite *ChannelLifetimeSuite) Test0010_GetChannel() {
@@ -212,7 +211,7 @@ func TestChannelLifetime(t *testing.T) {
 
 // Suite for testing channelConsume methods.
 type ChannelMethodsSuite struct {
-	amqpTest.ChannelSuiteBase
+	amqpTest.AmqpSuite
 }
 
 func (suite *ChannelMethodsSuite) Test0010_QueueDeclare() {
@@ -1610,7 +1609,7 @@ func (suite *ChannelMethodsSuite) Test0320_Acknowledge_OrphanErr() {
 			t.FailNow()
 		}
 
-		var orphanErr *defaultMiddlewares.ErrCantAcknowledgeOrphans
+		var orphanErr amqp.ErrCantAcknowledgeOrphans
 		if !assert.ErrorAs(
 			err, &orphanErr, "error is ErrCantAcknowledgeOrphans",
 		) {

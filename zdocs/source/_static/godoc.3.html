@@ -93,7 +93,24 @@
 			</div>
 			<div class="expanded">
 				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
-				
+				<p>
+amqpMiddleware package defines middleware signatures for methods on *amqp.Channel.
+</p>
+<p>
+Using per-method middleware allows for a general system of configuring behavior across
+reconnection events without each feature needing to be a bespoke bit of logic spanning
+several methods in the Channel type.
+</p>
+<p>
+By implementing features like consistent caller-facing delivery tags across reconnect
+as middleware, we can collect all logic for that feature in a single place, making the
+logic of the feature easier to track.
+</p>
+<p>
+The middleware approach also makes this library highly-extensible by the end user,
+an added bonus.
+</p>
+
 				
 			</div>
 		</div>
@@ -209,6 +226,11 @@
 			
 				
 				<dd><a href="godoc.3.html#ConsumeEvent">type ConsumeEvent</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#EventConsume">type EventConsume</a></dd>
 				
 				
 			
@@ -413,6 +435,8 @@
 			<p>
 			<span style="font-size:90%">
 			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/doc.go">doc.go</a>
+			
 				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go">handlerDefs.go</a>
 			
 				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go">methodArgs.go</a>
@@ -433,12 +457,15 @@
 		
 			
 			
-			<h2 id="Ack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=951:992#L23">Ack</a>
+			<h2 id="Ack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=2317:2358#L47">Ack</a>
 				<a class="permalink" href="godoc.3.html#Ack">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+Ack defines signature for middleware invoked on *amqp.Channel.Ack() call.
+</p>
+
 			<pre>type Ack func(next <a href="godoc.3.html#HandlerAck">HandlerAck</a>) <a href="godoc.3.html#HandlerAck">HandlerAck</a></pre>
 
 			
@@ -455,12 +482,15 @@
 		
 			
 			
-			<h2 id="ArgsAck">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1838:1893#L93">ArgsAck</a>
+			<h2 id="ArgsAck">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=2693:2748#L110">ArgsAck</a>
 				<a class="permalink" href="godoc.3.html#ArgsAck">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ArgsAck stores args to amqp.Channel.Ack() for middleware to inspect.
+</p>
+
 			<pre>type ArgsAck struct {
 <span id="ArgsAck.Tag"></span>    Tag      <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
 <span id="ArgsAck.Multiple"></span>    Multiple <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
@@ -481,12 +511,15 @@
 		
 			
 			
-			<h2 id="ArgsConfirms">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1611:1652#L76">ArgsConfirms</a>
+			<h2 id="ArgsConfirms">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=2242:2283#L90">ArgsConfirms</a>
 				<a class="permalink" href="godoc.3.html#ArgsConfirms">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ArgsConfirms stores args to amqp.Channel.Confirms() for middleware to inspect.
+</p>
+
 			<pre>type ArgsConfirms struct {
 <span id="ArgsConfirms.NoWait"></span>    NoWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
 }
@@ -506,13 +539,14 @@
 		
 			
 			
-			<h2 id="ArgsExchangeBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1205:1344#L50">ArgsExchangeBind</a>
+			<h2 id="ArgsExchangeBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1511:1650#L59">ArgsExchangeBind</a>
 				<a class="permalink" href="godoc.3.html#ArgsExchangeBind">&#xb6;</a>
 				
 				
 			</h2>
 			<p>
-Store exchange bind information for re-establishing bindings on disconnect.
+ArgsExchangeBind stores args to amqp.Channel.ExchangeBind() for middleware to
+inspect.
 </p>
 
 			<pre>type ArgsExchangeBind struct {
@@ -538,13 +572,14 @@ Store exchange bind information for re-establishing bindings on disconnect.
 		
 			
 			
-			<h2 id="ArgsExchangeDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=872:1041#L33">ArgsExchangeDeclare</a>
+			<h2 id="ArgsExchangeDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1067:1236#L39">ArgsExchangeDeclare</a>
 				<a class="permalink" href="godoc.3.html#ArgsExchangeDeclare">&#xb6;</a>
 				
 				
 			</h2>
 			<p>
-Store exchange declare information for re-establishing queues on disconnect.
+ArgsExchangeDeclare stores args to amqp.Channel.ExchangeDeclare() for middleware to
+inspect.
 </p>
 
 			<pre>type ArgsExchangeDeclare struct {
@@ -572,12 +607,16 @@ Store exchange declare information for re-establishing queues on disconnect.
 		
 			
 			
-			<h2 id="ArgsExchangeDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1043:1124#L43">ArgsExchangeDelete</a>
+			<h2 id="ArgsExchangeDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1335:1416#L51">ArgsExchangeDelete</a>
 				<a class="permalink" href="godoc.3.html#ArgsExchangeDelete">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ArgsExchangeDelete stores args to amqp.Channel.ExchangeDelete() for middleware to
+inspect.
+</p>
+
 			<pre>type ArgsExchangeDelete struct {
 <span id="ArgsExchangeDelete.Name"></span>    Name     <a href="http://localhost:6161/pkg/builtin/#string">string</a>
 <span id="ArgsExchangeDelete.IfUnused"></span>    IfUnused <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
@@ -599,12 +638,16 @@ Store exchange declare information for re-establishing queues on disconnect.
 		
 			
 			
-			<h2 id="ArgsExchangeUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1346:1487#L58">ArgsExchangeUnbind</a>
+			<h2 id="ArgsExchangeUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1749:1890#L69">ArgsExchangeUnbind</a>
 				<a class="permalink" href="godoc.3.html#ArgsExchangeUnbind">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ArgsExchangeUnbind stores args to amqp.Channel.ExchangeUnbind() for middleware to
+inspect.
+</p>
+
 			<pre>type ArgsExchangeUnbind struct {
 <span id="ArgsExchangeUnbind.Destination"></span>    Destination <a href="http://localhost:6161/pkg/builtin/#string">string</a>
 <span id="ArgsExchangeUnbind.Key"></span>    Key         <a href="http://localhost:6161/pkg/builtin/#string">string</a>
@@ -628,12 +671,15 @@ Store exchange declare information for re-establishing queues on disconnect.
 		
 			
 			
-			<h2 id="ArgsFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1572:1609#L72">ArgsFlow</a>
+			<h2 id="ArgsFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=2121:2158#L85">ArgsFlow</a>
 				<a class="permalink" href="godoc.3.html#ArgsFlow">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ArgsFlow stores args to amqp.Channel.Flow() for middleware to inspect.
+</p>
+
 			<pre>type ArgsFlow struct {
 <span id="ArgsFlow.Active"></span>    Active <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
 }
@@ -653,12 +699,15 @@ Store exchange declare information for re-establishing queues on disconnect.
 		
 			
 			
-			<h2 id="ArgsGet">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1783:1836#L88">ArgsGet</a>
+			<h2 id="ArgsGet">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=2566:2619#L104">ArgsGet</a>
 				<a class="permalink" href="godoc.3.html#ArgsGet">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ArgsGet stores args to amqp.Channel.Get() for middleware to inspect.
+</p>
+
 			<pre>type ArgsGet struct {
 <span id="ArgsGet.Queue"></span>    Queue   <a href="http://localhost:6161/pkg/builtin/#string">string</a>
 <span id="ArgsGet.AutoAck"></span>    AutoAck <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
@@ -679,12 +728,15 @@ Store exchange declare information for re-establishing queues on disconnect.
 		
 			
 			
-			<h2 id="ArgsNack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1895:1966#L98">ArgsNack</a>
+			<h2 id="ArgsNack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=2824:2895#L116">ArgsNack</a>
 				<a class="permalink" href="godoc.3.html#ArgsNack">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ArgsNack stores args to amqp.Channel.Nack() for middleware to inspect.
+</p>
+
 			<pre>type ArgsNack struct {
 <span id="ArgsNack.Tag"></span>    Tag      <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
 <span id="ArgsNack.Multiple"></span>    Multiple <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
@@ -706,14 +758,18 @@ Store exchange declare information for re-establishing queues on disconnect.
 		
 			
 			
-			<h2 id="ArgsNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=2026:2091#L109">ArgsNotifyPublish</a>
+			<h2 id="ArgsNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=3128:3199#L130">ArgsNotifyPublish</a>
 				<a class="permalink" href="godoc.3.html#ArgsNotifyPublish">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ArgsNotifyPublish stores args to amqp.Channel.NotifyPublish() for middleware to
+inspect.
+</p>
+
 			<pre>type ArgsNotifyPublish struct {
-<span id="ArgsNotifyPublish.Confirm"></span>    Confirm chan <a href="godoc.4.html">data</a>.<a href="godoc.4.html#Confirmation">Confirmation</a>
+<span id="ArgsNotifyPublish.Confirm"></span>    Confirm chan <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Confirmation">Confirmation</a>
 }
 </pre>
 
@@ -731,12 +787,15 @@ Store exchange declare information for re-establishing queues on disconnect.
 		
 			
 			
-			<h2 id="ArgsPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1654:1781#L80">ArgsPublish</a>
+			<h2 id="ArgsPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=2365:2492#L95">ArgsPublish</a>
 				<a class="permalink" href="godoc.3.html#ArgsPublish">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ArgsPublish stores args to amqp.Channel.Publish() for middleware to inspect.
+</p>
+
 			<pre>type ArgsPublish struct {
 <span id="ArgsPublish.Exchange"></span>    Exchange  <a href="http://localhost:6161/pkg/builtin/#string">string</a>
 <span id="ArgsPublish.Key"></span>    Key       <a href="http://localhost:6161/pkg/builtin/#string">string</a>
@@ -760,12 +819,15 @@ Store exchange declare information for re-establishing queues on disconnect.
 		
 			
 			
-			<h2 id="ArgsQoS">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1489:1570#L66">ArgsQoS</a>
+			<h2 id="ArgsQoS">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1964:2045#L78">ArgsQoS</a>
 				<a class="permalink" href="godoc.3.html#ArgsQoS">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ArgsQoS stores args to amqp.Channel.QoS() for middleware to inspect.
+</p>
+
 			<pre>type ArgsQoS struct {
 <span id="ArgsQoS.PrefetchCount"></span>    PrefetchCount <a href="http://localhost:6161/pkg/builtin/#int">int</a>
 <span id="ArgsQoS.PrefetchSize"></span>    PrefetchSize  <a href="http://localhost:6161/pkg/builtin/#int">int</a>
@@ -787,13 +849,14 @@ Store exchange declare information for re-establishing queues on disconnect.
 		
 			
 			
-			<h2 id="ArgsQueueBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=559:680#L17">ArgsQueueBind</a>
+			<h2 id="ArgsQueueBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=644:765#L20">ArgsQueueBind</a>
 				<a class="permalink" href="godoc.3.html#ArgsQueueBind">&#xb6;</a>
 				
 				
 			</h2>
 			<p>
-Store queue bind information for re-establishing bindings on disconnect.
+ArgsQueueBind stores args to amqp.Channel.QueueBind() for middleware to
+inspect.
 </p>
 
 			<pre>type ArgsQueueBind struct {
@@ -819,13 +882,14 @@ Store queue bind information for re-establishing bindings on disconnect.
 		
 			
 			
-			<h2 id="ArgsQueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=200:347#L1">ArgsQueueDeclare</a>
+			<h2 id="ArgsQueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=222:369#L1">ArgsQueueDeclare</a>
 				<a class="permalink" href="godoc.3.html#ArgsQueueDeclare">&#xb6;</a>
 				
 				
 			</h2>
 			<p>
-Store queue declare information for re-establishing queues on disconnect.
+ArgsQueueDeclare stores args to amqp.Channel.QueueDeclare() for middleware to
+inspect.
 </p>
 
 			<pre>type ArgsQueueDeclare struct {
@@ -852,13 +916,14 @@ Store queue declare information for re-establishing queues on disconnect.
 		
 			
 			
-			<h2 id="ArgsQueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=388:481#L9">ArgsQueueDelete</a>
+			<h2 id="ArgsQueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=462:555#L11">ArgsQueueDelete</a>
 				<a class="permalink" href="godoc.3.html#ArgsQueueDelete">&#xb6;</a>
 				
 				
 			</h2>
 			<p>
-Arguments passed to channel delete.
+ArgsQueueDelete stores args to amqp.Channel.QueueDelete() for middleware to
+inspect.
 </p>
 
 			<pre>type ArgsQueueDelete struct {
@@ -883,12 +948,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="ArgsQueueUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=682:790#L25">ArgsQueueUnbind</a>
+			<h2 id="ArgsQueueUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=858:966#L30">ArgsQueueUnbind</a>
 				<a class="permalink" href="godoc.3.html#ArgsQueueUnbind">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ArgsQueueUnbind stores args to amqp.Channel.QueueUnbind() for middleware to
+inspect.
+</p>
+
 			<pre>type ArgsQueueUnbind struct {
 <span id="ArgsQueueUnbind.Name"></span>    Name     <a href="http://localhost:6161/pkg/builtin/#string">string</a>
 <span id="ArgsQueueUnbind.Key"></span>    Key      <a href="http://localhost:6161/pkg/builtin/#string">string</a>
@@ -911,12 +980,15 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="ArgsReject">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=1968:2024#L104">ArgsReject</a>
+			<h2 id="ArgsReject">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=2975:3031#L123">ArgsReject</a>
 				<a class="permalink" href="godoc.3.html#ArgsReject">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ArgsReject stores args to amqp.Channel.Reject() for middleware to inspect.
+</p>
+
 			<pre>type ArgsReject struct {
 <span id="ArgsReject.Tag"></span>    Tag     <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
 <span id="ArgsReject.Requeue"></span>    Requeue <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
@@ -937,12 +1009,15 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="Confirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=798:851#L17">Confirm</a>
+			<h2 id="Confirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1925:1978#L38">Confirm</a>
 				<a class="permalink" href="godoc.3.html#Confirm">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+Confirm defines signature for middleware invoked on *amqp.Channel.Confirm() call.
+</p>
+
 			<pre>type Confirm func(next <a href="godoc.3.html#HandlerConfirm">HandlerConfirm</a>) <a href="godoc.3.html#HandlerConfirm">HandlerConfirm</a></pre>
 
 			
@@ -959,12 +1034,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="ConsumeEvent">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1253:1321#L33">ConsumeEvent</a>
+			<h2 id="ConsumeEvent">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=3147:3215#L65">ConsumeEvent</a>
 				<a class="permalink" href="godoc.3.html#ConsumeEvent">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ConsumeEvent defines signature for middleware invoked on event processed
+during relay of *amqp.Channel.Consume() events.
+</p>
+
 			<pre>type ConsumeEvent func(next <a href="godoc.3.html#HandlerConsumeEvent">HandlerConsumeEvent</a>) <a href="godoc.3.html#HandlerConsumeEvent">HandlerConsumeEvent</a></pre>
 
 			
@@ -981,14 +1060,18 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="EventNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=2093:2159#L113">EventNotifyPublish</a>
-				<a class="permalink" href="godoc.3.html#EventNotifyPublish">&#xb6;</a>
+			<h2 id="EventConsume">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=3609:3667#L142">EventConsume</a>
+				<a class="permalink" href="godoc.3.html#EventConsume">&#xb6;</a>
 				
 				
 			</h2>
-			
-			<pre>type EventNotifyPublish struct {
-<span id="EventNotifyPublish.Confirmation"></span>    Confirmation <a href="godoc.4.html">data</a>.<a href="godoc.4.html#Confirmation">Confirmation</a>
+			<p>
+EventConsume passes event information from a  to amqp.Channel.Consume()
+event for middleware to inspect / modify before the event is passed to the caller.
+</p>
+
+			<pre>type EventConsume struct {
+<span id="EventConsume.Delivery"></span>    Delivery <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Delivery">Delivery</a>
 }
 </pre>
 
@@ -1006,12 +1089,45 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="ExchangeBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=563:631#L9">ExchangeBind</a>
+			<h2 id="EventNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/methodArgs.go?s=3374:3446#L136">EventNotifyPublish</a>
+				<a class="permalink" href="godoc.3.html#EventNotifyPublish">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+EventNotifyPublish passes event information from a  to amqp.Channel.NotifyPublish()
+event for middleware to inspect / modify before the event is passed to the caller.
+</p>
+
+			<pre>type EventNotifyPublish struct {
+<span id="EventNotifyPublish.Confirmation"></span>    Confirmation <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Confirmation">Confirmation</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ExchangeBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1347:1415#L25">ExchangeBind</a>
 				<a class="permalink" href="godoc.3.html#ExchangeBind">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ExchangeBind defines signature for middleware invoked on
+*amqp.Channel.ExchangeBind() call.
+</p>
+
 			<pre>type ExchangeBind func(next <a href="godoc.3.html#HandlerExchangeBind">HandlerExchangeBind</a>) <a href="godoc.3.html#HandlerExchangeBind">HandlerExchangeBind</a></pre>
 
 			
@@ -1028,12 +1144,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="ExchangeDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=408:485#L5">ExchangeDeclare</a>
+			<h2 id="ExchangeDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=992:1069#L17">ExchangeDeclare</a>
 				<a class="permalink" href="godoc.3.html#ExchangeDeclare">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ExchangeDeclare defines signature for middleware invoked on
+*amqp.Channel.ExchangeDeclare() call.
+</p>
+
 			<pre>type ExchangeDeclare func(next <a href="godoc.3.html#HandlerExchangeDeclare">HandlerExchangeDeclare</a>) <a href="godoc.3.html#HandlerExchangeDeclare">HandlerExchangeDeclare</a></pre>
 
 			
@@ -1050,12 +1170,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="ExchangeDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=487:561#L7">ExchangeDelete</a>
+			<h2 id="ExchangeDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1173:1247#L21">ExchangeDelete</a>
 				<a class="permalink" href="godoc.3.html#ExchangeDelete">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ExchangeDelete defines signature for middleware invoked on
+*amqp.Channel.ExchangeDelete() call.
+</p>
+
 			<pre>type ExchangeDelete func(next <a href="godoc.3.html#HandlerExchangeDelete">HandlerExchangeDelete</a>) <a href="godoc.3.html#HandlerExchangeDelete">HandlerExchangeDelete</a></pre>
 
 			
@@ -1072,12 +1196,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="ExchangeUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=633:707#L11">ExchangeUnbind</a>
+			<h2 id="ExchangeUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1519:1593#L29">ExchangeUnbind</a>
 				<a class="permalink" href="godoc.3.html#ExchangeUnbind">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+ExchangeUnbind defines signature for middleware invoked on
+*amqp.Channel.ExchangeUnbind() call.
+</p>
+
 			<pre>type ExchangeUnbind func(next <a href="godoc.3.html#HandlerExchangeUnbind">HandlerExchangeUnbind</a>) <a href="godoc.3.html#HandlerExchangeUnbind">HandlerExchangeUnbind</a></pre>
 
 			
@@ -1094,12 +1222,15 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="Flow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=752:796#L15">Flow</a>
+			<h2 id="Flow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1794:1838#L35">Flow</a>
 				<a class="permalink" href="godoc.3.html#Flow">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+Flow defines signature for middleware invoked on *amqp.Channel.Flow() call.
+</p>
+
 			<pre>type Flow func(next <a href="godoc.3.html#HandlerFlow">HandlerFlow</a>) <a href="godoc.3.html#HandlerFlow">HandlerFlow</a></pre>
 
 			
@@ -1116,12 +1247,15 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="Get">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=908:949#L21">Get</a>
+			<h2 id="Get">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=2197:2238#L44">Get</a>
 				<a class="permalink" href="godoc.3.html#Get">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+Get defines signature for middleware invoked on *amqp.Channel.Get() call.
+</p>
+
 			<pre>type Get func(next <a href="godoc.3.html#HandlerGet">HandlerGet</a>) <a href="godoc.3.html#HandlerGet">HandlerGet</a></pre>
 
 			
@@ -1138,12 +1272,15 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerAck">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1168:1209#L33">HandlerAck</a>
+			<h2 id="HandlerAck">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=2525:2566#L56">HandlerAck</a>
 				<a class="permalink" href="godoc.3.html#HandlerAck">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerAck: signature for handlers invoked when amqp.Channel.Ack() is called.
+</p>
+
 			<pre>type HandlerAck func(args *<a href="godoc.3.html#ArgsAck">ArgsAck</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
@@ -1160,12 +1297,15 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerConfirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=988:1038#L27">HandlerConfirm</a>
+			<h2 id="HandlerConfirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=2088:2138#L47">HandlerConfirm</a>
 				<a class="permalink" href="godoc.3.html#HandlerConfirm">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerConfirm: signature for handlers invoked when amqp.Channel.Confirm() is called.
+</p>
+
 			<pre>type HandlerConfirm func(args *<a href="godoc.3.html#ArgsConfirms">ArgsConfirms</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
@@ -1182,13 +1322,17 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerConsumeEvent">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1449:1499#L43">HandlerConsumeEvent</a>
+			<h2 id="HandlerConsumeEvent">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=3408:3458#L74">HandlerConsumeEvent</a>
 				<a class="permalink" href="godoc.3.html#HandlerConsumeEvent">&#xb6;</a>
 				
 				
 			</h2>
-			
-			<pre>type HandlerConsumeEvent func(event <a href="godoc.4.html">data</a>.<a href="godoc.4.html#Delivery">Delivery</a>)</pre>
+			<p>
+HandlerConsumeEvent: signature for handlers invoked when an event from a
+amqp.Channel.Consume() is being processed before beings sent to the caller.
+</p>
+
+			<pre>type HandlerConsumeEvent func(event *<a href="godoc.3.html#EventConsume">EventConsume</a>)</pre>
 
 			
 
@@ -1204,12 +1348,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerExchangeBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=774:833#L19">HandlerExchangeBind</a>
+			<h2 id="HandlerExchangeBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1515:1574#L34">HandlerExchangeBind</a>
 				<a class="permalink" href="godoc.3.html#HandlerExchangeBind">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerExchangeBind: signature for handlers invoked when
+amqp.Channel.ExchangeBind() is called.
+</p>
+
 			<pre>type HandlerExchangeBind func(args *<a href="godoc.3.html#ArgsExchangeBind">ArgsExchangeBind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
@@ -1226,12 +1374,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerExchangeDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=640:707#L15">HandlerExchangeDeclare</a>
+			<h2 id="HandlerExchangeDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1173:1240#L26">HandlerExchangeDeclare</a>
 				<a class="permalink" href="godoc.3.html#HandlerExchangeDeclare">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerExchangeDeclare: signature for handlers invoked when
+amqp.Channel.ExchangeDeclare() is called.
+</p>
+
 			<pre>type HandlerExchangeDeclare = func(args *<a href="godoc.3.html#ArgsExchangeDeclare">ArgsExchangeDeclare</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
@@ -1248,12 +1400,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerExchangeDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=709:772#L17">HandlerExchangeDelete</a>
+			<h2 id="HandlerExchangeDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1348:1411#L30">HandlerExchangeDelete</a>
 				<a class="permalink" href="godoc.3.html#HandlerExchangeDelete">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerExchangeDelete: signature for handlers invoked when
+amqp.Channel.ExchangeDelete() is called.
+</p>
+
 			<pre>type HandlerExchangeDelete func(args *<a href="godoc.3.html#ArgsExchangeDelete">ArgsExchangeDelete</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
@@ -1270,12 +1426,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerExchangeUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=835:898#L21">HandlerExchangeUnbind</a>
+			<h2 id="HandlerExchangeUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1682:1745#L38">HandlerExchangeUnbind</a>
 				<a class="permalink" href="godoc.3.html#HandlerExchangeUnbind">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerExchangeUnbind: signature for handlers invoked when
+amqp.Channel.ExchangeUnbind() is called.
+</p>
+
 			<pre>type HandlerExchangeUnbind func(args *<a href="godoc.3.html#ArgsExchangeUnbind">ArgsExchangeUnbind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
@@ -1292,12 +1452,15 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=943:986#L25">HandlerFlow</a>
+			<h2 id="HandlerFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1954:1997#L44">HandlerFlow</a>
 				<a class="permalink" href="godoc.3.html#HandlerFlow">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerFlow: signature for handlers invoked when amqp.Channel.Flow() is called.
+</p>
+
 			<pre>type HandlerFlow func(args *<a href="godoc.3.html#ArgsFlow">ArgsFlow</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
@@ -1314,13 +1477,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerGet">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1091:1166#L31">HandlerGet</a>
+			<h2 id="HandlerGet">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=2361:2442#L53">HandlerGet</a>
 				<a class="permalink" href="godoc.3.html#HandlerGet">&#xb6;</a>
 				
 				
 			</h2>
-			
-			<pre>type HandlerGet func(args *<a href="godoc.3.html#ArgsGet">ArgsGet</a>) (msg <a href="godoc.4.html">data</a>.<a href="godoc.4.html#Delivery">Delivery</a>, ok <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+			<p>
+HandlerGet: signature for handlers invoked when amqp.Channel.Get() is called.
+</p>
+
+			<pre>type HandlerGet func(args *<a href="godoc.3.html#ArgsGet">ArgsGet</a>) (msg <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Delivery">Delivery</a>, ok <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 
 			
 
@@ -1336,12 +1502,15 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerNack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1211:1254#L35">HandlerNack</a>
+			<h2 id="HandlerNack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=2651:2694#L59">HandlerNack</a>
 				<a class="permalink" href="godoc.3.html#HandlerNack">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerNack: signature for handlers invoked when amqp.Channel.Nack() is called.
+</p>
+
 			<pre>type HandlerNack func(args *<a href="godoc.3.html#ArgsNack">ArgsNack</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
@@ -1358,13 +1527,17 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1305:1383#L39">HandlerNotifyPublish</a>
+			<h2 id="HandlerNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=2936:3020#L66">HandlerNotifyPublish</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyPublish">&#xb6;</a>
 				
 				
 			</h2>
-			
-			<pre>type HandlerNotifyPublish func(args *<a href="godoc.3.html#ArgsNotifyPublish">ArgsNotifyPublish</a>) chan <a href="godoc.4.html">data</a>.<a href="godoc.4.html#Confirmation">Confirmation</a></pre>
+			<p>
+HandlerNotifyPublish: signature for handlers invoked when
+amqp.Channel.NotifyPublish() is called.
+</p>
+
+			<pre>type HandlerNotifyPublish func(args *<a href="godoc.3.html#ArgsNotifyPublish">ArgsNotifyPublish</a>) chan <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Confirmation">Confirmation</a></pre>
 
 			
 
@@ -1380,12 +1553,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerNotifyPublishEvent">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1385:1447#L41">HandlerNotifyPublishEvent</a>
+			<h2 id="HandlerNotifyPublishEvent">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=3189:3251#L70">HandlerNotifyPublishEvent</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyPublishEvent">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerNotifyPublishEvent: signature for handlers invoked when an event from a
+amqp.Channel.NotifyPublish() is being processed before beings sent to the caller.
+</p>
+
 			<pre>type HandlerNotifyPublishEvent func(event *<a href="godoc.3.html#EventNotifyPublish">EventNotifyPublish</a>)</pre>
 
 			
@@ -1402,12 +1579,15 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1040:1089#L29">HandlerPublish</a>
+			<h2 id="HandlerPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=2229:2278#L50">HandlerPublish</a>
 				<a class="permalink" href="godoc.3.html#HandlerPublish">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerPublish: signature for handlers invoked when amqp.Channel.Publish() is called.
+</p>
+
 			<pre>type HandlerPublish func(args *<a href="godoc.3.html#ArgsPublish">ArgsPublish</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
@@ -1424,12 +1604,15 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerQoS">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=900:941#L23">HandlerQoS</a>
+			<h2 id="HandlerQoS">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1828:1869#L41">HandlerQoS</a>
 				<a class="permalink" href="godoc.3.html#HandlerQoS">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerQoS: signature for handlers invoked when amqp.Channel.QoS() is called.
+</p>
+
 			<pre>type HandlerQoS func(args *<a href="godoc.3.html#ArgsQoS">ArgsQoS</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
@@ -1446,12 +1629,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerQueueBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=522:577#L11">HandlerQueueBind</a>
+			<h2 id="HandlerQueueBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=847:902#L18">HandlerQueueBind</a>
 				<a class="permalink" href="godoc.3.html#HandlerQueueBind">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerQueueBind: signature for handlers invoked when amqp.Channel.QueueBind()
+is called.
+</p>
+
 			<pre>type HandlerQueueBind = func(args *<a href="godoc.3.html#ArgsQueueBind">ArgsQueueBind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
@@ -1468,12 +1655,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerQueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=362:442#L7">HandlerQueueDeclare</a>
+			<h2 id="HandlerQueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=491:571#L10">HandlerQueueDeclare</a>
 				<a class="permalink" href="godoc.3.html#HandlerQueueDeclare">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerQueueDeclare: signature for handlers invoked when amqp.Channel.QueueDeclare()
+is called.
+</p>
+
 			<pre>type HandlerQueueDeclare = func(args *<a href="godoc.3.html#ArgsQueueDeclare">ArgsQueueDeclare</a>) (<a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Queue">Queue</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 
 			
@@ -1490,12 +1681,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerQueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=444:520#L9">HandlerQueueDelete</a>
+			<h2 id="HandlerQueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=673:749#L14">HandlerQueueDelete</a>
 				<a class="permalink" href="godoc.3.html#HandlerQueueDelete">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerQueueDelete: signature for handlers invoked when amqp.Channel.QueueDelete()
+is called.
+</p>
+
 			<pre>type HandlerQueueDelete = func(args *<a href="godoc.3.html#ArgsQueueDelete">ArgsQueueDelete</a>) (count <a href="http://localhost:6161/pkg/builtin/#int">int</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 
 			
@@ -1512,12 +1707,16 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerQueueUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=579:638#L13">HandlerQueueUnbind</a>
+			<h2 id="HandlerQueueUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1004:1063#L22">HandlerQueueUnbind</a>
 				<a class="permalink" href="godoc.3.html#HandlerQueueUnbind">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerQueueUnbind: signature for handlers invoked when amqp.Channel.QueueUnbind()
+is called.
+</p>
+
 			<pre>type HandlerQueueUnbind = func(args *<a href="godoc.3.html#ArgsQueueUnbind">ArgsQueueUnbind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
@@ -1534,13 +1733,14 @@ Arguments passed to channel delete.
 		
 			
 			
-			<h2 id="HandlerReconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=256:360#L3">HandlerReconnect</a>
+			<h2 id="HandlerReconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=283:387#L4">HandlerReconnect</a>
 				<a class="permalink" href="godoc.3.html#HandlerReconnect">&#xb6;</a>
 				
 				
 			</h2>
 			<p>
-Signature for handlers triggered when a channel is being re-established.
+HandlerReconnect: signature for handlers triggered when a channel is being
+re-established.
 </p>
 
 			<pre>type HandlerReconnect = func(
@@ -1561,12 +1761,15 @@ Signature for handlers triggered when a channel is being re-established.
 		
 			
 			
-			<h2 id="HandlerReject">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=1256:1303#L37">HandlerReject</a>
+			<h2 id="HandlerReject">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/handlerDefs.go?s=2783:2830#L62">HandlerReject</a>
 				<a class="permalink" href="godoc.3.html#HandlerReject">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+HandlerReject: signature for handlers invoked when amqp.Channel.Reject() is called.
+</p>
+
 			<pre>type HandlerReject func(args *<a href="godoc.3.html#ArgsReject">ArgsReject</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
@@ -1583,12 +1786,15 @@ Signature for handlers triggered when a channel is being re-established.
 		
 			
 			
-			<h2 id="Nack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=994:1038#L25">Nack</a>
+			<h2 id="Nack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=2439:2483#L50">Nack</a>
 				<a class="permalink" href="godoc.3.html#Nack">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+Nack defines signature for middleware invoked on *amqp.Channel.Nack() call.
+</p>
+
 			<pre>type Nack func(next <a href="godoc.3.html#HandlerNack">HandlerNack</a>) <a href="godoc.3.html#HandlerNack">HandlerNack</a></pre>
 
 			
@@ -1605,12 +1811,16 @@ Signature for handlers triggered when a channel is being re-established.
 		
 			
 			
-			<h2 id="NotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1092:1163#L29">NotifyPublish</a>
+			<h2 id="NotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=2720:2791#L57">NotifyPublish</a>
 				<a class="permalink" href="godoc.3.html#NotifyPublish">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+NotifyPublish defines signature for middleware invoked on
+*amqp.Channel.NotifyPublish() call.
+</p>
+
 			<pre>type NotifyPublish func(next <a href="godoc.3.html#HandlerNotifyPublish">HandlerNotifyPublish</a>) <a href="godoc.3.html#HandlerNotifyPublish">HandlerNotifyPublish</a></pre>
 
 			
@@ -1627,12 +1837,16 @@ Signature for handlers triggered when a channel is being re-established.
 		
 			
 			
-			<h2 id="NotifyPublishEvent">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1165:1251#L31">NotifyPublishEvent</a>
+			<h2 id="NotifyPublishEvent">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=2932:3018#L61">NotifyPublishEvent</a>
 				<a class="permalink" href="godoc.3.html#NotifyPublishEvent">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+NotifyPublishEvent defines signature for middleware invoked on event processed
+during relay of *amqp.Channel.NotifyPublish() events.
+</p>
+
 			<pre>type NotifyPublishEvent func(next <a href="godoc.3.html#HandlerNotifyPublishEvent">HandlerNotifyPublishEvent</a>) <a href="godoc.3.html#HandlerNotifyPublishEvent">HandlerNotifyPublishEvent</a></pre>
 
 			
@@ -1649,12 +1863,15 @@ Signature for handlers triggered when a channel is being re-established.
 		
 			
 			
-			<h2 id="Publish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=853:906#L19">Publish</a>
+			<h2 id="Publish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=2065:2118#L41">Publish</a>
 				<a class="permalink" href="godoc.3.html#Publish">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+Publish defines signature for middleware invoked on *amqp.Channel.Publish() call.
+</p>
+
 			<pre>type Publish func(next <a href="godoc.3.html#HandlerPublish">HandlerPublish</a>) <a href="godoc.3.html#HandlerPublish">HandlerPublish</a></pre>
 
 			
@@ -1671,12 +1888,15 @@ Signature for handlers triggered when a channel is being re-established.
 		
 			
 			
-			<h2 id="QoS">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=709:750#L13">QoS</a>
+			<h2 id="QoS">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1672:1713#L32">QoS</a>
 				<a class="permalink" href="godoc.3.html#QoS">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+QoS defines signature for middleware invoked on *amqp.Channel.QoS() call.
+</p>
+
 			<pre>type QoS func(next <a href="godoc.3.html#HandlerQoS">HandlerQoS</a>) <a href="godoc.3.html#HandlerQoS">HandlerQoS</a></pre>
 
 			
@@ -1693,12 +1913,16 @@ Signature for handlers triggered when a channel is being re-established.
 		
 			
 			
-			<h2 id="QueueBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=276:337#L1">QueueBind</a>
+			<h2 id="QueueBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=660:721#L9">QueueBind</a>
 				<a class="permalink" href="godoc.3.html#QueueBind">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+QueueBind defines signature for middleware invoked on *amqp.Channel.QueueBind()
+call.
+</p>
+
 			<pre>type QueueBind = func(next <a href="godoc.3.html#HandlerQueueBind">HandlerQueueBind</a>) <a href="godoc.3.html#HandlerQueueBind">HandlerQueueBind</a></pre>
 
 			
@@ -1715,12 +1939,16 @@ Signature for handlers triggered when a channel is being re-established.
 		
 			
 			
-			<h2 id="QueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=135:205#L1">QueueDeclare</a>
+			<h2 id="QueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=331:401#L1">QueueDeclare</a>
 				<a class="permalink" href="godoc.3.html#QueueDeclare">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+QueueDeclare defines signature for middleware invoked on *amqp.Channel.QueueDeclare()
+call.
+</p>
+
 			<pre>type QueueDeclare = func(next <a href="godoc.3.html#HandlerQueueDeclare">HandlerQueueDeclare</a>) <a href="godoc.3.html#HandlerQueueDeclare">HandlerQueueDeclare</a></pre>
 
 			
@@ -1737,12 +1965,16 @@ Signature for handlers triggered when a channel is being re-established.
 		
 			
 			
-			<h2 id="QueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=207:274#L1">QueueDelete</a>
+			<h2 id="QueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=499:566#L5">QueueDelete</a>
 				<a class="permalink" href="godoc.3.html#QueueDelete">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+QueueDelete defines signature for middleware invoked on *amqp.Channel.QueueDelete()
+call.
+</p>
+
 			<pre>type QueueDelete = func(next <a href="godoc.3.html#HandlerQueueDelete">HandlerQueueDelete</a>) <a href="godoc.3.html#HandlerQueueDelete">HandlerQueueDelete</a></pre>
 
 			
@@ -1759,12 +1991,16 @@ Signature for handlers triggered when a channel is being re-established.
 		
 			
 			
-			<h2 id="QueueUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=339:406#L3">QueueUnbind</a>
+			<h2 id="QueueUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=819:886#L13">QueueUnbind</a>
 				<a class="permalink" href="godoc.3.html#QueueUnbind">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+QueueUnbind defines signature for middleware invoked on *amqp.Channel.QueueUnbind()
+call.
+</p>
+
 			<pre>type QueueUnbind = func(next <a href="godoc.3.html#HandlerQueueUnbind">HandlerQueueUnbind</a>) <a href="godoc.3.html#HandlerQueueUnbind">HandlerQueueUnbind</a></pre>
 
 			
@@ -1781,12 +2017,16 @@ Signature for handlers triggered when a channel is being re-established.
 		
 			
 			
-			<h2 id="Reconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=72:133#L1">Reconnect</a>
+			<h2 id="Reconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=170:231#L1">Reconnect</a>
 				<a class="permalink" href="godoc.3.html#Reconnect">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+Reconnect defines signature for middleware called on underlying channel reconnection
+event.
+</p>
+
 			<pre>type Reconnect = func(next <a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a>) <a href="godoc.3.html#HandlerReconnect">HandlerReconnect</a></pre>
 
 			
@@ -1803,12 +2043,15 @@ Signature for handlers triggered when a channel is being re-established.
 		
 			
 			
-			<h2 id="Reject">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=1040:1090#L27">Reject</a>
+			<h2 id="Reject">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpMiddleware/middlewareDefs.go?s=2568:2618#L53">Reject</a>
 				<a class="permalink" href="godoc.3.html#Reject">&#xb6;</a>
 				
 				
 			</h2>
-			
+			<p>
+Reject defines signature for middleware invoked on *amqp.Channel.Reject() call.
+</p>
+
 			<pre>type Reject func(next <a href="godoc.3.html#HandlerReject">HandlerReject</a>) <a href="godoc.3.html#HandlerReject">HandlerReject</a></pre>
 
 			
