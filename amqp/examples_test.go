@@ -94,21 +94,26 @@ func ExampleChannel_Consume_deliveryTags() {
 	queueName := "example_delivery_tag_continuity"
 
 	// Declare the queue we are going to use.
-	_, err = consumeChannel.QueueDeclare(
+	queue, err := consumeChannel.QueueDeclare(
 		queueName, // name
-		false,     // durable
-		true,      // autoDelete
-		false,     // exclusive
-		false,     // noWait
-		nil,       // args
+		false, // durable
+		false, // autoDelete
+		false, // exclusive
+		false, // noWait
+		nil, // args
 	)
 	if err != nil {
 		panic(err)
 	}
 
+	// Clean up the queue on exit,
+	defer consumeChannel.QueueDelete(
+		queue.Name, false, false, false,
+	)
+
 	// Start consuming the channel
 	consume, err := consumeChannel.Consume(
-		queueName,
+		queue.Name,
 		"example consumer", // consumer name
 		true,               // autoAck
 		false,              // exclusive
@@ -133,14 +138,14 @@ func ExampleChannel_Consume_deliveryTags() {
 			// Force-reconnect the channel after each delivery.
 			consumeChannel.Test(new(testing.T)).ForceReconnect(context.Background())
 
+			// Tick down the consumeComplete waitgroup
+			consumeComplete.Done()
+
 			// Print the delivery. Even though we are forcing a new underlying channel
 			// to be connected each time, the delivery tags will still be continuous.
 			fmt.Printf(
 				"DELIVERY %v: %v\n", delivery.DeliveryTag, string(delivery.Body),
 			)
-
-			// Tick down the consumeComplete waitgroup
-			consumeComplete.Done()
 		}
 
 		fmt.Println("DELIVERIES EXHAUSTED")
@@ -160,7 +165,7 @@ func ExampleChannel_Consume_deliveryTags() {
 		// show in another example.
 		err = publishChannel.Publish(
 			"",
-			queueName,
+			queue.Name,
 			false,
 			false,
 			amqp.Publishing{
@@ -334,7 +339,7 @@ func ExampleChannel_Publish_tagContinuity() {
 	}()
 
 	// Declare the message queue
-	queueName := "example_delivery_tag_continuity"
+	queueName := "example_publish_tag_continuity"
 	_, err = publishChannel.QueueDeclare(
 		queueName,
 		false,

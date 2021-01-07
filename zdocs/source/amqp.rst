@@ -359,7 +359,7 @@ actual delivery tag relative to the current underlying channel:
 .. code-block::
 
   // Get a new connection to our test broker.
-  connection, err := amqp.Dial(amqpTest.TestDialAddress)
+  connection, err := amqp.DialCtx(context.Background(), amqpTest.TestDialAddress)
   if err != nil {
     panic(err)
   }
@@ -379,27 +379,32 @@ actual delivery tag relative to the current underlying channel:
   queueName := "example_delivery_tag_continuity"
 
   // Declare the queue we are going to use.
-  _, err = consumeChannel.QueueDeclare(
+  queue, err := consumeChannel.QueueDeclare(
     queueName, // name
     false, // durable
-    true, // autoDelete
+    false, // autoDelete
     false, // exclusive
-    false,  // noWait
+    false, // noWait
     nil, // args
   )
   if err != nil {
     panic(err)
   }
 
+  // Clean up the queue on exit,
+  defer consumeChannel.QueueDelete(
+    queue.Name, false, false, false,
+  )
+
   // Start consuming the channel
   consume, err := consumeChannel.Consume(
-    queueName,
+    queue.Name,
     "example consumer", // consumer name
-    true, // autoAck
-    false, // exclusive
-    false, // no local
-    false, // no wait
-    nil, // args
+    true,               // autoAck
+    false,              // exclusive
+    false,              // no local
+    false,              // no wait
+    nil,                // args
   )
 
   // We'll close this channel when the consumer is exhausted
@@ -418,21 +423,21 @@ actual delivery tag relative to the current underlying channel:
       // Force-reconnect the channel after each delivery.
       consumeChannel.Test(new(testing.T)).ForceReconnect(context.Background())
 
+      // Tick down the consumeComplete waitgroup
+      consumeComplete.Done()
+
       // Print the delivery. Even though we are forcing a new underlying channel
       // to be connected each time, the delivery tags will still be continuous.
       fmt.Printf(
         "DELIVERY %v: %v\n", delivery.DeliveryTag, string(delivery.Body),
       )
-
-      // Tick down the consumeComplete waitgroup
-      consumeComplete.Done()
     }
 
     fmt.Println("DELIVERIES EXHAUSTED")
   }()
 
   // We'll publish 10 test messages.
-  for i := 0 ; i < 10 ; i++ {
+  for i := 0; i < 10; i++ {
     // Add one to the consumeComplete WaitGroup.
     consumeComplete.Add(1)
 
@@ -445,7 +450,7 @@ actual delivery tag relative to the current underlying channel:
     // show in another example.
     err = publishChannel.Publish(
       "",
-      queueName,
+      queue.Name,
       false,
       false,
       amqp.Publishing{
