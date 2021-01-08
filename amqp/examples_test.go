@@ -106,11 +106,16 @@ func ExampleChannel_Consume_deliveryTags() {
 		panic(err)
 	}
 
+	// Clean up the queue on exit,
+	defer consumeChannel.QueueDelete(
+		queue.Name, false, false, false,
+	)
+
 	// Start consuming the channel
 	consume, err := consumeChannel.Consume(
 		queue.Name,
 		"example consumer", // consumer name
-		false,               // autoAck
+		true,               // autoAck
 		false,              // exclusive
 		false,              // no local
 		false,              // no wait
@@ -121,6 +126,13 @@ func ExampleChannel_Consume_deliveryTags() {
 	consumeComplete := new(sync.WaitGroup)
 	consumerClosed := make(chan struct{})
 
+	// Set the prefetch count to 1, that way we are less likely to lose a message
+	// that in in-flight from the broker in this example.
+	err = consumeChannel.Qos(1, 0, false)
+	if err != nil {
+		panic(err)
+	}
+
 	// Launch a consumer
 	go func() {
 		// Close the consumeComplete to signal exit
@@ -130,16 +142,10 @@ func ExampleChannel_Consume_deliveryTags() {
 
 		// Range over the consume channel
 		for delivery := range consume {
-			// Ack the delivery.
-			err = delivery.Ack(false)
-			if err != nil {
-				panic(err)
-			}
-
 			// Force-reconnect the channel after each delivery.
 			consumeChannel.Test(new(testing.T)).ForceReconnect(context.Background())
 
-			// Tick down the consumeComplete waitgroup
+			// Tick down the consumeComplete WaitGroup
 			consumeComplete.Done()
 
 			// Print the delivery. Even though we are forcing a new underlying channel
