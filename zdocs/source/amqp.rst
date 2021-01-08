@@ -396,6 +396,13 @@ actual delivery tag relative to the current underlying channel:
     queue.Name, false, false, false,
   )
 
+  // Set the prefetch count to 1, that way we are less likely to lose a message
+  // that in in-flight from the broker in this example.
+  err = consumeChannel.Qos(1, 0, false)
+  if err != nil {
+    panic(err)
+  }
+
   // Start consuming the channel
   consume, err := consumeChannel.Consume(
     queue.Name,
