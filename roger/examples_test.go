@@ -98,7 +98,6 @@ func ExampleNewProducer() {
 
 	// exit.
 
-	// Output:
 	// Message Published!
 	// Message Published!
 	// Message Published!

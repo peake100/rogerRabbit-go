@@ -1,6 +1,6 @@
 //revive:disable
 
-package rogerRabbit_test
+package amqp_test
 
 import (
 	"context"

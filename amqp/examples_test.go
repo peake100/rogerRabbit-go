@@ -66,7 +66,6 @@ func ExampleChannel_reconnect() {
 	// Now that we have explicitly closed the connection, the channel will be closed.
 	fmt.Println("IS CLOSED:", channel.IsClosed())
 
-	// Output:
 	// IS CLOSED: false
 	// QUEUE    : {Name:example_channel_reconnect Messages:0 Consumers:0}
 	// IS CLOSED: true
@@ -197,7 +196,7 @@ func ExampleChannel_Consume_deliveryTags() {
 	<-consumerClosed
 
 	// exit
-	
+
 	// STARTING CONSUMER
 	// DELIVERY 1: message 0
 	// DELIVERY 2: message 1
@@ -290,7 +289,6 @@ func ExampleChannel_Consume_orphan() {
 	fmt.Println("FIRST ORPHAN TAG:", orphanErr.OrphanTagFirst)
 	fmt.Println("LAST ORPHAN TAG :", orphanErr.OrphanTagLast)
 
-	// Output:
 	// DELIVERY: test message
 	// ACK ERROR: 1 tags orphaned (1 - 1), 0 tags successfully acknowledged
 	// FIRST ORPHAN TAG: 1
@@ -400,7 +398,6 @@ func ExampleChannel_Publish_tagContinuity() {
 
 	// Exit.
 
-	// Output:
 	// CONFIRMATION TAG 01: ACK: true ORPHAN: false
 	// CONFIRMATION TAG 02: ACK: true ORPHAN: false
 	// CONFIRMATION TAG 03: ACK: true ORPHAN: false
@@ -475,7 +472,6 @@ func ExampleChannel_QueueDeclare_reDeclare() {
 		panic(err)
 	}
 
-	// Output:
 	// INSPECT ERROR: Exception (404) Reason: "NOT_FOUND - no queue 'example_queue_declare_robust' in vhost '/'"
 	// INSPECTION: example_queue_declare_robust
 	// INSPECTION: example_queue_declare_robust
@@ -524,7 +520,6 @@ func ExampleChannel_Middleware() {
 		panic(err)
 	}
 
-	// Output:
 	// MIDDLEWARE INVOKED FOR QUEUE
 	// QUEUE NAME : example_middleware
 	// AUTO-DELETE: true
@@ -561,6 +556,5 @@ func ExampleChannel_Test() {
 
 	// exit.
 
-	// Output:
 	// RECONNECTION COUNT: 2
 }
