@@ -106,16 +106,11 @@ func ExampleChannel_Consume_deliveryTags() {
 		panic(err)
 	}
 
-	// Clean up the queue on exit,
-	defer consumeChannel.QueueDelete(
-		queue.Name, false, false, false,
-	)
-
 	// Start consuming the channel
 	consume, err := consumeChannel.Consume(
 		queue.Name,
 		"example consumer", // consumer name
-		true,               // autoAck
+		false,               // autoAck
 		false,              // exclusive
 		false,              // no local
 		false,              // no wait
@@ -135,6 +130,12 @@ func ExampleChannel_Consume_deliveryTags() {
 
 		// Range over the consume channel
 		for delivery := range consume {
+			// Ack the delivery.
+			err = delivery.Ack(false)
+			if err != nil {
+				panic(err)
+			}
+
 			// Force-reconnect the channel after each delivery.
 			consumeChannel.Test(new(testing.T)).ForceReconnect(context.Background())
 

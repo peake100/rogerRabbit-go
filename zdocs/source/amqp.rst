@@ -400,7 +400,7 @@ actual delivery tag relative to the current underlying channel:
   consume, err := consumeChannel.Consume(
     queue.Name,
     "example consumer", // consumer name
-    true,               // autoAck
+    false,              // autoAck
     false,              // exclusive
     false,              // no local
     false,              // no wait
@@ -420,6 +420,12 @@ actual delivery tag relative to the current underlying channel:
 
     // Range over the consume channel
     for delivery := range consume {
+			// Ack the delivery.
+			err = delivery.Ack(false)
+			if err != nil {
+				panic(err)
+			}
+
       // Force-reconnect the channel after each delivery.
       consumeChannel.Test(new(testing.T)).ForceReconnect(context.Background())
 
