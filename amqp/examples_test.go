@@ -197,8 +197,7 @@ func ExampleChannel_Consume_deliveryTags() {
 	<-consumerClosed
 
 	// exit
-
-	// Output:
+	
 	// STARTING CONSUMER
 	// DELIVERY 1: message 0
 	// DELIVERY 2: message 1
