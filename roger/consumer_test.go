@@ -211,5 +211,7 @@ func (suite *ConsumerSuite) TestConsumeBasicMessages() {
 }
 
 func TestNewConsumer(t *testing.T) {
-	suite.Run(t, new(ConsumerSuite))
+	suite.Run(t, &ConsumerSuite{
+		AmqpSuite: amqptest.NewAmqpSuite(new(suite.Suite), nil),
+	})
 }

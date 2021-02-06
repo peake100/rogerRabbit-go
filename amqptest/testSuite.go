@@ -13,6 +13,11 @@ import (
 	"time"
 )
 
+type InnerSuite interface {
+	Assertions
+	suite.TestingSuite
+}
+
 // ChannelSuiteOpts is used to configure AmqpSuite, which can be embedded
 // into a testify suite.Suite to gain a number of useful testing methods.
 type ChannelSuiteOpts struct {
@@ -47,7 +52,7 @@ func NewChannelSuiteOpts() *ChannelSuiteOpts {
 // handling test setup / teardown.
 type AmqpSuite struct {
 	// Suite is the embedded suite type.
-	suite.Suite
+	InnerSuite
 
 	// Opts is our Options object and can be set on suite instantiation or during setup.
 	Opts *ChannelSuiteOpts
@@ -63,14 +68,49 @@ type AmqpSuite struct {
 	channelPublish *amqp.Channel
 }
 
+// SetupSuite implements, suite.SetupAllSuite, and sets suite.Opts to
+// NewChannelSuiteOpts if no other opts has been provided.
+func (amqpSuite *AmqpSuite) SetupSuite() {
+	if amqpSuite.Opts == nil {
+		amqpSuite.Opts = NewChannelSuiteOpts()
+	}
+
+	if setupSuite, ok := amqpSuite.InnerSuite.(suite.SetupAllSuite); ok {
+		setupSuite.SetupSuite()
+	}
+}
+
+// TearDownSuite implements suite.TearDownAllSuite, and closes all open test connections
+// and channels created form this suite's helper methods.
+func (amqpSuite *AmqpSuite) TearDownSuite() {
+	if amqpSuite.connConsume != nil {
+		defer amqpSuite.connConsume.Close()
+	}
+
+	if amqpSuite.connPublish != nil {
+		defer amqpSuite.connPublish.Close()
+	}
+
+	if amqpSuite.channelConsume != nil {
+		defer amqpSuite.channelConsume.Close()
+	}
+	if amqpSuite.channelPublish != nil {
+		defer amqpSuite.channelPublish.Close()
+	}
+
+	if tearDownSuite, ok := amqpSuite.InnerSuite.(suite.TearDownAllSuite); ok {
+		tearDownSuite.TearDownSuite()
+	}
+}
+
 // dialConnection dials the test connection.
-func (suite *AmqpSuite) dialConnection() *amqp.Connection {
-	address := suite.Opts.dialAddress
+func (amqpSuite *AmqpSuite) dialConnection() *amqp.Connection {
+	address := amqpSuite.Opts.dialAddress
 	if address == "" {
 		address = TestDialAddress
 	}
 
-	config := suite.Opts.dialConfig
+	config := amqpSuite.Opts.dialConfig
 	if config == nil {
 		config = amqp.DefaultConfig()
 	}
@@ -80,19 +120,19 @@ func (suite *AmqpSuite) dialConnection() *amqp.Connection {
 
 	conn, err := amqp.DialConfigCtx(ctx, address, *config)
 	if err != nil {
-		suite.T().Errorf("error dialing connection: %v", err)
-		suite.T().FailNow()
+		amqpSuite.T().Errorf("error dialing connection: %v", err)
+		amqpSuite.T().FailNow()
 	}
 
 	return conn
 }
 
 // getChannel gets a new channel from conn.
-func (suite *AmqpSuite) getChannel(conn *amqp.Connection) *amqp.Channel {
+func (amqpSuite *AmqpSuite) getChannel(conn *amqp.Connection) *amqp.Channel {
 	channel, err := conn.Channel()
 	if err != nil {
-		suite.T().Errorf("error getting channel: %v", err)
-		suite.T().FailNow()
+		amqpSuite.T().Errorf("error getting channel: %v", err)
+		amqpSuite.T().FailNow()
 	}
 
 	return channel
@@ -100,85 +140,89 @@ func (suite *AmqpSuite) getChannel(conn *amqp.Connection) *amqp.Channel {
 
 // ConnConsume returns an *amqp.Connection to be used for consuming methods. The
 // returned connection object will be the same each time this methods is called.
-func (suite *AmqpSuite) ConnConsume() *amqp.Connection {
-	if suite.connConsume != nil {
-		return suite.connConsume
+func (amqpSuite *AmqpSuite) ConnConsume() *amqp.Connection {
+	if amqpSuite.connConsume != nil {
+		return amqpSuite.connConsume
 	}
-	suite.connConsume = suite.dialConnection()
-	return suite.connConsume
+	amqpSuite.connConsume = amqpSuite.dialConnection()
+	return amqpSuite.connConsume
 }
 
 // ChannelConsume returns an *amqp.Channel to be used for consuming methods. The
 // returned channel object will be the same each time this methods is called, until
 // ReplaceChannels is called.
-func (suite *AmqpSuite) ChannelConsume() *amqp.Channel {
-	if suite.channelConsume != nil {
-		return suite.channelConsume
+func (amqpSuite *AmqpSuite) ChannelConsume() *amqp.Channel {
+	if amqpSuite.channelConsume != nil {
+		return amqpSuite.channelConsume
 	}
-	suite.channelConsume = suite.getChannel(suite.ConnConsume())
-	return suite.channelConsume
+	amqpSuite.channelConsume = amqpSuite.getChannel(amqpSuite.ConnConsume())
+	return amqpSuite.channelConsume
 }
 
 // ChannelConsumeTester returns *amqp.ChannelTesting object for ChannelConsume with the
 // current suite.T().
-func (suite *AmqpSuite) ChannelConsumeTester() *amqp.ChannelTesting {
-	return suite.ChannelConsume().Test(suite.T())
+func (amqpSuite *AmqpSuite) ChannelConsumeTester() *amqp.ChannelTesting {
+	return amqpSuite.ChannelConsume().Test(amqpSuite.T())
 }
 
 // ConnPublish returns an *amqp.Connection to be used for publishing methods. The
 // returned connection object will be the same each time this methods is called.
-func (suite *AmqpSuite) ConnPublish() *amqp.Connection {
-	if suite.connPublish != nil {
-		return suite.connPublish
+func (amqpSuite *AmqpSuite) ConnPublish() *amqp.Connection {
+	if amqpSuite.connPublish != nil {
+		return amqpSuite.connPublish
 	}
-	suite.connPublish = suite.dialConnection()
-	return suite.connPublish
+	amqpSuite.connPublish = amqpSuite.dialConnection()
+	return amqpSuite.connPublish
 }
 
 // ChannelPublish returns an *amqp.Channel to be used for consuming methods. The
 // returned channel object will be the same each time this methods is called, until
 // ReplaceChannels is called.
-func (suite *AmqpSuite) ChannelPublish() *amqp.Channel {
-	if suite.channelPublish != nil {
-		return suite.channelPublish
+func (amqpSuite *AmqpSuite) ChannelPublish() *amqp.Channel {
+	if amqpSuite.channelPublish != nil {
+		return amqpSuite.channelPublish
 	}
-	suite.channelPublish = suite.getChannel(suite.ConnConsume())
-	return suite.channelPublish
+	amqpSuite.channelPublish = amqpSuite.getChannel(amqpSuite.ConnConsume())
+	return amqpSuite.channelPublish
 }
 
 // ChannelConsumeTester returns *amqp.ChannelTesting object for ChannelConsume with the
 // current suite.T().
-func (suite *AmqpSuite) ChannelPublishTester() *amqp.ChannelTesting {
-	return suite.channelPublish.Test(suite.T())
+func (amqpSuite *AmqpSuite) ChannelPublishTester() *amqp.ChannelTesting {
+	return amqpSuite.channelPublish.Test(amqpSuite.T())
 }
 
 // ReplaceChannels replace and close the current ChannelConsume and ChannelPublish for
 // fresh ones. Most helpfully used as a cleanup function when persisting the current
 // channels to the next test method is not desirable.
-func (suite *AmqpSuite) ReplaceChannels() {
-	if suite.channelConsume != nil {
-		_ = suite.channelConsume.Close()
+func (amqpSuite *AmqpSuite) ReplaceChannels() {
+	if amqpSuite.channelConsume != nil {
+		_ = amqpSuite.channelConsume.Close()
 	}
 
-	channel, err := suite.connConsume.Channel()
-	if !suite.NoError(err, "open new channelConsume for suite") {
-		suite.FailNow("could not open channelConsume for test suite")
+	channel, err := amqpSuite.connConsume.Channel()
+	if !amqpSuite.NoError(err, "open new channelConsume for amqpSuite") {
+		amqpSuite.FailNow(
+			"could not open channelConsume for test amqpSuite",
+		)
 	}
 
-	suite.channelConsume = channel
+	amqpSuite.channelConsume = channel
 
-	if suite.channelPublish != nil {
-		_ = suite.channelPublish.Close()
+	if amqpSuite.channelPublish != nil {
+		_ = amqpSuite.channelPublish.Close()
 	}
-	channel, err = suite.connConsume.Channel()
-	if !suite.NoError(err, "open new channelPublish for suite") {
-		suite.FailNow("could not open channelPublish for test suite")
+	channel, err = amqpSuite.connConsume.Channel()
+	if !amqpSuite.NoError(err, "open new channelPublish for amqpSuite") {
+		amqpSuite.FailNow(
+			"could not open channelPublish for test amqpSuite",
+		)
 	}
 
-	suite.channelPublish = channel
+	amqpSuite.channelPublish = channel
 }
 
-func (suite *AmqpSuite) createSingleTestQueue(
+func (amqpSuite *AmqpSuite) createSingleTestQueue(
 	name string,
 	exchange string,
 	exchangeKey string,
@@ -194,12 +238,12 @@ func (suite *AmqpSuite) createSingleTestQueue(
 		nil,
 	)
 
-	if !suite.NoError(err, "create queue") {
-		suite.T().FailNow()
+	if !amqpSuite.NoError(err, "create queue") {
+		amqpSuite.T().FailNow()
 	}
 
 	if cleanup {
-		suite.T().Cleanup(func() {
+		amqpSuite.T().Cleanup(func() {
 			_, _ = channel.QueueDelete(
 				name, false, false, false,
 			)
@@ -212,8 +256,8 @@ func (suite *AmqpSuite) createSingleTestQueue(
 	err = channel.QueueBind(
 		queue.Name, exchangeKey, exchange, false, nil,
 	)
-	if !suite.NoError(err, "error binding queue") {
-		suite.T().FailNow()
+	if !amqpSuite.NoError(err, "error binding queue") {
+		amqpSuite.T().FailNow()
 	}
 
 	return queue
@@ -225,14 +269,14 @@ func (suite *AmqpSuite) createSingleTestQueue(
 //
 // If cleanup is true, then a cleanup function will be registered on the current
 // suite.T() to delete the queues at the end of the test.
-func (suite *AmqpSuite) CreateTestQueue(
+func (amqpSuite *AmqpSuite) CreateTestQueue(
 	name string, exchange string, exchangeKey string, cleanup bool,
 ) amqp.Queue {
-	queue := suite.createSingleTestQueue(
-		name, exchange, exchangeKey, cleanup, suite.ChannelPublish(),
+	queue := amqpSuite.createSingleTestQueue(
+		name, exchange, exchangeKey, cleanup, amqpSuite.ChannelPublish(),
 	)
-	_ = suite.createSingleTestQueue(
-		name, exchange, exchangeKey, cleanup, suite.ChannelConsume(),
+	_ = amqpSuite.createSingleTestQueue(
+		name, exchange, exchangeKey, cleanup, amqpSuite.ChannelConsume(),
 	)
 
 	return queue
@@ -242,10 +286,10 @@ func (suite *AmqpSuite) CreateTestQueue(
 //
 // If cleanup is set to true, a cleanup function will be registered with the current
 // suite.T() that will delete the exchange at the end of the test.
-func (suite *AmqpSuite) CreateTestExchange(
+func (amqpSuite *AmqpSuite) CreateTestExchange(
 	name string, kind string, cleanup bool,
 ) {
-	err := suite.channelPublish.ExchangeDeclare(
+	err := amqpSuite.channelPublish.ExchangeDeclare(
 		name,
 		kind,
 		false,
@@ -255,19 +299,19 @@ func (suite *AmqpSuite) CreateTestExchange(
 		nil,
 	)
 
-	if !suite.NoError(err, "create publish queue") {
-		suite.T().FailNow()
+	if !amqpSuite.NoError(err, "create publish queue") {
+		amqpSuite.T().FailNow()
 	}
 
 	if cleanup {
-		suite.T().Cleanup(func() {
-			_ = suite.channelPublish.ExchangeDelete(
+		amqpSuite.T().Cleanup(func() {
+			_ = amqpSuite.channelPublish.ExchangeDelete(
 				name, false, false,
 			)
 		})
 	}
 
-	err = suite.channelConsume.ExchangeDeclare(
+	err = amqpSuite.channelConsume.ExchangeDeclare(
 		name,
 		kind,
 		false,
@@ -277,26 +321,26 @@ func (suite *AmqpSuite) CreateTestExchange(
 		nil,
 	)
 
-	if !suite.NoError(err, "create consume queue") {
-		suite.T().FailNow()
+	if !amqpSuite.NoError(err, "create consume queue") {
+		amqpSuite.T().FailNow()
 	}
 
 	if cleanup {
-		suite.T().Cleanup(func() {
-			_ = suite.channelConsume.ExchangeDelete(
+		amqpSuite.T().Cleanup(func() {
+			_ = amqpSuite.channelConsume.ExchangeDelete(
 				name, false, false,
 			)
 		})
 	}
 }
 
-func (suite *AmqpSuite) publishMessagesSend(
+func (amqpSuite *AmqpSuite) publishMessagesSend(
 	t *testing.T, exchange string, key string, count int,
 ) {
 	assert := assert.New(t)
 
 	for i := 0; i < count; i++ {
-		err := suite.ChannelPublish().Publish(
+		err := amqpSuite.ChannelPublish().Publish(
 			exchange,
 			key,
 			true,
@@ -312,7 +356,7 @@ func (suite *AmqpSuite) publishMessagesSend(
 	}
 }
 
-func (suite *AmqpSuite) publishMessagesConfirm(
+func (amqpSuite *AmqpSuite) publishMessagesConfirm(
 	t *testing.T,
 	count int,
 	confirmationEvents <-chan datamodels.Confirmation,
@@ -337,23 +381,23 @@ func (suite *AmqpSuite) publishMessagesConfirm(
 //
 // Messages bodies are simply the index of the message starting at 0, so publishing
 // 3 messages would result with a message bodies '0', '1', and '2'.
-func (suite *AmqpSuite) PublishMessages(
+func (amqpSuite *AmqpSuite) PublishMessages(
 	t *testing.T, exchange string, key string, count int,
 ) {
 	assert := assert.New(t)
 
-	err := suite.ChannelPublish().Confirm(false)
+	err := amqpSuite.ChannelPublish().Confirm(false)
 	if !assert.NoError(err, "put publish channel into confirm mode") {
 		t.FailNow()
 	}
 
 	confirmationEvents := make(chan datamodels.Confirmation, count)
-	suite.ChannelPublish().NotifyPublish(confirmationEvents)
+	amqpSuite.ChannelPublish().NotifyPublish(confirmationEvents)
 
-	go suite.publishMessagesSend(t, exchange, key, count)
+	go amqpSuite.publishMessagesSend(t, exchange, key, count)
 
 	allConfirmed := make(chan struct{})
-	go suite.publishMessagesConfirm(t, count, confirmationEvents, allConfirmed)
+	go amqpSuite.publishMessagesConfirm(t, count, confirmationEvents, allConfirmed)
 
 	select {
 	case <-allConfirmed:
@@ -365,44 +409,28 @@ func (suite *AmqpSuite) PublishMessages(
 
 // GetMessage gets a single message, failing the test immediately if there is not a
 // message waiting or the get message fails.
-func (suite *AmqpSuite) GetMessage(
+func (amqpSuite *AmqpSuite) GetMessage(
 	queueName string, autoAck bool,
 ) datamodels.Delivery {
-	delivery, ok, err := suite.ChannelConsume().Get(queueName, autoAck)
-	if !suite.NoError(err, "get message") {
-		suite.T().FailNow()
+	delivery, ok, err := amqpSuite.ChannelConsume().Get(queueName, autoAck)
+	if !amqpSuite.NoError(err, "get message") {
+		amqpSuite.T().FailNow()
 	}
 
-	if !suite.True(ok, "message was fetched") {
-		suite.T().FailNow()
+	if !amqpSuite.True(ok, "message was fetched") {
+		amqpSuite.T().FailNow()
 	}
 
 	return delivery
 }
 
-// SetupSuite implements, suite.SetupAllSuite, and sets suite.Opts to
-// NewChannelSuiteOpts if no other opts has been provided.
-func (suite *AmqpSuite) SetupSuite() {
-	if suite.Opts == nil {
-		suite.Opts = NewChannelSuiteOpts()
-	}
-}
-
-// TearDownSuite implements suite.TearDownAllSuite, and closes all open test connections
-// and channels created form this suite's helper methods.
-func (suite *AmqpSuite) TearDownSuite() {
-	if suite.connConsume != nil {
-		defer suite.connConsume.Close()
-	}
-
-	if suite.connPublish != nil {
-		defer suite.connPublish.Close()
-	}
-
-	if suite.channelConsume != nil {
-		defer suite.channelConsume.Close()
-	}
-	if suite.channelPublish != nil {
-		defer suite.channelPublish.Close()
+func NewAmqpSuite(innerSuite InnerSuite, opts *ChannelSuiteOpts) AmqpSuite {
+	return AmqpSuite{
+		InnerSuite:     innerSuite,
+		Opts:           opts,
+		connConsume:    nil,
+		channelConsume: nil,
+		connPublish:    nil,
+		channelPublish: nil,
 	}
 }

@@ -148,5 +148,7 @@ func (suite *ProducerSuite) TestProducerPublish() {
 }
 
 func TestProducer(t *testing.T) {
-	suite.Run(t, new(ProducerSuite))
+	suite.Run(t, &ProducerSuite{
+		AmqpSuite: amqptest.NewAmqpSuite(new(suite.Suite), nil),
+	})
 }

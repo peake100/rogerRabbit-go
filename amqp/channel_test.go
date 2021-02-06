@@ -206,7 +206,9 @@ func (suite *ChannelLifetimeSuite) Test0070_CloseConnection_ClosesChannel() {
 }
 
 func TestChannelLifetime(t *testing.T) {
-	suite.Run(t, new(ChannelLifetimeSuite))
+	suite.Run(t, &ChannelLifetimeSuite{
+		AmqpSuite: amqptest.NewAmqpSuite(new(suite.Suite), nil),
+	})
 }
 
 // Suite for testing channelConsume methods.
@@ -1865,5 +1867,7 @@ func (suite *ChannelMethodsSuite) Test0390_TxMethodsPanic() {
 }
 
 func TestChannelMethods(t *testing.T) {
-	suite.Run(t, new(ChannelMethodsSuite))
+	suite.Run(t, &ChannelMethodsSuite{
+		AmqpSuite: amqptest.NewAmqpSuite(new(suite.Suite), nil),
+	})
 }

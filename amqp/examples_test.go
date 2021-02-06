@@ -95,11 +95,11 @@ func ExampleChannel_Consume_deliveryTags() {
 	// Declare the queue we are going to use.
 	queue, err := consumeChannel.QueueDeclare(
 		queueName, // name
-		false, // durable
-		false, // autoDelete
-		false, // exclusive
-		false, // noWait
-		nil, // args
+		false,     // durable
+		false,     // autoDelete
+		false,     // exclusive
+		false,     // noWait
+		nil,       // args
 	)
 	if err != nil {
 		panic(err)
