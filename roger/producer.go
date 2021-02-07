@@ -52,20 +52,33 @@ type publishArgs struct {
 	Msg       amqp.Publishing
 }
 
-// publishOrder is t he order for a publications.
-type publishOrder struct {
+// Publication is t he order for a publications.
+type Publication struct {
 	// ctx is a context for this order from the original caller.
 	ctx context.Context
 
 	// publishArgs are the embedded publication args.
-	publishArgs
+	args publishArgs
 
-	// DeliveryTag is set by the publishing routine after a successful publication.
-	DeliveryTag uint64
+	// publicationTag is set by the publishing routine after a successful publication.
+	publicationTag uint64
+	tagSet         bool
 
 	// result us a channel we will send publishing results back to the original caller
 	// with.
 	result chan error
+}
+
+// WaitOnConfirmation blocks until the message is confirmed / nacked by the broker
+// or the context of the publication cancels.
+func (order *Publication) WaitOnConfirmation() error {
+	// Block until we have a final result, then return it.
+	select {
+	case result := <-order.result:
+		return result
+	case <-order.ctx.Done():
+		return fmt.Errorf("message cancelled: %w", order.ctx.Err())
+	}
 }
 
 // ProducerOpts holds options for Producer.
@@ -114,10 +127,10 @@ type Producer struct {
 	publishEvents chan datamodels.Confirmation
 
 	// Internal Queue for messages waiting to be published.
-	publishQueue chan *publishOrder
+	publishQueue chan *Publication
 	// Internal Queue of messages that have been sent to the broker, but are awaiting
 	// confirmation.
-	confirmQueue chan *publishOrder
+	confirmQueue chan *Publication
 
 	// Caller options for producer behavior
 	opts ProducerOpts
@@ -140,11 +153,11 @@ func (producer *Producer) runPublisher() {
 		}
 
 		err := producer.channel.Publish(
-			thisOrder.Exchange,
-			thisOrder.Key,
-			thisOrder.Mandatory,
-			thisOrder.Immediate,
-			thisOrder.Msg,
+			thisOrder.args.Exchange,
+			thisOrder.args.Key,
+			thisOrder.args.Mandatory,
+			thisOrder.args.Immediate,
+			thisOrder.args.Msg,
 		)
 		if err != nil {
 			// Return the error
@@ -162,7 +175,7 @@ func (producer *Producer) runPublisher() {
 		// If we are confirming orders, send this to the confirmation routine. We don't
 		// want to check if the requester context has cancelled, as we already sent
 		// the message, and need to tack it to make sure our confirmations line up
-		thisOrder.DeliveryTag = deliveryTag
+		thisOrder.publicationTag = deliveryTag
 		producer.confirmQueue <- thisOrder
 	}
 }
@@ -186,12 +199,12 @@ func (producer *Producer) runConfirmations() {
 			return
 		}
 
-		if confirmation.DeliveryTag != thisOrder.DeliveryTag {
+		if confirmation.DeliveryTag != thisOrder.publicationTag {
 			panic(fmt.Errorf(
 				"confirmation delivery tag %v does not line up with order"+
 					" delivery tag %v",
 				confirmation.DeliveryTag,
-				thisOrder.DeliveryTag,
+				thisOrder.publicationTag,
 			))
 		}
 
@@ -220,12 +233,11 @@ func (producer *Producer) Publish(
 	msg amqp.Publishing,
 ) (err error) {
 	// Create the order.
-	order := &publishOrder{
+	order := &Publication{
 		// Use the producer context.
 		ctx: ctx,
-
 		// Save the args
-		publishArgs: publishArgs{
+		args: publishArgs{
 			Exchange:  exchange,
 			Key:       key,
 			Mandatory: mandatory,
@@ -233,14 +245,64 @@ func (producer *Producer) Publish(
 			Msg:       msg,
 		},
 		// Set the delivery tag to 0, a proper tag will be set once publication occurs.
-		DeliveryTag: 0,
+		publicationTag: 0,
 		// Buffer the result channel by 1 so we never block the publication routine.
 		result: make(chan error, 1),
 	}
 
+	if err = producer.queueOrder(order); err != nil {
+		return fmt.Errorf("error queuing order: %w", err)
+	}
+
+	if err = order.WaitOnConfirmation(); err != nil {
+		return fmt.Errorf("error waiting for order publication: %w", err)
+	}
+
+	return nil
+}
+
+// QueueForPublication is as Publish, but only puts the order into an internal queue
+// before returning, allowing the user to wait on publication confirmation themselves
+// through the returned Publication value.
+//
+// Useful when ensuring publication order is important.
+func (producer *Producer) QueueForPublication(
+	ctx context.Context,
+	exchange string,
+	key string,
+	mandatory bool,
+	immediate bool,
+	msg amqp.Publishing,
+) (order *Publication, err error) {
+	// Create the order.
+	order = &Publication{
+		// Use the producer context.
+		ctx: ctx,
+		// Save the args
+		args: publishArgs{
+			Exchange:  exchange,
+			Key:       key,
+			Mandatory: mandatory,
+			Immediate: immediate,
+			Msg:       msg,
+		},
+		// Set the delivery tag to 0, a proper tag will be set once publication occurs.
+		publicationTag: 0,
+		// Buffer the result channel by 1 so we never block the publication routine.
+		result: make(chan error, 1),
+	}
+
+	if err = producer.queueOrder(order); err != nil {
+		return nil, fmt.Errorf("error queuing order: %w", err)
+	}
+
+	return order, nil
+}
+
+func (producer *Producer) queueOrder(order *Publication) error {
 	// We are going to use a closure to grab and release the lock so we don't hold onto
 	// it longer than we have to.
-	err = func() error {
+	err := func() error {
 		// Put a read hold on closing the order channel so it isn't closed out from
 		// under us.
 		producer.publishQueueLock.RLock()
@@ -257,8 +319,8 @@ func (producer *Producer) Publish(
 		case producer.publishQueue <- order:
 		case <-producer.ctx.Done():
 			return fmt.Errorf("publisher cancelled: %w", producer.ctx.Err())
-		case <-ctx.Done():
-			return fmt.Errorf("message cancelled: %w", err)
+		case <-order.ctx.Done():
+			return fmt.Errorf("message cancelled: %w", order.ctx.Err())
 		}
 
 		return nil
@@ -269,13 +331,7 @@ func (producer *Producer) Publish(
 		return err
 	}
 
-	// Block until we have a final result, then return it.
-	select {
-	case result := <-order.result:
-		return result
-	case <-ctx.Done():
-		return fmt.Errorf("message cancelled: %w", ctx.Err())
-	}
+	return nil
 }
 
 // Run the producer, this method blocks until the producer has been shut down.
@@ -398,8 +454,8 @@ func NewProducer(amqpChannel *amqp.Channel, opts *ProducerOpts) *Producer {
 		publishEvents: make(
 			chan datamodels.Confirmation, opts.internalQueueCapacity,
 		),
-		publishQueue: make(chan *publishOrder, opts.internalQueueCapacity),
-		confirmQueue: make(chan *publishOrder, opts.internalQueueCapacity),
+		publishQueue: make(chan *Publication, opts.internalQueueCapacity),
+		confirmQueue: make(chan *Publication, opts.internalQueueCapacity),
 		opts:         *opts,
 	}
 }

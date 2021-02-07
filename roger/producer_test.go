@@ -147,6 +147,66 @@ func (suite *ProducerSuite) TestProducerPublish() {
 	}
 }
 
+func (suite *ProducerSuite) TestProducerQueuePublication() {
+	suite.T().Cleanup(suite.ReplaceChannels)
+
+	publishCount := 10
+
+	queueName := "test_queue_producer_queue_publication"
+	suite.CreateTestQueue(queueName, "", "", true)
+
+	producer := roger.NewProducer(suite.ChannelPublish(), nil)
+
+	go func() {
+		err := producer.Run()
+		suite.NoError(err, "run producer")
+	}()
+
+	suite.T().Cleanup(producer.StartShutdown)
+
+	publications := make([]*roger.Publication, publishCount)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	for i := 0; i < publishCount; i++ {
+		publication, err := producer.QueueForPublication(
+			ctx,
+			"",
+			queueName,
+			false,
+			false,
+			amqp.Publishing{
+				Body: []byte(fmt.Sprint(i)),
+			},
+		)
+		if !suite.NoErrorf(err, "queue order %v", i) {
+			suite.T().FailNow()
+		}
+		publications[i] = publication
+	}
+
+	publishWork := new(sync.WaitGroup)
+	publishWork.Add(publishCount)
+	publishComplete := make(chan struct{})
+	go func() {
+		defer close(publishComplete)
+		publishWork.Wait()
+	}()
+
+	for i, thisPublication := range publications {
+		err := thisPublication.WaitOnConfirmation()
+		if !suite.NoError(err, "wait on publication %v", i) {
+			suite.T().FailNow()
+		}
+	}
+
+	for i := 0; i < publishCount; i++ {
+		msg := suite.GetMessage(queueName, true)
+		suite.Equal(fmt.Sprint(i), string(msg.Body), "message expected")
+	}
+}
+
 func TestProducer(t *testing.T) {
 	suite.Run(t, &ProducerSuite{
 		AmqpSuite: amqptest.NewAmqpSuite(new(suite.Suite), nil),

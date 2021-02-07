@@ -151,7 +151,7 @@ func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
 	// the streadway lib guarantees that all confirms will be in an ascending, ordered,
 	// unbroken stream, we need to handle a case where a channel was terminated before
 	// all deliveries were acknowledged, and continuing to send confirmations would
-	// result in a DeliveryTag gap.
+	// result in a publicationTag gap.
 	//
 	// It's possible that when the last connection went down, we missed some
 	// confirmations. We are going to check that the offset matches the number we

@@ -1091,7 +1091,7 @@ func (channel *Channel) Reject(tag uint64, requeue bool) error {
 /*
 NotifyPublish registers a listener for reliable publishing. Receives from this
 chan for every publish after Channel.Confirm will be in order starting with
-DeliveryTag 1.
+publicationTag 1.
 
 There will be one and only one Confirmation Publishing starting with the
 delivery tag of 1 and progressing sequentially until the total number of
@@ -1181,7 +1181,7 @@ func notifyConfirmHandleAckAndNack(
 
 /*
 NotifyConfirm calls NotifyPublish and starts a goroutine sending
-ordered Ack and Nack DeliveryTag to the respective channels.
+ordered Ack and Nack publicationTag to the respective channels.
 
 For strict ordering, use NotifyPublish instead.
 
