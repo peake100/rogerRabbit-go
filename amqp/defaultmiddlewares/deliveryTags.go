@@ -194,8 +194,8 @@ func (middleware *DeliveryTagsMiddleware) Reject(
 // ConsumeEvent is invoked whenever an event is sent to a caller of
 // amqp.Channel.Consume(), and handles applying the delivery tag offset.
 func (middleware *DeliveryTagsMiddleware) ConsumeEvent(
-	next amqpmiddleware.HandlerConsumeEvent,
-) (handler amqpmiddleware.HandlerConsumeEvent) {
+	next amqpmiddleware.HandlerConsumeEvents,
+) (handler amqpmiddleware.HandlerConsumeEvents) {
 	handler = func(event *amqpmiddleware.EventConsume) {
 		// Apply the offset to our delivery
 		event.Delivery.TagOffset = middleware.tagConsumeOffset

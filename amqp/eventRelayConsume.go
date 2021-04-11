@@ -29,11 +29,11 @@ type consumeRelay struct {
 	brokerDeliveries <-chan streadway.Delivery
 
 	// handler with middleware we will call to pass events to the caller.
-	handler amqpmiddleware.HandlerConsumeEvent
+	handler amqpmiddleware.HandlerConsumeEvents
 }
 
 // baseHandler returns the base handler to be wrapped in middleware.
-func (relay *consumeRelay) baseHandler() amqpmiddleware.HandlerConsumeEvent {
+func (relay *consumeRelay) baseHandler() amqpmiddleware.HandlerConsumeEvents {
 	return func(event *amqpmiddleware.EventConsume) {
 		relay.CallerDeliveries <- event.Delivery
 	}
@@ -95,7 +95,7 @@ func (relay *consumeRelay) Shutdown() error {
 func newConsumeRelay(
 	consumeArgs *consumeArgs,
 	acknowledger Acknowledger,
-	middleware []amqpmiddleware.ConsumeEvent,
+	middleware []amqpmiddleware.ConsumeEvents,
 ) *consumeRelay {
 	relay := &consumeRelay{
 		ConsumeArgs:      *consumeArgs,

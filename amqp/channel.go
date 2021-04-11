@@ -1215,42 +1215,28 @@ a disconnect, these tags are routed to the nack channel in NotifyConfirm.
 func (channel *Channel) NotifyConfirmOrOrphaned(
 	ack, nack, orphaned chan uint64,
 ) (chan uint64, chan uint64, chan uint64) {
-	confirmsEvents := channel.NotifyPublish(
-		make(chan datamodels.Confirmation, cap(ack)+cap(nack)+cap(orphaned)),
-	)
-	logger := channel.logger.With().
-		Str("EVENT_TYPE", "NOTIFY_CONFIRM_OR_ORPHAN").
-		Logger()
-
-	go channel.runNotifyConfirmOrOrphaned(ack, nack, orphaned, confirmsEvents, logger)
-
-	return ack, nack, orphaned
+	callArgs := &amqpmiddleware.ArgsNotifyConfirmOrOrphaned{
+		Ack:      ack,
+		Nack:     nack,
+		Orphaned: orphaned,
+	}
+	return channel.transportChannel.handlers.notifyConfirmOrOrphaned(callArgs)
 }
 
 // runNotifyConfirmOrOrphaned should be launched as a goroutine and handles sending
 // NotifyConfirmOrOrphaned to the caller.
 func (channel *Channel) runNotifyConfirmOrOrphaned(
+	eventHandler amqpmiddleware.HandlerNotifyConfirmOrOrphanedEvents,
 	ack, nack, orphaned chan uint64,
 	confirmEvents <-chan datamodels.Confirmation,
-	logger zerolog.Logger,
 ) {
 	// Close channels on exit
 	defer notifyConfirmCloseConfirmChannels(ack, nack, orphaned)
 
 	// range over confirmation events and place them in the ack and nack channels.
 	for confirmation := range confirmEvents {
-		if confirmation.DisconnectOrphan {
-			if logger.Debug().Enabled() {
-				logger.Debug().
-					Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
-					Bool("ACK", confirmation.Ack).
-					Str("CHANNEL", "ORPHANED").
-					Msg("orphaned confirmation sent")
-			}
-			orphaned <- confirmation.DeliveryTag
-		} else {
-			notifyConfirmHandleAckAndNack(confirmation, ack, nack, logger)
-		}
+		event := amqpmiddleware.EventNotifyConfirmOrOrphaned{Confirmation: confirmation}
+		eventHandler(&event)
 	}
 }
 

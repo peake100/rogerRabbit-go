@@ -99,10 +99,36 @@ type NotifyCancel func(next HandlerNotifyCancel) HandlerNotifyCancel
 // call.
 type NotifyFlow func(next HandlerNotifyFlow) HandlerNotifyFlow
 
-// NotifyPublishEvent defines signature for middleware invoked on event processed
+// NotifyPublishEvents defines signature for middleware invoked on event processed
 // during relay of *amqp.Channel.NotifyPublish() events.
-type NotifyPublishEvent func(next HandlerNotifyPublishEvent) HandlerNotifyPublishEvent
+type NotifyPublishEvents func(
+	next HandlerNotifyPublishEvents,
+) HandlerNotifyPublishEvents
 
-// ConsumeEvent defines signature for middleware invoked on event processed
+// ConsumeEvents defines signature for middleware invoked on event processed
 // during relay of *amqp.Channel.Consume() events.
-type ConsumeEvent func(next HandlerConsumeEvent) HandlerConsumeEvent
+type ConsumeEvents func(next HandlerConsumeEvents) HandlerConsumeEvents
+
+// NotifyConfirmEvents defines signature for middleware invoked on event processed
+// during relay of *amqp.Channel.NotifyConfirm() events.
+type NotifyConfirmEvents func(
+	next HandlerNotifyConfirmEvents,
+) HandlerNotifyConfirmEvents
+
+// NotifyConfirmOrOrphanedEvents defines signature for middleware invoked on event
+// processed during relay of *amqp.Channel.NotifyConfirmOrOrphaned() events.
+type NotifyConfirmOrOrphanedEvents func(
+	next HandlerNotifyConfirmOrOrphanedEvents,
+) HandlerNotifyConfirmOrOrphanedEvents
+
+// NotifyReturnEvents defines signature for middleware invoked on event processed
+// during relay of *amqp.Channel.NotifyReturn() events.
+type NotifyReturnEvents func(next HandlerNotifyReturnEvents) HandlerNotifyReturnEvents
+
+// NotifyCancelEvents defines signature for middleware invoked on event processed
+// during relay of *amqp.Channel.NotifyCancel() events.
+type NotifyCancelEvents func(next HandlerNotifyCancelEvents) HandlerNotifyCancelEvents
+
+// NotifyFlowEvents defines signature for middleware invoked on event processed
+// during relay of *amqp.Channel.NotifyFlow() events.
+type NotifyFlowEvents func(next HandlerNotifyFlowEvents) HandlerNotifyFlowEvents

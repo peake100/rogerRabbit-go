@@ -96,10 +96,25 @@ type channelHandlers struct {
 
 	// notifyPublishEvent is middleware to be registered on a
 	// notifyPublishRelay.
-	notifyPublishEvent []amqpmiddleware.NotifyPublishEvent
+	notifyPublishEvent []amqpmiddleware.NotifyPublishEvents
 	// consumeEvent is middleware to be registered on a
 	// consumeRelay.
-	consumeEvent []amqpmiddleware.ConsumeEvent
+	consumeEvent []amqpmiddleware.ConsumeEvents
+	// notifyConfirmEvent is a middleware to be registered on events for
+	// Channel.NotifyConfirm.
+	notifyConfirmEvent []amqpmiddleware.NotifyConfirmEvents
+	// notifyConfirmOrOrphanedEvent is a middleware to be registered on events for
+	// Channel.NotifyConfirmOrOrphaned.
+	notifyConfirmOrOrphanedEvent []amqpmiddleware.NotifyConfirmOrOrphanedEvents
+	// notifyReturnEvents is a middleware to be registered on events for
+	// Channel.NotifyReturn.
+	notifyReturnEvents []amqpmiddleware.NotifyReturnEvents
+	// notifyCancelEvents is a middleware to be registered on events for
+	// Channel.NotifyCancel.
+	notifyCancelEvents []amqpmiddleware.NotifyCancelEvents
+	// notifyFlowEvents is a middleware to be registered on events for
+	// Channel.NotifyFlow.
+	notifyFlowEvents []amqpmiddleware.NotifyFlowEvents
 
 	// lock should be acquired when adding a middleware to a handler to avoid race
 	// conditions.
@@ -403,7 +418,7 @@ func (handlers *channelHandlers) AddNotifyFlow(
 // AddNotifyPublishEvent adds a new middleware to be invoked on events sent to callers
 // of Channel.NotifyPublish.
 func (handlers *channelHandlers) AddNotifyPublishEvent(
-	middleware amqpmiddleware.NotifyPublishEvent,
+	middleware amqpmiddleware.NotifyPublishEvents,
 ) {
 	handlers.lock.Lock()
 	defer handlers.lock.Unlock()
@@ -416,13 +431,78 @@ func (handlers *channelHandlers) AddNotifyPublishEvent(
 // AddConsumeEvent adds a new middleware to be invoked on events sent to callers
 // of Channel.Consume.
 func (handlers *channelHandlers) AddConsumeEvent(
-	middleware amqpmiddleware.ConsumeEvent,
+	middleware amqpmiddleware.ConsumeEvents,
 ) {
 	handlers.lock.Lock()
 	defer handlers.lock.Unlock()
 
 	handlers.consumeEvent = append(
 		handlers.consumeEvent, middleware,
+	)
+}
+
+// AddNotifyConfirmEvent adds a new middleware to be invoked on events sent to callers
+// of Channel.NotifyConfirm.
+func (handlers *channelHandlers) AddNotifyConfirmEvent(
+	middleware amqpmiddleware.NotifyConfirmEvents,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyConfirmEvent = append(
+		handlers.notifyConfirmEvent, middleware,
+	)
+}
+
+// AddNotifyConfirmOrOrphanedEvent adds a new middleware to be invoked on events sent to
+// callers of Channel.NotifyConfirmOrOrphaned.
+func (handlers *channelHandlers) AddNotifyConfirmOrOrphanedEvent(
+	middleware amqpmiddleware.NotifyConfirmOrOrphanedEvents,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyConfirmOrOrphanedEvent = append(
+		handlers.notifyConfirmOrOrphanedEvent, middleware,
+	)
+}
+
+// AddNotifyReturnEvents adds a new middleware to be invoked on events sent to
+// callers of Channel.NotifyReturn.
+func (handlers *channelHandlers) AddNotifyReturnEvents(
+	middleware amqpmiddleware.NotifyReturnEvents,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyReturnEvents = append(
+		handlers.notifyReturnEvents, middleware,
+	)
+}
+
+// AddNotifyCancelEvents adds a new middleware to be invoked on events sent to
+// callers of Channel.NotifyCancel.
+func (handlers *channelHandlers) AddNotifyCancelEvents(
+	middleware amqpmiddleware.NotifyCancelEvents,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyCancelEvents = append(
+		handlers.notifyCancelEvents, middleware,
+	)
+}
+
+// AddNotifyFlowEvents adds a new middleware to be invoked on events sent to
+// callers of Channel.NotifyCancel.
+func (handlers *channelHandlers) AddNotifyFlowEvents(
+	middleware amqpmiddleware.NotifyFlowEvents,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyFlowEvents = append(
+		handlers.notifyFlowEvents, middleware,
 	)
 }
 
@@ -465,6 +545,10 @@ func newChannelHandlers(conn *Connection, channel *Channel) *channelHandlers {
 
 		notifyPublishEvent: nil,
 		consumeEvent:       nil,
+		notifyConfirmEvent: nil,
+		notifyReturnEvents: nil,
+		notifyCancelEvents: nil,
+		notifyFlowEvents:   nil,
 
 		lock: new(sync.RWMutex),
 	}

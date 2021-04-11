@@ -1,6 +1,7 @@
 package amqp
 
 import (
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
@@ -13,8 +14,24 @@ type notifyCancelRelay struct {
 	// The current broker channel we are pulling from.
 	brokerCancellations <-chan string
 
+	// handler is the base handler wrapped in all caller-supplied middleware to be
+	// evoked on each event.
+	handler amqpmiddleware.HandlerNotifyCancelEvents
+
 	// Logger
 	logger zerolog.Logger
+}
+
+func (relay *notifyCancelRelay) baseHandler() amqpmiddleware.HandlerNotifyCancelEvents {
+	return func(event *amqpmiddleware.EventNotifyCancel) {
+		if relay.logger.Debug().Enabled() {
+			relay.logger.Debug().
+				Str("CANCELLATION", event.Cancellation).
+				Msg("cancel notification sent")
+		}
+
+		relay.CallerCancellations <- event.Cancellation
+	}
 }
 
 // Logger implements eventRelay and sets up the relay logger.
@@ -37,13 +54,7 @@ func (relay *notifyCancelRelay) SetupForRelayLeg(newChannel *streadway.Channel) 
 // events to the original caller.
 func (relay *notifyCancelRelay) RunRelayLeg() (done bool, err error) {
 	for thisCancellation := range relay.brokerCancellations {
-		if relay.logger.Debug().Enabled() {
-			relay.logger.Debug().
-				Str("CANCELLATION", thisCancellation).
-				Msg("cancel notification sent")
-		}
-
-		relay.CallerCancellations <- thisCancellation
+		relay.handler(&amqpmiddleware.EventNotifyCancel{Cancellation: thisCancellation})
 	}
 
 	return false, nil
@@ -53,4 +64,23 @@ func (relay *notifyCancelRelay) RunRelayLeg() (done bool, err error) {
 func (relay *notifyCancelRelay) Shutdown() error {
 	defer close(relay.CallerCancellations)
 	return nil
+}
+
+// newNotifyReturnRelay creates a new notifyReturnRelay.
+func newNotifyCancelRelay(
+	callerCancellations chan<- string,
+	middleware []amqpmiddleware.NotifyCancelEvents,
+) *notifyCancelRelay {
+	// Create the relay
+	relay := &notifyCancelRelay{
+		CallerCancellations: callerCancellations,
+	}
+
+	// Apply all middleware to the handler
+	relay.handler = relay.baseHandler()
+	for _, thisMiddleware := range middleware {
+		relay.handler = thisMiddleware(relay.handler)
+	}
+
+	return relay
 }

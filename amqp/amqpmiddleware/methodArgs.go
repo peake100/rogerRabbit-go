@@ -197,14 +197,53 @@ type ArgsNotifyFlow struct {
 	FlowNotifications chan bool
 }
 
+// EVENTS ----------------------
+//
+// The below middlewares handle events from methods like NotifyPublish and Consume.
+
 // EventNotifyPublish passes event information from a  to amqp.Channel.NotifyPublish()
 // event for middleware to inspect / modify before the event is passed to the caller.
 type EventNotifyPublish struct {
 	Confirmation datamodels.Confirmation
 }
 
-// EventConsume passes event information from a to amqp.Channel.Consume()
+// EventConsume passes event information from an amqp.Channel.Consume()
 // event for middleware to inspect / modify before the event is passed to the caller.
 type EventConsume struct {
 	Delivery datamodels.Delivery
+}
+
+// EventNotifyConfirm passes event information from an amqp.Channel.NotifyConfirm()
+// event for middleware to inspect / modify before the event is passed to the caller.
+type EventNotifyConfirm struct {
+	// Confirmation is the underlying confirmation event being distributed to the
+	// caller channels
+	Confirmation datamodels.Confirmation
+}
+
+// EventNotifyConfirmOrOrphaned passes event information from an
+// amqp.Channel.NotifyConfirmOrOrphaned() event for middleware to inspect / modify
+// before the event is passed to the caller.
+type EventNotifyConfirmOrOrphaned struct {
+	// Confirmation is the underlying confirmation event being distributed to the
+	// caller channels
+	Confirmation datamodels.Confirmation
+}
+
+// EventNotifyReturn passes event information from an amqp.Channel.NotifyReturn() event
+// for middleware to inspect / modify before the event is passed to the caller.
+type EventNotifyReturn struct {
+	Return streadway.Return
+}
+
+// EventNotifyCancel passes event information from an amqp.Channel.NotifyCancel() event
+// for middleware to inspect / modify before the event is passed to the caller.
+type EventNotifyCancel struct {
+	Cancellation string
+}
+
+// EventNotifyFlow passes event information from an amqp.Channel.NotifyFlow() event
+// for middleware to inspect / modify before the event is passed to the caller.
+type EventNotifyFlow struct {
+	FlowNotification bool
 }

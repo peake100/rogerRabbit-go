@@ -144,7 +144,7 @@ func (middleware *PublishTagsMiddleware) Publish(
 // sends orphan confirmations to a single NotifyPublish listener, invoking all
 // middleware a normal call would make.
 func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
-	next amqpmiddleware.HandlerNotifyPublishEvent,
+	next amqpmiddleware.HandlerNotifyPublishEvents,
 	sentCount uint64,
 ) uint64 {
 	// The goal of this library is to simulate the behavior of streadway/amqp. Since
@@ -176,8 +176,8 @@ func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
 // NotifyPublishEvent is invoked when a channel passed to amqp.Channel.NotifyPublish is
 // sent an event.
 func (middleware *PublishTagsMiddleware) NotifyPublishEvent(
-	next amqpmiddleware.HandlerNotifyPublishEvent,
-) (handler amqpmiddleware.HandlerNotifyPublishEvent) {
+	next amqpmiddleware.HandlerNotifyPublishEvents,
+) (handler amqpmiddleware.HandlerNotifyPublishEvents) {
 	// We need to know the total number of confirmation that have been sent. We can
 	// start with the current tag offset.
 	sent := middleware.tagOffset

@@ -2,6 +2,7 @@ package amqp
 
 import (
 	"context"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
@@ -23,8 +24,24 @@ type notifyFlowRelay struct {
 	// lastEvent is the value of the last event sent from the broker.
 	lastEvent bool
 
+	// handler is the event handler for the relay wrapped in all middleware.
+	handler amqpmiddleware.HandlerNotifyFlowEvents
+
 	// logger is the Logger for this relay.
 	logger zerolog.Logger
+}
+
+func (relay *notifyFlowRelay) baseHandler() amqpmiddleware.HandlerNotifyFlowEvents {
+	return func(event *amqpmiddleware.EventNotifyFlow) {
+		if relay.logger.Debug().Enabled() {
+			relay.logger.Debug().
+				Bool("FLOW", event.FlowNotification).
+				Msg("cancel notification sent")
+		}
+
+		relay.CallerFlow <- event.FlowNotification
+		relay.lastEvent = event.FlowNotification
+	}
 }
 
 // Logger implements eventRelay and sets up our logger.
@@ -42,7 +59,7 @@ func (relay *notifyFlowRelay) SetupForRelayLeg(newChannel *streadway.Channel) er
 		// If we have already setup the relay once, that means we are opening a new
 		// channel, and should send a flow -> true to the caller as a fresh channel
 		// will not have flow turned off yet.
-		relay.CallerFlow <- true
+		relay.handler(&amqpmiddleware.EventNotifyFlow{FlowNotification: true})
 	} else {
 		relay.setup = true
 	}
@@ -61,22 +78,14 @@ func (relay *notifyFlowRelay) SetupForRelayLeg(newChannel *streadway.Channel) er
 // events to the original caller.
 func (relay *notifyFlowRelay) RunRelayLeg() (done bool, err error) {
 	for thisFlow := range relay.brokerFlow {
-		if relay.logger.Debug().Enabled() {
-			relay.logger.Debug().
-				Bool("FLOW", thisFlow).
-				Msg("cancel notification sent")
-		}
-
-		relay.CallerFlow <- thisFlow
-		relay.lastEvent = thisFlow
+		relay.handler(&amqpmiddleware.EventNotifyFlow{FlowNotification: thisFlow})
 	}
 
 	// Turn flow to false on broker disconnection if the roger channel has not been
 	// closed and the last notification sent was a ``true`` (we don't want to send two
-	// falses in a row).
+	// false values in a row).
 	if relay.ChannelCtx.Err() == nil && relay.lastEvent {
-		relay.CallerFlow <- false
-		relay.lastEvent = false
+		relay.handler(&amqpmiddleware.EventNotifyFlow{FlowNotification: false})
 	}
 
 	return false, nil
@@ -86,4 +95,25 @@ func (relay *notifyFlowRelay) RunRelayLeg() (done bool, err error) {
 func (relay *notifyFlowRelay) Shutdown() error {
 	defer close(relay.CallerFlow)
 	return nil
+}
+
+// newNotifyReturnRelay creates a new notifyReturnRelay.
+func newNotifyFlowRelay(
+	channelCtx context.Context,
+	callerFlowNotifications chan<- bool,
+	middleware []amqpmiddleware.NotifyFlowEvents,
+) *notifyFlowRelay {
+	// Create the relay
+	relay := &notifyFlowRelay{
+		ChannelCtx: channelCtx,
+		CallerFlow: callerFlowNotifications,
+	}
+
+	// Apply all middleware to the handler
+	relay.handler = relay.baseHandler()
+	for _, thisMiddleware := range middleware {
+		relay.handler = thisMiddleware(relay.handler)
+	}
+
+	return relay
 }

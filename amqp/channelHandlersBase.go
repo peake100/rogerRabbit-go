@@ -436,27 +436,56 @@ func (builder *middlewareBaseBuilder) createBaseHandlerNotifyConfirm() (
 	channel := builder.channel
 
 	handler = func(args *amqpmiddleware.ArgsNotifyConfirm) (chan uint64, chan uint64) {
-		confirmsEvents := channel.NotifyPublish(
-			make(chan datamodels.Confirmation, cap(args.Ack)+cap(args.Nack)),
-		)
 		logger := channel.logger.With().
 			Str("EVENT_TYPE", "NOTIFY_CONFIRM").
 			Logger()
 
-		go func() {
-			defer notifyConfirmCloseConfirmChannels(args.Ack, args.Nack)
+		// Set up the innermost event handler.
+		var eventHandler amqpmiddleware.HandlerNotifyConfirmEvents = func(
+			event *amqpmiddleware.EventNotifyConfirm,
+		) {
+			notifyConfirmHandleAckAndNack(
+				event.Confirmation, args.Ack, args.Nack, logger,
+			)
+		}
 
-			// range over confirmation events and place them in the ack and nack
-			// channels.
-			for confirmation := range confirmsEvents {
-				notifyConfirmHandleAckAndNack(confirmation, args.Ack, args.Nack, logger)
-			}
-		}()
+		// Wrap the event handler in the user-supplied middleware.
+		middlewares := channel.transportChannel.handlers.notifyConfirmEvent
+		for _, thisMiddleware := range middlewares {
+			eventHandler = thisMiddleware(eventHandler)
+		}
+
+		// Run the event relay.
+		go builder.runNotifyConfirm(args, eventHandler)
 
 		return args.Ack, args.Nack
 	}
 
 	return handler
+}
+
+// runNotifyConfirm relay the NotifyConfirm events to the caller by calling
+// NotifyPublish.
+func (builder *middlewareBaseBuilder) runNotifyConfirm(
+	args *amqpmiddleware.ArgsNotifyConfirm,
+	eventHandler amqpmiddleware.HandlerNotifyConfirmEvents,
+) {
+	defer notifyConfirmCloseConfirmChannels(args.Ack, args.Nack)
+
+	channel := builder.channel
+	confirmsEvents := channel.NotifyPublish(
+		make(chan datamodels.Confirmation, cap(args.Ack)+cap(args.Nack)),
+	)
+
+	// range over confirmation events and place them in the ack and nack
+	// channels.
+	for confirmation := range confirmsEvents {
+		// Create the middleware event.
+		event := amqpmiddleware.EventNotifyConfirm{Confirmation: confirmation}
+
+		// Pass it to the handler.
+		eventHandler(&event)
+	}
 }
 
 // createBaseHandlerNotifyConfirmOrOrphaned returns the base handler for
@@ -474,12 +503,11 @@ func (builder *middlewareBaseBuilder) createBaseHandlerNotifyConfirmOrOrphaned()
 		confirmsEvents := channel.NotifyPublish(
 			make(chan datamodels.Confirmation, cap(ack)+cap(nack)+cap(orphaned)),
 		)
-		logger := channel.logger.With().
-			Str("EVENT_TYPE", "NOTIFY_CONFIRM_OR_ORPHAN").
-			Logger()
+
+		eventHandler := builder.createEventHandlerNotifyConfirmOrOrphaned(args)
 
 		go channel.runNotifyConfirmOrOrphaned(
-			ack, nack, orphaned, confirmsEvents, logger,
+			eventHandler, ack, nack, orphaned, confirmsEvents,
 		)
 
 		return ack, nack, orphaned
@@ -488,7 +516,42 @@ func (builder *middlewareBaseBuilder) createBaseHandlerNotifyConfirmOrOrphaned()
 	return handler
 }
 
-// createBaseHandlerNotifyReturn returns the base handler for Channel.NotifyReturn that
+// createEventHandlerNotifyConfirmOrOrphaned creates an event handler for event on
+// Channel.NotifyConfirmOrOrphaned using user-supplied middleware.
+func (builder *middlewareBaseBuilder) createEventHandlerNotifyConfirmOrOrphaned(
+	args *amqpmiddleware.ArgsNotifyConfirmOrOrphaned,
+) amqpmiddleware.HandlerNotifyConfirmOrOrphanedEvents {
+	logger := builder.channel.logger.With().
+		Str("EVENT_TYPE", "NOTIFY_CONFIRM_OR_ORPHAN").
+		Logger()
+
+	var eventHandler amqpmiddleware.HandlerNotifyConfirmOrOrphanedEvents = func(
+		event *amqpmiddleware.EventNotifyConfirmOrOrphaned,
+	) {
+		confirmation := event.Confirmation
+		if confirmation.DisconnectOrphan {
+			if logger.Debug().Enabled() {
+				logger.Debug().
+					Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
+					Bool("ACK", confirmation.Ack).
+					Str("CHANNEL", "ORPHANED").
+					Msg("orphaned confirmation sent")
+			}
+			args.Orphaned <- confirmation.DeliveryTag
+		} else {
+			notifyConfirmHandleAckAndNack(confirmation, args.Ack, args.Nack, logger)
+		}
+	}
+
+	middlewares := builder.channel.transportChannel.handlers.
+		notifyConfirmOrOrphanedEvent
+
+	for _, thisMiddleware := range middlewares {
+		eventHandler = thisMiddleware(eventHandler)
+	}
+
+	return eventHandler
+}
 
 // invokes the method of the underlying streadway/amqp.Channel.
 func (builder *middlewareBaseBuilder) createBaseHandlerNotifyReturn() (
@@ -499,9 +562,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerNotifyReturn() (
 	handler = func(
 		args *amqpmiddleware.ArgsNotifyReturn,
 	) chan Return {
-		relay := &notifyReturnRelay{
-			CallerReturns: args.Returns,
-		}
+		relay := newNotifyReturnRelay(
+			args.Returns, channel.transportChannel.handlers.notifyReturnEvents,
+		)
 
 		err := channel.setupAndLaunchEventRelay(relay)
 		if err != nil {
@@ -524,9 +587,9 @@ func (builder *middlewareBaseBuilder) createBaseHandlerNotifyCancel() (
 	handler = func(
 		args *amqpmiddleware.ArgsNotifyCancel,
 	) chan string {
-		relay := &notifyCancelRelay{
-			CallerCancellations: args.Cancellations,
-		}
+		relay := newNotifyCancelRelay(
+			args.Cancellations, channel.transportChannel.handlers.notifyCancelEvents,
+		)
 
 		err := channel.setupAndLaunchEventRelay(relay)
 		if err != nil {
@@ -550,11 +613,14 @@ func (builder *middlewareBaseBuilder) createBaseHandlerNotifyFlow() (
 	handler = func(
 		args *amqpmiddleware.ArgsNotifyFlow,
 	) chan bool {
-		relay := &notifyFlowRelay{
-			CallerFlow: args.FlowNotifications,
-			ChannelCtx: channel.ctx,
-		}
+		// Create a new event relay.
+		relay := newNotifyFlowRelay(
+			channel.ctx,
+			args.FlowNotifications,
+			channel.transportChannel.handlers.notifyFlowEvents,
+		)
 
+		// Setup and launch the relay.
 		err := channel.setupAndLaunchEventRelay(relay)
 		if err != nil {
 			close(args.FlowNotifications)
