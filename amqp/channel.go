@@ -299,12 +299,7 @@ automatically re-declared. Future updates will introduce more control over when 
 how queues are re-declared on reconnection.
 */
 func (channel *Channel) QueueDeclare(
-	name string,
-	durable bool,
-	autoDelete bool,
-	exclusive bool,
-	noWait bool,
-	args Table,
+	name string, durable, autoDelete, exclusive, noWait bool, args Table,
 ) (queue Queue, err error) {
 	// Run an an operation to get automatic retries on channel dis-connections.
 	// We need to remember to re-declare this queue on reconnectMiddleware
@@ -346,14 +341,28 @@ func (channel *Channel) QueueDeclarePassive(
 	name string, durable, autoDelete, exclusive, noWait bool, args Table,
 ) (queue Queue, err error) {
 	// Run an an operation to get automatic retries on channel dis-connections.
+	// We need to remember to re-declare this queue on reconnectMiddleware
+	queueArgs := &amqpmiddleware.ArgsQueueDeclare{
+		Name:       name,
+		Durable:    durable,
+		AutoDelete: autoDelete,
+		Exclusive:  exclusive,
+		// We are always going to wait on re-declares, but we should save the
+		// NoWait value for posterity.
+		NoWait: noWait,
+		// Copy the Args so if the user mutates them for a future call we have
+		// an un-changed version of the originals.
+		Args: copyTable(args),
+	}
+
+	// Wrap the hook runner in a closure.
 	operation := func() error {
 		var opErr error
-		queue, opErr = channel.transportChannel.QueueDeclarePassive(
-			name, durable, autoDelete, exclusive, noWait, args,
-		)
+		queue, opErr = channel.transportChannel.handlers.queueDeclarePassive(queueArgs)
 		return opErr
 	}
 
+	// Hand off to the retry operation method.
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
 	return queue, err
 }
@@ -375,12 +384,19 @@ channel will be closed.
 */
 func (channel *Channel) QueueInspect(name string) (queue Queue, err error) {
 	// Run an an operation to get automatic retries on channel dis-connections.
+	// We need to remember to re-declare this queue on reconnectMiddleware
+	inspectArgs := &amqpmiddleware.ArgsQueueInspect{
+		Name: name,
+	}
+
+	// Wrap the hook runner in a closure.
 	operation := func() error {
 		var opErr error
-		queue, opErr = channel.transportChannel.QueueInspect(name)
+		queue, opErr = channel.transportChannel.handlers.queueInspect(inspectArgs)
 		return opErr
 	}
 
+	// Hand off to the retry operation method.
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
 	return queue, err
 }
@@ -488,9 +504,14 @@ messages purged will not be meaningful.
 func (channel *Channel) QueuePurge(name string, noWait bool) (
 	count int, err error,
 ) {
+	unbindArgs := &amqpmiddleware.ArgsQueuePurge{
+		Name:   name,
+		NoWait: noWait,
+	}
+
 	operation := func() error {
 		var opErr error
-		count, opErr = channel.transportChannel.QueuePurge(name, noWait)
+		count, opErr = channel.transportChannel.handlers.queuePurge(unbindArgs)
 		return opErr
 	}
 
@@ -638,17 +659,22 @@ can be used to detect the existence of an exchange.
 func (channel *Channel) ExchangeDeclarePassive(
 	name, kind string, durable, autoDelete, internal, noWait bool, args Table,
 ) (err error) {
-	// Run an an operation to get automatic retries on channel dis-connections.
-	operation := func() error {
-		var opErr error
-		opErr = channel.transportChannel.ExchangeDeclarePassive(
-			name, kind, durable, autoDelete, internal, noWait, args,
-		)
-		if opErr != nil {
-			return opErr
-		}
+	exchangeArgs := &amqpmiddleware.ArgsExchangeDeclare{
+		Name:       name,
+		Kind:       kind,
+		Durable:    durable,
+		AutoDelete: autoDelete,
+		Internal:   internal,
+		// We will always use wait on re-establishments, but preserve the original
+		// setting here for posterity.
+		NoWait: noWait,
+		// Copy the table so if the caller re-uses it we dont have it mutated
+		// between re-declarations.
+		Args: copyTable(args),
+	}
 
-		return nil
+	operation := func() error {
+		return channel.transportChannel.handlers.exchangeDeclarePassive(exchangeArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -960,35 +986,16 @@ tags of the current underlying channel.
 func (channel *Channel) Consume(
 	queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args Table,
 ) (deliveryChan <-chan datamodels.Delivery, err error) {
-	consumeArgs := &consumeArgs{
-		queue:     queue,
-		consumer:  consumer,
-		autoAck:   autoAck,
-		exclusive: exclusive,
-		noLocal:   noLocal,
-		noWait:    noWait,
-		args:      args,
-		// Make a buffered channel so we don't cause latency from waiting for queues to
-		// be ready
-		callerDeliveryChan: make(chan datamodels.Delivery, 16),
+	callArgs := &amqpmiddleware.ArgsConsume{
+		Queue:     queue,
+		Consumer:  consumer,
+		AutoAck:   autoAck,
+		Exclusive: exclusive,
+		NoLocal:   noLocal,
+		NoWait:    noWait,
+		Args:      copyTable(args),
 	}
-	deliveryChan = consumeArgs.callerDeliveryChan
-
-	// Create our consumer relay
-	consumeRelay := newConsumeRelay(
-		consumeArgs,
-		channel,
-		channel.transportChannel.handlers.consumeEventMiddleware,
-	)
-
-	// Pass it to our relay handler.
-	err = channel.setupAndLaunchEventRelay(consumeRelay)
-	if err != nil {
-		return nil, err
-	}
-
-	// If no error, pass the channel back to the caller
-	return deliveryChan, nil
+	return channel.transportChannel.handlers.consume(callArgs)
 }
 
 /*
@@ -1194,23 +1201,11 @@ Orphaned tags separately, use the new method NotifyConfirmOrOrphaned.
 func (channel *Channel) NotifyConfirm(
 	ack, nack chan uint64,
 ) (chan uint64, chan uint64) {
-	confirmsEvents := channel.NotifyPublish(
-		make(chan datamodels.Confirmation, cap(ack)+cap(nack)),
-	)
-	logger := channel.logger.With().
-		Str("EVENT_TYPE", "NOTIFY_CONFIRM").
-		Logger()
-
-	go func() {
-		defer notifyConfirmCloseConfirmChannels(ack, nack)
-
-		// range over confirmation events and place them in the ack and nack channels.
-		for confirmation := range confirmsEvents {
-			notifyConfirmHandleAckAndNack(confirmation, ack, nack, logger)
-		}
-	}()
-
-	return ack, nack
+	callArgs := &amqpmiddleware.ArgsNotifyConfirm{
+		Ack:  ack,
+		Nack: nack,
+	}
+	return channel.transportChannel.handlers.notifyConfirm(callArgs)
 }
 
 /*
@@ -1274,16 +1269,8 @@ possible that returns in-flight to the client from the broker will be dropped, a
 therefore will be missed. You can subscribe to disconnection events through.
 */
 func (channel *Channel) NotifyReturn(returns chan Return) chan Return {
-	relay := &notifyReturnRelay{
-		CallerReturns: returns,
-	}
-
-	err := channel.setupAndLaunchEventRelay(relay)
-	if err != nil {
-		close(returns)
-		channel.logger.Err(err).Msg("error setting up notify return relay")
-	}
-	return returns
+	args := &amqpmiddleware.ArgsNotifyReturn{Returns: returns}
+	return channel.transportChannel.handlers.notifyReturn(args)
 }
 
 /*
@@ -1294,17 +1281,8 @@ where the master has just failed (and was moved to another node).
 The subscription tag is returned to the listener.
 */
 func (channel *Channel) NotifyCancel(cancellations chan string) chan string {
-	relay := &notifyCancelRelay{
-		CallerCancellations: cancellations,
-	}
-
-	err := channel.setupAndLaunchEventRelay(relay)
-	if err != nil {
-		close(cancellations)
-		channel.logger.Err(err).Msg("error setting up notify cancel relay")
-	}
-
-	return cancellations
+	args := &amqpmiddleware.ArgsNotifyCancel{Cancellations: cancellations}
+	return channel.transportChannel.handlers.notifyCancel(args)
 }
 
 /*
@@ -1349,18 +1327,8 @@ broker. This means that NotifyFlow can be a useful tool for dealing with disconn
 even when using RabbitMQ.
 */
 func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool {
-	relay := &notifyFlowRelay{
-		CallerFlow: flowNotifications,
-		ChannelCtx: channel.ctx,
-	}
-
-	err := channel.setupAndLaunchEventRelay(relay)
-	if err != nil {
-		close(flowNotifications)
-		channel.logger.Err(err).Msg("error setting up notify cancel relay")
-	}
-
-	return flowNotifications
+	args := &amqpmiddleware.ArgsNotifyFlow{FlowNotifications: flowNotifications}
+	return channel.transportChannel.handlers.notifyFlow(args)
 }
 
 // returns error we should pass to transaction panics until they are implemented.
