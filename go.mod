@@ -11,6 +11,7 @@ require (
 	github.com/mgechev/revive v1.0.2
 	github.com/rs/zerolog v1.20.0
 	github.com/streadway/amqp v1.0.0
-	github.com/stretchr/testify v1.6.2-0.20201103103935-92707c0b2d50
+	github.com/stretchr/testify v1.7.0
 	golang.org/x/tools v0.0.0-20201114224030-61ea331ec02b
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
