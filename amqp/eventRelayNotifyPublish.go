@@ -16,10 +16,8 @@ type notifyPublishRelay struct {
 	// brokerConfirmations is the current delivery channel coming from the broker.
 	brokerConfirmations <-chan streadway.Confirmation
 
-	// middleware is Middleware for notify publish.
-	middleware []amqpmiddleware.NotifyPublishEvent
 	// handler for notify publish events.
-	handler amqpmiddleware.HandlerNotifyPublishEvent
+	handler amqpmiddleware.HandlerNotifyPublishEvents
 
 	// logger is the Logger for our event relay.
 	logger zerolog.Logger
@@ -27,7 +25,7 @@ type notifyPublishRelay struct {
 
 // baseHandler creates the innermost handler for the event send.
 func (relay *notifyPublishRelay) baseHandler() (
-	handler amqpmiddleware.HandlerNotifyPublishEvent,
+	handler amqpmiddleware.HandlerNotifyPublishEvents,
 ) {
 	return func(event *amqpmiddleware.EventNotifyPublish) {
 		relay.CallerConfirmations <- event.Confirmation
@@ -92,7 +90,7 @@ func (relay *notifyPublishRelay) Shutdown() error {
 // newNotifyPublishRelay creates a new notifyPublishRelay.
 func newNotifyPublishRelay(
 	callerConfirmations chan<- datamodels.Confirmation,
-	middleware []amqpmiddleware.NotifyPublishEvent,
+	middleware []amqpmiddleware.NotifyPublishEvents,
 ) *notifyPublishRelay {
 	// Create the relay
 	relay := &notifyPublishRelay{

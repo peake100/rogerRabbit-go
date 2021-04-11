@@ -28,18 +28,26 @@ type channelHandlers struct {
 
 	// queueDeclare is the handler for Channel.QueueDeclare
 	queueDeclare amqpmiddleware.HandlerQueueDeclare
+	// queueDeclarePassive is the handler for Channel.QueueDeclare
+	queueDeclarePassive amqpmiddleware.HandlerQueueDeclare
+	// queueInspect is the handler for Channel.QueueInspect
+	queueInspect amqpmiddleware.HandlerQueueInspect
 	// queueDelete is the handler for Channel.QueueDelete
 	queueDelete amqpmiddleware.HandlerQueueDelete
 	// queueBind is the handler for Channel.QueueBind
 	queueBind amqpmiddleware.HandlerQueueBind
 	// queueUnbind is the handler for Channel.QueueUnbind
 	queueUnbind amqpmiddleware.HandlerQueueUnbind
+	// queueInspect is the handler for Channel.QueueInspect
+	queuePurge amqpmiddleware.HandlerQueuePurge
 
 	// EXCHANGE HANDLERS
 	// -----------------
 
 	// exchangeDeclare is the handler for Channel.ExchangeDeclare
 	exchangeDeclare amqpmiddleware.HandlerExchangeDeclare
+	// exchangeDeclarePassive is the handler for Channel.ExchangeDeclare
+	exchangeDeclarePassive amqpmiddleware.HandlerExchangeDeclare
 	// exchangeDelete is the handler for Channel.ExchangeDelete
 	exchangeDelete amqpmiddleware.HandlerExchangeDelete
 	// exchangeBind is the handler for Channel.ExchangeBind
@@ -52,6 +60,18 @@ type channelHandlers struct {
 
 	// notifyPublish is the handler for Channel.NotifyPublish
 	notifyPublish amqpmiddleware.HandlerNotifyPublish
+	// consume is the handler for Channel.Consume
+	consume amqpmiddleware.HandlerConsume
+	// notifyConfirm is the handler for Channel.NotifyConfirm
+	notifyConfirm amqpmiddleware.HandlerNotifyConfirm
+	// notifyConfirmOrOrphaned is the handler for Channel.NotifyConfirmOrOrphaned
+	notifyConfirmOrOrphaned amqpmiddleware.HandlerNotifyConfirmOrOrphaned
+	// notifyReturn is the handler for Channel.NotifyReturn
+	notifyReturn amqpmiddleware.HandlerNotifyReturn
+	// notifyCancel is the handler for Channel.NotifyCancel
+	notifyCancel amqpmiddleware.HandlerNotifyCancel
+	// notifyFlow is the handler for Channel.NotifyFlow
+	notifyFlow amqpmiddleware.HandlerNotifyFlow
 
 	// MESSAGING HANDLERS
 	// ------------------
@@ -74,12 +94,27 @@ type channelHandlers struct {
 	// EVENT MIDDLEWARE
 	// ----------------
 
-	// notifyPublishEventMiddleware is middleware to be registered on a
+	// notifyPublishEvent is middleware to be registered on a
 	// notifyPublishRelay.
-	notifyPublishEventMiddleware []amqpmiddleware.NotifyPublishEvent
-	// consumeEventMiddleware is middleware to be registered on a
+	notifyPublishEvent []amqpmiddleware.NotifyPublishEvents
+	// consumeEvent is middleware to be registered on a
 	// consumeRelay.
-	consumeEventMiddleware []amqpmiddleware.ConsumeEvent
+	consumeEvent []amqpmiddleware.ConsumeEvents
+	// notifyConfirmEvent is a middleware to be registered on events for
+	// Channel.NotifyConfirm.
+	notifyConfirmEvent []amqpmiddleware.NotifyConfirmEvents
+	// notifyConfirmOrOrphanedEvent is a middleware to be registered on events for
+	// Channel.NotifyConfirmOrOrphaned.
+	notifyConfirmOrOrphanedEvent []amqpmiddleware.NotifyConfirmOrOrphanedEvents
+	// notifyReturnEvents is a middleware to be registered on events for
+	// Channel.NotifyReturn.
+	notifyReturnEvents []amqpmiddleware.NotifyReturnEvents
+	// notifyCancelEvents is a middleware to be registered on events for
+	// Channel.NotifyCancel.
+	notifyCancelEvents []amqpmiddleware.NotifyCancelEvents
+	// notifyFlowEvents is a middleware to be registered on events for
+	// Channel.NotifyFlow.
+	notifyFlowEvents []amqpmiddleware.NotifyFlowEvents
 
 	// lock should be acquired when adding a middleware to a handler to avoid race
 	// conditions.
@@ -135,6 +170,28 @@ func (handlers *channelHandlers) AddQueueDeclare(
 	handlers.queueDeclare = middleware(handlers.queueDeclare)
 }
 
+// AddQueueDeclarePassive adds a new middleware to be invoked on
+// Channel.QueueDeclarePassive method calls.
+func (handlers *channelHandlers) AddQueueDeclarePassive(
+	middleware amqpmiddleware.QueueDeclare,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.queueDeclarePassive = middleware(handlers.queueDeclarePassive)
+}
+
+// AddQueueInspect adds a new middleware to be invoked on Channel.QueueInspect method
+// calls.
+func (handlers *channelHandlers) AddQueueInspect(
+	middleware amqpmiddleware.QueueInspect,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.queueInspect = middleware(handlers.queueInspect)
+}
+
 // AddQueueDelete adds a new middleware to be invoked on Channel.QueueDelete method
 // calls.
 func (handlers *channelHandlers) AddQueueDelete(middleware amqpmiddleware.QueueDelete) {
@@ -162,6 +219,17 @@ func (handlers *channelHandlers) AddQueueUnbind(middleware amqpmiddleware.QueueU
 	handlers.queueUnbind = middleware(handlers.queueUnbind)
 }
 
+// AddQueuePurge adds a new middleware to be invoked on Channel.QueuePurge method
+// calls.
+func (handlers *channelHandlers) AddQueuePurge(
+	middleware amqpmiddleware.QueuePurge,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.queuePurge = middleware(handlers.queuePurge)
+}
+
 // AddExchangeDeclare adds a new middleware to be invoked on Channel.ExchangeDeclare
 // method calls.
 func (handlers *channelHandlers) AddExchangeDeclare(
@@ -171,6 +239,17 @@ func (handlers *channelHandlers) AddExchangeDeclare(
 	defer handlers.lock.Unlock()
 
 	handlers.exchangeDeclare = middleware(handlers.exchangeDeclare)
+}
+
+// AddExchangeDeclarePassive adds a new middleware to be invoked on
+// Channel.ExchangeDeclarePassive method calls.
+func (handlers *channelHandlers) AddExchangeDeclarePassive(
+	middleware amqpmiddleware.ExchangeDeclare,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.exchangeDeclarePassive = middleware(handlers.exchangeDeclarePassive)
 }
 
 // AddExchangeDelete adds a new middleware to be invoked on Channel.ExchangeDelete
@@ -226,6 +305,20 @@ func (handlers *channelHandlers) AddGet(
 	handlers.get = middleware(handlers.get)
 }
 
+// AddConsume adds a new middleware to be invoked on Channel.Consume method calls.
+//
+// NOTE: this is a distinct middleware from AddConsumeEvent, which fires on every
+// delivery sent from the broker. This event only fires once when the  Channel.Consume
+// method is first called.
+func (handlers *channelHandlers) AddConsume(
+	middleware amqpmiddleware.Consume,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.consume = middleware(handlers.consume)
+}
+
 // AddAck adds a new middleware to be invoked on Channel.Ack method calls.
 func (handlers *channelHandlers) AddAck(
 	middleware amqpmiddleware.Ack,
@@ -267,29 +360,149 @@ func (handlers *channelHandlers) AddNotifyPublish(
 	handlers.notifyPublish = middleware(handlers.notifyPublish)
 }
 
-// AddNotifyPublishEvent adds a new middleware to be invoked on events sent to callers
-// of Channel.NotifyPublish.
-func (handlers *channelHandlers) AddNotifyPublishEvent(
-	middleware amqpmiddleware.NotifyPublishEvent,
+// AddNotifyConfirm adds a new middleware to be invoked on Channel.NotifyConfirm method
+// calls.
+func (handlers *channelHandlers) AddNotifyConfirm(
+	middleware amqpmiddleware.NotifyConfirm,
 ) {
 	handlers.lock.Lock()
 	defer handlers.lock.Unlock()
 
-	handlers.notifyPublishEventMiddleware = append(
-		handlers.notifyPublishEventMiddleware, middleware,
+	handlers.notifyConfirm = middleware(handlers.notifyConfirm)
+}
+
+// AddNotifyConfirmOrOrphaned adds a new middleware to be invoked on
+// Channel.NotifyConfirmOrOrphaned method calls.
+func (handlers *channelHandlers) AddNotifyConfirmOrOrphaned(
+	middleware amqpmiddleware.NotifyConfirmOrOrphaned,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyConfirmOrOrphaned = middleware(handlers.notifyConfirmOrOrphaned)
+}
+
+// AddNotifyReturn adds a new middleware to be invoked on Channel.NotifyReturn method
+// calls.
+func (handlers *channelHandlers) AddNotifyReturn(
+	middleware amqpmiddleware.NotifyReturn,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyReturn = middleware(handlers.notifyReturn)
+}
+
+// AddNotifyCancel adds a new middleware to be invoked on Channel.NotifyCancel method
+// calls.
+func (handlers *channelHandlers) AddNotifyCancel(
+	middleware amqpmiddleware.NotifyCancel,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyCancel = middleware(handlers.notifyCancel)
+}
+
+// AddNotifyFlow adds a new middleware to be invoked on Channel.NotifyFlow method
+// calls.
+func (handlers *channelHandlers) AddNotifyFlow(
+	middleware amqpmiddleware.NotifyFlow,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyFlow = middleware(handlers.notifyFlow)
+}
+
+// AddNotifyPublishEvent adds a new middleware to be invoked on events sent to callers
+// of Channel.NotifyPublish.
+func (handlers *channelHandlers) AddNotifyPublishEvent(
+	middleware amqpmiddleware.NotifyPublishEvents,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyPublishEvent = append(
+		handlers.notifyPublishEvent, middleware,
 	)
 }
 
 // AddConsumeEvent adds a new middleware to be invoked on events sent to callers
 // of Channel.Consume.
 func (handlers *channelHandlers) AddConsumeEvent(
-	middleware amqpmiddleware.ConsumeEvent,
+	middleware amqpmiddleware.ConsumeEvents,
 ) {
 	handlers.lock.Lock()
 	defer handlers.lock.Unlock()
 
-	handlers.consumeEventMiddleware = append(
-		handlers.consumeEventMiddleware, middleware,
+	handlers.consumeEvent = append(
+		handlers.consumeEvent, middleware,
+	)
+}
+
+// AddNotifyConfirmEvent adds a new middleware to be invoked on events sent to callers
+// of Channel.NotifyConfirm.
+func (handlers *channelHandlers) AddNotifyConfirmEvent(
+	middleware amqpmiddleware.NotifyConfirmEvents,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyConfirmEvent = append(
+		handlers.notifyConfirmEvent, middleware,
+	)
+}
+
+// AddNotifyConfirmOrOrphanedEvent adds a new middleware to be invoked on events sent to
+// callers of Channel.NotifyConfirmOrOrphaned.
+func (handlers *channelHandlers) AddNotifyConfirmOrOrphanedEvent(
+	middleware amqpmiddleware.NotifyConfirmOrOrphanedEvents,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyConfirmOrOrphanedEvent = append(
+		handlers.notifyConfirmOrOrphanedEvent, middleware,
+	)
+}
+
+// AddNotifyReturnEvents adds a new middleware to be invoked on events sent to
+// callers of Channel.NotifyReturn.
+func (handlers *channelHandlers) AddNotifyReturnEvents(
+	middleware amqpmiddleware.NotifyReturnEvents,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyReturnEvents = append(
+		handlers.notifyReturnEvents, middleware,
+	)
+}
+
+// AddNotifyCancelEvents adds a new middleware to be invoked on events sent to
+// callers of Channel.NotifyCancel.
+func (handlers *channelHandlers) AddNotifyCancelEvents(
+	middleware amqpmiddleware.NotifyCancelEvents,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyCancelEvents = append(
+		handlers.notifyCancelEvents, middleware,
+	)
+}
+
+// AddNotifyFlowEvents adds a new middleware to be invoked on events sent to
+// callers of Channel.NotifyCancel.
+func (handlers *channelHandlers) AddNotifyFlowEvents(
+	middleware amqpmiddleware.NotifyFlowEvents,
+) {
+	handlers.lock.Lock()
+	defer handlers.lock.Unlock()
+
+	handlers.notifyFlowEvents = append(
+		handlers.notifyFlowEvents, middleware,
 	)
 }
 
@@ -301,26 +514,41 @@ func newChannelHandlers(conn *Connection, channel *Channel) *channelHandlers {
 	}
 
 	return &channelHandlers{
-		reconnect:       baseBuilder.createBaseHandlerReconnect(conn),
-		queueDeclare:    baseBuilder.createBaseHandlerQueueDeclare(),
-		queueDelete:     baseBuilder.createBaseHandlerQueueDelete(),
-		queueBind:       baseBuilder.createBaseHandlerQueueBind(),
-		queueUnbind:     baseBuilder.createBaseHandlerQueueUnbind(),
-		exchangeDeclare: baseBuilder.createBaseHandlerExchangeDeclare(),
-		exchangeDelete:  baseBuilder.createBaseHandlerExchangeDelete(),
-		exchangeBind:    baseBuilder.createBaseHandlerExchangeBind(),
-		exchangeUnbind:  baseBuilder.createBaseHandlerExchangeUnbind(),
-		qos:             baseBuilder.createBaseHandlerQoS(),
-		flow:            baseBuilder.createBaseHandlerFlow(),
-		confirm:         baseBuilder.createBaseHandlerConfirm(),
-		publish:         baseBuilder.createBaseHandlerPublish(),
-		get:             baseBuilder.createBaseHandlerGet(),
-		ack:             baseBuilder.createBaseHandlerAck(),
-		nack:            baseBuilder.createBaseHandlerNack(),
-		reject:          baseBuilder.createBaseHandlerReject(),
-		notifyPublish:   baseBuilder.createBaseHandlerNotifyPublish(),
+		reconnect:               baseBuilder.createBaseHandlerReconnect(),
+		queueDeclare:            baseBuilder.createBaseHandlerQueueDeclare(),
+		queueDeclarePassive:     baseBuilder.createBaseHandlerQueueDeclarePassive(),
+		queueInspect:            baseBuilder.createBaseHandlerQueueInspect(),
+		queueDelete:             baseBuilder.createBaseHandlerQueueDelete(),
+		queueBind:               baseBuilder.createBaseHandlerQueueBind(),
+		queueUnbind:             baseBuilder.createBaseHandlerQueueUnbind(),
+		queuePurge:              baseBuilder.createBaseHandlerQueuePurge(),
+		exchangeDeclare:         baseBuilder.createBaseHandlerExchangeDeclare(),
+		exchangeDeclarePassive:  baseBuilder.createBaseHandlerExchangeDeclarePassive(),
+		exchangeDelete:          baseBuilder.createBaseHandlerExchangeDelete(),
+		exchangeBind:            baseBuilder.createBaseHandlerExchangeBind(),
+		exchangeUnbind:          baseBuilder.createBaseHandlerExchangeUnbind(),
+		qos:                     baseBuilder.createBaseHandlerQoS(),
+		flow:                    baseBuilder.createBaseHandlerFlow(),
+		confirm:                 baseBuilder.createBaseHandlerConfirm(),
+		publish:                 baseBuilder.createBaseHandlerPublish(),
+		get:                     baseBuilder.createBaseHandlerGet(),
+		consume:                 baseBuilder.createBaseHandlerConsume(),
+		ack:                     baseBuilder.createBaseHandlerAck(),
+		nack:                    baseBuilder.createBaseHandlerNack(),
+		reject:                  baseBuilder.createBaseHandlerReject(),
+		notifyPublish:           baseBuilder.createBaseHandlerNotifyPublish(),
+		notifyConfirm:           baseBuilder.createBaseHandlerNotifyConfirm(),
+		notifyConfirmOrOrphaned: baseBuilder.createBaseHandlerNotifyConfirmOrOrphaned(),
+		notifyReturn:            baseBuilder.createBaseHandlerNotifyReturn(),
+		notifyCancel:            baseBuilder.createBaseHandlerNotifyCancel(),
+		notifyFlow:              baseBuilder.createBaseHandlerNotifyFlow(),
 
-		notifyPublishEventMiddleware: nil,
+		notifyPublishEvent: nil,
+		consumeEvent:       nil,
+		notifyConfirmEvent: nil,
+		notifyReturnEvents: nil,
+		notifyCancelEvents: nil,
+		notifyFlowEvents:   nil,
 
 		lock: new(sync.RWMutex),
 	}
