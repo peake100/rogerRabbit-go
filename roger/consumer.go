@@ -29,6 +29,7 @@ type AmqpRouteManager interface {
 	QueueInspect(name string) (queue amqp.Queue, err error)
 	QueueBind(name, key, exchange string, noWait bool, args amqp.Table) error
 	QueueDelete(name string, ifUnused, ifEmpty, noWait bool) (count int, err error)
+	Qos(prefetchCount, prefetchSize int, global bool) error
 
 	ExchangeDeclare(
 		name, kind string, durable, autoDelete, internal, noWait bool, args amqp.Table,
