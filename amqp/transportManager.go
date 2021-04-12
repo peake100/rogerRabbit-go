@@ -239,7 +239,7 @@ func isRepeatErr(err error) bool {
 
 // retryOperationOnClosedSingle attempts a Connection or Channel channel method a single
 // time.
-func (manager *transportManager) retryOperationOnClosedSingle(
+func (manager transportManager) retryOperationOnClosedSingle(
 	ctx context.Context,
 	operation func() error,
 ) error {
@@ -277,7 +277,7 @@ func (manager *transportManager) retryOperationOnClosedSingle(
 // returned or ctx expires. This is a helper method for implementing methods like
 // Channel.QueueBind, in which we want to retry the operation if our underlying
 // livesOnce mechanism has connection issues.
-func (manager *transportManager) retryOperationOnClosed(
+func (manager transportManager) retryOperationOnClosed(
 	ctx context.Context,
 	operation func() error,
 	retry bool,
@@ -302,7 +302,7 @@ func (manager *transportManager) retryOperationOnClosed(
 
 // sendDialNotifications sends results of a dial attempt to all
 // transportManager.NotifyDial subscribers.
-func (manager *transportManager) sendDialNotifications(err error) {
+func (manager transportManager) sendDialNotifications(err error) {
 	manager.notificationSubscriberLock.Lock()
 	defer manager.notificationSubscriberLock.Unlock()
 
@@ -320,7 +320,7 @@ func (manager *transportManager) sendDialNotifications(err error) {
 
 // sendDisconnectNotifications sends the error from NotifyClose of the underlying
 // connection when a disconnect occurs to all NotifyOnDisconnect subscribers.
-func (manager *transportManager) sendDisconnectNotifications(
+func (manager transportManager) sendDisconnectNotifications(
 	streadwayErr *streadway.Error,
 ) {
 	manager.notificationSubscriberLock.Lock()
@@ -348,7 +348,7 @@ func (manager *transportManager) sendDisconnectNotifications(
 }
 
 // sendCloseNotifications sends notification to all NotifyOnClose subscribers.
-func (manager *transportManager) sendCloseNotifications(err *streadway.Error) {
+func (manager transportManager) sendCloseNotifications(err *streadway.Error) {
 	if manager.logger.Debug().Enabled() {
 		manager.logger.Debug().Msg("sending close notifications")
 	}
@@ -370,6 +370,9 @@ func (manager *transportManager) sendCloseNotifications(err *streadway.Error) {
 	}
 }
 
+// we can get away with making methods like NotifyClose a non-pinter type because the
+// method handlers have already captured a pointer to the manager.
+
 // NotifyClose is as NotifyClose on streadway Connection/Channel.NotifyClose.
 // Subscribers to Close events will not be notified when a reconnection occurs under
 // the hood, only when the roger Connection or Channel is closed by calling the Close
@@ -378,7 +381,7 @@ func (manager *transportManager) sendCloseNotifications(err *streadway.Error) {
 //
 // For finer-grained connection status, see NotifyDial and NotifyDisconnect, which
 // will both send individual events when the connection is lost or re-acquired.
-func (manager *transportManager) NotifyClose(
+func (manager transportManager) NotifyClose(
 	receiver chan *streadway.Error,
 ) chan *streadway.Error {
 	args := amqpmiddleware.ArgsNotifyClose{
@@ -391,7 +394,7 @@ func (manager *transportManager) NotifyClose(
 // NotifyDial is new for robust Roger transportType objects. NotifyDial will send all
 // subscribers an event notification every time we try to re-acquire a connection. This
 // will include both failure AND successes.
-func (manager *transportManager) NotifyDial(
+func (manager transportManager) NotifyDial(
 	receiver chan error,
 ) error {
 	args := amqpmiddleware.ArgsNotifyDial{
@@ -404,7 +407,7 @@ func (manager *transportManager) NotifyDial(
 // NotifyDisconnect is new for robust Roger transportType objects. NotifyDisconnect will
 // send all subscribers an event notification every time the underlying connection is
 // lost.
-func (manager *transportManager) NotifyDisconnect(
+func (manager transportManager) NotifyDisconnect(
 	receiver chan error,
 ) error {
 	args := amqpmiddleware.ArgsNotifyDisconnect{
@@ -416,7 +419,7 @@ func (manager *transportManager) NotifyDisconnect(
 
 // cancelCtxCloseTransport cancels the main context and closes the underlying connection
 // during shutdown.
-func (manager *transportManager) cancelCtxCloseTransport() {
+func (manager transportManager) cancelCtxCloseTransport() {
 	// Grab the notification subscriber lock so new subscribers will not get added
 	// without seeing the context cancel.
 	manager.notificationSubscriberLock.Lock()
@@ -440,7 +443,7 @@ func (manager *transportManager) cancelCtxCloseTransport() {
 
 // Close the robust connection. This both closes the current connection and keeps it
 // from reconnecting.
-func (manager *transportManager) Close() error {
+func (manager transportManager) Close() error {
 	args := amqpmiddleware.ArgsClose{TransportType: manager.transport.transportType()}
 	return manager.handlers.transportClose(args)
 }
@@ -454,7 +457,7 @@ func (manager *transportManager) Close() error {
 // objects, rogerRabbit makes IsClosed() available on both connections and channels.
 // IsClosed() will return false until the connection / channel is shut down, even if the
 // underlying connection is currently disconnected and waiting to reconnectMiddleware.
-func (manager *transportManager) IsClosed() bool {
+func (manager transportManager) IsClosed() bool {
 	// If the context is cancelled, the livesOnce is closed.
 	return manager.ctx.Err() != nil
 }
