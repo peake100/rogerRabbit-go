@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
-	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqptest"
-	streadway "github.com/streadway/amqp"
 	"sync"
 	"testing"
 	"time"
@@ -477,53 +475,53 @@ func ExampleChannel_QueueDeclare_reDeclare() {
 	// INSPECTION: example_queue_declare_robust
 }
 
-func ExampleChannel_Middleware() {
-	// define our new middleware
-	queueDeclareMiddleware := func(
-		next amqpmiddleware.HandlerQueueDeclare,
-	) amqpmiddleware.HandlerQueueDeclare {
-		return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
-			fmt.Println("MIDDLEWARE INVOKED FOR QUEUE")
-			fmt.Println("QUEUE NAME :", args.Name)
-			fmt.Println("AUTO-DELETE:", args.AutoDelete)
-			return next(args)
-		}
-	}
-
-	// Get a new connection to our test broker.
-	connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
-	if err != nil {
-		panic(err)
-	}
-	defer connection.Close()
-
-	// Get a new channel from our robust connection for publishing. The channel is
-	// created with our default middleware.
-	channel, err := connection.Channel()
-	if err != nil {
-		panic(err)
-	}
-
-	// Register our middleware for queue declare.
-	channel.Middleware().AddQueueDeclare(queueDeclareMiddleware)
-
-	// Declare our queue, our middleware will be invoked and print a message.
-	_, err = channel.QueueDeclare(
-		"example_middleware",
-		false,
-		true,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	// MIDDLEWARE INVOKED FOR QUEUE
-	// QUEUE NAME : example_middleware
-	// AUTO-DELETE: true
-}
+//func ExampleChannel_Middleware() {
+//	// define our new middleware
+//	queueDeclareMiddleware := func(
+//		next amqpmiddleware.HandlerQueueDeclare,
+//	) amqpmiddleware.HandlerQueueDeclare {
+//		return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+//			fmt.Println("MIDDLEWARE INVOKED FOR QUEUE")
+//			fmt.Println("QUEUE NAME :", args.Name)
+//			fmt.Println("AUTO-DELETE:", args.AutoDelete)
+//			return next(args)
+//		}
+//	}
+//
+//	// Get a new connection to our test broker.
+//	connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
+//	if err != nil {
+//		panic(err)
+//	}
+//	defer connection.Close()
+//
+//	// Get a new channel from our robust connection for publishing. The channel is
+//	// created with our default middleware.
+//	channel, err := connection.Channel()
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	// Register our middleware for queue declare.
+//	channel.Middleware().AddQueueDeclare(queueDeclareMiddleware)
+//
+//	// Declare our queue, our middleware will be invoked and print a message.
+//	_, err = channel.QueueDeclare(
+//		"example_middleware",
+//		false,
+//		true,
+//		false,
+//		false,
+//		nil,
+//	)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	// MIDDLEWARE INVOKED FOR QUEUE
+//	// QUEUE NAME : example_middleware
+//	// AUTO-DELETE: true
+//}
 
 func ExampleChannel_Test() {
 	// Get a new connection to our test broker.

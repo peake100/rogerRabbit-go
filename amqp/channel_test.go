@@ -1108,6 +1108,8 @@ func (suite *ChannelMethodsSuite) Test0180_NotifyConfirmOrOrphaned() {
 	select {
 	case <-allPublished:
 	case <-time.NewTimer(5 * time.Second).C:
+		suite.T().Error("ERROR WAITING FOR MESSAGES")
+		suite.T().FailNow()
 	}
 
 	published.Wait()

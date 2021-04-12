@@ -5,9 +5,36 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
+// transportManagerMiddleware holds all the middleware configured for a specific
+// transportManager.
+type transportManagerMiddleware struct {
+	// METHOD HANDLERS
+	// ---------------
+
+	// middleware for transportManager.NotifyClose
+	notifyClose []amqpmiddleware.NotifyClose
+	// middleware for transportManager.NotifyDial
+	notifyDial []amqpmiddleware.NotifyDial
+	// middleware for transportManager.NotifyDisconnect
+	notifyDisconnect []amqpmiddleware.NotifyDisconnect
+	// middleware for transportManager.Close
+	transportClose []amqpmiddleware.Close
+
+	// EVENT HANDLERS
+	// ---------------
+
+	// middleware for transportManager.NotifyDial events
+	notifyDialEvents []amqpmiddleware.NotifyDialEvents
+	// middleware for transportManager.NotifyDisconnect events
+	notifyDisconnectEvents []amqpmiddleware.NotifyDisconnectEvents
+	// middleware for transportManager.NotifyClose events
+	notifyCloseEvents []amqpmiddleware.NotifyCloseEvents
+}
+
 // transportHandlersBaseBuilder builds the base handlers for transportManager methods.
 type transportHandlersBaseBuilder struct {
-	manager *transportManager
+	manager    *transportManager
+	middleware transportManagerMiddleware
 }
 
 // createBaseNotifyClose creates the base handler for transportManager.NotifyClose.
@@ -15,6 +42,8 @@ func (
 	builder transportHandlersBaseBuilder,
 ) createBaseNotifyClose() amqpmiddleware.HandlerNotifyClose {
 	manager := builder.manager
+	eventMiddlewares := builder.middleware.notifyCloseEvents
+
 	return func(args amqpmiddleware.ArgsNotifyClose) chan *streadway.Error {
 		manager.notificationSubscriberLock.Lock()
 		defer manager.notificationSubscriberLock.Unlock()
@@ -39,7 +68,7 @@ func (
 			close(args.Receiver)
 		}
 
-		for _, middleware := range manager.handlers.notifyCloseEvents {
+		for _, middleware := range eventMiddlewares {
 			eventHandler = middleware(eventHandler)
 		}
 
@@ -56,6 +85,8 @@ func (
 	builder transportHandlersBaseBuilder,
 ) createBaseNotifyDial() amqpmiddleware.HandlerNotifyDial {
 	manager := builder.manager
+	eventMiddlewares := builder.middleware.notifyDialEvents
+
 	return func(args amqpmiddleware.ArgsNotifyDial) error {
 		manager.notificationSubscriberLock.Lock()
 		defer manager.notificationSubscriberLock.Unlock()
@@ -78,7 +109,7 @@ func (
 			args.Receiver <- event.Err
 		}
 
-		for _, thisMiddleware := range manager.handlers.notifyDialEvents {
+		for _, thisMiddleware := range eventMiddlewares {
 			eventHandler = thisMiddleware(eventHandler)
 		}
 
@@ -96,6 +127,8 @@ func (
 	builder transportHandlersBaseBuilder,
 ) createBaseNotifyDisconnect() amqpmiddleware.HandlerNotifyDisconnect {
 	manager := builder.manager
+	eventMiddlewares := builder.middleware.notifyDisconnectEvents
+
 	return func(args amqpmiddleware.ArgsNotifyDisconnect) error {
 		manager.notificationSubscriberLock.Lock()
 		defer manager.notificationSubscriberLock.Unlock()
@@ -118,7 +151,7 @@ func (
 			args.Receiver <- event.Err
 		}
 
-		for _, middleware := range builder.manager.handlers.notifyDisconnectEvents {
+		for _, middleware := range eventMiddlewares {
 			eventHandler = middleware(eventHandler)
 		}
 

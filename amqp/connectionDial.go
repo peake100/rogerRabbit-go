@@ -13,11 +13,11 @@ import (
 // Dial uses the zero value of tls.Config when it encounters an amqps://
 // scheme.  It is equivalent to calling DialTLS(amqp, nil).
 func Dial(url string) (*Connection, error) {
-	// Use the same default config as streadway/amqp.
+	// Use the same default middlewares as streadway/amqp.
 	config := DefaultConfig()
 
 	// Make our initial connection.
-	return DialConfig(url, *config)
+	return DialConfig(url, config)
 }
 
 // DialConfig accepts a string in the AMQP URI format and a configuration for
@@ -26,7 +26,7 @@ func Dial(url string) (*Connection, error) {
 // to 30 seconds.
 func DialConfig(url string, config Config) (*Connection, error) {
 	// Create the robust connection object.
-	conn := newConnection(url, &config)
+	conn := newConnection(url, config)
 	// Make our initial connection
 	err := conn.reconnect(conn.ctx, false)
 	if err != nil {
@@ -44,7 +44,7 @@ func DialTLS(url string, amqps *tls.Config) (*Connection, error) {
 	config := DefaultConfig()
 	config.TLSClientConfig = amqps
 
-	return DialConfig(url, *config)
+	return DialConfig(url, config)
 }
 
 // As DialConfig, but endlessly redials the connection until ctx is cancelled. Once
@@ -52,7 +52,7 @@ func DialTLS(url string, amqps *tls.Config) (*Connection, error) {
 func DialConfigCtx(
 	ctx context.Context, url string, config Config,
 ) (*Connection, error) {
-	conn := newConnection(url, &config)
+	conn := newConnection(url, config)
 	err := conn.reconnect(ctx, true)
 	if err != nil {
 		return nil, err
@@ -65,11 +65,11 @@ func DialConfigCtx(
 func DialCtx(
 	ctx context.Context, url string,
 ) (*Connection, error) {
-	// Use the same default config as streadway/amqp.
+	// Use the same default middlewares as streadway/amqp.
 	config := DefaultConfig()
 
 	// Dial the connection.
-	return DialConfigCtx(ctx, url, *config)
+	return DialConfigCtx(ctx, url, config)
 }
 
 // As DialTLS, but endlessly redials the connection until ctx is cancelled. Once
@@ -80,5 +80,5 @@ func DialTLSCtx(
 	config := DefaultConfig()
 	config.TLSClientConfig = amqps
 
-	return DialConfigCtx(ctx, url, *config)
+	return DialConfigCtx(ctx, url, config)
 }

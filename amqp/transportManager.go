@@ -468,6 +468,7 @@ func (manager *transportManager) Test(t *testing.T) *TransportTesting {
 func newTransportManager(
 	ctx context.Context,
 	transport transportReconnect,
+	middleware transportManagerMiddleware,
 ) *transportManager {
 	ctx, cancelFunc := context.WithCancel(ctx)
 
@@ -491,7 +492,7 @@ func newTransportManager(
 	manager.reconnectCond = sync.NewCond(manager.transportLock)
 
 	// Create the base method handlers.
-	manager.handlers = newTransportManagerHandlers(manager)
+	manager.handlers = newTransportManagerHandlers(manager, middleware)
 
 	return manager
 }
