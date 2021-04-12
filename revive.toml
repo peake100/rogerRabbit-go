@@ -1,7 +1,7 @@
 # When set to false, ignores files with "GENERATED" header, similar to golint
 ignoreGeneratedHeader = false
 
-# Sets the default severity to "warning"
+# Sets the default severity to "error"
 severity = "error"
 
 # Sets the default failure confidence. This means that linting errors
