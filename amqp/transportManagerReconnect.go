@@ -19,7 +19,7 @@ func (manager *transportManager) reconnectRedialOnce(ctx context.Context) error 
 		manager.logger.Debug().Err(err).Msg("error re-dialing connection")
 	}
 	// Send a notification to all listeners subscribed to dial events.
-	manager.sendConnectNotifications(err)
+	manager.sendDialNotifications(err)
 	if err != nil {
 		manager.logger.
 			Error().

@@ -2,9 +2,15 @@ package amqpmiddleware
 
 // Middleware definitions for channel methods.
 
-// Reconnect defines signature for middleware called on underlying channel reconnection
-// event.
-type Reconnect = func(next HandlerReconnect) HandlerReconnect
+// ConnectionReconnect defines signature for middleware called on underlying channel
+// reconnection event.
+type ConnectionReconnect = func(
+	next HandlerConnectionReconnect,
+) HandlerConnectionReconnect
+
+// ChannelReconnect defines signature for middleware called on underlying channel
+// reconnection event.
+type ChannelReconnect = func(next HandlerChannelReconnect) HandlerChannelReconnect
 
 // QueueDeclare defines signature for middleware invoked on *amqp.Channel.QueueDeclare()
 // and *amqp.Channel.QueueDeclarePassive() call.
@@ -73,6 +79,22 @@ type Nack func(next HandlerNack) HandlerNack
 // Reject defines signature for middleware invoked on *amqp.Channel.Reject() call.
 type Reject func(next HandlerReject) HandlerReject
 
+// NotifyClose defines signature for middleware invoked on the NotifyClose method of
+// an amqp.Connection or amqp.Channel.
+type NotifyClose func(next HandlerNotifyClose) HandlerNotifyClose
+
+// NotifyDial defines signature for middleware invoked on the NotifyDial method of
+// an amqp.Connection or amqp.Channel.
+type NotifyDial func(next HandlerNotifyDial) HandlerNotifyDial
+
+// NotifyDisconnect defines signature for middleware invoked on the NotifyDisconnect
+// method of an amqp.Connection or amqp.Channel.
+type NotifyDisconnect func(next HandlerNotifyDisconnect) HandlerNotifyDisconnect
+
+// Close defines signature for middleware invoked on the Close method of an
+// amqp.Connection or amqp.Channel.
+type Close func(next HandlerClose) HandlerClose
+
 // NotifyPublish defines signature for middleware invoked on
 // *amqp.Channel.NotifyPublish() call.
 type NotifyPublish func(next HandlerNotifyPublish) HandlerNotifyPublish
@@ -98,6 +120,28 @@ type NotifyCancel func(next HandlerNotifyCancel) HandlerNotifyCancel
 // NotifyFlow defines signature for middleware invoked on *amqp.Channel.NotifyFlow()
 // call.
 type NotifyFlow func(next HandlerNotifyFlow) HandlerNotifyFlow
+
+// EVENT MIDDLEWARE #####################################
+// ######################################################
+
+// NotifyDialEvents defines signature for middleware invoked on event processed
+// during relay of NotifyConnect() events on either an amqp.Connection or amqp.Channel.
+type NotifyDialEvents func(
+	next HandlerNotifyDialEvents,
+) HandlerNotifyDialEvents
+
+// NotifyDisconnectEvents defines signature for middleware invoked on event processed
+// during relay of NotifyDisconnect() events on either an amqp.Connection or
+// amqp.Channel.
+type NotifyDisconnectEvents func(
+	next HandlerNotifyDisconnectEvents,
+) HandlerNotifyDisconnectEvents
+
+// NotifyCloseEvents defines signature for middleware invoked on event processed
+// during relay of NotifyClose() events on either an amqp.Connection or amqp.Channel.
+type NotifyCloseEvents func(
+	next HandlerNotifyCloseEvents,
+) HandlerNotifyCloseEvents
 
 // NotifyPublishEvents defines signature for middleware invoked on event processed
 // during relay of *amqp.Channel.NotifyPublish() events.

@@ -3,6 +3,7 @@ package amqp
 import (
 	"context"
 	"errors"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	streadway "github.com/streadway/amqp"
@@ -18,6 +19,7 @@ import (
 // *streadway.Channel. We want o abstract away identical operations we need to implement
 // on both of them
 type transport interface {
+	TypeName() amqpmiddleware.TransportType
 	NotifyClose(receiver chan *streadway.Error) chan *streadway.Error
 	Close() error
 }
@@ -163,8 +165,6 @@ type transportManager struct {
 
 	// Our core transport object.
 	transport transportReconnect
-	// The type of transport this is (CONNECTION or CHANNEL). Used for logging.
-	transportType string
 	// Lock to control the transport.
 	transportLock *sync.RWMutex
 	// This value is incremented every time we re-connect to the broker.
@@ -172,12 +172,29 @@ type transportManager struct {
 	// sync.Cond that broadcasts whenever a connection is successfully re-established
 	reconnectCond *sync.Cond
 
-	// List of channels to send a connection established notification to.
-	notificationSubscribersConnect []chan error
+	// handlers are the underlying method and event handlers for this transport's
+	// methods, in order to allow user-defined middleware on both channels and
+	// connections.
+	handlers transportManagerHandlers
+
+	// notificationSubscribersDial is the list of channels to send a connection
+	// established notification to.
+	notificationSubscribersDial []chan error
+	// notifyDialEventHandlers is the list of event handles used to send NotifyDial
+	// events.
+	notifyDialEventHandlers []amqpmiddleware.HandlerNotifyDialEvents
+
 	// List of channels to send a connection lost notification to.
 	notificationSubscriberDisconnect []chan error
+	// notifyDisconnectEventHandlers is the list of event handles used to send
+	// NotifyDisconnect events.
+	notifyDisconnectEventHandlers []amqpmiddleware.HandlerNotifyDisconnectEvents
+
 	// List of channels to send a connection close notification to.
 	notificationSubscriberClose []chan *streadway.Error
+	// notifyCloseEventHandlers is the list of event handles used to send NotifyClose
+	// events.
+	notifyCloseEventHandlers []amqpmiddleware.HandlerNotifyCloseEvents
 	// Mutex for notification subscriber lists. Allows subscribers to be added during
 	// an active redial loop.
 	notificationSubscriberLock *sync.Mutex
@@ -280,32 +297,50 @@ func (manager *transportManager) retryOperationOnClosed(
 	}
 }
 
-// sendConnectNotifications sends results of a dial attempt to all
+// sendDialNotifications sends results of a dial attempt to all
 // transportManager.NotifyDial subscribers.
-func (manager *transportManager) sendConnectNotifications(err error) {
+func (manager *transportManager) sendDialNotifications(err error) {
 	manager.notificationSubscriberLock.Lock()
 	defer manager.notificationSubscriberLock.Unlock()
+
+	// We are going to send the close error (if any) through the event handlers.
+	event := amqpmiddleware.EventNotifyDial{
+		TransportType: manager.transport.TypeName(),
+		Err:           err,
+	}
+
 	// Notify all our close subscribers.
-	for _, receiver := range manager.notificationSubscribersConnect {
-		// We are going to send the close error (if any) and close the channelConsume.
-		receiver <- err
+	for _, receiver := range manager.notifyDialEventHandlers {
+		receiver(event)
 	}
 }
 
 // sendDisconnectNotifications sends the error from NotifyClose of the underlying
 // connection when a disconnect occurs to all NotifyOnDisconnect subscribers.
-func (manager *transportManager) sendDisconnectNotifications(err *streadway.Error) {
+func (manager *transportManager) sendDisconnectNotifications(
+	streadwayErr *streadway.Error,
+) {
 	manager.notificationSubscriberLock.Lock()
 	defer manager.notificationSubscriberLock.Unlock()
+
+	// Even if the pointer is nil, setting an error field to a concrete nil pointer
+	// results in a non-nil error interface, so we only want to set this if it's NOT
+	// nil.
+	var err error
+	if streadwayErr != nil {
+		err = streadwayErr
+	}
+
+	// We need to send an explicit nil on a nil pointer as a nil pointer with a
+	// concrete type is, weirdly, a non-nil error interface value.
+	event := amqpmiddleware.EventNotifyDisconnect{
+		TransportType: manager.transport.TypeName(),
+		Err:           err,
+	}
+
 	// Notify all our close subscribers.
-	for _, receiver := range manager.notificationSubscriberDisconnect {
-		// We need to send an explicit nil on a nil pointer as a nil pointer with a
-		// concrete type is, weirdly, a non-nil error interface value.
-		var event error
-		if err != nil {
-			event = err
-		}
-		receiver <- event
+	for _, handler := range manager.notifyDisconnectEventHandlers {
+		handler(event)
 	}
 }
 
@@ -317,12 +352,14 @@ func (manager *transportManager) sendCloseNotifications(err *streadway.Error) {
 
 	manager.notificationSubscriberLock.Lock()
 	defer manager.notificationSubscriberLock.Unlock()
+
 	// Notify all our close subscribers.
-	for _, receiver := range manager.notificationSubscriberClose {
-		// We are going to send the close error (if any) and close the channelConsume.
-		receiver <- err
-		// This event is only sent once, so we can
-		close(receiver)
+	event := amqpmiddleware.EventNotifyClose{
+		TransportType: manager.transport.TypeName(),
+		Err:           err,
+	}
+	for _, receiver := range manager.notifyCloseEventHandlers {
+		receiver(event)
 	}
 
 	if manager.logger.Debug().Enabled() {
@@ -341,64 +378,37 @@ func (manager *transportManager) sendCloseNotifications(err *streadway.Error) {
 func (manager *transportManager) NotifyClose(
 	receiver chan *streadway.Error,
 ) chan *streadway.Error {
-	manager.notificationSubscriberLock.Lock()
-	defer manager.notificationSubscriberLock.Unlock()
-
-	// If the context of the transport manager has been cancelled, close the receiver
-	// and exit.
-	if manager.ctx.Err() != nil {
-		close(receiver)
-		return receiver
+	args := amqpmiddleware.ArgsNotifyClose{
+		Receiver:      receiver,
+		TransportType: manager.transport.TypeName(),
 	}
-
-	manager.notificationSubscriberClose = append(
-		manager.notificationSubscriberClose, receiver,
-	)
-	return receiver
+	return manager.handlers.notifyClose(args)
 }
 
-// NotifyDial is new for robust Roger Transport objects. NotifyDial will send all
+// NotifyDial is new for robust Roger TransportType objects. NotifyDial will send all
 // subscribers an event notification every time we try to re-acquire a connection. This
 // will include both failure AND successes.
 func (manager *transportManager) NotifyDial(
 	receiver chan error,
 ) error {
-	manager.notificationSubscriberLock.Lock()
-	defer manager.notificationSubscriberLock.Unlock()
-
-	// If the context of the transport manager has been cancelled, close the receiver
-	// and exit.
-	if manager.ctx.Err() != nil {
-		close(receiver)
-		return streadway.ErrClosed
+	args := amqpmiddleware.ArgsNotifyDial{
+		TransportType: manager.transport.TypeName(),
+		Receiver:      receiver,
 	}
-
-	manager.notificationSubscribersConnect = append(
-		manager.notificationSubscribersConnect, receiver,
-	)
-	return nil
+	return manager.handlers.notifyDial(args)
 }
 
-// NotifyDisconnect is new for robust Roger Transport objects. NotifyDisconnect will
+// NotifyDisconnect is new for robust Roger TransportType objects. NotifyDisconnect will
 // send all subscribers an event notification every time the underlying connection is
 // lost.
 func (manager *transportManager) NotifyDisconnect(
 	receiver chan error,
 ) error {
-	manager.notificationSubscriberLock.Lock()
-	defer manager.notificationSubscriberLock.Unlock()
-
-	// If the context of the transport manager has been cancelled, close the receiver
-	// and exit.
-	if manager.ctx.Err() != nil {
-		close(receiver)
-		return streadway.ErrClosed
+	args := amqpmiddleware.ArgsNotifyDisconnect{
+		TransportType: manager.transport.TypeName(),
+		Receiver:      receiver,
 	}
-
-	manager.notificationSubscriberDisconnect = append(
-		manager.notificationSubscriberDisconnect, receiver,
-	)
-	return nil
+	return manager.handlers.notifyDisconnect(args)
 }
 
 // cancelCtxCloseTransport cancels the main context and closes the underlying connection
@@ -428,31 +438,8 @@ func (manager *transportManager) cancelCtxCloseTransport() {
 // Close the robust connection. This both closes the current connection and keeps it
 // from reconnecting.
 func (manager *transportManager) Close() error {
-	// If the context has already been cancelled, we can exit.
-	if manager.ctx.Err() != nil {
-		return streadway.ErrClosed
-	}
-
-	manager.cancelCtxCloseTransport()
-
-	// Close all disconnect and connect subscribers, then clear them. We don't need to
-	// grab the lock for this since the cancelled context will keep any new subscribers
-	// from being added.
-	for _, subscriber := range manager.notificationSubscribersConnect {
-		close(subscriber)
-	}
-	manager.notificationSubscribersConnect = nil
-
-	for _, subscriber := range manager.notificationSubscriberDisconnect {
-		close(subscriber)
-	}
-	manager.notificationSubscriberDisconnect = nil
-
-	// Send closure notifications to all subscribers.
-	manager.sendCloseNotifications(nil)
-
-	// Execute any cleanup on behalf of the transport implementation.
-	return manager.transport.cleanup()
+	args := amqpmiddleware.ArgsClose{TransportType: manager.transport.TypeName()}
+	return manager.handlers.transportClose(args)
 }
 
 // IsClosed returns true if the connection is marked as closed, otherwise false
@@ -481,21 +468,20 @@ func (manager *transportManager) Test(t *testing.T) *TransportTesting {
 func newTransportManager(
 	ctx context.Context,
 	transport transportReconnect,
-	transportType string,
 ) *transportManager {
 	ctx, cancelFunc := context.WithCancel(ctx)
 
-	logger := log.Logger.With().Str("TRANSPORT", transportType).Logger()
+	logger := log.Logger.With().
+		Str("TRANSPORT", string(transport.TypeName())).Logger()
 
 	manager := &transportManager{
 		ctx:                              ctx,
 		cancelFunc:                       cancelFunc,
 		transport:                        transport,
-		transportType:                    transportType,
 		transportLock:                    new(sync.RWMutex),
 		reconnectCount:                   0,
 		reconnectCond:                    nil,
-		notificationSubscribersConnect:   nil,
+		notificationSubscribersDial:      nil,
 		notificationSubscriberDisconnect: nil,
 		notificationSubscriberClose:      nil,
 		notificationSubscriberLock:       new(sync.Mutex),
@@ -503,6 +489,9 @@ func newTransportManager(
 	}
 
 	manager.reconnectCond = sync.NewCond(manager.transportLock)
+
+	// Create the base method handlers.
+	manager.handlers = newTransportManagerHandlers(manager)
 
 	return manager
 }

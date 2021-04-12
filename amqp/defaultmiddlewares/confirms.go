@@ -23,15 +23,14 @@ func (middleware *ConfirmsMiddleware) ConfirmsOn() bool {
 // Reconnect puts the new, underlying connection into confirmation mode if Confirm()
 // has been called.
 func (middleware *ConfirmsMiddleware) Reconnect(
-	next amqpmiddleware.HandlerReconnect,
-) (handler amqpmiddleware.HandlerReconnect) {
+	next amqpmiddleware.HandlerChannelReconnect,
+) (handler amqpmiddleware.HandlerChannelReconnect) {
 	return func(
 		ctx context.Context,
-		transportType amqpmiddleware.TransportType,
 		attempt uint64,
 		logger zerolog.Logger,
 	) (*streadway.Channel, error) {
-		channel, err := next(ctx, transportType, attempt, logger)
+		channel, err := next(ctx, attempt, logger)
 		// If there was an error or QoS() has not been called, return results.
 		if err != nil || !middleware.confirmsOn {
 			return channel, err
