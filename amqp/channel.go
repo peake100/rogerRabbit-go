@@ -20,7 +20,7 @@ type transportChannel struct {
 
 	// handlers Holds all registered handlers and methods for registering new
 	// middleware.
-	handlers *channelHandlers
+	handlers channelHandlers
 
 	// defaultMiddlewares holds our default middlewares for testing purposes:
 	//	TODO: maybe turn this into a map and return a key when middleware is
@@ -1394,14 +1394,6 @@ PRs to add this functionality are welcome.
 */
 func (channel *Channel) TxRollback() error {
 	panic(panicTransactionMessage("TxRollback"))
-}
-
-/*
-Middleware is a namespace object with methods for registering middleware. Middleware
-will be called in the order it is registered.
-*/
-func (channel *Channel) Middleware() *channelHandlers {
-	return channel.transportChannel.handlers
 }
 
 // ChannelTestingDefaultMiddlewares holds default middleware for inspection during

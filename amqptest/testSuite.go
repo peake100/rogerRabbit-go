@@ -21,8 +21,9 @@ type InnerSuite interface {
 // ChannelSuiteOpts is used to configure AmqpSuite, which can be embedded
 // into a testify suite.Suite to gain a number of useful testing methods.
 type ChannelSuiteOpts struct {
-	dialAddress string
-	dialConfig  *amqp.Config
+	dialAddress   string
+	dialConfig    amqp.Config
+	dialConfigSet bool
 }
 
 // WithDialAddress configures the address to dial for our test connections.
@@ -34,8 +35,9 @@ func (opts *ChannelSuiteOpts) WithDialAddress(amqpURI string) *ChannelSuiteOpts 
 
 // WithDialConfig sets the amqp.Config object to use when dialing the test brocker.
 // Default: amqp.DefaultConfig()
-func (opts *ChannelSuiteOpts) WithDialConfig(config *amqp.Config) *ChannelSuiteOpts {
+func (opts *ChannelSuiteOpts) WithDialConfig(config amqp.Config) *ChannelSuiteOpts {
 	opts.dialConfig = config
+	opts.dialConfigSet = true
 	return opts
 }
 
@@ -111,14 +113,14 @@ func (amqpSuite *AmqpSuite) dialConnection() *amqp.Connection {
 	}
 
 	config := amqpSuite.Opts.dialConfig
-	if config == nil {
+	if !amqpSuite.Opts.dialConfigSet {
 		config = amqp.DefaultConfig()
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	conn, err := amqp.DialConfigCtx(ctx, address, *config)
+	conn, err := amqp.DialConfigCtx(ctx, address, config)
 	if err != nil {
 		amqpSuite.T().Errorf("error dialing connection: %v", err)
 		amqpSuite.T().FailNow()

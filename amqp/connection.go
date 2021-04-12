@@ -18,10 +18,10 @@ type transportConnection struct {
 	dialURL string
 
 	// dialConfig is the Config passed to our constructor method.
-	dialConfig *Config
+	dialConfig Config
 
 	// streadwayConfig is extracted from the settings on dialConfig.
-	streadwayConfig *BasicConfig
+	streadwayConfig BasicConfig
 
 	// handlerReconnect is the reconnect handler with caller-supplied middleware
 	// applied.
@@ -35,7 +35,7 @@ func (transport *transportConnection) basicReconnectHandler(
 	attempt uint64,
 	logger zerolog.Logger,
 ) (*streadway.Connection, error) {
-	return streadway.DialConfig(transport.dialURL, *transport.streadwayConfig)
+	return streadway.DialConfig(transport.dialURL, transport.streadwayConfig)
 }
 
 func (transport *transportConnection) TypeName() amqpmiddleware.TransportType {
@@ -106,63 +106,77 @@ func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 	return channel, err
 }
 
-// newChannelApplyDefaultMiddleware applies the default middleware to a new Channel.
-func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
+// newChannelApplyMiddleware applies the default middleware to a new Channel.
+func newChannelApplyMiddleware(
+	channel *Channel,
+	config Config,
+	transportHandlers transportManagerHandlers,
+) Config {
 	if config.NoDefaultMiddleware {
-		return
+		return config
 	}
 
-	handlers := channel.transportChannel.handlers
 	middlewareStorage := channel.transportChannel.defaultMiddlewares
+
+	mConfig := config.ChannelMiddleware
 
 	// Qos middleware
 	qosMiddleware := defaultmiddlewares.NewQosMiddleware()
-	handlers.AddChannelReconnect(qosMiddleware.Reconnect)
-	handlers.AddQoS(qosMiddleware.Qos)
+	mConfig.AddChannelReconnect(qosMiddleware.Reconnect)
+	mConfig.AddQoS(qosMiddleware.Qos)
 	middlewareStorage.QoS = qosMiddleware
 
 	// Flow middleware
 	flowMiddleware := defaultmiddlewares.NewFlowMiddleware()
-	handlers.AddChannelReconnect(flowMiddleware.Reconnect)
-	handlers.AddFlow(flowMiddleware.Flow)
+	mConfig.AddChannelReconnect(flowMiddleware.Reconnect)
+	mConfig.AddFlow(flowMiddleware.Flow)
 	middlewareStorage.Flow = flowMiddleware
 
 	// Confirmation middleware
 	confirmMiddleware := defaultmiddlewares.NewConfirmMiddleware()
-	handlers.AddChannelReconnect(confirmMiddleware.Reconnect)
-	handlers.AddConfirm(confirmMiddleware.Confirm)
+	mConfig.AddChannelReconnect(confirmMiddleware.Reconnect)
+	mConfig.AddConfirm(confirmMiddleware.Confirm)
 	middlewareStorage.Confirm = confirmMiddleware
 
 	// Publish Tags middleware
 	publishTagsMiddleware := defaultmiddlewares.NewPublishTagsMiddleware()
-	handlers.AddChannelReconnect(publishTagsMiddleware.Reconnect)
-	handlers.AddConfirm(publishTagsMiddleware.Confirm)
-	handlers.AddPublish(publishTagsMiddleware.Publish)
-	handlers.AddNotifyPublishEvent(publishTagsMiddleware.NotifyPublishEvent)
+	mConfig.AddChannelReconnect(publishTagsMiddleware.Reconnect)
+	mConfig.AddConfirm(publishTagsMiddleware.Confirm)
+	mConfig.AddPublish(publishTagsMiddleware.Publish)
+	mConfig.AddNotifyPublishEvent(publishTagsMiddleware.NotifyPublishEvent)
 	middlewareStorage.PublishTags = publishTagsMiddleware
 
 	// Delivery Tags middleware
 	deliveryTagsMiddleware := defaultmiddlewares.NewDeliveryTagsMiddleware()
-	handlers.AddChannelReconnect(deliveryTagsMiddleware.Reconnect)
-	handlers.AddGet(deliveryTagsMiddleware.Get)
-	handlers.AddConsumeEvent(deliveryTagsMiddleware.ConsumeEvent)
-	handlers.AddAck(deliveryTagsMiddleware.Ack)
-	handlers.AddNack(deliveryTagsMiddleware.Nack)
-	handlers.AddReject(deliveryTagsMiddleware.Reject)
+	mConfig.AddChannelReconnect(deliveryTagsMiddleware.Reconnect)
+	mConfig.AddGet(deliveryTagsMiddleware.Get)
+	mConfig.AddConsumeEvent(deliveryTagsMiddleware.ConsumeEvent)
+	mConfig.AddAck(deliveryTagsMiddleware.Ack)
+	mConfig.AddNack(deliveryTagsMiddleware.Nack)
+	mConfig.AddReject(deliveryTagsMiddleware.Reject)
 	middlewareStorage.DeliveryTags = deliveryTagsMiddleware
 
 	// Route declaration middleware
 	declarationMiddleware := defaultmiddlewares.NewRouteDeclarationMiddleware()
-	handlers.AddChannelReconnect(declarationMiddleware.Reconnect)
-	handlers.AddQueueDeclare(declarationMiddleware.QueueDeclare)
-	handlers.AddQueueDelete(declarationMiddleware.QueueDelete)
-	handlers.AddQueueBind(declarationMiddleware.QueueBind)
-	handlers.AddQueueUnbind(declarationMiddleware.QueueUnbind)
-	handlers.AddExchangeDeclare(declarationMiddleware.ExchangeDeclare)
-	handlers.AddExchangeDelete(declarationMiddleware.ExchangeDelete)
-	handlers.AddExchangeBind(declarationMiddleware.ExchangeBind)
-	handlers.AddExchangeUnbind(declarationMiddleware.ExchangeUnbind)
+	mConfig.AddChannelReconnect(declarationMiddleware.Reconnect)
+	mConfig.AddQueueDeclare(declarationMiddleware.QueueDeclare)
+	mConfig.AddQueueDelete(declarationMiddleware.QueueDelete)
+	mConfig.AddQueueBind(declarationMiddleware.QueueBind)
+	mConfig.AddQueueUnbind(declarationMiddleware.QueueUnbind)
+	mConfig.AddExchangeDeclare(declarationMiddleware.ExchangeDeclare)
+	mConfig.AddExchangeDelete(declarationMiddleware.ExchangeDelete)
+	mConfig.AddExchangeBind(declarationMiddleware.ExchangeBind)
+	mConfig.AddExchangeUnbind(declarationMiddleware.ExchangeUnbind)
 	middlewareStorage.RouteDeclaration = declarationMiddleware
+
+	channel.transportChannel.handlers = newChannelHandlers(
+		channel.transportChannel.rogerConn,
+		channel,
+		transportHandlers,
+		mConfig,
+	)
+
+	return config
 }
 
 /*
@@ -179,12 +193,24 @@ func (conn *Connection) Channel() (*Channel, error) {
 	transportChan := &transportChannel{
 		BasicChannel:       nil,
 		rogerConn:          conn,
-		handlers:           nil,
+		handlers:           channelHandlers{},
 		defaultMiddlewares: new(ChannelTestingDefaultMiddlewares),
+		relaySync:          channelRelaySync{},
 		logger:             zerolog.Logger{},
 	}
 
-	manager := newTransportManager(conn.ctx, transportChan)
+	chanMiddleware := conn.transportConn.dialConfig.ChannelMiddleware
+	transportMiddleware := transportManagerMiddleware{
+		notifyClose:            chanMiddleware.notifyClose,
+		notifyDial:             chanMiddleware.notifyDial,
+		notifyDisconnect:       chanMiddleware.notifyDisconnect,
+		transportClose:         chanMiddleware.transportClose,
+		notifyDialEvents:       chanMiddleware.notifyDialEvents,
+		notifyDisconnectEvents: chanMiddleware.notifyDisconnectEvents,
+		notifyCloseEvents:      chanMiddleware.notifyCloseEvents,
+	}
+
+	manager := newTransportManager(conn.ctx, transportChan, transportMiddleware)
 	transportChan.logger = manager.logger
 
 	// Create our more robust channelConsume wrapper.
@@ -197,10 +223,10 @@ func (conn *Connection) Channel() (*Channel, error) {
 		shared: newSharedSync(rogerChannel),
 	}
 
-	// Initialize our channel handlers with the new channel
-	transportChan.handlers = newChannelHandlers(conn, rogerChannel, &manager.handlers)
 	// Add default middleware around these handlers.
-	newChannelApplyDefaultMiddleware(rogerChannel, conn.transportConn.dialConfig)
+	newChannelApplyMiddleware(
+		rogerChannel, conn.transportConn.dialConfig, manager.handlers,
+	)
 
 	// Try and establish a channel using the connection's context.
 	err := rogerChannel.reconnect(conn.ctx, true)
@@ -225,9 +251,10 @@ func (conn *Connection) Test(t *testing.T) *ConnectionTesting {
 	}
 }
 
-// newConnection gets a new roger connection for a given url and connection config.
-func newConnection(url string, config *Config) *Connection {
-	streadwayConfig := &streadway.Config{
+// newConnection gets a new roger connection for a given url and connection middlewares.
+func newConnection(url string, config Config) *Connection {
+	// Extract our config into a streadway.Config
+	streadwayConfig := streadway.Config{
 		SASL:            config.SASL,
 		Vhost:           config.Vhost,
 		ChannelMax:      config.ChannelMax,
@@ -247,15 +274,33 @@ func newConnection(url string, config *Config) *Connection {
 		streadwayConfig: streadwayConfig,
 	}
 
-	manager := newTransportManager(context.Background(), transportConn)
-	// Use the logger from the config
+	middlewares := transportManagerMiddleware{
+		notifyClose:            config.ConnectionMiddleware.notifyClose,
+		notifyDial:             config.ConnectionMiddleware.notifyDial,
+		notifyDisconnect:       config.ConnectionMiddleware.notifyDisconnect,
+		transportClose:         config.ConnectionMiddleware.transportClose,
+		notifyDialEvents:       config.ConnectionMiddleware.notifyDialEvents,
+		notifyDisconnectEvents: config.ConnectionMiddleware.notifyDisconnectEvents,
+		notifyCloseEvents:      config.ConnectionMiddleware.notifyCloseEvents,
+	}
+
+	// Create the new transport manager.
+	manager := newTransportManager(context.Background(), transportConn, middlewares)
+	// Use the logger from the middlewares
 	manager.logger = config.Logger
 
 	conn := &Connection{
 		transportConn:    transportConn,
 		transportManager: manager,
 	}
-	conn.transportConn.handlerReconnect = conn.transportConn.basicReconnectHandler
+
+	// Create the reconnect handler.
+	reconnectHandler := conn.transportConn.basicReconnectHandler
+	for _, thisMiddleware := range config.ConnectionMiddleware.connectionReconnect {
+		reconnectHandler = thisMiddleware(reconnectHandler)
+	}
+
+	conn.transportConn.handlerReconnect = reconnectHandler
 
 	return conn
 }

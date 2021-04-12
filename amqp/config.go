@@ -13,9 +13,9 @@ import (
 //
 // ---
 //
-// ROGER NOTE: This config object is a re-implementation of streadway/amqp.Config. We
+// ROGER NOTE: This config type is a re-implementation of streadway/amqp.Config. We
 // any code that can declare such a config will work with this type. In the future this
-// type may add additional options for rogerRabbit.
+// type may add additional options for rogerRabbit-go/amqp.
 type Config struct {
 	// The SASL mechanisms to try in the client request, and the successful
 	// mechanism used on the Connection object.
@@ -23,7 +23,7 @@ type Config struct {
 	SASL []Authentication
 
 	// Vhost specifies the namespace of permissions, exchanges, queues and
-	// bindings on the server.  Dial sets this to the path parsed from the URL.
+	// bindings on the server. Dial sets this to the path parsed from the URL.
 	Vhost string
 
 	ChannelMax int           // 0 max channels means 2^16 - 1
@@ -56,6 +56,13 @@ type Config struct {
 	// through the associated connection.
 	NoDefaultMiddleware bool
 
+	// ConnectionMiddleware holds middleware to add to connection method and event
+	// handlers.
+	ConnectionMiddleware ConnectionMiddleware
+
+	// ChannelMiddleware holds middleware to add to channel method and event handlers.
+	ChannelMiddleware ChannelMiddleware
+
 	// The logger to use for internal logging. If none, the default zerolog logger will
 	// be used.
 	Logger zerolog.Logger
@@ -63,8 +70,8 @@ type Config struct {
 
 // DefaultConfig returns the default config for Dial() as it is in the streadway
 // application.
-func DefaultConfig() *Config {
-	return &Config{
+func DefaultConfig() Config {
+	return Config{
 		Heartbeat: defaultHeartbeat,
 		Locale:    defaultLocale,
 	}
