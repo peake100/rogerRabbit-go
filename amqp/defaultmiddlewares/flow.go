@@ -51,7 +51,7 @@ func (middleware *FlowMiddleware) Reconnect(
 func (middleware *FlowMiddleware) Flow(
 	next amqpmiddleware.HandlerFlow,
 ) (handler amqpmiddleware.HandlerFlow) {
-	return func(args *amqpmiddleware.ArgsFlow) error {
+	return func(args amqpmiddleware.ArgsFlow) error {
 		middleware.activeLock.Lock()
 		defer middleware.activeLock.Unlock()
 

@@ -50,7 +50,7 @@ func (middleware *ConfirmsMiddleware) Reconnect(
 func (middleware *ConfirmsMiddleware) Confirm(
 	next amqpmiddleware.HandlerConfirm,
 ) (handler amqpmiddleware.HandlerConfirm) {
-	return func(args *amqpmiddleware.ArgsConfirms) error {
+	return func(args amqpmiddleware.ArgsConfirms) error {
 		err := next(args)
 		if err != nil {
 			return err

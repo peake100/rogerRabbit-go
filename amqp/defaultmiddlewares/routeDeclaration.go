@@ -21,11 +21,11 @@ type RouteDeclarationMiddleware struct {
 	// delete.
 	declareExchanges *sync.Map
 	// bindQueues is a list of bindings to re-build on channel re-establishment.
-	bindQueues []*amqpmiddleware.ArgsQueueBind
+	bindQueues []amqpmiddleware.ArgsQueueBind
 	// bindQueuesLock must be acquired to alter bindQueues.
 	bindQueuesLock *sync.Mutex
 	// bindExchanges is a list of bindings to re-build on channel re-establishment.
-	bindExchanges []*amqpmiddleware.ArgsExchangeBind
+	bindExchanges []amqpmiddleware.ArgsExchangeBind
 	// bindExchangesLock must be acquired to alter bindQueues.
 	bindExchangesLock *sync.Mutex
 }
@@ -67,7 +67,7 @@ type removeQueueBindingOpts struct {
 // removeQueueBindingOk compares the original args a queue bind was made with and
 // a removeQueueBindingOpts to see if a queue should be removed.
 func removeQueueBindingOk(
-	binding *amqpmiddleware.ArgsQueueBind, opts removeQueueBindingOpts,
+	binding amqpmiddleware.ArgsQueueBind, opts removeQueueBindingOpts,
 ) bool {
 	// If there is a routing Key to match, then the queue and exchange must match
 	// too (so we don't end up removing a binding with the same routing Key between
@@ -180,7 +180,7 @@ type removeExchangeBindingOpts struct {
 // removeExchangeBindingOk returns true is binding made with
 // amqpmiddleware.ArgsExchangeBind should be removed based on removeExchangeBindingOpts.
 func removeExchangeBindingOk(
-	binding *amqpmiddleware.ArgsExchangeBind, opts removeExchangeBindingOpts,
+	binding amqpmiddleware.ArgsExchangeBind, opts removeExchangeBindingOpts,
 ) bool {
 	// If there is a routing Key to match, then the source and destination exchanges
 	// must match too (so we don't end up removing a binding with the same routing
@@ -260,7 +260,7 @@ func (middle *RouteDeclarationMiddleware) reconnectDeclareQueues(
 	var err error
 
 	redeclareQueues := func(key, value interface{}) bool {
-		thisQueue := value.(*amqpmiddleware.ArgsQueueDeclare)
+		thisQueue := value.(amqpmiddleware.ArgsQueueDeclare)
 
 		// By default, we will passively declare a queue. This allows us to respect
 		// queue deletion by other producers or consumers.
@@ -318,7 +318,7 @@ func (middle *RouteDeclarationMiddleware) reconnectDeclareExchanges(
 	var err error
 
 	redeclareExchanges := func(key, value interface{}) bool {
-		thisExchange := value.(*amqpmiddleware.ArgsExchangeDeclare)
+		thisExchange := value.(amqpmiddleware.ArgsExchangeDeclare)
 
 		// By default, we will passively declare a queue. This allows us to respect
 		// queue deletion by other producers or consumers.
@@ -493,7 +493,7 @@ func (middle *RouteDeclarationMiddleware) Reconnect(
 func (middle *RouteDeclarationMiddleware) QueueDeclare(
 	next amqpmiddleware.HandlerQueueDeclare,
 ) (handler amqpmiddleware.HandlerQueueDeclare) {
-	handler = func(args *amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+	handler = func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
 		// If there is any sort of error, pass it on.
 		queue, err := next(args)
 		if err != nil {
@@ -514,7 +514,7 @@ func (middle *RouteDeclarationMiddleware) QueueDelete(
 	next amqpmiddleware.HandlerQueueDelete,
 ) (handler amqpmiddleware.HandlerQueueDelete) {
 	// If there is any sort of error, pass it on.
-	handler = func(args *amqpmiddleware.ArgsQueueDelete) (count int, err error) {
+	handler = func(args amqpmiddleware.ArgsQueueDelete) (count int, err error) {
 		count, err = next(args)
 		if err != nil {
 			return count, err
@@ -535,7 +535,7 @@ func (middle *RouteDeclarationMiddleware) QueueBind(
 	next amqpmiddleware.HandlerQueueBind,
 ) (handler amqpmiddleware.HandlerQueueBind) {
 	// If there is any sort of error, pass it on.
-	handler = func(args *amqpmiddleware.ArgsQueueBind) error {
+	handler = func(args amqpmiddleware.ArgsQueueBind) error {
 		err := next(args)
 		if err != nil {
 			return err
@@ -556,7 +556,7 @@ func (middle *RouteDeclarationMiddleware) QueueBind(
 func (middle *RouteDeclarationMiddleware) QueueUnbind(
 	next amqpmiddleware.HandlerQueueUnbind,
 ) (handler amqpmiddleware.HandlerQueueUnbind) {
-	handler = func(args *amqpmiddleware.ArgsQueueUnbind) error {
+	handler = func(args amqpmiddleware.ArgsQueueUnbind) error {
 		// If there is any sort of error, pass it on.
 		err := next(args)
 		if err != nil {
@@ -581,7 +581,7 @@ func (middle *RouteDeclarationMiddleware) QueueUnbind(
 func (middle *RouteDeclarationMiddleware) ExchangeDeclare(
 	next amqpmiddleware.HandlerExchangeDeclare,
 ) (handler amqpmiddleware.HandlerExchangeDeclare) {
-	handler = func(args *amqpmiddleware.ArgsExchangeDeclare) error {
+	handler = func(args amqpmiddleware.ArgsExchangeDeclare) error {
 		// If there is any sort of error, pass it on.
 		err := next(args)
 		if err != nil {
@@ -600,7 +600,7 @@ func (middle *RouteDeclarationMiddleware) ExchangeDeclare(
 func (middle *RouteDeclarationMiddleware) ExchangeDelete(
 	next amqpmiddleware.HandlerExchangeDelete,
 ) (handler amqpmiddleware.HandlerExchangeDelete) {
-	handler = func(args *amqpmiddleware.ArgsExchangeDelete) error {
+	handler = func(args amqpmiddleware.ArgsExchangeDelete) error {
 		// If there is any sort of error, pass it on.
 		err := next(args)
 		if err != nil {
@@ -622,7 +622,7 @@ func (middle *RouteDeclarationMiddleware) ExchangeBind(
 	next amqpmiddleware.HandlerExchangeBind,
 ) (handler amqpmiddleware.HandlerExchangeBind) {
 	// If there is any sort of error, pass it on.
-	handler = func(args *amqpmiddleware.ArgsExchangeBind) error {
+	handler = func(args amqpmiddleware.ArgsExchangeBind) error {
 		err := next(args)
 		if err != nil {
 			return err
@@ -646,7 +646,7 @@ func (middle *RouteDeclarationMiddleware) ExchangeUnbind(
 	next amqpmiddleware.HandlerExchangeUnbind,
 ) (handler amqpmiddleware.HandlerExchangeUnbind) {
 	// If there is any sort of error, pass it on.
-	handler = func(args *amqpmiddleware.ArgsExchangeUnbind) error {
+	handler = func(args amqpmiddleware.ArgsExchangeUnbind) error {
 		err := next(args)
 		if err != nil {
 			return err

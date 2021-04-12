@@ -27,7 +27,7 @@ type notifyPublishRelay struct {
 func (relay *notifyPublishRelay) baseHandler() (
 	handler amqpmiddleware.HandlerNotifyPublishEvents,
 ) {
-	return func(event *amqpmiddleware.EventNotifyPublish) {
+	return func(event amqpmiddleware.EventNotifyPublish) {
 		relay.CallerConfirmations <- event.Confirmation
 	}
 }
@@ -74,7 +74,7 @@ func (relay *notifyPublishRelay) RunRelayLeg() (done bool, err error) {
 		if relay.logger.Debug().Enabled() {
 			relay.logConfirmation(confirmation)
 		}
-		relay.handler(&amqpmiddleware.EventNotifyPublish{Confirmation: confirmation})
+		relay.handler(amqpmiddleware.EventNotifyPublish{Confirmation: confirmation})
 	}
 
 	// Otherwise continue to the next channel.

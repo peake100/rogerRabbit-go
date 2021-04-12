@@ -63,13 +63,13 @@ func (middleware *QoSMiddleware) Reconnect(
 func (middleware *QoSMiddleware) Qos(
 	next amqpmiddleware.HandlerQoS,
 ) (handler amqpmiddleware.HandlerQoS) {
-	return func(args *amqpmiddleware.ArgsQoS) error {
+	return func(args amqpmiddleware.ArgsQoS) error {
 		err := next(args)
 		if err != nil {
 			return err
 		}
 
-		middleware.qosArgs = *args
+		middleware.qosArgs = args
 		middleware.isSet = true
 		return nil
 	}

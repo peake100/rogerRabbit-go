@@ -106,7 +106,7 @@ func (middleware *PublishTagsMiddleware) Reconnect(
 func (middleware *PublishTagsMiddleware) Confirm(
 	next amqpmiddleware.HandlerConfirm,
 ) (handler amqpmiddleware.HandlerConfirm) {
-	handler = func(args *amqpmiddleware.ArgsConfirms) error {
+	handler = func(args amqpmiddleware.ArgsConfirms) error {
 		err := next(args)
 		if err != nil {
 			return err
@@ -124,7 +124,7 @@ func (middleware *PublishTagsMiddleware) Confirm(
 func (middleware *PublishTagsMiddleware) Publish(
 	next amqpmiddleware.HandlerPublish,
 ) (handler amqpmiddleware.HandlerPublish) {
-	handler = func(args *amqpmiddleware.ArgsPublish) error {
+	handler = func(args amqpmiddleware.ArgsPublish) error {
 		err := next(args)
 		if err != nil || !middleware.confirmMode {
 			return err
@@ -166,7 +166,7 @@ func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
 			},
 			DisconnectOrphan: true,
 		}
-		next(&amqpmiddleware.EventNotifyPublish{Confirmation: confirmation})
+		next(amqpmiddleware.EventNotifyPublish{Confirmation: confirmation})
 		sentCount++
 	}
 
@@ -198,7 +198,7 @@ func (middleware *PublishTagsMiddleware) NotifyPublishEvent(
 	}()
 
 	// Return the middleware.
-	return func(event *amqpmiddleware.EventNotifyPublish) {
+	return func(event amqpmiddleware.EventNotifyPublish) {
 		// If this is the first ever delivery we have received, update sent to
 		// be equal to it's current value + this delivery tag - 1.
 		//
