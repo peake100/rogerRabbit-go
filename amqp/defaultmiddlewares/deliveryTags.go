@@ -52,7 +52,7 @@ func (middleware *DeliveryTagsMiddleware) Get(
 	next amqpmiddleware.HandlerGet,
 ) (handler amqpmiddleware.HandlerGet) {
 	handler = func(
-		args *amqpmiddleware.ArgsGet,
+		args amqpmiddleware.ArgsGet,
 	) (msg datamodels.Delivery, ok bool, err error) {
 		msg, ok, err = next(args)
 		if err != nil {
@@ -149,7 +149,7 @@ func (middleware *DeliveryTagsMiddleware) runAckMethod(
 func (middleware *DeliveryTagsMiddleware) Ack(
 	next amqpmiddleware.HandlerAck,
 ) (handler amqpmiddleware.HandlerAck) {
-	handler = func(args *amqpmiddleware.ArgsAck) error {
+	handler = func(args amqpmiddleware.ArgsAck) error {
 		method := func() error {
 			return next(args)
 		}
@@ -165,7 +165,7 @@ func (middleware *DeliveryTagsMiddleware) Ack(
 func (middleware *DeliveryTagsMiddleware) Nack(
 	next amqpmiddleware.HandlerNack,
 ) (handler amqpmiddleware.HandlerNack) {
-	handler = func(args *amqpmiddleware.ArgsNack) error {
+	handler = func(args amqpmiddleware.ArgsNack) error {
 		method := func() error {
 			return next(args)
 		}
@@ -181,7 +181,7 @@ func (middleware *DeliveryTagsMiddleware) Nack(
 func (middleware *DeliveryTagsMiddleware) Reject(
 	next amqpmiddleware.HandlerReject,
 ) (handler amqpmiddleware.HandlerReject) {
-	handler = func(args *amqpmiddleware.ArgsReject) error {
+	handler = func(args amqpmiddleware.ArgsReject) error {
 		method := func() error {
 			return next(args)
 		}
@@ -196,7 +196,7 @@ func (middleware *DeliveryTagsMiddleware) Reject(
 func (middleware *DeliveryTagsMiddleware) ConsumeEvent(
 	next amqpmiddleware.HandlerConsumeEvents,
 ) (handler amqpmiddleware.HandlerConsumeEvents) {
-	handler = func(event *amqpmiddleware.EventConsume) {
+	handler = func(event amqpmiddleware.EventConsume) {
 		// Apply the offset to our delivery
 		event.Delivery.TagOffset = middleware.tagConsumeOffset
 		event.Delivery.DeliveryTag += middleware.tagConsumeOffset

@@ -482,7 +482,7 @@ func ExampleChannel_Middleware() {
 	queueDeclareMiddleware := func(
 		next amqpmiddleware.HandlerQueueDeclare,
 	) amqpmiddleware.HandlerQueueDeclare {
-		return func(args *amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+		return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
 			fmt.Println("MIDDLEWARE INVOKED FOR QUEUE")
 			fmt.Println("QUEUE NAME :", args.Name)
 			fmt.Println("AUTO-DELETE:", args.AutoDelete)

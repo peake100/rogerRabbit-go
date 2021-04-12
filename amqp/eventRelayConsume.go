@@ -34,7 +34,7 @@ type consumeRelay struct {
 
 // baseHandler returns the base handler to be wrapped in middleware.
 func (relay *consumeRelay) baseHandler() amqpmiddleware.HandlerConsumeEvents {
-	return func(event *amqpmiddleware.EventConsume) {
+	return func(event amqpmiddleware.EventConsume) {
 		relay.CallerDeliveries <- event.Delivery
 	}
 }
@@ -75,10 +75,9 @@ func (relay *consumeRelay) RunRelayLeg() (done bool, err error) {
 	// Drain consumer events
 	for brokerDelivery := range relay.brokerDeliveries {
 		// Wrap the delivery and send on our way.
-		event := &amqpmiddleware.EventConsume{
+		relay.handler(amqpmiddleware.EventConsume{
 			Delivery: datamodels.NewDelivery(brokerDelivery, relay.Acknowledger),
-		}
-		relay.handler(event)
+		})
 	}
 
 	return false, nil

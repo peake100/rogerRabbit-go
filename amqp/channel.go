@@ -144,7 +144,7 @@ will take care of matching up caller-facing delivery tags to the current channel
 underlying tag.
 */
 func (channel *Channel) Confirm(noWait bool) error {
-	args := &amqpmiddleware.ArgsConfirms{NoWait: noWait}
+	args := amqpmiddleware.ArgsConfirms{NoWait: noWait}
 
 	op := func() error {
 		return channel.transportChannel.handlers.confirm(args)
@@ -189,7 +189,7 @@ greater as described by benchmarks on RabbitMQ.
 http://www.rabbitmq.com/blog/2012/04/25/rabbitmq-performance-measurements-part-2/
 */
 func (channel *Channel) Qos(prefetchCount, prefetchSize int, global bool) error {
-	args := &amqpmiddleware.ArgsQoS{
+	args := amqpmiddleware.ArgsQoS{
 		PrefetchCount: prefetchCount,
 		PrefetchSize:  prefetchSize,
 		Global:        global,
@@ -225,7 +225,7 @@ a connection, so under high volume scenarios, it's wise to open separate
 Connections for publishings and deliveries.
 */
 func (channel *Channel) Flow(active bool) error {
-	args := &amqpmiddleware.ArgsFlow{
+	args := amqpmiddleware.ArgsFlow{
 		Active: active,
 	}
 
@@ -303,7 +303,7 @@ func (channel *Channel) QueueDeclare(
 ) (queue Queue, err error) {
 	// Run an an operation to get automatic retries on channel dis-connections.
 	// We need to remember to re-declare this queue on reconnectMiddleware
-	queueArgs := &amqpmiddleware.ArgsQueueDeclare{
+	queueArgs := amqpmiddleware.ArgsQueueDeclare{
 		Name:       name,
 		Durable:    durable,
 		AutoDelete: autoDelete,
@@ -342,7 +342,7 @@ func (channel *Channel) QueueDeclarePassive(
 ) (queue Queue, err error) {
 	// Run an an operation to get automatic retries on channel dis-connections.
 	// We need to remember to re-declare this queue on reconnectMiddleware
-	queueArgs := &amqpmiddleware.ArgsQueueDeclare{
+	queueArgs := amqpmiddleware.ArgsQueueDeclare{
 		Name:       name,
 		Durable:    durable,
 		AutoDelete: autoDelete,
@@ -385,7 +385,7 @@ channel will be closed.
 func (channel *Channel) QueueInspect(name string) (queue Queue, err error) {
 	// Run an an operation to get automatic retries on channel dis-connections.
 	// We need to remember to re-declare this queue on reconnectMiddleware
-	inspectArgs := &amqpmiddleware.ArgsQueueInspect{
+	inspectArgs := amqpmiddleware.ArgsQueueInspect{
 		Name: name,
 	}
 
@@ -448,7 +448,7 @@ closed with an error.
 func (channel *Channel) QueueBind(
 	name, key, exchange string, noWait bool, args Table,
 ) error {
-	bindArgs := &amqpmiddleware.ArgsQueueBind{
+	bindArgs := amqpmiddleware.ArgsQueueBind{
 		Name:     name,
 		Key:      key,
 		Exchange: exchange,
@@ -476,7 +476,7 @@ unbind the queue from the default exchange.
 
 */
 func (channel *Channel) QueueUnbind(name, key, exchange string, args Table) error {
-	unbindArgs := &amqpmiddleware.ArgsQueueUnbind{
+	unbindArgs := amqpmiddleware.ArgsQueueUnbind{
 		Name:     name,
 		Key:      key,
 		Exchange: exchange,
@@ -504,7 +504,7 @@ messages purged will not be meaningful.
 func (channel *Channel) QueuePurge(name string, noWait bool) (
 	count int, err error,
 ) {
-	unbindArgs := &amqpmiddleware.ArgsQueuePurge{
+	unbindArgs := amqpmiddleware.ArgsQueuePurge{
 		Name:   name,
 		NoWait: noWait,
 	}
@@ -545,7 +545,7 @@ re-declared on reconnections of the underlying streadway/amqp.Channel object.
 func (channel *Channel) QueueDelete(
 	name string, ifUnused, ifEmpty, noWait bool,
 ) (count int, err error) {
-	deleteArgs := &amqpmiddleware.ArgsQueueDelete{
+	deleteArgs := amqpmiddleware.ArgsQueueDelete{
 		Name:     name,
 		IfUnused: ifUnused,
 		IfEmpty:  ifEmpty,
@@ -627,7 +627,7 @@ how exchanges are re-declared on reconnection.
 func (channel *Channel) ExchangeDeclare(
 	name, kind string, durable, autoDelete, internal, noWait bool, args Table,
 ) (err error) {
-	exchangeArgs := &amqpmiddleware.ArgsExchangeDeclare{
+	exchangeArgs := amqpmiddleware.ArgsExchangeDeclare{
 		Name:       name,
 		Kind:       kind,
 		Durable:    durable,
@@ -659,7 +659,7 @@ can be used to detect the existence of an exchange.
 func (channel *Channel) ExchangeDeclarePassive(
 	name, kind string, durable, autoDelete, internal, noWait bool, args Table,
 ) (err error) {
-	exchangeArgs := &amqpmiddleware.ArgsExchangeDeclare{
+	exchangeArgs := amqpmiddleware.ArgsExchangeDeclare{
 		Name:       name,
 		Kind:       kind,
 		Durable:    durable,
@@ -704,7 +704,7 @@ or relevant bindings to be re-declared on reconnections of the underlying
 func (channel *Channel) ExchangeDelete(
 	name string, ifUnused, noWait bool,
 ) (err error) {
-	deleteArgs := &amqpmiddleware.ArgsExchangeDelete{
+	deleteArgs := amqpmiddleware.ArgsExchangeDelete{
 		Name:     name,
 		IfUnused: ifUnused,
 		NoWait:   noWait,
@@ -756,7 +756,7 @@ ROGER NOTE: All bindings will be remembered and re-declared on reconnection even
 func (channel *Channel) ExchangeBind(
 	destination, key, source string, noWait bool, args Table,
 ) (err error) {
-	bindArgs := &amqpmiddleware.ArgsExchangeBind{
+	bindArgs := amqpmiddleware.ArgsExchangeBind{
 		Destination: destination,
 		Key:         key,
 		Source:      source,
@@ -794,7 +794,7 @@ on reconnect.
 func (channel *Channel) ExchangeUnbind(
 	destination, key, source string, noWait bool, args Table,
 ) (err error) {
-	unbindArgs := &amqpmiddleware.ArgsExchangeUnbind{
+	unbindArgs := amqpmiddleware.ArgsExchangeUnbind{
 		Destination: destination,
 		Key:         key,
 		Source:      source,
@@ -856,7 +856,7 @@ func (channel *Channel) Publish(
 	immediate bool,
 	msg Publishing,
 ) (err error) {
-	args := &amqpmiddleware.ArgsPublish{
+	args := amqpmiddleware.ArgsPublish{
 		Exchange:  exchange,
 		Key:       key,
 		Mandatory: mandatory,
@@ -900,7 +900,7 @@ func (channel *Channel) Get(
 	queue string,
 	autoAck bool,
 ) (msg datamodels.Delivery, ok bool, err error) {
-	args := &amqpmiddleware.ArgsGet{
+	args := amqpmiddleware.ArgsGet{
 		Queue:   queue,
 		AutoAck: autoAck,
 	}
@@ -986,7 +986,7 @@ tags of the current underlying channel.
 func (channel *Channel) Consume(
 	queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args Table,
 ) (deliveryChan <-chan datamodels.Delivery, err error) {
-	callArgs := &amqpmiddleware.ArgsConsume{
+	callArgs := amqpmiddleware.ArgsConsume{
 		Queue:     queue,
 		Consumer:  consumer,
 		AutoAck:   autoAck,
@@ -1019,7 +1019,7 @@ channel, and therefore be successful. In such cases, the ErrCantAcknowledgeOrpha
 still be returned, and can be checked for which tag ranges could not be acked.
 */
 func (channel *Channel) Ack(tag uint64, multiple bool) error {
-	args := &amqpmiddleware.ArgsAck{
+	args := amqpmiddleware.ArgsAck{
 		Tag:      tag,
 		Multiple: multiple,
 	}
@@ -1051,7 +1051,7 @@ still be returned, and can be checked for which tag ranges could not be nacked.
 
 */
 func (channel *Channel) Nack(tag uint64, multiple bool, requeue bool) error {
-	args := &amqpmiddleware.ArgsNack{
+	args := amqpmiddleware.ArgsNack{
 		Tag:      tag,
 		Multiple: multiple,
 		Requeue:  requeue,
@@ -1083,7 +1083,7 @@ channel, and therefore be successful. In such cases, the ErrCantAcknowledgeOrpha
 still be returned, and can be checked for which tag ranges could not be rejected.
 */
 func (channel *Channel) Reject(tag uint64, requeue bool) error {
-	args := &amqpmiddleware.ArgsReject{
+	args := amqpmiddleware.ArgsReject{
 		Tag:     tag,
 		Requeue: requeue,
 	}
@@ -1137,7 +1137,7 @@ func (channel *Channel) NotifyPublish(
 ) chan datamodels.Confirmation {
 	// Setup and launch the event relay that will handle these events across multiple
 	// connections.
-	args := &amqpmiddleware.ArgsNotifyPublish{Confirm: confirm}
+	args := amqpmiddleware.ArgsNotifyPublish{Confirm: confirm}
 	return channel.transportChannel.handlers.notifyPublish(args)
 }
 
@@ -1201,7 +1201,7 @@ Orphaned tags separately, use the new method NotifyConfirmOrOrphaned.
 func (channel *Channel) NotifyConfirm(
 	ack, nack chan uint64,
 ) (chan uint64, chan uint64) {
-	callArgs := &amqpmiddleware.ArgsNotifyConfirm{
+	callArgs := amqpmiddleware.ArgsNotifyConfirm{
 		Ack:  ack,
 		Nack: nack,
 	}
@@ -1215,7 +1215,7 @@ a disconnect, these tags are routed to the nack channel in NotifyConfirm.
 func (channel *Channel) NotifyConfirmOrOrphaned(
 	ack, nack, orphaned chan uint64,
 ) (chan uint64, chan uint64, chan uint64) {
-	callArgs := &amqpmiddleware.ArgsNotifyConfirmOrOrphaned{
+	callArgs := amqpmiddleware.ArgsNotifyConfirmOrOrphaned{
 		Ack:      ack,
 		Nack:     nack,
 		Orphaned: orphaned,
@@ -1236,7 +1236,7 @@ func (channel *Channel) runNotifyConfirmOrOrphaned(
 	// range over confirmation events and place them in the ack and nack channels.
 	for confirmation := range confirmEvents {
 		event := amqpmiddleware.EventNotifyConfirmOrOrphaned{Confirmation: confirmation}
-		eventHandler(&event)
+		eventHandler(event)
 	}
 }
 
@@ -1255,7 +1255,7 @@ possible that returns in-flight to the client from the broker will be dropped, a
 therefore will be missed. You can subscribe to disconnection events through.
 */
 func (channel *Channel) NotifyReturn(returns chan Return) chan Return {
-	args := &amqpmiddleware.ArgsNotifyReturn{Returns: returns}
+	args := amqpmiddleware.ArgsNotifyReturn{Returns: returns}
 	return channel.transportChannel.handlers.notifyReturn(args)
 }
 
@@ -1267,7 +1267,7 @@ where the master has just failed (and was moved to another node).
 The subscription tag is returned to the listener.
 */
 func (channel *Channel) NotifyCancel(cancellations chan string) chan string {
-	args := &amqpmiddleware.ArgsNotifyCancel{Cancellations: cancellations}
+	args := amqpmiddleware.ArgsNotifyCancel{Cancellations: cancellations}
 	return channel.transportChannel.handlers.notifyCancel(args)
 }
 
@@ -1313,7 +1313,7 @@ broker. This means that NotifyFlow can be a useful tool for dealing with disconn
 even when using RabbitMQ.
 */
 func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool {
-	args := &amqpmiddleware.ArgsNotifyFlow{FlowNotifications: flowNotifications}
+	args := amqpmiddleware.ArgsNotifyFlow{FlowNotifications: flowNotifications}
 	return channel.transportChannel.handlers.notifyFlow(args)
 }
 
