@@ -11,8 +11,10 @@ import (
 
 // HandlerReconnect: signature for handlers triggered when a channel is being
 // re-established.
+//
+// Attempt is the attempt number, including all previous failures and successes.
 type HandlerReconnect = func(
-	ctx context.Context, logger zerolog.Logger,
+	ctx context.Context, attempt uint64, logger zerolog.Logger,
 ) (*streadway.Channel, error)
 
 // HandlerQueueDeclare: signature for handlers invoked when amqp.Channel.QueueDeclare()

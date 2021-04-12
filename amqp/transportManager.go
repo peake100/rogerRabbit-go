@@ -29,7 +29,7 @@ type transportReconnect interface {
 
 	// tryReconnect is needed for both Connection and Channel. This method
 	// attempts to re-establish a connection for the underlying object exactly once.
-	tryReconnect(ctx context.Context) error
+	tryReconnect(ctx context.Context, attempt uint64) error
 
 	// cleanup releases any resources. Called on final close AFTER the main context is
 	// cancelled but before the current underlying connection is closed. NOTE:

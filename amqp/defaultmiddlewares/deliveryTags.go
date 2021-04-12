@@ -30,11 +30,11 @@ func (middleware *DeliveryTagsMiddleware) Reconnect(
 	next amqpmiddleware.HandlerReconnect,
 ) (handler amqpmiddleware.HandlerReconnect) {
 	handler = func(
-		ctx context.Context, logger zerolog.Logger,
+		ctx context.Context, attempt uint64, logger zerolog.Logger,
 	) (*streadway.Channel, error) {
 		middleware.tagConsumeOffset = *middleware.tagConsumeCount
 
-		channel, err := next(ctx, logger)
+		channel, err := next(ctx, attempt, logger)
 		if err != nil {
 			return channel, err
 

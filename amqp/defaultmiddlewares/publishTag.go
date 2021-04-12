@@ -76,7 +76,7 @@ func (middleware *PublishTagsMiddleware) Reconnect(
 	next amqpmiddleware.HandlerReconnect,
 ) (handler amqpmiddleware.HandlerReconnect) {
 	handler = func(
-		ctx context.Context, logger zerolog.Logger,
+		ctx context.Context, attempt uint64, logger zerolog.Logger,
 	) (*streadway.Channel, error) {
 		// The current count becomes the offset we apply to tags on this channel.
 		middleware.tagOffset = *middleware.publishCount
@@ -89,7 +89,7 @@ func (middleware *PublishTagsMiddleware) Reconnect(
 		}()
 
 		// While those are cooking , we can move forward with getting the channel.
-		channel, err := next(ctx, logger)
+		channel, err := next(ctx, attempt, logger)
 		// Once the channel returns, wait for all our orphan notifications to be sent
 		// out.
 		sendDone.Wait()

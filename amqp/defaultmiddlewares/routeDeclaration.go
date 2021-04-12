@@ -442,9 +442,12 @@ func (middle *RouteDeclarationMiddleware) reconnectBindExchanges(
 // reconnectHandler re-establishes queue and exchange topologies on a channel
 // reconnection event.
 func (middle *RouteDeclarationMiddleware) reconnectHandler(
-	ctx context.Context, logger zerolog.Logger, next amqpmiddleware.HandlerReconnect,
+	ctx context.Context,
+	attempt uint64,
+	logger zerolog.Logger,
+	next amqpmiddleware.HandlerReconnect,
 ) (*streadway.Channel, error) {
-	channel, err := next(ctx, logger)
+	channel, err := next(ctx, attempt, logger)
 	// If there was an error, pass it up the chain.
 	if err != nil {
 		return channel, err
@@ -480,9 +483,9 @@ func (middle *RouteDeclarationMiddleware) Reconnect(
 	next amqpmiddleware.HandlerReconnect,
 ) (handler amqpmiddleware.HandlerReconnect) {
 	handler = func(
-		ctx context.Context, logger zerolog.Logger,
+		ctx context.Context, attempt uint64, logger zerolog.Logger,
 	) (*streadway.Channel, error) {
-		return middle.reconnectHandler(ctx, logger, next)
+		return middle.reconnectHandler(ctx, attempt, logger, next)
 	}
 
 	return handler
