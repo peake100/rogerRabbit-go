@@ -31,20 +31,21 @@ type transportManagerMiddleware struct {
 	notifyCloseEvents []amqpmiddleware.NotifyCloseEvents
 }
 
+//revive:disable:line-length-limit
+// we need to disable this here since the builder signatures are so long.
+
 // transportHandlersBuilder builds the base handlers for transportManager methods.
 type transportHandlersBuilder struct {
 	manager    *transportManager
 	middleware transportManagerMiddleware
 }
 
-// createBaseNotifyClose creates the base handler for transportManager.NotifyClose.
-func (
-	builder transportHandlersBuilder,
-) createBaseNotifyClose() amqpmiddleware.HandlerNotifyClose {
+// createNotifyClose creates the base handler for transportManager.NotifyClose.
+func (builder transportHandlersBuilder) createNotifyClose() amqpmiddleware.HandlerNotifyClose {
 	manager := builder.manager
 	eventMiddlewares := builder.middleware.notifyCloseEvents
 
-	return func(args amqpmiddleware.ArgsNotifyClose) chan *streadway.Error {
+	handler := func(args amqpmiddleware.ArgsNotifyClose) chan *streadway.Error {
 		manager.notificationSubscriberLock.Lock()
 		defer manager.notificationSubscriberLock.Unlock()
 
@@ -78,16 +79,20 @@ func (
 
 		return args.Receiver
 	}
+
+	for _, middleware := range builder.middleware.notifyClose {
+		handler = middleware(handler)
+	}
+
+	return handler
 }
 
-// createBaseNotifyDial creates the base handler for transportManager.NotifyDial.
-func (
-	builder transportHandlersBuilder,
-) createBaseNotifyDial() amqpmiddleware.HandlerNotifyDial {
+// createNotifyDial creates the base handler for transportManager.NotifyDial.
+func (builder transportHandlersBuilder) createNotifyDial() amqpmiddleware.HandlerNotifyDial {
 	manager := builder.manager
 	eventMiddlewares := builder.middleware.notifyDialEvents
 
-	return func(args amqpmiddleware.ArgsNotifyDial) error {
+	handler := func(args amqpmiddleware.ArgsNotifyDial) error {
 		manager.notificationSubscriberLock.Lock()
 		defer manager.notificationSubscriberLock.Unlock()
 
@@ -119,17 +124,21 @@ func (
 
 		return nil
 	}
+
+	for _, middleware := range builder.middleware.notifyDial {
+		handler = middleware(handler)
+	}
+
+	return handler
 }
 
-// createBaseNotifyDisconnect creates the base handler for
+// createNotifyDisconnect creates the base handler for
 // transportManager.NotifyDisconnect.
-func (
-	builder transportHandlersBuilder,
-) createBaseNotifyDisconnect() amqpmiddleware.HandlerNotifyDisconnect {
+func (builder transportHandlersBuilder) createNotifyDisconnect() amqpmiddleware.HandlerNotifyDisconnect {
 	manager := builder.manager
 	eventMiddlewares := builder.middleware.notifyDisconnectEvents
 
-	return func(args amqpmiddleware.ArgsNotifyDisconnect) error {
+	handler := func(args amqpmiddleware.ArgsNotifyDisconnect) error {
 		manager.notificationSubscriberLock.Lock()
 		defer manager.notificationSubscriberLock.Unlock()
 
@@ -161,12 +170,20 @@ func (
 
 		return nil
 	}
+
+	for _, middleware := range builder.middleware.notifyDisconnect {
+		handler = middleware(handler)
+	}
+
+	return handler
 }
 
-// createBaseClose creates the base handler for transportManager.Close.
-func (builder transportHandlersBuilder) createBaseClose() amqpmiddleware.HandlerClose {
+// createClose creates the base handler for transportManager.Close.
+func (builder transportHandlersBuilder) createClose() amqpmiddleware.HandlerClose {
 	manager := builder.manager
-	return func(args amqpmiddleware.ArgsClose) error {
+
+	handler := func(args amqpmiddleware.ArgsClose) error {
+
 		// If the context has already been cancelled, we can exit.
 		if manager.ctx.Err() != nil {
 			return streadway.ErrClosed
@@ -174,22 +191,28 @@ func (builder transportHandlersBuilder) createBaseClose() amqpmiddleware.Handler
 
 		manager.cancelCtxCloseTransport()
 
-		// Close all disconnect and connect subscribers, then clear them. We don't
-		// need to grab the lock for this since the cancelled context will keep any new
-		// subscribers from being added.
-		for _, subscriber := range manager.notificationSubscribersDial {
-			close(subscriber)
-		}
-		// We clear these to avoid sending on a nil channel.
-		manager.notificationSubscribersDial = nil
-		manager.notifyDialEventHandlers = nil
+		func() {
+			// We need to acquire and release the lock here to avoid race conditions.
+			manager.notificationSubscriberLock.Lock()
+			defer manager.notificationSubscriberLock.Unlock()
 
-		for _, subscriber := range manager.notificationSubscriberDisconnect {
-			close(subscriber)
-		}
-		// We clear these to avoid sending on a nil channel.
-		manager.notificationSubscriberDisconnect = nil
-		manager.notifyDisconnectEventHandlers = nil
+			// Close all disconnect and connect subscribers, then clear them. We don't
+			// need to grab the lock for this since the cancelled context will keep any new
+			// subscribers from being added.
+			for _, subscriber := range manager.notificationSubscribersDial {
+				close(subscriber)
+			}
+			// We clear these to avoid sending on a nil channel.
+			manager.notificationSubscribersDial = nil
+			manager.notifyDialEventHandlers = nil
+
+			for _, subscriber := range manager.notificationSubscriberDisconnect {
+				close(subscriber)
+			}
+			// We clear these to avoid sending on a nil channel.
+			manager.notificationSubscriberDisconnect = nil
+			manager.notifyDisconnectEventHandlers = nil
+		}()
 
 		// Send closure notifications to all subscribers.
 		manager.sendCloseNotifications(nil)
@@ -197,4 +220,12 @@ func (builder transportHandlersBuilder) createBaseClose() amqpmiddleware.Handler
 		// Execute any cleanup on behalf of the livesOnce implementation.
 		return manager.transport.cleanup()
 	}
+
+	for _, middleware := range builder.middleware.transportClose {
+		handler = middleware(handler)
+	}
+
+	return handler
 }
+
+//revive:enable:line-length-limit

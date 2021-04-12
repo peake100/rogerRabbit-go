@@ -36,7 +36,7 @@ warningCode = 1
 # provide a more precise measure of the difficulty of understanding the code. Enforcing
 # a maximum complexity per function helps to keep code readable and maintainable.
 [rule.cognitive-complexity]
-arguments =[8]
+arguments =[10]
 
 # Methods or fields of struct that have names different only by capitalization could be
 # confusing.

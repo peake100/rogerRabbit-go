@@ -36,9 +36,9 @@ func newTransportManagerHandlers(
 	}
 
 	return transportManagerHandlers{
-		notifyClose:      builder.createBaseNotifyClose(),
-		notifyDial:       builder.createBaseNotifyDial(),
-		notifyDisconnect: builder.createBaseNotifyDisconnect(),
-		transportClose:   builder.createBaseClose(),
+		notifyClose:      builder.createNotifyClose(),
+		notifyDial:       builder.createNotifyDial(),
+		notifyDisconnect: builder.createNotifyDisconnect(),
+		transportClose:   builder.createClose(),
 	}
 }
