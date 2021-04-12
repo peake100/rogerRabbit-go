@@ -185,7 +185,7 @@ func (relaySync *relaySync) WaitToSetup() {
 	if !relaySync.firstSetupDone {
 		relaySync.shared.transportLock.RLock()
 	} else {
-		// Otherwise wait until the reconnect gives us the all clear
+		// Otherwise wait until the channelReconnect gives us the all clear
 		relaySync.shared.runSetup.Wait()
 	}
 }

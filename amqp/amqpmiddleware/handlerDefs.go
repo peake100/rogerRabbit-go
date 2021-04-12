@@ -19,13 +19,22 @@ const TransportTypeChannel = "CHANNEL"
 
 // HOOK DEFINITIONS
 
-// HandlerReconnect: signature for handlers triggered when a channel is being
+// HandlerChannelReconnect: signature for handlers triggered when a channel is being
 // re-established.
 //
 // Attempt is the attempt number, including all previous failures and successes.
-type HandlerReconnect = func(
+type HandlerConnectionReconnect = func(
 	ctx context.Context,
-	transportType TransportType,
+	attempt uint64,
+	logger zerolog.Logger,
+) (*streadway.Connection, error)
+
+// HandlerChannelReconnect: signature for handlers triggered when a channel is being
+// re-established.
+//
+// Attempt is the attempt number, including all previous failures and successes.
+type HandlerChannelReconnect = func(
+	ctx context.Context,
 	attempt uint64,
 	logger zerolog.Logger,
 ) (*streadway.Channel, error)
@@ -102,6 +111,22 @@ type HandlerNack func(args ArgsNack) error
 // HandlerReject: signature for handlers invoked when amqp.Channel.Reject() is called.
 type HandlerReject func(args ArgsReject) error
 
+// HandlerNotifyClose: signature for handlers invoked when the NotifyClose method
+// is called on an amqp.Connection or amqp.Channel.
+type HandlerNotifyClose func(args ArgsNotifyClose) chan *streadway.Error
+
+// HandlerNotifyDial: signature for handlers invoked when the NotifyDial method
+// is called on an amqp.Connection or amqp.Channel.
+type HandlerNotifyDial func(args ArgsNotifyDial) error
+
+// HandlerNotifyDisconnect: signature for handlers invoked when the NotifyDisconnect
+// method is called on an amqp.Connection or amqp.Channel.
+type HandlerNotifyDisconnect func(args ArgsNotifyDisconnect) error
+
+// HandlerClose: signature for handlers invoked when the Close method is called on an
+// amqp.Connection or amqp.Channel.
+type HandlerClose func(args ArgsClose) error
+
 // HandlerNotifyConfirm: signature for handlers invoked when
 // amqp.Channel.NotifyConfirm() is called.
 type HandlerNotifyConfirm func(args ArgsNotifyConfirm) (chan uint64, chan uint64)
@@ -128,31 +153,49 @@ type HandlerNotifyFlow func(args ArgsNotifyFlow) chan bool
 // amqp.Channel.NotifyPublish() is called.
 type HandlerNotifyPublish func(args ArgsNotifyPublish) chan datamodels.Confirmation
 
+// EVENT HANDLERS #####################################
+// ####################################################
+
+// HandlerNotifyDialEvents: signature for handlers invoked when an event from a
+// NotifyDial() of an amqp.Connection or amqp.Channel is being processed before
+// being sent to the caller.
+type HandlerNotifyDialEvents func(event EventNotifyDial)
+
+// HandlerNotifyDisconnectEvents: signature for handlers invoked when an event from a
+// NotifyDisconnect() of an amqp.Connection or amqp.Channel is being processed before
+// being sent to the caller.
+type HandlerNotifyDisconnectEvents func(event EventNotifyDisconnect)
+
+// HandlerNotifyCloseEvents: signature for handlers invoked when an event from a
+// NotifyClose() of an amqp.Connection or amqp.Channel is being processed before
+// being sent to the caller.
+type HandlerNotifyCloseEvents func(event EventNotifyClose)
+
 // HandlerNotifyPublishEvents: signature for handlers invoked when an event from an
-// amqp.Channel.NotifyPublish() is being processed before beings sent to the caller.
+// amqp.Channel.NotifyPublish() is being processed before being sent to the caller.
 type HandlerNotifyPublishEvents func(event EventNotifyPublish)
 
 // HandlerConsumeEvents: signature for handlers invoked when an event from an
-// amqp.Channel.Consume() is being processed before beings sent to the caller.
+// amqp.Channel.Consume() is being processed before being sent to the caller.
 type HandlerConsumeEvents func(event EventConsume)
 
 // HandlerNotifyConfirmEvents: signature for handlers invoked when an event from an
-// amqp.Channel.NotifyConfirm() is being processed before beings sent to the caller.
+// amqp.Channel.NotifyConfirm() is being processed before being sent to the caller.
 type HandlerNotifyConfirmEvents func(event EventNotifyConfirm)
 
 // HandlerNotifyConfirmOrOrphanedEvents: signature for handlers invoked when an event
-// from ab amqp.Channel.NotifyConfirmOrOrphaned() is being processed before beings sent
+// from ab amqp.Channel.NotifyConfirmOrOrphaned() is being processed before being sent
 // to the caller.
 type HandlerNotifyConfirmOrOrphanedEvents func(event EventNotifyConfirmOrOrphaned)
 
 // HandlerNotifyReturnEvents: signature for handlers invoked when an event from an
-// amqp.Channel.NotifyReturn() is being processed before beings sent to the caller.
+// amqp.Channel.NotifyReturn() is being processed before being sent to the caller.
 type HandlerNotifyReturnEvents func(event EventNotifyReturn)
 
 // HandlerNotifyCancelEvents: signature for handlers invoked when an event from an
-// amqp.Channel.NotifyReturn() is being processed before beings sent to the caller.
+// amqp.Channel.NotifyReturn() is being processed before being sent to the caller.
 type HandlerNotifyCancelEvents func(event EventNotifyCancel)
 
 // HandlerNotifyFlowEvents: signature for handlers invoked when an event from an
-// amqp.Channel.NotifyFlow() is being processed before beings sent to the caller.
+// amqp.Channel.NotifyFlow() is being processed before being sent to the caller.
 type HandlerNotifyFlowEvents func(event EventNotifyFlow)

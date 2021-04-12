@@ -7,11 +7,13 @@ import (
 
 // channelHandlers hols a Channel's method handlers with applied middleware.
 type channelHandlers struct {
+	*transportManagerHandlers
+
 	// LIFETIME HANDLERS
 	// ----------------
 
-	// reconnect is the handler invoked on a reconnection event.
-	reconnect amqpmiddleware.HandlerReconnect
+	// channelReconnect is the handler invoked on a reconnection event.
+	channelReconnect amqpmiddleware.HandlerChannelReconnect
 
 	// MODE HANDLERS
 	// -------------
@@ -121,12 +123,15 @@ type channelHandlers struct {
 	lock *sync.RWMutex
 }
 
-// AddReconnect adds a new middleware to be invoked on a Channel reconnection event.
-func (handlers *channelHandlers) AddReconnect(middleware amqpmiddleware.Reconnect) {
+// AddChannelReconnect adds a new middleware to be invoked on a Channel reconnection
+// event.
+func (handlers *channelHandlers) AddChannelReconnect(
+	middleware amqpmiddleware.ChannelReconnect,
+) {
 	handlers.lock.Lock()
 	defer handlers.lock.Unlock()
 
-	handlers.reconnect = middleware(handlers.reconnect)
+	handlers.channelReconnect = middleware(handlers.channelReconnect)
 }
 
 // AddQoS adds a new middleware to be invoked on Channel.Qos method calls.
@@ -507,14 +512,20 @@ func (handlers *channelHandlers) AddNotifyFlowEvents(
 }
 
 // newChannelHandlers created a new channelHandlers with all base handlers added.
-func newChannelHandlers(conn *Connection, channel *Channel) *channelHandlers {
-	baseBuilder := &middlewareBaseBuilder{
+func newChannelHandlers(
+	conn *Connection,
+	channel *Channel,
+	transportHandlers *transportManagerHandlers,
+) *channelHandlers {
+	baseBuilder := &channelHandlerBaseBuilder{
 		connection: conn,
 		channel:    channel,
 	}
 
 	return &channelHandlers{
-		reconnect:               baseBuilder.createBaseHandlerReconnect(),
+		transportManagerHandlers: transportHandlers,
+
+		channelReconnect:        baseBuilder.createBaseHandlerChannelReconnect(),
 		queueDeclare:            baseBuilder.createBaseHandlerQueueDeclare(),
 		queueDeclarePassive:     baseBuilder.createBaseHandlerQueueDeclarePassive(),
 		queueInspect:            baseBuilder.createBaseHandlerQueueInspect(),

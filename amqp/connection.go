@@ -2,6 +2,7 @@ package amqp
 
 import (
 	"context"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/defaultmiddlewares"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
@@ -21,6 +22,24 @@ type transportConnection struct {
 
 	// streadwayConfig is extracted from the settings on dialConfig.
 	streadwayConfig *BasicConfig
+
+	// handlerReconnect is the reconnect handler with caller-supplied middleware
+	// applied.
+	handlerReconnect amqpmiddleware.HandlerConnectionReconnect
+}
+
+// basicReconnectHandler is the innermost reconnection handler for the
+// transportConnection.
+func (transport *transportConnection) basicReconnectHandler(
+	ctx context.Context,
+	attempt uint64,
+	logger zerolog.Logger,
+) (*streadway.Connection, error) {
+	return streadway.DialConfig(transport.dialURL, *transport.streadwayConfig)
+}
+
+func (transport *transportConnection) TypeName() amqpmiddleware.TransportType {
+	return amqpmiddleware.TransportTypeConnection
 }
 
 // cleanup implements transportManager. Does nothing for transportConnection.
@@ -32,7 +51,7 @@ func (transport *transportConnection) cleanup() error {
 func (transport *transportConnection) tryReconnect(
 	ctx context.Context, attempt uint64,
 ) error {
-	conn, err := streadway.DialConfig(transport.dialURL, *transport.streadwayConfig)
+	conn, err := transport.handlerReconnect(ctx, attempt, transport.dialConfig.Logger)
 	if err != nil {
 		return err
 	}
@@ -98,25 +117,25 @@ func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 
 	// Qos middleware
 	qosMiddleware := defaultmiddlewares.NewQosMiddleware()
-	handlers.AddReconnect(qosMiddleware.Reconnect)
+	handlers.AddChannelReconnect(qosMiddleware.Reconnect)
 	handlers.AddQoS(qosMiddleware.Qos)
 	middlewareStorage.QoS = qosMiddleware
 
 	// Flow middleware
 	flowMiddleware := defaultmiddlewares.NewFlowMiddleware()
-	handlers.AddReconnect(flowMiddleware.Reconnect)
+	handlers.AddChannelReconnect(flowMiddleware.Reconnect)
 	handlers.AddFlow(flowMiddleware.Flow)
 	middlewareStorage.Flow = flowMiddleware
 
 	// Confirmation middleware
 	confirmMiddleware := defaultmiddlewares.NewConfirmMiddleware()
-	handlers.AddReconnect(confirmMiddleware.Reconnect)
+	handlers.AddChannelReconnect(confirmMiddleware.Reconnect)
 	handlers.AddConfirm(confirmMiddleware.Confirm)
 	middlewareStorage.Confirm = confirmMiddleware
 
 	// Publish Tags middleware
 	publishTagsMiddleware := defaultmiddlewares.NewPublishTagsMiddleware()
-	handlers.AddReconnect(publishTagsMiddleware.Reconnect)
+	handlers.AddChannelReconnect(publishTagsMiddleware.Reconnect)
 	handlers.AddConfirm(publishTagsMiddleware.Confirm)
 	handlers.AddPublish(publishTagsMiddleware.Publish)
 	handlers.AddNotifyPublishEvent(publishTagsMiddleware.NotifyPublishEvent)
@@ -124,7 +143,7 @@ func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 
 	// Delivery Tags middleware
 	deliveryTagsMiddleware := defaultmiddlewares.NewDeliveryTagsMiddleware()
-	handlers.AddReconnect(deliveryTagsMiddleware.Reconnect)
+	handlers.AddChannelReconnect(deliveryTagsMiddleware.Reconnect)
 	handlers.AddGet(deliveryTagsMiddleware.Get)
 	handlers.AddConsumeEvent(deliveryTagsMiddleware.ConsumeEvent)
 	handlers.AddAck(deliveryTagsMiddleware.Ack)
@@ -134,7 +153,7 @@ func newChannelApplyDefaultMiddleware(channel *Channel, config *Config) {
 
 	// Route declaration middleware
 	declarationMiddleware := defaultmiddlewares.NewRouteDeclarationMiddleware()
-	handlers.AddReconnect(declarationMiddleware.Reconnect)
+	handlers.AddChannelReconnect(declarationMiddleware.Reconnect)
 	handlers.AddQueueDeclare(declarationMiddleware.QueueDeclare)
 	handlers.AddQueueDelete(declarationMiddleware.QueueDelete)
 	handlers.AddQueueBind(declarationMiddleware.QueueBind)
@@ -165,7 +184,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 		logger:             zerolog.Logger{},
 	}
 
-	manager := newTransportManager(conn.ctx, transportChan, "CHANNEL")
+	manager := newTransportManager(conn.ctx, transportChan)
 	transportChan.logger = manager.logger
 
 	// Create our more robust channelConsume wrapper.
@@ -179,7 +198,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 	}
 
 	// Initialize our channel handlers with the new channel
-	transportChan.handlers = newChannelHandlers(conn, rogerChannel)
+	transportChan.handlers = newChannelHandlers(conn, rogerChannel, &manager.handlers)
 	// Add default middleware around these handlers.
 	newChannelApplyDefaultMiddleware(rogerChannel, conn.transportConn.dialConfig)
 
@@ -228,9 +247,7 @@ func newConnection(url string, config *Config) *Connection {
 		streadwayConfig: streadwayConfig,
 	}
 
-	manager := newTransportManager(
-		context.Background(), transportConn, "CONNECTION",
-	)
+	manager := newTransportManager(context.Background(), transportConn)
 	// Use the logger from the config
 	manager.logger = config.Logger
 
@@ -238,6 +255,7 @@ func newConnection(url string, config *Config) *Connection {
 		transportConn:    transportConn,
 		transportManager: manager,
 	}
+	conn.transportConn.handlerReconnect = conn.transportConn.basicReconnectHandler
 
 	return conn
 }

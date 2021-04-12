@@ -73,11 +73,10 @@ func (middleware *PublishTagsMiddleware) reconnectSendOrphans() {
 // offset based on the current publish count, and send orphan events to all
 // amqp.Channel.NotifyPublish() listeners.
 func (middleware *PublishTagsMiddleware) Reconnect(
-	next amqpmiddleware.HandlerReconnect,
-) (handler amqpmiddleware.HandlerReconnect) {
+	next amqpmiddleware.HandlerChannelReconnect,
+) (handler amqpmiddleware.HandlerChannelReconnect) {
 	handler = func(
 		ctx context.Context,
-		transportType amqpmiddleware.TransportType,
 		attempt uint64,
 		logger zerolog.Logger,
 	) (*streadway.Channel, error) {
@@ -92,7 +91,7 @@ func (middleware *PublishTagsMiddleware) Reconnect(
 		}()
 
 		// While those are cooking , we can move forward with getting the channel.
-		channel, err := next(ctx, transportType, attempt, logger)
+		channel, err := next(ctx, attempt, logger)
 		// Once the channel returns, wait for all our orphan notifications to be sent
 		// out.
 		sendDone.Wait()

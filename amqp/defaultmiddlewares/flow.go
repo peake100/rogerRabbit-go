@@ -26,15 +26,14 @@ func (middleware *FlowMiddleware) Active() bool {
 // Reconnect sets amqp.Channel.Flow(flow=false) on the underlying channel as soon as a
 // reconnection occurs if the user has paused the flow on the channel.
 func (middleware *FlowMiddleware) Reconnect(
-	next amqpmiddleware.HandlerReconnect,
-) (handler amqpmiddleware.HandlerReconnect) {
+	next amqpmiddleware.HandlerChannelReconnect,
+) (handler amqpmiddleware.HandlerChannelReconnect) {
 	return func(
 		ctx context.Context,
-		transportType amqpmiddleware.TransportType,
 		attempt uint64,
 		logger zerolog.Logger,
 	) (*streadway.Channel, error) {
-		channel, err := next(ctx, transportType, attempt, logger)
+		channel, err := next(ctx, attempt, logger)
 		// New channels start out active, so if flow is active we can keep chugging.
 		if err != nil || middleware.active {
 			return channel, err

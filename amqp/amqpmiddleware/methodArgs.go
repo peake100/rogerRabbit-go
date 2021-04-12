@@ -159,6 +159,32 @@ type ArgsReject struct {
 	Requeue bool
 }
 
+// ArgsNotifyClose stores args for the NotifyClose method on amqp.Connection and
+// amqp.Channel.
+type ArgsNotifyClose struct {
+	TransportType TransportType
+	Receiver      chan *streadway.Error
+}
+
+// ArgsNotifyDial stores args for the NotifyDial method on amqp.Connection and
+// amqp.Channel.
+type ArgsNotifyDial struct {
+	TransportType TransportType
+	Receiver      chan error
+}
+
+// ArgsNotifyDisconnect stores args for the NotifyDisconnect method on amqp.Connection
+// and amqp.Channel.
+type ArgsNotifyDisconnect struct {
+	TransportType TransportType
+	Receiver      chan error
+}
+
+// ArgsClose stores args for the Close method on amqp.Connection and amqp.Channel.
+type ArgsClose struct {
+	TransportType TransportType
+}
+
 // ArgsNotifyPublish stores args to amqp.Channel.NotifyPublish() for middleware to
 // inspect.
 type ArgsNotifyPublish struct {
@@ -201,7 +227,28 @@ type ArgsNotifyFlow struct {
 //
 // The below middlewares handle events from methods like NotifyPublish and Consume.
 
-// EventNotifyPublish passes event information from a  to amqp.Channel.NotifyPublish()
+// EventNotifyDial passes event information from a NotifyDial event on an
+// amqp.Connection or amqp.Channel.
+type EventNotifyDial struct {
+	TransportType TransportType
+	Err           error
+}
+
+// EventNotifyDisconnect passes event information from a NotifyDisconnect event on an
+// amqp.Connection or amqp.Channel.
+type EventNotifyDisconnect struct {
+	TransportType TransportType
+	Err           error
+}
+
+// EventNotifyClose passes event information from a NotifyClose event on an
+// amqp.Connection or amqp.Channel.
+type EventNotifyClose struct {
+	TransportType TransportType
+	Err           *streadway.Error
+}
+
+// EventNotifyPublish passes event information from an amqp.Channel.NotifyPublish()
 // event for middleware to inspect / modify before the event is passed to the caller.
 type EventNotifyPublish struct {
 	Confirmation datamodels.Confirmation

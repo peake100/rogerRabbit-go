@@ -27,17 +27,16 @@ type DeliveryTagsMiddleware struct {
 // Reconnect establishes our current delivery tag offset based on how many deliveries
 // have been consumed across all of our connections so far.
 func (middleware *DeliveryTagsMiddleware) Reconnect(
-	next amqpmiddleware.HandlerReconnect,
-) (handler amqpmiddleware.HandlerReconnect) {
+	next amqpmiddleware.HandlerChannelReconnect,
+) (handler amqpmiddleware.HandlerChannelReconnect) {
 	handler = func(
 		ctx context.Context,
-		transportType amqpmiddleware.TransportType,
 		attempt uint64,
 		logger zerolog.Logger,
 	) (*streadway.Channel, error) {
 		middleware.tagConsumeOffset = *middleware.tagConsumeCount
 
-		channel, err := next(ctx, transportType, attempt, logger)
+		channel, err := next(ctx, attempt, logger)
 		if err != nil {
 			return channel, err
 

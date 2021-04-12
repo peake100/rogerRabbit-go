@@ -35,6 +35,10 @@ type transportChannel struct {
 	logger zerolog.Logger
 }
 
+func (transport *transportChannel) TypeName() amqpmiddleware.TransportType {
+	return amqpmiddleware.TransportTypeChannel
+}
+
 // cleanup implements transport and releases a WorkGroup that allows event relays
 // to fully close
 func (transport *transportChannel) cleanup() error {
@@ -62,10 +66,8 @@ func (transport *transportChannel) tryReconnect(
 		logger.Debug().Msg("getting new channel")
 	}
 
-	// Invoke all our reconnection middleware and reconnect the channel.
-	channel, err := transport.handlers.reconnect(
-		ctx, amqpmiddleware.TransportTypeChannel, attempt, logger,
-	)
+	// Invoke all our reconnection middleware and channelReconnect the channel.
+	channel, err := transport.handlers.channelReconnect(ctx, attempt, logger)
 	if err != nil {
 		return err
 	}
@@ -793,7 +795,7 @@ identify the binding.
 ---
 
 ROGER NOTE: All relevant bindings will be removed from the list of bindings to declare
-on reconnect.
+on channelReconnect.
 */
 func (channel *Channel) ExchangeUnbind(
 	destination, key, source string, noWait bool, args Table,

@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// Channel reconnect examples.
+// Channel channelReconnect examples.
 func ExampleChannel_reconnect() {
 	// Get a new connection to our test broker.
 	//
@@ -32,7 +32,7 @@ func ExampleChannel_reconnect() {
 
 	// We can use the test method to return an testing object with some additional
 	// methods. ForceReconnect force-closes the underlying transport, causing the
-	// robust connection to reconnect.
+	// robust connection to channelReconnect.
 	//
 	// We'll use a dummy *testing.T object here. These methods are designed for tests
 	// only and should not be used in production code.
@@ -141,7 +141,7 @@ func ExampleChannel_Consume_deliveryTags() {
 
 		// Range over the consume channel
 		for delivery := range consume {
-			// Force-reconnect the channel after each delivery.
+			// Force-channelReconnect the channel after each delivery.
 			consumeChannel.Test(new(testing.T)).ForceReconnect(context.Background())
 
 			// Tick down the consumeComplete WaitGroup
@@ -544,7 +544,7 @@ func ExampleChannel_Test() {
 	// test's *testing.T value. Here, we will just pass a dummy one.
 	testHarness := channel.Test(new(testing.T))
 
-	// We can use the test harness to force the channel to reconnect. If a reconnection
+	// We can use the test harness to force the channel to channelReconnect. If a reconnection
 	// does not occur before the passed context expires, the test will be failed.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
