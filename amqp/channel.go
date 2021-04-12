@@ -10,85 +10,6 @@ import (
 	"testing"
 )
 
-// transportChannel implements transport for *streadway.Channel.
-type transportChannel struct {
-	// The current, underlying channel object.
-	*BasicChannel
-
-	// rogerConn us the roger Connection we will use to re-establish dropped channels.
-	rogerConn *Connection
-
-	// handlers Holds all registered handlers and methods for registering new
-	// middleware.
-	handlers channelHandlers
-
-	// defaultMiddlewares holds our default middlewares for testing purposes:
-	//	TODO: maybe turn this into a map and return a key when middleware is
-	//	 registered so non-default middlewares can also be accessed for testing.
-	defaultMiddlewares *ChannelTestingDefaultMiddlewares
-
-	// relaySync has all necessary sync objects for controlling the advancement of
-	// all registered eventRelays.
-	relaySync channelRelaySync
-
-	// logger for the channel transport
-	logger zerolog.Logger
-}
-
-func (transport *transportChannel) TypeName() amqpmiddleware.TransportType {
-	return amqpmiddleware.TransportTypeChannel
-}
-
-// cleanup implements transport and releases a WorkGroup that allows event relays
-// to fully close
-func (transport *transportChannel) cleanup() error {
-	// Release this lock so event processors can close.
-	defer transport.relaySync.shared.runSetup.Done()
-	return nil
-}
-
-// tryReconnect implements transport and makes a single attempt to re-establish a
-// channel.
-func (transport *transportChannel) tryReconnect(
-	ctx context.Context, attempt uint64,
-) error {
-	// Wait for all event processors processing events from the previous channel to be
-	// ready.
-	logger := transport.logger.With().Str("STATUS", "CONNECTING").Logger()
-	debugEnabled := logger.Debug().Enabled()
-
-	if debugEnabled {
-		logger.Debug().Msg("waiting for event relays to finish")
-	}
-	transport.relaySync.WaitOnLegComplete()
-
-	if debugEnabled {
-		logger.Debug().Msg("getting new channel")
-	}
-
-	// Invoke all our reconnection middleware and channelReconnect the channel.
-	channel, err := transport.handlers.channelReconnect(ctx, attempt, logger)
-	if err != nil {
-		return err
-	}
-
-	// Set up the new channel
-	transport.BasicChannel = channel
-	// Allow the relays to advance to the setup stage.
-	if debugEnabled {
-		logger.Debug().Msg("advancing event relays to setup")
-	}
-	transport.relaySync.AllowSetup()
-	transport.relaySync.WaitOnSetup()
-
-	if debugEnabled {
-		logger.Debug().Msg("restarting event relay processing")
-	}
-	transport.relaySync.AllowRelayLegRun()
-
-	return nil
-}
-
 /*
 Channel represents an AMQP channel. Used as a context for valid message
 exchange.  Errors on methods with this Channel as a receiver means this channel
@@ -112,11 +33,89 @@ fresh, one -- so operation will continue as normal.
 type Channel struct {
 	// transportChannel is the the transport object that contains our current underlying
 	// connection.
-	transportChannel *transportChannel
+	// The current, underlying channel object.
+	underlyingChannel *BasicChannel
+
+	// rogerConn us the roger Connection we will use to re-establish dropped channels.
+	rogerConn *Connection
+
+	// handlers Holds all registered handlers and methods for registering new
+	// middleware.
+	handlers channelHandlers
+
+	// defaultMiddlewares holds our default middlewares for testing purposes:
+	//	TODO: maybe turn this into a map and return a key when middleware is
+	//	 registered so non-default middlewares can also be accessed for testing.
+	defaultMiddlewares *ChannelTestingDefaultMiddlewares
+
+	// relaySync has all necessary sync objects for controlling the advancement of
+	// all registered eventRelays.
+	relaySync channelRelaySync
+
+	// logger for the channel transport
+	logger zerolog.Logger
 
 	// transportManager embedded object. Manages the lifetime of the connection: such as
 	// automatic reconnects, connection status events, and closing.
 	*transportManager
+}
+
+func (channel *Channel) transport() transport {
+	return channel.underlyingChannel
+}
+
+func (channel *Channel) TypeName() amqpmiddleware.TransportType {
+	return amqpmiddleware.TransportTypeChannel
+}
+
+// cleanup implements transport and releases a WorkGroup that allows event relays
+// to fully close
+func (channel *Channel) cleanup() error {
+	// Release this lock so event processors can close.
+	defer channel.relaySync.shared.runSetup.Done()
+	return nil
+}
+
+// tryReconnect implements transport and makes a single attempt to re-establish a
+// channel.
+func (channel *Channel) tryReconnect(
+	ctx context.Context, attempt uint64,
+) error {
+	// Wait for all event processors processing events from the previous channel to be
+	// ready.
+	logger := channel.logger.With().Str("STATUS", "CONNECTING").Logger()
+	debugEnabled := logger.Debug().Enabled()
+
+	if debugEnabled {
+		logger.Debug().Msg("waiting for event relays to finish")
+	}
+	channel.relaySync.WaitOnLegComplete()
+
+	if debugEnabled {
+		logger.Debug().Msg("getting new channel")
+	}
+
+	// Invoke all our reconnection middleware and channelReconnect the channel.
+	underlyingChan, err := channel.handlers.channelReconnect(ctx, attempt, logger)
+	if err != nil {
+		return err
+	}
+
+	// Set up the new channel
+	channel.underlyingChannel = underlyingChan
+	// Allow the relays to advance to the setup stage.
+	if debugEnabled {
+		logger.Debug().Msg("advancing event relays to setup")
+	}
+	channel.relaySync.AllowSetup()
+	channel.relaySync.WaitOnSetup()
+
+	if debugEnabled {
+		logger.Debug().Msg("restarting event relay processing")
+	}
+	channel.relaySync.AllowRelayLegRun()
+
+	return nil
 }
 
 /*
@@ -153,7 +152,7 @@ func (channel *Channel) Confirm(noWait bool) error {
 	args := amqpmiddleware.ArgsConfirms{NoWait: noWait}
 
 	op := func() error {
-		return channel.transportChannel.handlers.confirm(args)
+		return channel.handlers.confirm(args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, op, true)
@@ -202,7 +201,7 @@ func (channel *Channel) Qos(prefetchCount, prefetchSize int, global bool) error 
 	}
 
 	op := func() error {
-		return channel.transportChannel.handlers.qos(args)
+		return channel.handlers.qos(args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, op, true)
@@ -236,7 +235,7 @@ func (channel *Channel) Flow(active bool) error {
 	}
 
 	op := func() error {
-		return channel.transportChannel.handlers.flow(args)
+		return channel.handlers.flow(args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, op, true)
@@ -325,7 +324,7 @@ func (channel *Channel) QueueDeclare(
 	// Wrap the hook runner in a closure.
 	operation := func() error {
 		var opErr error
-		queue, opErr = channel.transportChannel.handlers.queueDeclare(queueArgs)
+		queue, opErr = channel.handlers.queueDeclare(queueArgs)
 		return opErr
 	}
 
@@ -364,7 +363,7 @@ func (channel *Channel) QueueDeclarePassive(
 	// Wrap the hook runner in a closure.
 	operation := func() error {
 		var opErr error
-		queue, opErr = channel.transportChannel.handlers.queueDeclarePassive(queueArgs)
+		queue, opErr = channel.handlers.queueDeclarePassive(queueArgs)
 		return opErr
 	}
 
@@ -398,7 +397,7 @@ func (channel *Channel) QueueInspect(name string) (queue Queue, err error) {
 	// Wrap the hook runner in a closure.
 	operation := func() error {
 		var opErr error
-		queue, opErr = channel.transportChannel.handlers.queueInspect(inspectArgs)
+		queue, opErr = channel.handlers.queueInspect(inspectArgs)
 		return opErr
 	}
 
@@ -466,7 +465,7 @@ func (channel *Channel) QueueBind(
 
 	// Wrap the method handler
 	operation := func() error {
-		return channel.transportChannel.handlers.queueBind(bindArgs)
+		return channel.handlers.queueBind(bindArgs)
 	}
 
 	err := channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -490,7 +489,7 @@ func (channel *Channel) QueueUnbind(name, key, exchange string, args Table) erro
 	}
 
 	operation := func() error {
-		return channel.transportChannel.handlers.queueUnbind(unbindArgs)
+		return channel.handlers.queueUnbind(unbindArgs)
 	}
 
 	err := channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -517,7 +516,7 @@ func (channel *Channel) QueuePurge(name string, noWait bool) (
 
 	operation := func() error {
 		var opErr error
-		count, opErr = channel.transportChannel.handlers.queuePurge(unbindArgs)
+		count, opErr = channel.handlers.queuePurge(unbindArgs)
 		return opErr
 	}
 
@@ -560,7 +559,7 @@ func (channel *Channel) QueueDelete(
 
 	operation := func() error {
 		var opErr error
-		count, opErr = channel.transportChannel.handlers.queueDelete(deleteArgs)
+		count, opErr = channel.handlers.queueDelete(deleteArgs)
 		return opErr
 	}
 
@@ -648,7 +647,7 @@ func (channel *Channel) ExchangeDeclare(
 	}
 
 	operation := func() error {
-		return channel.transportChannel.handlers.exchangeDeclare(exchangeArgs)
+		return channel.handlers.exchangeDeclare(exchangeArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -680,7 +679,7 @@ func (channel *Channel) ExchangeDeclarePassive(
 	}
 
 	operation := func() error {
-		return channel.transportChannel.handlers.exchangeDeclarePassive(exchangeArgs)
+		return channel.handlers.exchangeDeclarePassive(exchangeArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -717,7 +716,7 @@ func (channel *Channel) ExchangeDelete(
 	}
 
 	operation := func() error {
-		return channel.transportChannel.handlers.exchangeDelete(deleteArgs)
+		return channel.handlers.exchangeDelete(deleteArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -771,7 +770,7 @@ func (channel *Channel) ExchangeBind(
 	}
 
 	operation := func() error {
-		return channel.transportChannel.handlers.exchangeBind(bindArgs)
+		return channel.handlers.exchangeBind(bindArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -809,7 +808,7 @@ func (channel *Channel) ExchangeUnbind(
 	}
 
 	operation := func() error {
-		return channel.transportChannel.handlers.exchangeUnbind(unbindArgs)
+		return channel.handlers.exchangeUnbind(unbindArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -872,7 +871,7 @@ func (channel *Channel) Publish(
 
 	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func() error {
-		return channel.transportChannel.handlers.publish(args)
+		return channel.handlers.publish(args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -914,7 +913,7 @@ func (channel *Channel) Get(
 	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func() error {
 		var opErr error
-		msg, ok, opErr = channel.transportChannel.handlers.get(args)
+		msg, ok, opErr = channel.handlers.get(args)
 		if opErr != nil {
 			return opErr
 		}
@@ -1001,7 +1000,7 @@ func (channel *Channel) Consume(
 		NoWait:    noWait,
 		Args:      copyTable(args),
 	}
-	return channel.transportChannel.handlers.consume(callArgs)
+	return channel.handlers.consume(callArgs)
 }
 
 /*
@@ -1031,7 +1030,7 @@ func (channel *Channel) Ack(tag uint64, multiple bool) error {
 	}
 
 	operation := func() error {
-		return channel.transportChannel.handlers.ack(args)
+		return channel.handlers.ack(args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -1064,7 +1063,7 @@ func (channel *Channel) Nack(tag uint64, multiple bool, requeue bool) error {
 	}
 
 	operation := func() error {
-		return channel.transportChannel.handlers.nack(args)
+		return channel.handlers.nack(args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -1095,7 +1094,7 @@ func (channel *Channel) Reject(tag uint64, requeue bool) error {
 	}
 
 	operation := func() error {
-		return channel.transportChannel.handlers.reject(args)
+		return channel.handlers.reject(args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -1144,7 +1143,7 @@ func (channel *Channel) NotifyPublish(
 	// Setup and launch the event relay that will handle these events across multiple
 	// connections.
 	args := amqpmiddleware.ArgsNotifyPublish{Confirm: confirm}
-	return channel.transportChannel.handlers.notifyPublish(args)
+	return channel.handlers.notifyPublish(args)
 }
 
 // notifyConfirmCloseConfirmChannels closes confirmation tag channels for NotifyConfirm
@@ -1211,7 +1210,7 @@ func (channel *Channel) NotifyConfirm(
 		Ack:  ack,
 		Nack: nack,
 	}
-	return channel.transportChannel.handlers.notifyConfirm(callArgs)
+	return channel.handlers.notifyConfirm(callArgs)
 }
 
 /*
@@ -1226,7 +1225,7 @@ func (channel *Channel) NotifyConfirmOrOrphaned(
 		Nack:     nack,
 		Orphaned: orphaned,
 	}
-	return channel.transportChannel.handlers.notifyConfirmOrOrphaned(callArgs)
+	return channel.handlers.notifyConfirmOrOrphaned(callArgs)
 }
 
 // runNotifyConfirmOrOrphaned should be launched as a goroutine and handles sending
@@ -1262,7 +1261,7 @@ therefore will be missed. You can subscribe to disconnection events through.
 */
 func (channel *Channel) NotifyReturn(returns chan Return) chan Return {
 	args := amqpmiddleware.ArgsNotifyReturn{Returns: returns}
-	return channel.transportChannel.handlers.notifyReturn(args)
+	return channel.handlers.notifyReturn(args)
 }
 
 /*
@@ -1274,7 +1273,7 @@ The subscription tag is returned to the listener.
 */
 func (channel *Channel) NotifyCancel(cancellations chan string) chan string {
 	args := amqpmiddleware.ArgsNotifyCancel{Cancellations: cancellations}
-	return channel.transportChannel.handlers.notifyCancel(args)
+	return channel.handlers.notifyCancel(args)
 }
 
 /*
@@ -1320,7 +1319,7 @@ even when using RabbitMQ.
 */
 func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool {
 	args := amqpmiddleware.ArgsNotifyFlow{FlowNotifications: flowNotifications}
-	return channel.transportChannel.handlers.notifyFlow(args)
+	return channel.handlers.notifyFlow(args)
 }
 
 // returns error we should pass to transaction panics until they are implemented.
@@ -1428,23 +1427,20 @@ func (tester *ChannelTesting) ConnTest() *TransportTesting {
 
 	return &TransportTesting{
 		t:       tester.t,
-		manager: tester.channel.transportChannel.rogerConn.transportManager,
+		manager: tester.channel.rogerConn.transportManager,
 		blocks:  &blocks,
 	}
 }
 
 // UnderlyingChannel returns the current underlying streadway/amqp.Channel being used.
 func (tester *ChannelTesting) UnderlyingChannel() *BasicChannel {
-	if tester.channel.transportChannel == nil {
-		return nil
-	}
-	return tester.channel.transportChannel.BasicChannel
+	return tester.channel.underlyingChannel
 }
 
 // UnderlyingConnection returns the current underlying streadway/amqp.Connection being
 // used to feed this Channel.
 func (tester *ChannelTesting) UnderlyingConnection() *BasicConnection {
-	return tester.channel.transportChannel.rogerConn.transportConn.BasicConnection
+	return tester.channel.rogerConn.underlyingConn
 }
 
 // ReconnectionCount returns the number of times this channel has been reconnected.
@@ -1463,7 +1459,7 @@ func (channel *Channel) Test(t *testing.T) *ChannelTesting {
 			blocks:  &blocks,
 		},
 		channel:            channel,
-		DefaultMiddlewares: channel.transportChannel.defaultMiddlewares,
+		DefaultMiddlewares: channel.defaultMiddlewares,
 	}
 
 	t.Cleanup(chanTester.cleanup)

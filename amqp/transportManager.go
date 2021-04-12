@@ -19,7 +19,6 @@ import (
 // *streadway.Channel. We want o abstract away identical operations we need to implement
 // on both of them
 type transport interface {
-	TypeName() amqpmiddleware.TransportType
 	NotifyClose(receiver chan *streadway.Error) chan *streadway.Error
 	Close() error
 }
@@ -27,7 +26,11 @@ type transport interface {
 // transportReconnect is the interface we need to implement for a transport capable of
 // being reconnected
 type transportReconnect interface {
-	transport
+	TypeName() amqpmiddleware.TransportType
+
+	// transport returns  the underlying transport (streadway.Connection or
+	// streadway.Channel)
+	transport() transport
 
 	// tryReconnect is needed for both Connection and Channel. This method
 	// attempts to re-establish a connection for the underlying object exactly once.
@@ -127,7 +130,7 @@ func (tester *TransportTesting) SignalOnReconnect() *TestReconnectSignaler {
 
 // DisconnectTransport closes the underlying transport to force a reconnection.
 func (tester *TransportTesting) DisconnectTransport() {
-	err := tester.manager.transport.Close()
+	err := tester.manager.transport.transport().Close()
 	if !assert.NoError(tester.t, err, "close underlying transport") {
 		tester.t.FailNow()
 	}
@@ -432,7 +435,7 @@ func (manager *transportManager) cancelCtxCloseTransport() {
 	defer manager.transportLock.Unlock()
 
 	// Close the current connection on exit
-	defer manager.transport.Close()
+	defer manager.transport.transport().Close()
 }
 
 // Close the robust connection. This both closes the current connection and keeps it

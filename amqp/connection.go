@@ -9,57 +9,6 @@ import (
 	"testing"
 )
 
-// transportConnection implements transport for streadway/amqp.Connection.
-type transportConnection struct {
-	// Embedded streadway/amqp.Connection
-	*BasicConnection
-
-	// dialURL is the address to dial for the broker.
-	dialURL string
-
-	// dialConfig is the Config passed to our constructor method.
-	dialConfig Config
-
-	// streadwayConfig is extracted from the settings on dialConfig.
-	streadwayConfig BasicConfig
-
-	// handlerReconnect is the reconnect handler with caller-supplied middleware
-	// applied.
-	handlerReconnect amqpmiddleware.HandlerConnectionReconnect
-}
-
-// basicReconnectHandler is the innermost reconnection handler for the
-// transportConnection.
-func (transport *transportConnection) basicReconnectHandler(
-	ctx context.Context,
-	attempt uint64,
-	logger zerolog.Logger,
-) (*streadway.Connection, error) {
-	return streadway.DialConfig(transport.dialURL, transport.streadwayConfig)
-}
-
-func (transport *transportConnection) TypeName() amqpmiddleware.TransportType {
-	return amqpmiddleware.TransportTypeConnection
-}
-
-// cleanup implements transportManager. Does nothing for transportConnection.
-func (transport *transportConnection) cleanup() error {
-	return nil
-}
-
-// tryReconnect implements transportManager and tries to re-dial the broker one time.
-func (transport *transportConnection) tryReconnect(
-	ctx context.Context, attempt uint64,
-) error {
-	conn, err := transport.handlerReconnect(ctx, attempt, transport.dialConfig.Logger)
-	if err != nil {
-		return err
-	}
-
-	transport.BasicConnection = conn
-	return nil
-}
-
 // Connection manages the serialization and deserialization of frames from IO
 // and dispatches the frames to the appropriate channel.  All RPC methods and
 // asynchronous Publishing, Delivery, Ack, Nack and Return messages are
@@ -80,13 +29,61 @@ func (transport *transportConnection) tryReconnect(
 // automatically suppress and re-establish connection for, but in these early days,
 // ErrClosed seems like a good place to start.
 type Connection struct {
-	// transportConn is a transport object that contains our current underlying
-	// connection.
-	transportConn *transportConnection
+	// Embedded streadway/amqp.Connection
+	underlyingConn *BasicConnection
+
+	// dialURL is the address to dial for the broker.
+	dialURL string
+
+	// dialConfig is the Config passed to our constructor method.
+	dialConfig Config
+
+	// streadwayConfig is extracted from the settings on dialConfig.
+	streadwayConfig BasicConfig
+
+	// handlerReconnect is the reconnect handler with caller-supplied middleware
+	// applied.
+	handlerReconnect amqpmiddleware.HandlerConnectionReconnect
 
 	// transportManager manages the lifetime of the connection: such as automatic
 	// reconnects, connection status events, and closing.
 	*transportManager
+}
+
+func (conn *Connection) transport() transport {
+	return conn.underlyingConn
+}
+
+// basicReconnectHandler is the innermost reconnection handler for the
+// transportConnection.
+func (conn *Connection) basicReconnectHandler(
+	ctx context.Context,
+	attempt uint64,
+	logger zerolog.Logger,
+) (*streadway.Connection, error) {
+	return streadway.DialConfig(conn.dialURL, conn.streadwayConfig)
+}
+
+func (conn *Connection) TypeName() amqpmiddleware.TransportType {
+	return amqpmiddleware.TransportTypeConnection
+}
+
+// cleanup implements transportReconnect. Does nothing for transportConnection.
+func (conn *Connection) cleanup() error {
+	return nil
+}
+
+// tryReconnect implements transportReconnect and tries to re-dial the broker one time.
+func (conn *Connection) tryReconnect(
+	ctx context.Context, attempt uint64,
+) error {
+	basicConn, err := conn.handlerReconnect(ctx, attempt, conn.dialConfig.Logger)
+	if err != nil {
+		return err
+	}
+
+	conn.underlyingConn = basicConn
+	return nil
 }
 
 // getStreadwayChannel gets a streadway/amqp.Channel from the current underlying
@@ -96,7 +93,7 @@ func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 ) {
 	operation := func() error {
 		var channelErr error
-		channel, channelErr = conn.transportConn.Channel()
+		channel, channelErr = conn.underlyingConn.Channel()
 		return channelErr
 	}
 
@@ -116,7 +113,7 @@ func newChannelApplyMiddleware(
 		return config
 	}
 
-	middlewareStorage := channel.transportChannel.defaultMiddlewares
+	middlewareStorage := channel.defaultMiddlewares
 
 	mConfig := config.ChannelMiddleware
 
@@ -169,8 +166,8 @@ func newChannelApplyMiddleware(
 	mConfig.AddExchangeUnbind(declarationMiddleware.ExchangeUnbind)
 	middlewareStorage.RouteDeclaration = declarationMiddleware
 
-	channel.transportChannel.handlers = newChannelHandlers(
-		channel.transportChannel.rogerConn,
+	channel.handlers = newChannelHandlers(
+		channel.rogerConn,
 		channel,
 		transportHandlers,
 		mConfig,
@@ -190,8 +187,8 @@ ROGER NOTE: Unlike the normal channels, roger channels will automatically reconn
 all errors until Channel.Close() is called.
 */
 func (conn *Connection) Channel() (*Channel, error) {
-	transportChan := &transportChannel{
-		BasicChannel:       nil,
+	rogerChannel := &Channel{
+		underlyingChannel:  nil,
 		rogerConn:          conn,
 		handlers:           channelHandlers{},
 		defaultMiddlewares: new(ChannelTestingDefaultMiddlewares),
@@ -199,7 +196,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 		logger:             zerolog.Logger{},
 	}
 
-	chanMiddleware := conn.transportConn.dialConfig.ChannelMiddleware
+	chanMiddleware := conn.dialConfig.ChannelMiddleware
 	transportMiddleware := transportManagerMiddleware{
 		notifyClose:            chanMiddleware.notifyClose,
 		notifyDial:             chanMiddleware.notifyDial,
@@ -210,22 +207,17 @@ func (conn *Connection) Channel() (*Channel, error) {
 		notifyCloseEvents:      chanMiddleware.notifyCloseEvents,
 	}
 
-	manager := newTransportManager(conn.ctx, transportChan, transportMiddleware)
-	transportChan.logger = manager.logger
+	manager := newTransportManager(conn.ctx, rogerChannel, transportMiddleware)
+	rogerChannel.logger = manager.logger
+	rogerChannel.transportManager = manager
 
-	// Create our more robust channelConsume wrapper.
-	rogerChannel := &Channel{
-		transportChannel: transportChan,
-		transportManager: manager,
-	}
-
-	transportChan.relaySync = channelRelaySync{
+	rogerChannel.relaySync = channelRelaySync{
 		shared: newSharedSync(rogerChannel),
 	}
 
 	// Add default middleware around these handlers.
 	newChannelApplyMiddleware(
-		rogerChannel, conn.transportConn.dialConfig, manager.handlers,
+		rogerChannel, conn.dialConfig, manager.handlers,
 	)
 
 	// Try and establish a channel using the connection's context.
@@ -266,14 +258,6 @@ func newConnection(url string, config Config) *Connection {
 		Dial:            config.Dial,
 	}
 
-	// Create our robust connection object
-	transportConn := &transportConnection{
-		BasicConnection: nil,
-		dialURL:         url,
-		dialConfig:      config,
-		streadwayConfig: streadwayConfig,
-	}
-
 	middlewares := transportManagerMiddleware{
 		notifyClose:            config.ConnectionMiddleware.notifyClose,
 		notifyDial:             config.ConnectionMiddleware.notifyDial,
@@ -284,23 +268,33 @@ func newConnection(url string, config Config) *Connection {
 		notifyCloseEvents:      config.ConnectionMiddleware.notifyCloseEvents,
 	}
 
+	// Create a new connection
+	conn := &Connection{
+		underlyingConn:  nil,
+		dialURL:         url,
+		dialConfig:      config,
+		streadwayConfig: streadwayConfig,
+
+		// We will defer setting these fields since they need to reference the
+		// connection
+		handlerReconnect: nil,
+		transportManager: nil,
+	}
+
 	// Create the new transport manager.
-	manager := newTransportManager(context.Background(), transportConn, middlewares)
+	manager := newTransportManager(context.Background(), conn, middlewares)
 	// Use the logger from the middlewares
 	manager.logger = config.Logger
 
-	conn := &Connection{
-		transportConn:    transportConn,
-		transportManager: manager,
-	}
+	conn.transportManager = manager
 
 	// Create the reconnect handler.
-	reconnectHandler := conn.transportConn.basicReconnectHandler
+	reconnectHandler := conn.basicReconnectHandler
 	for _, thisMiddleware := range config.ConnectionMiddleware.connectionReconnect {
 		reconnectHandler = thisMiddleware(reconnectHandler)
 	}
 
-	conn.transportConn.handlerReconnect = reconnectHandler
+	conn.handlerReconnect = reconnectHandler
 
 	return conn
 }

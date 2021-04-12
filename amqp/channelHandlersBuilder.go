@@ -47,7 +47,7 @@ func (builder *channelHandlerBuilder) createHandlerQueueDeclare() (
 	handler amqpmiddleware.HandlerQueueDeclare,
 ) {
 	handler = func(args amqpmiddleware.ArgsQueueDeclare) (Queue, error) {
-		return builder.channel.transportChannel.QueueDeclare(
+		return builder.channel.underlyingChannel.QueueDeclare(
 			args.Name,
 			args.Durable,
 			args.AutoDelete,
@@ -71,7 +71,7 @@ func (builder *channelHandlerBuilder) createHandlerQueueDeclarePassive() (
 	handler amqpmiddleware.HandlerQueueDeclare,
 ) {
 	handler = func(args amqpmiddleware.ArgsQueueDeclare) (Queue, error) {
-		return builder.channel.transportChannel.QueueDeclarePassive(
+		return builder.channel.underlyingChannel.QueueDeclarePassive(
 			args.Name,
 			args.Durable,
 			args.AutoDelete,
@@ -94,7 +94,7 @@ func (builder *channelHandlerBuilder) createHandlerQueueInspect() (
 	handler amqpmiddleware.HandlerQueueInspect,
 ) {
 	handler = func(args amqpmiddleware.ArgsQueueInspect) (Queue, error) {
-		return builder.channel.transportChannel.QueueInspect(args.Name)
+		return builder.channel.underlyingChannel.QueueInspect(args.Name)
 	}
 
 	for _, middleware := range builder.middlewares.queueInspect {
@@ -110,7 +110,7 @@ func (builder *channelHandlerBuilder) createHandlerQueueDelete() (
 	handler amqpmiddleware.HandlerQueueDelete,
 ) {
 	handler = func(args amqpmiddleware.ArgsQueueDelete) (int, error) {
-		return builder.channel.transportChannel.QueueDelete(
+		return builder.channel.underlyingChannel.QueueDelete(
 			args.Name,
 			args.IfUnused,
 			args.IfEmpty,
@@ -131,7 +131,7 @@ func (builder *channelHandlerBuilder) createHandlerQueueBind() (
 	handler amqpmiddleware.HandlerQueueBind,
 ) {
 	handler = func(args amqpmiddleware.ArgsQueueBind) error {
-		return builder.channel.transportChannel.QueueBind(
+		return builder.channel.underlyingChannel.QueueBind(
 			args.Name,
 			args.Key,
 			args.Exchange,
@@ -153,7 +153,7 @@ func (builder *channelHandlerBuilder) createHandlerQueueUnbind() (
 	handler amqpmiddleware.HandlerQueueUnbind,
 ) {
 	handler = func(args amqpmiddleware.ArgsQueueUnbind) error {
-		return builder.channel.transportChannel.QueueUnbind(
+		return builder.channel.underlyingChannel.QueueUnbind(
 			args.Name,
 			args.Key,
 			args.Exchange,
@@ -174,7 +174,7 @@ func (builder *channelHandlerBuilder) createHandlerQueuePurge() (
 	handler amqpmiddleware.HandlerQueuePurge,
 ) {
 	handler = func(args amqpmiddleware.ArgsQueuePurge) (int, error) {
-		return builder.channel.transportChannel.QueuePurge(
+		return builder.channel.underlyingChannel.QueuePurge(
 			args.Name,
 			args.NoWait,
 		)
@@ -193,7 +193,7 @@ func (builder *channelHandlerBuilder) createHandlerExchangeDeclare() (
 	handler amqpmiddleware.HandlerExchangeDeclare,
 ) {
 	handler = func(args amqpmiddleware.ArgsExchangeDeclare) error {
-		return builder.channel.transportChannel.ExchangeDeclare(
+		return builder.channel.underlyingChannel.ExchangeDeclare(
 			args.Name,
 			args.Kind,
 			args.Durable,
@@ -218,7 +218,7 @@ func (builder *channelHandlerBuilder) createHandlerExchangeDeclarePassive() (
 	handler amqpmiddleware.HandlerExchangeDeclare,
 ) {
 	handler = func(args amqpmiddleware.ArgsExchangeDeclare) error {
-		return builder.channel.transportChannel.ExchangeDeclarePassive(
+		return builder.channel.underlyingChannel.ExchangeDeclarePassive(
 			args.Name,
 			args.Kind,
 			args.Durable,
@@ -242,7 +242,7 @@ func (builder *channelHandlerBuilder) createHandlerExchangeDelete() (
 	handler amqpmiddleware.HandlerExchangeDelete,
 ) {
 	handler = func(args amqpmiddleware.ArgsExchangeDelete) error {
-		return builder.channel.transportChannel.ExchangeDelete(
+		return builder.channel.underlyingChannel.ExchangeDelete(
 			args.Name,
 			args.IfUnused,
 			args.NoWait,
@@ -262,7 +262,7 @@ func (builder *channelHandlerBuilder) createHandlerExchangeBind() (
 	handler amqpmiddleware.HandlerExchangeBind,
 ) {
 	handler = func(args amqpmiddleware.ArgsExchangeBind) error {
-		return builder.channel.transportChannel.ExchangeBind(
+		return builder.channel.underlyingChannel.ExchangeBind(
 			args.Destination,
 			args.Key,
 			args.Source,
@@ -284,7 +284,7 @@ func (builder *channelHandlerBuilder) createHandlerExchangeUnbind() (
 	handler amqpmiddleware.HandlerExchangeUnbind,
 ) {
 	handler = func(args amqpmiddleware.ArgsExchangeUnbind) error {
-		return builder.channel.transportChannel.ExchangeUnbind(
+		return builder.channel.underlyingChannel.ExchangeUnbind(
 			args.Destination,
 			args.Key,
 			args.Source,
@@ -306,7 +306,7 @@ func (builder *channelHandlerBuilder) createHandlerQoS() (
 	handler amqpmiddleware.HandlerQoS,
 ) {
 	handler = func(args amqpmiddleware.ArgsQoS) error {
-		return builder.channel.transportChannel.Qos(
+		return builder.channel.underlyingChannel.Qos(
 			args.PrefetchCount,
 			args.PrefetchSize,
 			args.Global,
@@ -326,7 +326,7 @@ func (builder *channelHandlerBuilder) createHandlerFlow() (
 	handler amqpmiddleware.HandlerFlow,
 ) {
 	handler = func(args amqpmiddleware.ArgsFlow) error {
-		return builder.channel.transportChannel.Flow(args.Active)
+		return builder.channel.underlyingChannel.Flow(args.Active)
 	}
 
 	for _, middleware := range builder.middlewares.flow {
@@ -342,7 +342,7 @@ func (builder *channelHandlerBuilder) createHandlerConfirm() (
 	handler amqpmiddleware.HandlerConfirm,
 ) {
 	handler = func(args amqpmiddleware.ArgsConfirms) error {
-		return builder.channel.transportChannel.Confirm(
+		return builder.channel.underlyingChannel.Confirm(
 			args.NoWait,
 		)
 	}
@@ -360,7 +360,7 @@ func (builder *channelHandlerBuilder) createHandlerPublish() (
 	handler amqpmiddleware.HandlerPublish,
 ) {
 	handler = func(args amqpmiddleware.ArgsPublish) error {
-		return builder.channel.transportChannel.Publish(
+		return builder.channel.underlyingChannel.Publish(
 			args.Exchange,
 			args.Key,
 			args.Mandatory,
@@ -383,7 +383,7 @@ func (builder *channelHandlerBuilder) createHandlerGet() (
 ) {
 	handler = func(args amqpmiddleware.ArgsGet) (msg Delivery, ok bool, err error) {
 		var msgOrig streadway.Delivery
-		msgOrig, ok, err = builder.channel.transportChannel.Get(
+		msgOrig, ok, err = builder.channel.underlyingChannel.Get(
 			args.Queue, args.AutoAck,
 		)
 		msg = datamodels.NewDelivery(msgOrig, builder.channel)
@@ -450,7 +450,7 @@ func (builder *channelHandlerBuilder) createHandlerAck() (
 	handler amqpmiddleware.HandlerAck,
 ) {
 	handler = func(args amqpmiddleware.ArgsAck) error {
-		return builder.channel.transportChannel.Ack(args.Tag, args.Multiple)
+		return builder.channel.underlyingChannel.Ack(args.Tag, args.Multiple)
 	}
 
 	for _, middleware := range builder.middlewares.ack {
@@ -466,7 +466,7 @@ func (builder *channelHandlerBuilder) createHandlerNack() (
 	handler amqpmiddleware.HandlerNack,
 ) {
 	handler = func(args amqpmiddleware.ArgsNack) error {
-		return builder.channel.transportChannel.Nack(
+		return builder.channel.underlyingChannel.Nack(
 			args.Tag, args.Multiple, args.Requeue,
 		)
 	}
@@ -484,7 +484,7 @@ func (builder *channelHandlerBuilder) createHandlerReject() (
 	handler amqpmiddleware.HandlerReject,
 ) {
 	handler = func(args amqpmiddleware.ArgsReject) error {
-		return builder.channel.transportChannel.Reject(args.Tag, args.Requeue)
+		return builder.channel.underlyingChannel.Reject(args.Tag, args.Requeue)
 	}
 
 	for _, middleware := range builder.middlewares.reject {

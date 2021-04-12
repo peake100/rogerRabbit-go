@@ -107,7 +107,7 @@ func (manager *transportManager) reconnect(ctx context.Context, retry bool) erro
 
 	// Register a notification channelConsume for the new connection's closure.
 	closeChan := make(chan *streadway.Error, 1)
-	manager.transport.NotifyClose(closeChan)
+	manager.transport.transport().NotifyClose(closeChan)
 
 	// Launch a goroutine to reconnectMiddleware on connection closure.
 	go manager.reconnectListenForClose(closeChan)
