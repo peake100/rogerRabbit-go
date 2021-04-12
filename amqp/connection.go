@@ -29,7 +29,9 @@ func (transport *transportConnection) cleanup() error {
 }
 
 // tryReconnect implements transportManager and tries to re-dial the broker one time.
-func (transport *transportConnection) tryReconnect(ctx context.Context) error {
+func (transport *transportConnection) tryReconnect(
+	ctx context.Context, attempt uint64,
+) error {
 	conn, err := streadway.DialConfig(transport.dialURL, *transport.streadwayConfig)
 	if err != nil {
 		return err

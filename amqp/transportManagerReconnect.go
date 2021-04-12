@@ -14,7 +14,7 @@ func (manager *transportManager) reconnectRedialOnce(ctx context.Context) error 
 			Uint64("RECONNECT_COUNT", manager.reconnectCount).
 			Msg("attempting connection")
 	}
-	err := manager.transport.tryReconnect(ctx)
+	err := manager.transport.tryReconnect(ctx, manager.reconnectCount)
 	if err != nil {
 		manager.logger.Debug().Err(err).Msg("error re-dialing connection")
 	}

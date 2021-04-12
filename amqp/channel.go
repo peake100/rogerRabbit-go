@@ -45,7 +45,9 @@ func (transport *transportChannel) cleanup() error {
 
 // tryReconnect implements transport and makes a single attempt to re-establish a
 // channel.
-func (transport *transportChannel) tryReconnect(ctx context.Context) error {
+func (transport *transportChannel) tryReconnect(
+	ctx context.Context, attempt uint64,
+) error {
 	// Wait for all event processors processing events from the previous channel to be
 	// ready.
 	logger := transport.logger.With().Str("STATUS", "CONNECTING").Logger()
@@ -61,7 +63,7 @@ func (transport *transportChannel) tryReconnect(ctx context.Context) error {
 	}
 
 	// Invoke all our reconnection middleware and reconnect the channel.
-	channel, err := transport.handlers.reconnect(ctx, logger)
+	channel, err := transport.handlers.reconnect(ctx, attempt, logger)
 	if err != nil {
 		return err
 	}
