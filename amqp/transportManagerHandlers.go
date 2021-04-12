@@ -30,7 +30,7 @@ func newTransportManagerHandlers(
 	manager *transportManager,
 	middleware transportManagerMiddleware,
 ) transportManagerHandlers {
-	builder := transportHandlersBaseBuilder{
+	builder := transportHandlersBuilder{
 		manager:    manager,
 		middleware: middleware,
 	}

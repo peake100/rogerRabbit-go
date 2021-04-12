@@ -31,15 +31,15 @@ type transportManagerMiddleware struct {
 	notifyCloseEvents []amqpmiddleware.NotifyCloseEvents
 }
 
-// transportHandlersBaseBuilder builds the base handlers for transportManager methods.
-type transportHandlersBaseBuilder struct {
+// transportHandlersBuilder builds the base handlers for transportManager methods.
+type transportHandlersBuilder struct {
 	manager    *transportManager
 	middleware transportManagerMiddleware
 }
 
 // createBaseNotifyClose creates the base handler for transportManager.NotifyClose.
 func (
-	builder transportHandlersBaseBuilder,
+	builder transportHandlersBuilder,
 ) createBaseNotifyClose() amqpmiddleware.HandlerNotifyClose {
 	manager := builder.manager
 	eventMiddlewares := builder.middleware.notifyCloseEvents
@@ -82,7 +82,7 @@ func (
 
 // createBaseNotifyDial creates the base handler for transportManager.NotifyDial.
 func (
-	builder transportHandlersBaseBuilder,
+	builder transportHandlersBuilder,
 ) createBaseNotifyDial() amqpmiddleware.HandlerNotifyDial {
 	manager := builder.manager
 	eventMiddlewares := builder.middleware.notifyDialEvents
@@ -124,7 +124,7 @@ func (
 // createBaseNotifyDisconnect creates the base handler for
 // transportManager.NotifyDisconnect.
 func (
-	builder transportHandlersBaseBuilder,
+	builder transportHandlersBuilder,
 ) createBaseNotifyDisconnect() amqpmiddleware.HandlerNotifyDisconnect {
 	manager := builder.manager
 	eventMiddlewares := builder.middleware.notifyDisconnectEvents
@@ -164,9 +164,7 @@ func (
 }
 
 // createBaseClose creates the base handler for transportManager.Close.
-func (
-	builder transportHandlersBaseBuilder,
-) createBaseClose() amqpmiddleware.HandlerClose {
+func (builder transportHandlersBuilder) createBaseClose() amqpmiddleware.HandlerClose {
 	manager := builder.manager
 	return func(args amqpmiddleware.ArgsClose) error {
 		// If the context has already been cancelled, we can exit.
