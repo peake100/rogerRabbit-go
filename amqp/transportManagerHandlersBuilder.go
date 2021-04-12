@@ -48,7 +48,7 @@ func (
 		manager.notificationSubscriberLock.Lock()
 		defer manager.notificationSubscriberLock.Unlock()
 
-		// If the context of the transport manager has been cancelled, close the
+		// If the context of the livesOnce manager has been cancelled, close the
 		// receiver and exit.
 		if manager.ctx.Err() != nil {
 			close(args.Receiver)
@@ -63,7 +63,7 @@ func (
 			event amqpmiddleware.EventNotifyClose,
 		) {
 			// We send the error then close the channel. This handler will only be
-			// called once on the final transport close.
+			// called once on the final livesOnce close.
 			args.Receiver <- event.Err
 			close(args.Receiver)
 		}
@@ -91,7 +91,7 @@ func (
 		manager.notificationSubscriberLock.Lock()
 		defer manager.notificationSubscriberLock.Unlock()
 
-		// If the context of the transport manager has been cancelled, close the
+		// If the context of the livesOnce manager has been cancelled, close the
 		// receiver and exit.
 		if manager.ctx.Err() != nil {
 			close(args.Receiver)
@@ -133,7 +133,7 @@ func (
 		manager.notificationSubscriberLock.Lock()
 		defer manager.notificationSubscriberLock.Unlock()
 
-		// If the context of the transport manager has been cancelled, close the
+		// If the context of the livesOnce manager has been cancelled, close the
 		// receiver and exit.
 		if manager.ctx.Err() != nil {
 			close(args.Receiver)
@@ -196,7 +196,7 @@ func (
 		// Send closure notifications to all subscribers.
 		manager.sendCloseNotifications(nil)
 
-		// Execute any cleanup on behalf of the transport implementation.
+		// Execute any cleanup on behalf of the livesOnce implementation.
 		return manager.transport.cleanup()
 	}
 }

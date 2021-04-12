@@ -57,18 +57,21 @@ type Channel struct {
 
 	// transportManager embedded object. Manages the lifetime of the connection: such as
 	// automatic reconnects, connection status events, and closing.
-	*transportManager
+	transportManager
 }
 
-func (channel *Channel) transport() transport {
-	return channel.underlyingChannel
-}
-
-func (channel *Channel) TypeName() amqpmiddleware.TransportType {
+// transportType implements reconnects and returns "CHANNEL".
+func (channel *Channel) transportType() amqpmiddleware.TransportType {
 	return amqpmiddleware.TransportTypeChannel
 }
 
-// cleanup implements transport and releases a WorkGroup that allows event relays
+// underlyingTransport implements reconnects and returns the underlying
+// streadway.Channel as a livesOnce interface
+func (channel *Channel) underlyingTransport() livesOnce {
+	return channel.underlyingChannel
+}
+
+// cleanup implements reconnects and releases a WorkGroup that allows event relays
 // to fully close
 func (channel *Channel) cleanup() error {
 	// Release this lock so event processors can close.
@@ -76,8 +79,8 @@ func (channel *Channel) cleanup() error {
 	return nil
 }
 
-// tryReconnect implements transport and makes a single attempt to re-establish a
-// channel.
+// tryReconnect implements reconnects and makes a single attempt to re-establish an
+// underlying channel connection.
 func (channel *Channel) tryReconnect(
 	ctx context.Context, attempt uint64,
 ) error {
@@ -1427,7 +1430,7 @@ func (tester *ChannelTesting) ConnTest() *TransportTesting {
 
 	return &TransportTesting{
 		t:       tester.t,
-		manager: tester.channel.rogerConn.transportManager,
+		manager: &tester.channel.rogerConn.transportManager,
 		blocks:  &blocks,
 	}
 }
@@ -1455,7 +1458,7 @@ func (channel *Channel) Test(t *testing.T) *ChannelTesting {
 	chanTester := &ChannelTesting{
 		TransportTesting: &TransportTesting{
 			t:       t,
-			manager: channel.transportManager,
+			manager: &channel.transportManager,
 			blocks:  &blocks,
 		},
 		channel:            channel,

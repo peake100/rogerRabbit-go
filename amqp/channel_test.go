@@ -602,7 +602,7 @@ func (suite *ChannelMethodsSuite) Test0120_QueueDeclare_RedeclareAfterDisconnect
 
 	chanTester := suite.ChannelPublishTester()
 
-	// grab the channel transport lock so our channel cannot reopen immediately.
+	// grab the channel livesOnce lock so our channel cannot reopen immediately.
 	chanTester.BlockReconnect()
 	chanTester.DisconnectTransport()
 

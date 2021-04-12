@@ -29,7 +29,7 @@ func ExampleChannel_reconnect() {
 	}
 
 	// We can use the test method to return an testing object with some additional
-	// methods. ForceReconnect force-closes the underlying transport, causing the
+	// methods. ForceReconnect force-closes the underlying livesOnce, causing the
 	// robust connection to channelReconnect.
 	//
 	// We'll use a dummy *testing.T object here. These methods are designed for tests
