@@ -11,7 +11,9 @@ type transportHandlersBaseBuilder struct {
 }
 
 // createBaseNotifyClose creates the base handler for transportManager.NotifyClose.
-func (builder transportHandlersBaseBuilder) createBaseNotifyClose() amqpmiddleware.HandlerNotifyClose {
+func (
+	builder transportHandlersBaseBuilder,
+) createBaseNotifyClose() amqpmiddleware.HandlerNotifyClose {
 	manager := builder.manager
 	return func(args amqpmiddleware.ArgsNotifyClose) chan *streadway.Error {
 		manager.notificationSubscriberLock.Lock()
@@ -50,7 +52,9 @@ func (builder transportHandlersBaseBuilder) createBaseNotifyClose() amqpmiddlewa
 }
 
 // createBaseNotifyDial creates the base handler for transportManager.NotifyDial.
-func (builder transportHandlersBaseBuilder) createBaseNotifyDial() amqpmiddleware.HandlerNotifyDial {
+func (
+	builder transportHandlersBaseBuilder,
+) createBaseNotifyDial() amqpmiddleware.HandlerNotifyDial {
 	manager := builder.manager
 	return func(args amqpmiddleware.ArgsNotifyDial) error {
 		manager.notificationSubscriberLock.Lock()
@@ -88,7 +92,9 @@ func (builder transportHandlersBaseBuilder) createBaseNotifyDial() amqpmiddlewar
 
 // createBaseNotifyDisconnect creates the base handler for
 // transportManager.NotifyDisconnect.
-func (builder transportHandlersBaseBuilder) createBaseNotifyDisconnect() amqpmiddleware.HandlerNotifyDisconnect {
+func (
+	builder transportHandlersBaseBuilder,
+) createBaseNotifyDisconnect() amqpmiddleware.HandlerNotifyDisconnect {
 	manager := builder.manager
 	return func(args amqpmiddleware.ArgsNotifyDisconnect) error {
 		manager.notificationSubscriberLock.Lock()
@@ -125,7 +131,9 @@ func (builder transportHandlersBaseBuilder) createBaseNotifyDisconnect() amqpmid
 }
 
 // createBaseClose creates the base handler for transportManager.Close.
-func (builder transportHandlersBaseBuilder) createBaseClose() amqpmiddleware.HandlerClose {
+func (
+	builder transportHandlersBaseBuilder,
+) createBaseClose() amqpmiddleware.HandlerClose {
 	manager := builder.manager
 	return func(args amqpmiddleware.ArgsClose) error {
 		// If the context has already been cancelled, we can exit.
