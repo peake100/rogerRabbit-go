@@ -29,9 +29,12 @@ func (middleware *FlowMiddleware) Reconnect(
 	next amqpmiddleware.HandlerReconnect,
 ) (handler amqpmiddleware.HandlerReconnect) {
 	return func(
-		ctx context.Context, attempt uint64, logger zerolog.Logger,
+		ctx context.Context,
+		transportType amqpmiddleware.TransportType,
+		attempt uint64,
+		logger zerolog.Logger,
 	) (*streadway.Channel, error) {
-		channel, err := next(ctx, attempt, logger)
+		channel, err := next(ctx, transportType, attempt, logger)
 		// New channels start out active, so if flow is active we can keep chugging.
 		if err != nil || middleware.active {
 			return channel, err

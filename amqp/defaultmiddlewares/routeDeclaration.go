@@ -443,11 +443,12 @@ func (middle *RouteDeclarationMiddleware) reconnectBindExchanges(
 // reconnection event.
 func (middle *RouteDeclarationMiddleware) reconnectHandler(
 	ctx context.Context,
+	transportType amqpmiddleware.TransportType,
 	attempt uint64,
 	logger zerolog.Logger,
 	next amqpmiddleware.HandlerReconnect,
 ) (*streadway.Channel, error) {
-	channel, err := next(ctx, attempt, logger)
+	channel, err := next(ctx, transportType, attempt, logger)
 	// If there was an error, pass it up the chain.
 	if err != nil {
 		return channel, err
@@ -483,9 +484,12 @@ func (middle *RouteDeclarationMiddleware) Reconnect(
 	next amqpmiddleware.HandlerReconnect,
 ) (handler amqpmiddleware.HandlerReconnect) {
 	handler = func(
-		ctx context.Context, attempt uint64, logger zerolog.Logger,
+		ctx context.Context,
+		transportType amqpmiddleware.TransportType,
+		attempt uint64,
+		logger zerolog.Logger,
 	) (*streadway.Channel, error) {
-		return middle.reconnectHandler(ctx, attempt, logger, next)
+		return middle.reconnectHandler(ctx, transportType, attempt, logger, next)
 	}
 
 	return handler

@@ -63,7 +63,9 @@ func (transport *transportChannel) tryReconnect(
 	}
 
 	// Invoke all our reconnection middleware and reconnect the channel.
-	channel, err := transport.handlers.reconnect(ctx, attempt, logger)
+	channel, err := transport.handlers.reconnect(
+		ctx, amqpmiddleware.TransportTypeChannel, attempt, logger,
+	)
 	if err != nil {
 		return err
 	}

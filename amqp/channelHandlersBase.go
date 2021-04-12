@@ -22,7 +22,10 @@ func (builder *middlewareBaseBuilder) createBaseHandlerReconnect() (
 	handler amqpmiddleware.HandlerReconnect,
 ) {
 	handler = func(
-		ctx context.Context, attempt uint64, logger zerolog.Logger,
+		ctx context.Context,
+		transportType amqpmiddleware.TransportType,
+		attempt uint64,
+		logger zerolog.Logger,
 	) (*streadway.Channel, error) {
 		channel, err := builder.connection.getStreadwayChannel(ctx)
 		if err != nil {

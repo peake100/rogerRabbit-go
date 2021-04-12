@@ -7,6 +7,16 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
+// TransportType is passed into handlers who's definition is shared between
+// amqp.Channel values and amqp.Connection values.
+type TransportType string
+
+// TransportTypeConnection is passed into handlers by amqp.Connection values.
+const TransportTypeConnection = "CONNECTION"
+
+// TransportTypeChannel is passed into handlers by amqp.Channel values.
+const TransportTypeChannel = "CHANNEL"
+
 // HOOK DEFINITIONS
 
 // HandlerReconnect: signature for handlers triggered when a channel is being
@@ -14,7 +24,10 @@ import (
 //
 // Attempt is the attempt number, including all previous failures and successes.
 type HandlerReconnect = func(
-	ctx context.Context, attempt uint64, logger zerolog.Logger,
+	ctx context.Context,
+	transportType TransportType,
+	attempt uint64,
+	logger zerolog.Logger,
 ) (*streadway.Channel, error)
 
 // HandlerQueueDeclare: signature for handlers invoked when amqp.Channel.QueueDeclare()

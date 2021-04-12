@@ -36,10 +36,11 @@ func (middleware *QoSMiddleware) Reconnect(
 ) (handler amqpmiddleware.HandlerReconnect) {
 	return func(
 		ctx context.Context,
+		transportType amqpmiddleware.TransportType,
 		attempt uint64,
 		logger zerolog.Logger,
 	) (*streadway.Channel, error) {
-		channel, err := next(ctx, attempt, logger)
+		channel, err := next(ctx, transportType, attempt, logger)
 		// If there was an error or QoS() has not been called, return results.
 		if err != nil || !middleware.isSet {
 			return channel, err
