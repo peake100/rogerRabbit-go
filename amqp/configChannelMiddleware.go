@@ -480,14 +480,18 @@ func (config *ChannelMiddlewares) buildAndAddProviderMethods() {
 	}
 }
 
+// The sheer number of type asserts in the method below breaks the cyclomatic and
+// cognitive complexity checks implemented by revive, so we will disable them for this
+// method.
+
+//revive:disable:cognitive-complexity
+//revive:disable:cyclomatic
+
 // AddProviderMethods adds a Middleware Provider's methods as Middleware. If this method
 // is invoked directly by the user, the same type value's method will be added to all
-// *Connection values created by a *Channel.
+// *Channel values created by a *Connection.
 //
-// if addFirst is true, then the middleware provided by this provider will be
-// addFirst before all other middleware.
-//
-// If a new provider value should be made for each channel, consider using
+// If a new provider value should be made for each *Channel, consider using
 // AddProviderFactory instead.
 func (config *ChannelMiddlewares) AddProviderMethods(provider interface{}) {
 	if hasMethods, ok := provider.(amqpmiddleware.ProvidesClose); ok {
@@ -654,3 +658,6 @@ func (config *ChannelMiddlewares) AddProviderMethods(provider interface{}) {
 		config.AddNotifyFlowEvents(hasMethods.NotifyFlowEvents)
 	}
 }
+
+//revive:enable:cognitive-complexity
+//revive:enable:cyclomatic

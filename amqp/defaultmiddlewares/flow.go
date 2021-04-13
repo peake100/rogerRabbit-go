@@ -1,10 +1,8 @@
 package defaultmiddlewares
 
 import (
-	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
 )
@@ -28,12 +26,8 @@ func (middleware *FlowMiddleware) Active() bool {
 func (middleware *FlowMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
-	return func(
-		ctx context.Context,
-		attempt uint64,
-		logger zerolog.Logger,
-	) (*streadway.Channel, error) {
-		channel, err := next(ctx, attempt, logger)
+	return func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+		channel, err := next(args)
 		// New channels start out active, so if flow is active we can keep chugging.
 		if err != nil || middleware.active {
 			return channel, err

@@ -1,9 +1,7 @@
 package amqpmiddleware
 
 import (
-	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
 
@@ -23,21 +21,13 @@ const TransportTypeChannel = "CHANNEL"
 // re-established.
 //
 // Attempt is the attempt number, including all previous failures and successes.
-type HandlerConnectionReconnect = func(
-	ctx context.Context,
-	attempt uint64,
-	logger zerolog.Logger,
-) (*streadway.Connection, error)
+type HandlerConnectionReconnect = func(args ArgsConnectionReconnect) (*streadway.Connection, error)
 
 // HandlerChannelReconnect: signature for handlers triggered when a channel is being
 // re-established.
 //
 // Attempt is the attempt number, including all previous failures and successes.
-type HandlerChannelReconnect = func(
-	ctx context.Context,
-	attempt uint64,
-	logger zerolog.Logger,
-) (*streadway.Channel, error)
+type HandlerChannelReconnect = func(args ArgsChannelReconnect) (*streadway.Channel, error)
 
 // HandlerQueueDeclare: signature for handlers invoked when amqp.Channel.QueueDeclare()
 // is called.

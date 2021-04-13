@@ -1,11 +1,9 @@
 package defaultmiddlewares
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
 )
@@ -442,12 +440,10 @@ func (middle *RouteDeclarationMiddleware) reconnectBindExchanges(
 // reconnectHandler re-establishes queue and exchange topologies on a channel
 // reconnection event.
 func (middle *RouteDeclarationMiddleware) reconnectHandler(
-	ctx context.Context,
-	attempt uint64,
-	logger zerolog.Logger,
+	args amqpmiddleware.ArgsChannelReconnect,
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (*streadway.Channel, error) {
-	channel, err := next(ctx, attempt, logger)
+	channel, err := next(args)
 	// If there was an error, pass it up the chain.
 	if err != nil {
 		return channel, err
@@ -482,12 +478,8 @@ func (middle *RouteDeclarationMiddleware) reconnectHandler(
 func (middle *RouteDeclarationMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
-	handler = func(
-		ctx context.Context,
-		attempt uint64,
-		logger zerolog.Logger,
-	) (*streadway.Channel, error) {
-		return middle.reconnectHandler(ctx, attempt, logger, next)
+	handler = func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+		return middle.reconnectHandler(args, next)
 	}
 
 	return handler

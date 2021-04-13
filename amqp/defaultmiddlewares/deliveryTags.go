@@ -1,11 +1,9 @@
 package defaultmiddlewares
 
 import (
-	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
 	"sync/atomic"
@@ -29,14 +27,10 @@ type DeliveryTagsMiddleware struct {
 func (middleware *DeliveryTagsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
-	handler = func(
-		ctx context.Context,
-		attempt uint64,
-		logger zerolog.Logger,
-	) (*streadway.Channel, error) {
+	handler = func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
 		middleware.tagConsumeOffset = *middleware.tagConsumeCount
 
-		channel, err := next(ctx, attempt, logger)
+		channel, err := next(args)
 		if err != nil {
 			return channel, err
 

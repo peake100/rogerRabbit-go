@@ -70,7 +70,12 @@ func (conn *Connection) cleanup() error {
 func (conn *Connection) tryReconnect(
 	ctx context.Context, attempt uint64,
 ) error {
-	basicConn, err := conn.handlerReconnect(ctx, attempt, conn.dialConfig.Logger)
+	args := amqpmiddleware.ArgsConnectionReconnect{
+		Ctx:     ctx,
+		Attempt: attempt,
+		Logger:  conn.dialConfig.Logger,
+	}
+	basicConn, err := conn.handlerReconnect(args)
 	if err != nil {
 		return err
 	}
@@ -82,9 +87,7 @@ func (conn *Connection) tryReconnect(
 // basicReconnectHandler is the innermost reconnection handler for the
 // transportConnection.
 func (conn *Connection) basicReconnectHandler(
-	ctx context.Context,
-	attempt uint64,
-	logger zerolog.Logger,
+	args amqpmiddleware.ArgsConnectionReconnect,
 ) (*streadway.Connection, error) {
 	return streadway.DialConfig(conn.dialURL, conn.streadwayConfig)
 }
@@ -112,43 +115,41 @@ func newChannelApplyMiddleware(
 	config Config,
 	transportHandlers transportManagerHandlers,
 ) Config {
-	if config.NoDefaultMiddleware {
-		return config
-	}
-
-	middlewareStorage := channel.defaultMiddlewares
-
 	mConfig := config.ChannelMiddleware
 
-	// QoS middleware
-	qosMiddleware := defaultmiddlewares.NewQosMiddleware()
-	mConfig.AddProviderMethods(qosMiddleware)
-	middlewareStorage.QoS = qosMiddleware
+	if !config.NoDefaultMiddleware {
+		middlewareStorage := &channel.defaultMiddlewares
 
-	// Flow middleware
-	flowMiddleware := defaultmiddlewares.NewFlowMiddleware()
-	mConfig.AddProviderMethods(flowMiddleware)
-	middlewareStorage.Flow = flowMiddleware
+		// QoS middleware
+		qosMiddleware := defaultmiddlewares.NewQosMiddleware()
+		mConfig.AddProviderMethods(qosMiddleware)
+		middlewareStorage.QoS = qosMiddleware
 
-	// Confirmation middleware
-	confirmMiddleware := defaultmiddlewares.NewConfirmMiddleware()
-	mConfig.AddProviderMethods(confirmMiddleware)
-	middlewareStorage.Confirm = confirmMiddleware
+		// Flow middleware
+		flowMiddleware := defaultmiddlewares.NewFlowMiddleware()
+		mConfig.AddProviderMethods(flowMiddleware)
+		middlewareStorage.Flow = flowMiddleware
 
-	// Publish Tags middleware
-	publishTagsMiddleware := defaultmiddlewares.NewPublishTagsMiddleware()
-	mConfig.AddProviderMethods(publishTagsMiddleware)
-	middlewareStorage.PublishTags = publishTagsMiddleware
+		// Confirmation middleware
+		confirmMiddleware := defaultmiddlewares.NewConfirmMiddleware()
+		mConfig.AddProviderMethods(confirmMiddleware)
+		middlewareStorage.Confirm = confirmMiddleware
 
-	// Delivery Tags middleware
-	deliveryTagsMiddleware := defaultmiddlewares.NewDeliveryTagsMiddleware()
-	mConfig.AddProviderMethods(deliveryTagsMiddleware)
-	middlewareStorage.DeliveryTags = deliveryTagsMiddleware
+		// Publish Tags middleware
+		publishTagsMiddleware := defaultmiddlewares.NewPublishTagsMiddleware()
+		mConfig.AddProviderMethods(publishTagsMiddleware)
+		middlewareStorage.PublishTags = publishTagsMiddleware
 
-	// Route declaration middleware
-	declarationMiddleware := defaultmiddlewares.NewRouteDeclarationMiddleware()
-	mConfig.AddProviderMethods(declarationMiddleware)
-	middlewareStorage.RouteDeclaration = declarationMiddleware
+		// Delivery Tags middleware
+		deliveryTagsMiddleware := defaultmiddlewares.NewDeliveryTagsMiddleware()
+		mConfig.AddProviderMethods(deliveryTagsMiddleware)
+		middlewareStorage.DeliveryTags = deliveryTagsMiddleware
+
+		// Route declaration middleware
+		declarationMiddleware := defaultmiddlewares.NewRouteDeclarationMiddleware()
+		mConfig.AddProviderMethods(declarationMiddleware)
+		middlewareStorage.RouteDeclaration = declarationMiddleware
+	}
 
 	channel.handlers = newChannelHandlers(
 		channel.rogerConn,
@@ -175,7 +176,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 		underlyingChannel:  nil,
 		rogerConn:          conn,
 		handlers:           channelHandlers{},
-		defaultMiddlewares: new(ChannelTestingDefaultMiddlewares),
+		defaultMiddlewares: ChannelTestingDefaultMiddlewares{},
 		relaySync:          channelRelaySync{},
 		logger:             zerolog.Logger{},
 		transportManager:   transportManager{},

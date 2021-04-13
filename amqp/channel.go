@@ -46,7 +46,7 @@ type Channel struct {
 	// defaultMiddlewares holds our default middlewares for testing purposes:
 	//	TODO: maybe turn this into a map and return a key when middleware is
 	//	 registered so non-default middlewares can also be accessed for testing.
-	defaultMiddlewares *ChannelTestingDefaultMiddlewares
+	defaultMiddlewares ChannelTestingDefaultMiddlewares
 
 	// relaySync has all necessary sync objects for controlling the advancement of
 	// all registered eventRelays.
@@ -99,7 +99,12 @@ func (channel *Channel) tryReconnect(
 	}
 
 	// Invoke all our reconnection middleware and channelReconnect the channel.
-	underlyingChan, err := channel.handlers.channelReconnect(ctx, attempt, logger)
+	ags := amqpmiddleware.ArgsChannelReconnect{
+		Ctx:     ctx,
+		Attempt: attempt,
+		Logger:  logger,
+	}
+	underlyingChan, err := channel.handlers.channelReconnect(ags)
 	if err != nil {
 		return err
 	}
@@ -1462,7 +1467,7 @@ func (channel *Channel) Test(t *testing.T) *ChannelTesting {
 			blocks:  &blocks,
 		},
 		channel:            channel,
-		DefaultMiddlewares: channel.defaultMiddlewares,
+		DefaultMiddlewares: &channel.defaultMiddlewares,
 	}
 
 	t.Cleanup(chanTester.cleanup)

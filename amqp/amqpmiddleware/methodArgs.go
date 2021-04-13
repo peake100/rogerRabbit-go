@@ -1,9 +1,96 @@
 package amqpmiddleware
 
 import (
+	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
+	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
+
+// SHARED METHOD ARGS ##################################
+// #####################################################
+
+// ArgsClose stores args for the Close method on amqp.Connection and amqp.Channel.
+type ArgsClose struct {
+	TransportType TransportType
+}
+
+// ArgsNotifyClose stores args for the NotifyClose method on amqp.Connection and
+// amqp.Channel.
+type ArgsNotifyClose struct {
+	TransportType TransportType
+	Receiver      chan *streadway.Error
+}
+
+// ArgsNotifyDial stores args for the NotifyDial method on amqp.Connection and
+// amqp.Channel.
+type ArgsNotifyDial struct {
+	TransportType TransportType
+	Receiver      chan error
+}
+
+// ArgsNotifyDisconnect stores args for the NotifyDisconnect method on amqp.Connection
+// and amqp.Channel.
+type ArgsNotifyDisconnect struct {
+	TransportType TransportType
+	Receiver      chan error
+}
+
+// SHARED EVENTS #######################################
+// #####################################################
+
+// EventNotifyDial passes event information from a NotifyDial event on an
+// amqp.Connection or amqp.Channel.
+type EventNotifyDial struct {
+	TransportType TransportType
+	Err           error
+}
+
+// EventNotifyDisconnect passes event information from a NotifyDisconnect event on an
+// amqp.Connection or amqp.Channel.
+type EventNotifyDisconnect struct {
+	TransportType TransportType
+	Err           error
+}
+
+// EventNotifyClose passes event information from a NotifyClose event on an
+// amqp.Connection or amqp.Channel.
+type EventNotifyClose struct {
+	TransportType TransportType
+	Err           *streadway.Error
+}
+
+// CONNECTION METHOD ARGS ##############################
+// #####################################################
+
+// ArgsConnectionReconnect passes information to HandlerConnectionReconnect funcs about
+// the reconnection event.
+type ArgsConnectionReconnect struct {
+	// Ctx is the connection context.
+	Ctx context.Context
+	// Attempt is the reconnection attempt count. It starts at 0 when the Connection is
+	// made and increments by 1 each time a reconnect is attempted. It does not reset
+	// on successful reconnections.
+	Attempt uint64
+	// Logger is the connection logger.
+	Logger zerolog.Logger
+}
+
+// CHANNEL METHOD ARGS #################################
+// #####################################################
+
+// ArgsChannelReconnect passes information to HandlerChannelReconnect funcs about
+// the reconnection event.
+type ArgsChannelReconnect struct {
+	// Ctx is the connection context.
+	Ctx context.Context
+	// Attempt is the reconnection attempt count. It starts at 0 when the Channel is
+	// made and increments by 1 each time a reconnect is attempted. It does not reset
+	// on successful reconnections.
+	Attempt uint64
+	// Logger is the channel logger.
+	Logger zerolog.Logger
+}
 
 // ArgsQueueDeclare stores args to amqp.Channel.QueueDeclare() for middleware to
 // inspect.
@@ -159,32 +246,6 @@ type ArgsReject struct {
 	Requeue bool
 }
 
-// ArgsNotifyClose stores args for the NotifyClose method on amqp.Connection and
-// amqp.Channel.
-type ArgsNotifyClose struct {
-	TransportType TransportType
-	Receiver      chan *streadway.Error
-}
-
-// ArgsNotifyDial stores args for the NotifyDial method on amqp.Connection and
-// amqp.Channel.
-type ArgsNotifyDial struct {
-	TransportType TransportType
-	Receiver      chan error
-}
-
-// ArgsNotifyDisconnect stores args for the NotifyDisconnect method on amqp.Connection
-// and amqp.Channel.
-type ArgsNotifyDisconnect struct {
-	TransportType TransportType
-	Receiver      chan error
-}
-
-// ArgsClose stores args for the Close method on amqp.Connection and amqp.Channel.
-type ArgsClose struct {
-	TransportType TransportType
-}
-
 // ArgsNotifyPublish stores args to amqp.Channel.NotifyPublish() for middleware to
 // inspect.
 type ArgsNotifyPublish struct {
@@ -223,30 +284,8 @@ type ArgsNotifyFlow struct {
 	FlowNotifications chan bool
 }
 
-// EVENTS ----------------------
-//
-// The below middlewares handle events from methods like NotifyPublish and Consume.
-
-// EventNotifyDial passes event information from a NotifyDial event on an
-// amqp.Connection or amqp.Channel.
-type EventNotifyDial struct {
-	TransportType TransportType
-	Err           error
-}
-
-// EventNotifyDisconnect passes event information from a NotifyDisconnect event on an
-// amqp.Connection or amqp.Channel.
-type EventNotifyDisconnect struct {
-	TransportType TransportType
-	Err           error
-}
-
-// EventNotifyClose passes event information from a NotifyClose event on an
-// amqp.Connection or amqp.Channel.
-type EventNotifyClose struct {
-	TransportType TransportType
-	Err           *streadway.Error
-}
+// CHANNEL EVENTS ######################################
+// #####################################################
 
 // EventNotifyPublish passes event information from an amqp.Channel.NotifyPublish()
 // event for middleware to inspect / modify before the event is passed to the caller.

@@ -1,10 +1,8 @@
 package amqp
 
 import (
-	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
 
@@ -23,12 +21,8 @@ func (builder channelHandlerBuilder) createChannelReconnect() amqpmiddleware.Han
 	// capture connection into the closure.
 	connection := builder.connection
 
-	handler := func(
-		ctx context.Context,
-		attempt uint64,
-		logger zerolog.Logger,
-	) (*streadway.Channel, error) {
-		channel, err := connection.getStreadwayChannel(ctx)
+	handler := func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+		channel, err := connection.getStreadwayChannel(args.Ctx)
 		if err != nil {
 			return nil, err
 		}
