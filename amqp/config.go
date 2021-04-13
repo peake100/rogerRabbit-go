@@ -59,7 +59,7 @@ type Config struct {
 
 	// ConnectionMiddleware holds middleware to add to connection method and event
 	// handlers.
-	ConnectionMiddleware ConnectionMiddleware
+	ConnectionMiddleware ConnectionMiddlewares
 
 	// ChannelMiddleware holds middleware to add to channel method and event handlers.
 	ChannelMiddleware ChannelMiddlewares

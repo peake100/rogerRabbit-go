@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
+	"github.com/peake100/rogerRabbit-go/amqp/defaultmiddlewares"
 	"github.com/peake100/rogerRabbit-go/amqptest"
 	streadway "github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
@@ -1710,7 +1711,14 @@ func (suite *ChannelMethodsSuite) Test0330_QoS_PrefetchCount() {
 	err := suite.ChannelConsume().Qos(10, 0, false)
 	suite.NoError(err, "QoS")
 
-	qosMiddleware := suite.ChannelConsume().Test(suite.T()).DefaultMiddlewares.QoS
+	provider := suite.ChannelConsume().
+		Test(suite.T()).
+		GetMiddlewareProvider(defaultmiddlewares.QoSMiddlewareID)
+
+	qosMiddleware, ok := provider.(*defaultmiddlewares.QoSMiddleware)
+	if !suite.True(ok, "type assert QoSMiddleware") {
+		suite.T().FailNow()
+	}
 
 	suite.Equal(
 		10,

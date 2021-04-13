@@ -168,7 +168,7 @@ with automatic redials, method middleware, and more.
 					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.Confirm">func (channel *Channel) Confirm(noWait bool) error</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.Consume">func (channel *Channel) Consume(queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args Table) (deliveryChan &lt;-chan dataModels.Delivery, err error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.Consume">func (channel *Channel) Consume(queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args Table) (deliveryChan &lt;-chan datamodels.Delivery, err error)</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.ExchangeBind">func (channel *Channel) ExchangeBind(destination, key, source string, noWait bool, args Table) (err error)</a></dd>
@@ -189,13 +189,10 @@ with automatic redials, method middleware, and more.
 					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.Flow">func (channel *Channel) Flow(active bool) error</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.Get">func (channel *Channel) Get(queue string, autoAck bool) (msg dataModels.Delivery, ok bool, err error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.Get">func (channel *Channel) Get(queue string, autoAck bool) (msg datamodels.Delivery, ok bool, err error)</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.IsClosed">func (manager Channel) IsClosed() bool</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.Middleware">func (channel *Channel) Middleware() *channelHandlers</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.Nack">func (channel *Channel) Nack(tag uint64, multiple bool, requeue bool) error</a></dd>
@@ -222,7 +219,7 @@ with automatic redials, method middleware, and more.
 					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.NotifyFlow">func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.NotifyPublish">func (channel *Channel) NotifyPublish(confirm chan dataModels.Confirmation) chan dataModels.Confirmation</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.NotifyPublish">func (channel *Channel) NotifyPublish(confirm chan datamodels.Confirmation) chan datamodels.Confirmation</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.NotifyReturn">func (channel *Channel) NotifyReturn(returns chan Return) chan Return</a></dd>
@@ -237,7 +234,7 @@ with automatic redials, method middleware, and more.
 					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.QueueBind">func (channel *Channel) QueueBind(name, key, exchange string, noWait bool, args Table) error</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.QueueDeclare">func (channel *Channel) QueueDeclare(name string, durable bool, autoDelete bool, exclusive bool, noWait bool, args Table) (queue Queue, err error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.QueueDeclare">func (channel *Channel) QueueDeclare(name string, durable, autoDelete, exclusive, noWait bool, args Table) (queue Queue, err error)</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Channel.QueueDeclarePassive">func (channel *Channel) QueueDeclarePassive(name string, durable, autoDelete, exclusive, noWait bool, args Table) (queue Queue, err error)</a></dd>
@@ -271,11 +268,151 @@ with automatic redials, method middleware, and more.
 				
 			
 				
+				<dd><a href="godoc.8.html#ChannelMiddlewares">type ChannelMiddlewares</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddAck">func (config *ChannelMiddlewares) AddAck(middleware amqpmiddleware.Ack)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddChannelReconnect">func (config *ChannelMiddlewares) AddChannelReconnect(middleware amqpmiddleware.ChannelReconnect)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddClose">func (config *ChannelMiddlewares) AddClose(middleware amqpmiddleware.Close)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddConfirm">func (config *ChannelMiddlewares) AddConfirm(middleware amqpmiddleware.Confirm)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddConsume">func (config *ChannelMiddlewares) AddConsume(middleware amqpmiddleware.Consume)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddConsumeEvents">func (config *ChannelMiddlewares) AddConsumeEvents(middleware amqpmiddleware.ConsumeEvents)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddExchangeBind">func (config *ChannelMiddlewares) AddExchangeBind(middleware amqpmiddleware.ExchangeBind)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddExchangeDeclare">func (config *ChannelMiddlewares) AddExchangeDeclare(middleware amqpmiddleware.ExchangeDeclare)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddExchangeDeclarePassive">func (config *ChannelMiddlewares) AddExchangeDeclarePassive(middleware amqpmiddleware.ExchangeDeclare)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddExchangeDelete">func (config *ChannelMiddlewares) AddExchangeDelete(middleware amqpmiddleware.ExchangeDelete)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddExchangeUnbind">func (config *ChannelMiddlewares) AddExchangeUnbind(middleware amqpmiddleware.ExchangeUnbind)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddFlow">func (config *ChannelMiddlewares) AddFlow(middleware amqpmiddleware.Flow)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddGet">func (config *ChannelMiddlewares) AddGet(middleware amqpmiddleware.Get)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNack">func (config *ChannelMiddlewares) AddNack(middleware amqpmiddleware.Nack)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyCancel">func (config *ChannelMiddlewares) AddNotifyCancel(middleware amqpmiddleware.NotifyCancel)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyCancelEvents">func (config *ChannelMiddlewares) AddNotifyCancelEvents(middleware amqpmiddleware.NotifyCancelEvents)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyClose">func (config *ChannelMiddlewares) AddNotifyClose(middleware amqpmiddleware.NotifyClose)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyCloseEvents">func (config *ChannelMiddlewares) AddNotifyCloseEvents(middleware amqpmiddleware.NotifyCloseEvents)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyConfirm">func (config *ChannelMiddlewares) AddNotifyConfirm(middleware amqpmiddleware.NotifyConfirm)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyConfirmEvents">func (config *ChannelMiddlewares) AddNotifyConfirmEvents(middleware amqpmiddleware.NotifyConfirmEvents)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyConfirmOrOrphaned">func (config *ChannelMiddlewares) AddNotifyConfirmOrOrphaned(middleware amqpmiddleware.NotifyConfirmOrOrphaned)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyConfirmOrOrphanedEvents">func (config *ChannelMiddlewares) AddNotifyConfirmOrOrphanedEvents(middleware amqpmiddleware.NotifyConfirmOrOrphanedEvents)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyDial">func (config *ChannelMiddlewares) AddNotifyDial(middleware amqpmiddleware.NotifyDial)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyDialEvents">func (config *ChannelMiddlewares) AddNotifyDialEvents(middleware amqpmiddleware.NotifyDialEvents)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyDisconnect">func (config *ChannelMiddlewares) AddNotifyDisconnect(middleware amqpmiddleware.NotifyDisconnect)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyDisconnectEvents">func (config *ChannelMiddlewares) AddNotifyDisconnectEvents(middleware amqpmiddleware.NotifyDisconnectEvents)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyFlow">func (config *ChannelMiddlewares) AddNotifyFlow(middleware amqpmiddleware.NotifyFlow)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyFlowEvents">func (config *ChannelMiddlewares) AddNotifyFlowEvents(middleware amqpmiddleware.NotifyFlowEvents)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyPublish">func (config *ChannelMiddlewares) AddNotifyPublish(middleware amqpmiddleware.NotifyPublish)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyPublishEvents">func (config *ChannelMiddlewares) AddNotifyPublishEvents(middleware amqpmiddleware.NotifyPublishEvents)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyReturn">func (config *ChannelMiddlewares) AddNotifyReturn(middleware amqpmiddleware.NotifyReturn)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddNotifyReturnEvents">func (config *ChannelMiddlewares) AddNotifyReturnEvents(middleware amqpmiddleware.NotifyReturnEvents)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddProviderFactory">func (config *ChannelMiddlewares) AddProviderFactory(factory func() amqpmiddleware.ProvidesMiddleware)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddProviderMethods">func (config *ChannelMiddlewares) AddProviderMethods(provider amqpmiddleware.ProvidesMiddleware) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddPublish">func (config *ChannelMiddlewares) AddPublish(middleware amqpmiddleware.Publish)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddQoS">func (config *ChannelMiddlewares) AddQoS(middleware amqpmiddleware.QoS)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddQueueBind">func (config *ChannelMiddlewares) AddQueueBind(middleware amqpmiddleware.QueueBind)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddQueueDeclare">func (config *ChannelMiddlewares) AddQueueDeclare(middleware amqpmiddleware.QueueDeclare)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddQueueDeclarePassive">func (config *ChannelMiddlewares) AddQueueDeclarePassive(middleware amqpmiddleware.QueueDeclare)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddQueueDelete">func (config *ChannelMiddlewares) AddQueueDelete(middleware amqpmiddleware.QueueDelete)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddQueueInspect">func (config *ChannelMiddlewares) AddQueueInspect(middleware amqpmiddleware.QueueInspect)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddQueuePurge">func (config *ChannelMiddlewares) AddQueuePurge(middleware amqpmiddleware.QueuePurge)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddQueueUnbind">func (config *ChannelMiddlewares) AddQueueUnbind(middleware amqpmiddleware.QueueUnbind)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelMiddlewares.AddReject">func (config *ChannelMiddlewares) AddReject(middleware amqpmiddleware.Reject)</a></dd>
+				
+			
+				
 				<dd><a href="godoc.8.html#ChannelTesting">type ChannelTesting</a></dd>
 				
 				
 					
 					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelTesting.ConnTest">func (tester *ChannelTesting) ConnTest() *TransportTesting</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelTesting.GetMiddlewareProvider">func (tester *ChannelTesting) GetMiddlewareProvider(id amqpmiddleware.ProviderTypeID) amqpmiddleware.ProvidesMiddleware</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ChannelTesting.ReconnectionCount">func (tester *ChannelTesting) ReconnectionCount() uint64</a></dd>
@@ -288,15 +425,10 @@ with automatic redials, method middleware, and more.
 				
 			
 				
-				<dd><a href="godoc.8.html#ChannelTestingDefaultMiddlewares">type ChannelTestingDefaultMiddlewares</a></dd>
-				
-				
-			
-				
 				<dd><a href="godoc.8.html#Config">type Config</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.8.html#DefaultConfig">func DefaultConfig() *Config</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#DefaultConfig">func DefaultConfig() Config</a></dd>
 				
 				
 			
@@ -347,6 +479,41 @@ with automatic redials, method middleware, and more.
 				
 					
 					<dd>&nbsp; &nbsp; <a href="godoc.8.html#Connection.Test">func (conn *Connection) Test(t *testing.T) *ConnectionTesting</a></dd>
+				
+			
+				
+				<dd><a href="godoc.8.html#ConnectionMiddlewares">type ConnectionMiddlewares</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ConnectionMiddlewares.AddClose">func (config *ConnectionMiddlewares) AddClose(middleware amqpmiddleware.Close)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ConnectionMiddlewares.AddConnectionReconnect">func (config *ConnectionMiddlewares) AddConnectionReconnect(middleware amqpmiddleware.ConnectionReconnect)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ConnectionMiddlewares.AddNotifyClose">func (config *ConnectionMiddlewares) AddNotifyClose(middleware amqpmiddleware.NotifyClose)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ConnectionMiddlewares.AddNotifyCloseEvents">func (config *ConnectionMiddlewares) AddNotifyCloseEvents(middleware amqpmiddleware.NotifyCloseEvents)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ConnectionMiddlewares.AddNotifyDial">func (config *ConnectionMiddlewares) AddNotifyDial(middleware amqpmiddleware.NotifyDial)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ConnectionMiddlewares.AddNotifyDialEvents">func (config *ConnectionMiddlewares) AddNotifyDialEvents(middleware amqpmiddleware.NotifyDialEvents)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ConnectionMiddlewares.AddNotifyDisconnect">func (config *ConnectionMiddlewares) AddNotifyDisconnect(middleware amqpmiddleware.NotifyDisconnect)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ConnectionMiddlewares.AddNotifyDisconnectEvents">func (config *ConnectionMiddlewares) AddNotifyDisconnectEvents(middleware amqpmiddleware.NotifyDisconnectEvents)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ConnectionMiddlewares.AddProviderFactory">func (config *ConnectionMiddlewares) AddProviderFactory(factory func() amqpmiddleware.ProvidesMiddleware)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.8.html#ConnectionMiddlewares.AddProviderMethods">func (config *ConnectionMiddlewares) AddProviderMethods(provider amqpmiddleware.ProvidesMiddleware) error</a></dd>
 				
 			
 				
@@ -442,13 +609,15 @@ with automatic redials, method middleware, and more.
 			
 			<dd><a class="exampleLink" href="godoc.8.html#example_Channel_Consume_orphan">Channel.Consume (Orphan)</a></dd>
 			
-			<dd><a class="exampleLink" href="godoc.8.html#example_Channel_Middleware">Channel.Middleware</a></dd>
-			
 			<dd><a class="exampleLink" href="godoc.8.html#example_Channel_Publish_tagContinuity">Channel.Publish (TagContinuity)</a></dd>
 			
 			<dd><a class="exampleLink" href="godoc.8.html#example_Channel_QueueDeclare_reDeclare">Channel.QueueDeclare (ReDeclare)</a></dd>
 			
 			<dd><a class="exampleLink" href="godoc.8.html#example_Channel_Test">Channel.Test</a></dd>
+			
+			<dd><a class="exampleLink" href="godoc.8.html#example_Channel_addMiddleware">Channel (AddMiddleware)</a></dd>
+			
+			<dd><a class="exampleLink" href="godoc.8.html#example_Channel_customMiddlewareProvider">Channel (CustomMiddlewareProvider)</a></dd>
 			
 			<dd><a class="exampleLink" href="godoc.8.html#example_Channel_reconnect">Channel (Reconnect)</a></dd>
 			
@@ -469,11 +638,15 @@ with automatic redials, method middleware, and more.
 			
 				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channelHandlers.go">channelHandlers.go</a>
 			
-				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channelHandlersBase.go">channelHandlersBase.go</a>
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channelHandlersBuilder.go">channelHandlersBuilder.go</a>
 			
 				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/common.go">common.go</a>
 			
 				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/config.go">config.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go">configChannelMiddleware.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configConnMiddleware.go">configConnMiddleware.go</a>
 			
 				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connection.go">connection.go</a>
 			
@@ -502,6 +675,10 @@ with automatic redials, method middleware, and more.
 				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go">streadwayAliases.go</a>
 			
 				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go">transportManager.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManagerHandlers.go">transportManagerHandlers.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManagerHandlersBuilder.go">transportManagerHandlersBuilder.go</a>
 			
 				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManagerReconnect.go">transportManagerReconnect.go</a>
 			
@@ -589,6 +766,16 @@ Aliases to sentinel errors
     <span id="ErrSyntax">ErrSyntax</span>          = <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#ErrSyntax">ErrSyntax</a>
     <span id="ErrUnexpectedFrame">ErrUnexpectedFrame</span> = <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#ErrUnexpectedFrame">ErrUnexpectedFrame</a>
     <span id="ErrVhost">ErrVhost</span>           = <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#ErrVhost">ErrVhost</a>
+)</pre>
+			
+				
+				<pre>var <span id="ErrDuplicateProvider">ErrDuplicateProvider</span> = <a href="http://localhost:6161/pkg/errors/">errors</a>.<a href="http://localhost:6161/pkg/errors/#New">New</a>(
+    &#34;amqp middleware provider already registered. providers must only be registered once&#34;,
+)</pre>
+			
+				
+				<pre>var <span id="ErrNoMiddlewareMethods">ErrNoMiddlewareMethods</span> = <a href="http://localhost:6161/pkg/errors/">errors</a>.<a href="http://localhost:6161/pkg/errors/#New">New</a>(
+    &#34;amqp middleware provider does not implement any middleware methods&#34;,
 )</pre>
 			
 		
@@ -756,7 +943,7 @@ events.
 		
 			
 			
-			<h2 id="Channel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=3406:3738#L96">Channel</a>
+			<h2 id="Channel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=1075:1875#L22">Channel</a>
 				<a class="permalink" href="godoc.8.html#Channel">&#xb6;</a>
 				
 				
@@ -771,19 +958,152 @@ events.
 
 			
 
-			<div id="example_Channel_reconnect" class="toggle">
+			<div id="example_Channel_addMiddleware" class="toggle">
+	<div class="collapsed">
+		<p class="exampleHeading toggleButton">▹ <span class="text">Example (AddMiddleware)</span></p>
+	</div>
+	<div class="expanded">
+		<p class="exampleHeading toggleButton">▾ <span class="text">Example (AddMiddleware)</span></p>
+		<p>Add a custom middleware to channels created by a connection.
+</p>
+		
+		
+			<p>Code:</p>
+			<pre class="code">
+<span class="comment">// define our new middleware</span>
+queueDeclareMiddleware := func(
+    next amqpmiddleware.HandlerQueueDeclare,
+) amqpmiddleware.HandlerQueueDeclare {
+    return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+        fmt.Println(&#34;MIDDLEWARE INVOKED FOR QUEUE&#34;)
+        fmt.Println(&#34;QUEUE NAME :&#34;, args.Name)
+        fmt.Println(&#34;AUTO-DELETE:&#34;, args.AutoDelete)
+        return next(args)
+    }
+}
+
+<span class="comment">// Create a config and add our middleware to it.</span>
+config := amqp.DefaultConfig()
+config.ChannelMiddleware.AddQueueDeclare(queueDeclareMiddleware)
+
+<span class="comment">// Get a new connection to our test broker.</span>
+connection, err := amqp.DialConfigCtx(
+    context.Background(), amqptest.TestDialAddress, config,
+)
+if err != nil {
+    panic(err)
+}
+defer connection.Close()
+
+<span class="comment">// Get a new channel from our robust connection for publishing. The channel is</span>
+<span class="comment">// created with our default middleware.</span>
+channel, err := connection.Channel()
+if err != nil {
+    panic(err)
+}
+
+<span class="comment">// Declare our queue, our middleware will be invoked and print a message.</span>
+_, err = channel.QueueDeclare(
+    &#34;example_middleware&#34;,
+    false,
+    true,
+    false,
+    false,
+    nil,
+)
+if err != nil {
+    panic(err)
+}
+
+<span class="comment">// MIDDLEWARE INVOKED FOR QUEUE</span>
+<span class="comment">// QUEUE NAME : example_middleware</span>
+<span class="comment">// AUTO-DELETE: true</span>
+</pre>
+			
+		
+	</div>
+</div>
+<div id="example_Channel_customMiddlewareProvider" class="toggle">
+	<div class="collapsed">
+		<p class="exampleHeading toggleButton">▹ <span class="text">Example (CustomMiddlewareProvider)</span></p>
+	</div>
+	<div class="expanded">
+		<p class="exampleHeading toggleButton">▾ <span class="text">Example (CustomMiddlewareProvider)</span></p>
+		
+		
+		
+			<p>Code:</p>
+			<pre class="code">
+<span class="comment">// Create a config and add our middleware provider factory to it.</span>
+config := amqp.DefaultConfig()
+config.ChannelMiddleware.AddProviderFactory(NewCustomMiddlewareProvider)
+
+<span class="comment">// Get a new connection to our test broker.</span>
+connection, err := amqp.DialConfigCtx(
+    context.Background(), amqptest.TestDialAddress, config,
+)
+if err != nil {
+    panic(err)
+}
+defer connection.Close()
+
+<span class="comment">// Get a new channel from our robust connection for publishing. The channel is</span>
+<span class="comment">// created with our default middleware.</span>
+channel, err := connection.Channel()
+if err != nil {
+    panic(err)
+}
+
+<span class="comment">// Declare our queue, our middleware will be invoked and print a message.</span>
+_, err = channel.QueueDeclare(
+    &#34;example_middleware&#34;,
+    false, <span class="comment">// durable</span>
+    true,  <span class="comment">// autoDelete</span>
+    false, <span class="comment">// exclusive</span>
+    false, <span class="comment">// noWait</span>
+    nil,   <span class="comment">// args</span>
+)
+if err != nil {
+    panic(err)
+}
+
+<span class="comment">// Delete our queue, our middleware will be invoked and print a message.</span>
+_, err = channel.QueueDelete(
+    &#34;example_middleware&#34;,
+    false, <span class="comment">// ifUnused</span>
+    false, <span class="comment">// ifEmpty</span>
+    false, <span class="comment">// noWait</span>
+)
+if err != nil {
+    panic(err)
+}
+
+<span class="comment">// MIDDLEWARE INVOKED FOR QUEUE</span>
+<span class="comment">// DECLARED: example_middleware, TOTAL: 1</span>
+<span class="comment">// DELETED: example_middleware, TOTAL: 2</span>
+<span class="comment">// AUTO-DELETE: true</span>
+</pre>
+			
+		
+	</div>
+</div>
+<div id="example_Channel_reconnect" class="toggle">
 	<div class="collapsed">
 		<p class="exampleHeading toggleButton">▹ <span class="text">Example (Reconnect)</span></p>
 	</div>
 	<div class="expanded">
 		<p class="exampleHeading toggleButton">▾ <span class="text">Example (Reconnect)</span></p>
-		<p>Channel reconnect examples.
+		<p>Channel channelReconnect examples.
 </p>
 		
 		
 			<p>Code:</p>
-			<pre class="code"><span class="comment">// Get a new connection to our test broker.</span>
-connection, err := amqp.Dial(amqpTest.TestDialAddress)
+			<pre class="code">
+<span class="comment">// Get a new connection to our test broker.</span>
+<span class="comment">//</span>
+<span class="comment">// DialCtx is a new function that allows the Dial function to keep attempting</span>
+<span class="comment">// re-dials to the broker until the passed context expires.</span>
+connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 if err != nil {
     panic(err)
 }
@@ -795,8 +1115,8 @@ if err != nil {
 }
 
 <span class="comment">// We can use the test method to return an testing object with some additional</span>
-<span class="comment">// methods. ForceReconnect force-closes the underlying transport, causing the</span>
-<span class="comment">// robust connection to reconnect.</span>
+<span class="comment">// methods. ForceReconnect force-closes the underlying livesOnce, causing the</span>
+<span class="comment">// robust connection to channelReconnect.</span>
 <span class="comment">//</span>
 <span class="comment">// We&#39;ll use a dummy *testing.T object here. These methods are designed for tests</span>
 <span class="comment">// only and should not be used in production code.</span>
@@ -830,12 +1150,9 @@ if err != nil {
 <span class="comment">// Now that we have explicitly closed the connection, the channel will be closed.</span>
 fmt.Println(&#34;IS CLOSED:&#34;, channel.IsClosed())
 
-<span class="comment"></pre>
-			
-			<p>Output:</p>
-			<pre class="output">IS CLOSED: false
-QUEUE    : {Name:example_channel_reconnect Messages:0 Consumers:0}
-IS CLOSED: true
+<span class="comment">// IS CLOSED: false</span>
+<span class="comment">// QUEUE    : {Name:example_channel_reconnect Messages:0 Consumers:0}</span>
+<span class="comment">// IS CLOSED: true</span>
 </pre>
 			
 		
@@ -849,7 +1166,7 @@ IS CLOSED: true
 
 			
 				
-				<h3 id="Channel.Ack">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=37428:37488#L1004">Ack</a>
+				<h3 id="Channel.Ack">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=37771:37831#L1018">Ack</a>
 					<a class="permalink" href="godoc.8.html#Channel.Ack">&#xb6;</a>
 					
 					
@@ -884,7 +1201,7 @@ still be returned, and can be checked for which tag ranges could not be acked.
 				
 			
 				
-				<h3 id="Channel.Close">func (Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=14416:14462#L412">Close</a>
+				<h3 id="Channel.Close">func (Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=15448:15493#L436">Close</a>
 					<a class="permalink" href="godoc.8.html#Channel.Close">&#xb6;</a>
 					
 					
@@ -900,7 +1217,7 @@ from reconnecting.
 				
 			
 				
-				<h3 id="Channel.Confirm">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=5065:5115#L136">Confirm</a>
+				<h3 id="Channel.Confirm">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=5132:5182#L143">Confirm</a>
 					<a class="permalink" href="godoc.8.html#Channel.Confirm">&#xb6;</a>
 					
 					
@@ -949,14 +1266,14 @@ underlying tag.
 				
 			
 				
-				<h3 id="Channel.Consume">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=35724:35890#L950">Consume</a>
+				<h3 id="Channel.Consume">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=36564:36730#L983">Consume</a>
 					<a class="permalink" href="godoc.8.html#Channel.Consume">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (channel *<a href="godoc.8.html#Channel">Channel</a>) Consume(
     queue, consumer <a href="http://localhost:6161/pkg/builtin/#string">string</a>, autoAck, exclusive, noLocal, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.8.html#Table">Table</a>,
-) (deliveryChan &lt;-chan <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Delivery">Delivery</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+) (deliveryChan &lt;-chan <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Delivery">Delivery</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 				<p>
 Consume immediately starts delivering queued messages.
 </p>
@@ -1047,8 +1364,9 @@ tags of the current underlying channel.
 		
 		
 			<p>Code:</p>
-			<pre class="code"><span class="comment">// Get a new connection to our test broker.</span>
-connection, err := amqp.Dial(amqpTest.TestDialAddress)
+			<pre class="code">
+<span class="comment">// Get a new connection to our test broker.</span>
+connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 if err != nil {
     panic(err)
 }
@@ -1068,10 +1386,10 @@ if err != nil {
 queueName := &#34;example_delivery_tag_continuity&#34;
 
 <span class="comment">// Declare the queue we are going to use.</span>
-_, err = consumeChannel.QueueDeclare(
+queue, err := consumeChannel.QueueDeclare(
     queueName, <span class="comment">// name</span>
     false,     <span class="comment">// durable</span>
-    true,      <span class="comment">// autoDelete</span>
+    false,     <span class="comment">// autoDelete</span>
     false,     <span class="comment">// exclusive</span>
     false,     <span class="comment">// noWait</span>
     nil,       <span class="comment">// args</span>
@@ -1080,9 +1398,14 @@ if err != nil {
     panic(err)
 }
 
+<span class="comment">// Clean up the queue on exit,</span>
+defer consumeChannel.QueueDelete(
+    queue.Name, false, false, false,
+)
+
 <span class="comment">// Start consuming the channel</span>
 consume, err := consumeChannel.Consume(
-    queueName,
+    queue.Name,
     &#34;example consumer&#34;, <span class="comment">// consumer name</span>
     true,               <span class="comment">// autoAck</span>
     false,              <span class="comment">// exclusive</span>
@@ -1095,6 +1418,13 @@ consume, err := consumeChannel.Consume(
 consumeComplete := new(sync.WaitGroup)
 consumerClosed := make(chan struct{})
 
+<span class="comment">// Set the prefetch count to 1, that way we are less likely to lose a message</span>
+<span class="comment">// that in in-flight from the broker in this example.</span>
+err = consumeChannel.Qos(1, 0, false)
+if err != nil {
+    panic(err)
+}
+
 <span class="comment">// Launch a consumer</span>
 go func() {
     <span class="comment">// Close the consumeComplete to signal exit</span>
@@ -1104,17 +1434,17 @@ go func() {
 
     <span class="comment">// Range over the consume channel</span>
     for delivery := range consume {
-        <span class="comment">// Force-reconnect the channel after each delivery.</span>
+        <span class="comment">// Force-channelReconnect the channel after each delivery.</span>
         consumeChannel.Test(new(testing.T)).ForceReconnect(context.Background())
+
+        <span class="comment">// Tick down the consumeComplete WaitGroup</span>
+        consumeComplete.Done()
 
         <span class="comment">// Print the delivery. Even though we are forcing a new underlying channel</span>
         <span class="comment">// to be connected each time, the delivery tags will still be continuous.</span>
         fmt.Printf(
             &#34;DELIVERY %v: %v\n&#34;, delivery.DeliveryTag, string(delivery.Body),
         )
-
-        <span class="comment">// Tick down the consumeComplete waitgroup</span>
-        consumeComplete.Done()
     }
 
     fmt.Println(&#34;DELIVERIES EXHAUSTED&#34;)
@@ -1134,7 +1464,7 @@ for i := 0; i &lt; 10; i++ {
     <span class="comment">// show in another example.</span>
     err = publishChannel.Publish(
         &#34;&#34;,
-        queueName,
+        queue.Name,
         false,
         false,
         amqp.Publishing{
@@ -1160,21 +1490,18 @@ if err != nil {
 
 <span class="comment">// exit</span>
 
-<span class="comment"></pre>
-			
-			<p>Output:</p>
-			<pre class="output">STARTING CONSUMER
-DELIVERY 1: message 0
-DELIVERY 2: message 1
-DELIVERY 3: message 2
-DELIVERY 4: message 3
-DELIVERY 5: message 4
-DELIVERY 6: message 5
-DELIVERY 7: message 6
-DELIVERY 8: message 7
-DELIVERY 9: message 8
-DELIVERY 10: message 9
-DELIVERIES EXHAUSTED
+<span class="comment">// STARTING CONSUMER</span>
+<span class="comment">// DELIVERY 1: message 0</span>
+<span class="comment">// DELIVERY 2: message 1</span>
+<span class="comment">// DELIVERY 3: message 2</span>
+<span class="comment">// DELIVERY 4: message 3</span>
+<span class="comment">// DELIVERY 5: message 4</span>
+<span class="comment">// DELIVERY 6: message 5</span>
+<span class="comment">// DELIVERY 7: message 6</span>
+<span class="comment">// DELIVERY 8: message 7</span>
+<span class="comment">// DELIVERY 9: message 8</span>
+<span class="comment">// DELIVERY 10: message 9</span>
+<span class="comment">// DELIVERIES EXHAUSTED</span>
 </pre>
 			
 		
@@ -1190,8 +1517,9 @@ DELIVERIES EXHAUSTED
 		
 		
 			<p>Code:</p>
-			<pre class="code"><span class="comment">// Get a new connection to our test broker.</span>
-connection, err := amqp.Dial(amqpTest.TestDialAddress)
+			<pre class="code">
+<span class="comment">// Get a new connection to our test broker.</span>
+connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 if err != nil {
     panic(err)
 }
@@ -1267,13 +1595,10 @@ if !errors.As(err, &amp;orphanErr) {
 fmt.Println(&#34;FIRST ORPHAN TAG:&#34;, orphanErr.OrphanTagFirst)
 fmt.Println(&#34;LAST ORPHAN TAG :&#34;, orphanErr.OrphanTagLast)
 
-<span class="comment"></pre>
-			
-			<p>Output:</p>
-			<pre class="output">DELIVERY: test message
-ACK ERROR: 1 tags orphaned (1 - 1), 0 tags successfully acknowledged
-FIRST ORPHAN TAG: 1
-LAST ORPHAN TAG : 1
+<span class="comment">// DELIVERY: test message</span>
+<span class="comment">// ACK ERROR: 1 tags orphaned (1 - 1), 0 tags successfully acknowledged</span>
+<span class="comment">// FIRST ORPHAN TAG: 1</span>
+<span class="comment">// LAST ORPHAN TAG : 1</span>
 </pre>
 			
 		
@@ -1283,7 +1608,7 @@ LAST ORPHAN TAG : 1
 				
 			
 				
-				<h3 id="Channel.ExchangeBind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=27102:27212#L720">ExchangeBind</a>
+				<h3 id="Channel.ExchangeBind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=28007:28117#L753">ExchangeBind</a>
 					<a class="permalink" href="godoc.8.html#Channel.ExchangeBind">&#xb6;</a>
 					
 					
@@ -1339,7 +1664,7 @@ ROGER NOTE: All bindings will be remembered and re-declared on reconnection even
 				
 			
 				
-				<h3 id="Channel.ExchangeDeclare">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=22731:22861#L596">ExchangeDeclare</a>
+				<h3 id="Channel.ExchangeDeclare">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=23456:23586#L624">ExchangeDeclare</a>
 					<a class="permalink" href="godoc.8.html#Channel.ExchangeDeclare">&#xb6;</a>
 					
 					
@@ -1429,7 +1754,7 @@ how exchanges are re-declared on reconnection.
 				
 			
 				
-				<h3 id="Channel.ExchangeDeclarePassive">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=23849:23986#L628">ExchangeDeclarePassive</a>
+				<h3 id="Channel.ExchangeDeclarePassive">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=24556:24693#L656">ExchangeDeclarePassive</a>
 					<a class="permalink" href="godoc.8.html#Channel.ExchangeDeclarePassive">&#xb6;</a>
 					
 					
@@ -1450,7 +1775,7 @@ can be used to detect the existence of an exchange.
 				
 			
 				
-				<h3 id="Channel.ExchangeDelete">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=25291:25381#L668">ExchangeDelete</a>
+				<h3 id="Channel.ExchangeDelete">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=26214:26304#L701">ExchangeDelete</a>
 					<a class="permalink" href="godoc.8.html#Channel.ExchangeDelete">&#xb6;</a>
 					
 					
@@ -1489,7 +1814,7 @@ or relevant bindings to be re-declared on reconnections of the underlying
 				
 			
 				
-				<h3 id="Channel.ExchangeUnbind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=28295:28407#L758">ExchangeUnbind</a>
+				<h3 id="Channel.ExchangeUnbind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=29189:29301#L791">ExchangeUnbind</a>
 					<a class="permalink" href="godoc.8.html#Channel.ExchangeUnbind">&#xb6;</a>
 					
 					
@@ -1518,7 +1843,7 @@ identify the binding.
 </p>
 <p>
 ROGER NOTE: All relevant bindings will be removed from the list of bindings to declare
-on reconnect.
+on channelReconnect.
 </p>
 
 				
@@ -1526,7 +1851,7 @@ on reconnect.
 				
 			
 				
-				<h3 id="Channel.Flow">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=8524:8571#L217">Flow</a>
+				<h3 id="Channel.Flow">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=8555:8602#L224">Flow</a>
 					<a class="permalink" href="godoc.8.html#Channel.Flow">&#xb6;</a>
 					
 					
@@ -1565,7 +1890,7 @@ Connections for publishings and deliveries.
 				
 			
 				
-				<h3 id="Channel.Get">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=32314:32420#L863">Get</a>
+				<h3 id="Channel.Get">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=33172:33278#L896">Get</a>
 					<a class="permalink" href="godoc.8.html#Channel.Get">&#xb6;</a>
 					
 					
@@ -1573,7 +1898,7 @@ Connections for publishings and deliveries.
 				<pre>func (channel *<a href="godoc.8.html#Channel">Channel</a>) Get(
     queue <a href="http://localhost:6161/pkg/builtin/#string">string</a>,
     autoAck <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
-) (msg <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Delivery">Delivery</a>, ok <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+) (msg <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Delivery">Delivery</a>, ok <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 				<p>
 Get synchronously receives a single Delivery from the head of a queue from the
 server to the client.  In almost all cases, using Channel.Consume will be
@@ -1609,7 +1934,7 @@ you.
 				
 			
 				
-				<h3 id="Channel.IsClosed">func (Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=15747:15795#L449">IsClosed</a>
+				<h3 id="Channel.IsClosed">func (Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=16083:16130#L450">IsClosed</a>
 					<a class="permalink" href="godoc.8.html#Channel.IsClosed">&#xb6;</a>
 					
 					
@@ -1634,86 +1959,7 @@ underlying connection is currently disconnected and waiting to reconnectMiddlewa
 				
 			
 				
-				<h3 id="Channel.Middleware">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=52615:52668#L1433">Middleware</a>
-					<a class="permalink" href="godoc.8.html#Channel.Middleware">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func (channel *<a href="godoc.8.html#Channel">Channel</a>) Middleware() *channelHandlers</pre>
-				<p>
-Middleware is a namespace object with methods for registering middleware. Middleware
-will be called in the order it is registered.
-</p>
-
-				
-				<div id="example_Channel_Middleware" class="toggle">
-	<div class="collapsed">
-		<p class="exampleHeading toggleButton">▹ <span class="text">Example</span></p>
-	</div>
-	<div class="expanded">
-		<p class="exampleHeading toggleButton">▾ <span class="text">Example</span></p>
-		
-		
-		
-			<p>Code:</p>
-			<pre class="code"><span class="comment">// define our new middleware</span>
-queueDeclareMiddleware := func(
-    next amqpMiddleware.HandlerQueueDeclare,
-) amqpMiddleware.HandlerQueueDeclare {
-    return func(args *amqpMiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
-        fmt.Println(&#34;MIDDLEWARE INVOKED FOR QUEUE&#34;)
-        fmt.Println(&#34;QUEUE NAME :&#34;, args.Name)
-        fmt.Println(&#34;AUTO-DELETE:&#34;, args.AutoDelete)
-        return next(args)
-    }
-}
-
-<span class="comment">// Get a new connection to our test broker.</span>
-connection, err := amqp.Dial(amqpTest.TestDialAddress)
-if err != nil {
-    panic(err)
-}
-defer connection.Close()
-
-<span class="comment">// Get a new channel from our robust connection for publishing. The channel is</span>
-<span class="comment">// created with our default middleware.</span>
-channel, err := connection.Channel()
-if err != nil {
-    panic(err)
-}
-
-<span class="comment">// Register our middleware for queue declare.</span>
-channel.Middleware().AddQueueDeclare(queueDeclareMiddleware)
-
-<span class="comment">// Declare our queue, our middleware will be invoked and print a message.</span>
-_, err = channel.QueueDeclare(
-    &#34;example_middleware&#34;,
-    false,
-    true,
-    false,
-    false,
-    nil,
-)
-if err != nil {
-    panic(err)
-}
-
-<span class="comment"></pre>
-			
-			<p>Output:</p>
-			<pre class="output">MIDDLEWARE INVOKED FOR QUEUE
-QUEUE NAME : example_middleware
-AUTO-DELETE: true
-</pre>
-			
-		
-	</div>
-</div>
-
-				
-			
-				
-				<h3 id="Channel.Nack">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=38507:38582#L1036">Nack</a>
+				<h3 id="Channel.Nack">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=38832:38907#L1050">Nack</a>
 					<a class="permalink" href="godoc.8.html#Channel.Nack">&#xb6;</a>
 					
 					
@@ -1745,7 +1991,7 @@ still be returned, and can be checked for which tag ranges could not be nacked.
 				
 			
 				
-				<h3 id="Channel.NotifyCancel">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=47091:47166#L1286">NotifyCancel</a>
+				<h3 id="Channel.NotifyCancel">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=46511:46586#L1266">NotifyCancel</a>
 					<a class="permalink" href="godoc.8.html#Channel.NotifyCancel">&#xb6;</a>
 					
 					
@@ -1765,7 +2011,7 @@ The subscription tag is returned to the listener.
 				
 			
 				
-				<h3 id="Channel.NotifyClose">func (Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=11550:11652#L323">NotifyClose</a>
+				<h3 id="Channel.NotifyClose">func (Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=13215:13316#L374">NotifyClose</a>
 					<a class="permalink" href="godoc.8.html#Channel.NotifyClose">&#xb6;</a>
 					
 					
@@ -1778,7 +2024,7 @@ NotifyClose is as NotifyClose on streadway Connection/Channel.NotifyClose.
 Subscribers to Close events will not be notified when a reconnection occurs under
 the hood, only when the roger Connection or Channel is closed by calling the Close
 method. This mirrors the streadway implementation, where Close events are only sent
-once when the transport object becomes unusable.
+once when the livesOnce object becomes unusable.
 </p>
 <p>
 For finer-grained connection status, see NotifyDial and NotifyDisconnect, which
@@ -1790,7 +2036,7 @@ will both send individual events when the connection is lost or re-acquired.
 				
 			
 				
-				<h3 id="Channel.NotifyConfirm">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=43886:43977#L1184">NotifyConfirm</a>
+				<h3 id="Channel.NotifyConfirm">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=44163:44254#L1198">NotifyConfirm</a>
 					<a class="permalink" href="godoc.8.html#Channel.NotifyConfirm">&#xb6;</a>
 					
 					
@@ -1800,7 +2046,7 @@ will both send individual events when the connection is lost or re-acquired.
 ) (chan <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>, chan <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>)</pre>
 				<p>
 NotifyConfirm calls NotifyPublish and starts a goroutine sending
-ordered Ack and Nack DeliveryTag to the respective channels.
+ordered Ack and Nack publicationTag to the respective channels.
 </p>
 <p>
 For strict ordering, use NotifyPublish instead.
@@ -1819,7 +2065,7 @@ Orphaned tags separately, use the new method NotifyConfirmOrOrphaned.
 				
 			
 				
-				<h3 id="Channel.NotifyConfirmOrOrphaned">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=44621:44745#L1210">NotifyConfirmOrOrphaned</a>
+				<h3 id="Channel.NotifyConfirmOrOrphaned">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=44549:44673#L1212">NotifyConfirmOrOrphaned</a>
 					<a class="permalink" href="godoc.8.html#Channel.NotifyConfirmOrOrphaned">&#xb6;</a>
 					
 					
@@ -1837,7 +2083,7 @@ a disconnect, these tags are routed to the nack channel in NotifyConfirm.
 				
 			
 				
-				<h3 id="Channel.NotifyDial">func (Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=12251:12325#L345">NotifyDial</a>
+				<h3 id="Channel.NotifyDial">func (Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=13706:13779#L387">NotifyDial</a>
 					<a class="permalink" href="godoc.8.html#Channel.NotifyDial">&#xb6;</a>
 					
 					
@@ -1846,7 +2092,7 @@ a disconnect, these tags are routed to the nack channel in NotifyConfirm.
     receiver chan <a href="http://localhost:6161/pkg/builtin/#error">error</a>,
 ) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 				<p>
-NotifyDial is new for robust Roger Transport objects. NotifyDial will send all
+NotifyDial is new for robust Roger transportType objects. NotifyDial will send all
 subscribers an event notification every time we try to re-acquire a connection. This
 will include both failure AND successes.
 </p>
@@ -1856,7 +2102,7 @@ will include both failure AND successes.
 				
 			
 				
-				<h3 id="Channel.NotifyDisconnect">func (Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=12902:12982#L367">NotifyDisconnect</a>
+				<h3 id="Channel.NotifyDisconnect">func (Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=14133:14212#L400">NotifyDisconnect</a>
 					<a class="permalink" href="godoc.8.html#Channel.NotifyDisconnect">&#xb6;</a>
 					
 					
@@ -1865,7 +2111,7 @@ will include both failure AND successes.
     receiver chan <a href="http://localhost:6161/pkg/builtin/#error">error</a>,
 ) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 				<p>
-NotifyDisconnect is new for robust Roger Transport objects. NotifyDisconnect will
+NotifyDisconnect is new for robust Roger transportType objects. NotifyDisconnect will
 send all subscribers an event notification every time the underlying connection is
 lost.
 </p>
@@ -1875,7 +2121,7 @@ lost.
 				
 			
 				
-				<h3 id="Channel.NotifyFlow">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=49484:49557#L1341">NotifyFlow</a>
+				<h3 id="Channel.NotifyFlow">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=48763:48836#L1312">NotifyFlow</a>
 					<a class="permalink" href="godoc.8.html#Channel.NotifyFlow">&#xb6;</a>
 					
 					
@@ -1936,18 +2182,18 @@ even when using RabbitMQ.
 				
 			
 				
-				<h3 id="Channel.NotifyPublish">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=41709:41817#L1118">NotifyPublish</a>
+				<h3 id="Channel.NotifyPublish">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=42001:42109#L1132">NotifyPublish</a>
 					<a class="permalink" href="godoc.8.html#Channel.NotifyPublish">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (channel *<a href="godoc.8.html#Channel">Channel</a>) NotifyPublish(
-    confirm chan <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Confirmation">Confirmation</a>,
-) chan <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Confirmation">Confirmation</a></pre>
+    confirm chan <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Confirmation">Confirmation</a>,
+) chan <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Confirmation">Confirmation</a></pre>
 				<p>
 NotifyPublish registers a listener for reliable publishing. Receives from this
 chan for every publish after Channel.Confirm will be in order starting with
-DeliveryTag 1.
+publicationTag 1.
 </p>
 <p>
 There will be one and only one Confirmation Publishing starting with the
@@ -1995,7 +2241,7 @@ receiving.
 				
 			
 				
-				<h3 id="Channel.NotifyReturn">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=46503:46572#L1266">NotifyReturn</a>
+				<h3 id="Channel.NotifyReturn">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=46051:46120#L1254">NotifyReturn</a>
 					<a class="permalink" href="godoc.8.html#Channel.NotifyReturn">&#xb6;</a>
 					
 					
@@ -2024,7 +2270,7 @@ therefore will be missed. You can subscribe to disconnection events through.
 				
 			
 				
-				<h3 id="Channel.Publish">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=30765:30893#L816">Publish</a>
+				<h3 id="Channel.Publish">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=31641:31769#L849">Publish</a>
 					<a class="permalink" href="godoc.8.html#Channel.Publish">&#xb6;</a>
 					
 					
@@ -2096,8 +2342,9 @@ you.
 		
 		
 			<p>Code:</p>
-			<pre class="code"><span class="comment">// Get a new connection to our test broker.</span>
-connection, err := amqp.Dial(amqpTest.TestDialAddress)
+			<pre class="code">
+<span class="comment">// Get a new connection to our test broker.</span>
+connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 if err != nil {
     panic(err)
 }
@@ -2142,7 +2389,7 @@ go func() {
 }()
 
 <span class="comment">// Declare the message queue</span>
-queueName := &#34;example_delivery_tag_continuity&#34;
+queueName := &#34;example_publish_tag_continuity&#34;
 _, err = publishChannel.QueueDeclare(
     queueName,
     false,
@@ -2197,19 +2444,16 @@ if err != nil {
 
 <span class="comment">// Exit.</span>
 
-<span class="comment"></pre>
-			
-			<p>Output:</p>
-			<pre class="output">CONFIRMATION TAG 01: ACK: true ORPHAN: false
-CONFIRMATION TAG 02: ACK: true ORPHAN: false
-CONFIRMATION TAG 03: ACK: true ORPHAN: false
-CONFIRMATION TAG 04: ACK: true ORPHAN: false
-CONFIRMATION TAG 05: ACK: true ORPHAN: false
-CONFIRMATION TAG 06: ACK: true ORPHAN: false
-CONFIRMATION TAG 07: ACK: true ORPHAN: false
-CONFIRMATION TAG 08: ACK: true ORPHAN: false
-CONFIRMATION TAG 09: ACK: true ORPHAN: false
-CONFIRMATION TAG 10: ACK: true ORPHAN: false
+<span class="comment">// CONFIRMATION TAG 01: ACK: true ORPHAN: false</span>
+<span class="comment">// CONFIRMATION TAG 02: ACK: true ORPHAN: false</span>
+<span class="comment">// CONFIRMATION TAG 03: ACK: true ORPHAN: false</span>
+<span class="comment">// CONFIRMATION TAG 04: ACK: true ORPHAN: false</span>
+<span class="comment">// CONFIRMATION TAG 05: ACK: true ORPHAN: false</span>
+<span class="comment">// CONFIRMATION TAG 06: ACK: true ORPHAN: false</span>
+<span class="comment">// CONFIRMATION TAG 07: ACK: true ORPHAN: false</span>
+<span class="comment">// CONFIRMATION TAG 08: ACK: true ORPHAN: false</span>
+<span class="comment">// CONFIRMATION TAG 09: ACK: true ORPHAN: false</span>
+<span class="comment">// CONFIRMATION TAG 10: ACK: true ORPHAN: false</span>
 </pre>
 			
 		
@@ -2219,7 +2463,7 @@ CONFIRMATION TAG 10: ACK: true ORPHAN: false
 				
 			
 				
-				<h3 id="Channel.Qos">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=7188:7267#L181">Qos</a>
+				<h3 id="Channel.Qos">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=7237:7316#L188">Qos</a>
 					<a class="permalink" href="godoc.8.html#Channel.Qos">&#xb6;</a>
 					
 					
@@ -2273,7 +2517,7 @@ greater as described by benchmarks on RabbitMQ.
 				
 			
 				
-				<h3 id="Channel.QueueBind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=16345:16441#L422">QueueBind</a>
+				<h3 id="Channel.QueueBind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=17050:17146#L445">QueueBind</a>
 					<a class="permalink" href="godoc.8.html#Channel.QueueBind">&#xb6;</a>
 					
 					
@@ -2335,18 +2579,13 @@ closed with an error.
 				
 			
 				
-				<h3 id="Channel.QueueDeclare">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=11829:11984#L291">QueueDeclare</a>
+				<h3 id="Channel.QueueDeclare">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=11842:11977#L298">QueueDeclare</a>
 					<a class="permalink" href="godoc.8.html#Channel.QueueDeclare">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (channel *<a href="godoc.8.html#Channel">Channel</a>) QueueDeclare(
-    name <a href="http://localhost:6161/pkg/builtin/#string">string</a>,
-    durable <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
-    autoDelete <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
-    exclusive <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
-    noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
-    args <a href="godoc.8.html#Table">Table</a>,
+    name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, durable, autoDelete, exclusive, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.8.html#Table">Table</a>,
 ) (queue <a href="godoc.8.html#Queue">Queue</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 				<p>
 QueueDeclare declares a queue to hold messages and deliver to consumers.
@@ -2435,8 +2674,9 @@ how queues are re-declared on reconnection.
 		
 		
 			<p>Code:</p>
-			<pre class="code"><span class="comment">// Get a new connection to our test broker.</span>
-connection, err := amqp.Dial(amqpTest.TestDialAddress)
+			<pre class="code">
+<span class="comment">// Get a new connection to our test broker.</span>
+connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 if err != nil {
     panic(err)
 }
@@ -2495,12 +2735,9 @@ if err != nil {
     panic(err)
 }
 
-<span class="comment"></pre>
-			
-			<p>Output:</p>
-			<pre class="output">INSPECT ERROR: Exception (404) Reason: &#34;NOT_FOUND - no queue &#39;example_queue_declare_robust&#39; in vhost &#39;/&#39;&#34;
-INSPECTION: example_queue_declare_robust
-INSPECTION: example_queue_declare_robust
+<span class="comment">// INSPECT ERROR: Exception (404) Reason: &#34;NOT_FOUND - no queue &#39;example_queue_declare_robust&#39; in vhost &#39;/&#39;&#34;</span>
+<span class="comment">// INSPECTION: example_queue_declare_robust</span>
+<span class="comment">// INSPECTION: example_queue_declare_robust</span>
 </pre>
 			
 		
@@ -2510,7 +2747,7 @@ INSPECTION: example_queue_declare_robust
 				
 			
 				
-				<h3 id="Channel.QueueDeclarePassive">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=13220:13362#L335">QueueDeclarePassive</a>
+				<h3 id="Channel.QueueDeclarePassive">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=13195:13337#L337">QueueDeclarePassive</a>
 					<a class="permalink" href="godoc.8.html#Channel.QueueDeclarePassive">&#xb6;</a>
 					
 					
@@ -2531,7 +2768,7 @@ can be used to test for the existence of a queue.
 				
 			
 				
-				<h3 id="Channel.QueueDelete">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=19151:19258#L514">QueueDelete</a>
+				<h3 id="Channel.QueueDelete">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=19894:20001#L542">QueueDelete</a>
 					<a class="permalink" href="godoc.8.html#Channel.QueueDelete">&#xb6;</a>
 					
 					
@@ -2573,7 +2810,7 @@ re-declared on reconnections of the underlying streadway/amqp.Channel object.
 				
 			
 				
-				<h3 id="Channel.QueueInspect">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=14233:14307#L366">QueueInspect</a>
+				<h3 id="Channel.QueueInspect">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=14717:14791#L382">QueueInspect</a>
 					<a class="permalink" href="godoc.8.html#Channel.QueueInspect">&#xb6;</a>
 					
 					
@@ -2602,7 +2839,7 @@ channel will be closed.
 				
 			
 				
-				<h3 id="Channel.QueuePurge">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=17882:17969#L478">QueuePurge</a>
+				<h3 id="Channel.QueuePurge">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=18551:18638#L501">QueuePurge</a>
 					<a class="permalink" href="godoc.8.html#Channel.QueuePurge">&#xb6;</a>
 					
 					
@@ -2628,7 +2865,7 @@ messages purged will not be meaningful.
 				
 			
 				
-				<h3 id="Channel.QueueUnbind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=17113:17194#L452">QueueUnbind</a>
+				<h3 id="Channel.QueueUnbind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=17800:17881#L475">QueueUnbind</a>
 					<a class="permalink" href="godoc.8.html#Channel.QueueUnbind">&#xb6;</a>
 					
 					
@@ -2648,7 +2885,7 @@ unbind the queue from the default exchange.
 				
 			
 				
-				<h3 id="Channel.Reject">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=39664:39726#L1068">Reject</a>
+				<h3 id="Channel.Reject">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=39971:40033#L1082">Reject</a>
 					<a class="permalink" href="godoc.8.html#Channel.Reject">&#xb6;</a>
 					
 					
@@ -2680,7 +2917,7 @@ still be returned, and can be checked for which tag ranges could not be rejected
 				
 			
 				
-				<h3 id="Channel.Test">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=54688:54746#L1494">Test</a>
+				<h3 id="Channel.Test">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=53225:53283#L1440">Test</a>
 					<a class="permalink" href="godoc.8.html#Channel.Test">&#xb6;</a>
 					
 					
@@ -2701,8 +2938,9 @@ Test returns an object with methods for testing the Channel.
 		
 		
 			<p>Code:</p>
-			<pre class="code"><span class="comment">// Get a new connection to our test broker.</span>
-connection, err := amqp.Dial(amqpTest.TestDialAddress)
+			<pre class="code">
+<span class="comment">// Get a new connection to our test broker.</span>
+connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 if err != nil {
     panic(err)
 }
@@ -2719,7 +2957,7 @@ if err != nil {
 <span class="comment">// test&#39;s *testing.T value. Here, we will just pass a dummy one.</span>
 testHarness := channel.Test(new(testing.T))
 
-<span class="comment">// We can use the test harness to force the channel to reconnect. If a reconnection</span>
+<span class="comment">// We can use the test harness to force the channel to channelReconnect. If a reconnection</span>
 <span class="comment">// does not occur before the passed context expires, the test will be failed.</span>
 ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 defer cancel()
@@ -2731,10 +2969,7 @@ fmt.Println(&#34;RECONNECTION COUNT:&#34;, testHarness.ReconnectionCount())
 
 <span class="comment">// exit.</span>
 
-<span class="comment"></pre>
-			
-			<p>Output:</p>
-			<pre class="output">RECONNECTION COUNT: 2
+<span class="comment">// RECONNECTION COUNT: 2</span>
 </pre>
 			
 		
@@ -2744,7 +2979,7 @@ fmt.Println(&#34;RECONNECTION COUNT:&#34;, testHarness.ReconnectionCount())
 				
 			
 				
-				<h3 id="Channel.Tx">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=51174:51208#L1389">Tx</a>
+				<h3 id="Channel.Tx">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=50288:50322#L1350">Tx</a>
 					<a class="permalink" href="godoc.8.html#Channel.Tx">&#xb6;</a>
 					
 					
@@ -2786,7 +3021,7 @@ PRs to add this functionality are welcome.
 				
 			
 				
-				<h3 id="Channel.TxCommit">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=51773:51813#L1408">TxCommit</a>
+				<h3 id="Channel.TxCommit">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=50887:50927#L1369">TxCommit</a>
 					<a class="permalink" href="godoc.8.html#Channel.TxCommit">&#xb6;</a>
 					
 					
@@ -2817,7 +3052,7 @@ PRs to add this functionality are welcome.
 				
 			
 				
-				<h3 id="Channel.TxRollback">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=52384:52426#L1425">TxRollback</a>
+				<h3 id="Channel.TxRollback">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=51498:51540#L1386">TxRollback</a>
 					<a class="permalink" href="godoc.8.html#Channel.TxRollback">&#xb6;</a>
 					
 					
@@ -2847,22 +3082,13 @@ PRs to add this functionality are welcome.
 		
 			
 			
-			<h2 id="ChannelTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=53242:53594#L1451">ChannelTesting</a>
-				<a class="permalink" href="godoc.8.html#ChannelTesting">&#xb6;</a>
+			<h2 id="ChannelMiddlewares">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=604:5846#L16">ChannelMiddlewares</a>
+				<a class="permalink" href="godoc.8.html#ChannelMiddlewares">&#xb6;</a>
 				
 				
 			</h2>
-			<p>
-ChannelTesting exposes a number of methods designed for testing.
-</p>
-
-			<pre>type ChannelTesting struct {
-    <span class="comment">// TransportTesting embedded common methods between Connections and Channels.</span>
-    *<a href="godoc.8.html#TransportTesting">TransportTesting</a>
-
-<span id="ChannelTesting.DefaultMiddlewares"></span>    <span class="comment">// DefaultMiddlewares holds middleware objects registered to the channel during</span>
-    <span class="comment">// channel creation.</span>
-    DefaultMiddlewares *<a href="godoc.8.html#ChannelTestingDefaultMiddlewares">ChannelTestingDefaultMiddlewares</a>
+			
+			<pre>type ChannelMiddlewares struct {
     <span class="comment">// contains filtered or unexported fields</span>
 }
 </pre>
@@ -2879,7 +3105,752 @@ ChannelTesting exposes a number of methods designed for testing.
 
 			
 				
-				<h3 id="ChannelTesting.ConnTest">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=53671:53729#L1464">ConnTest</a>
+				<h3 id="ChannelMiddlewares.AddAck">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=13554:13625#L327">AddAck</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddAck">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddAck(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#Ack">Ack</a>)</pre>
+				<p>
+AddAck adds a new middleware to be invoked on Channel.Ack method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddChannelReconnect">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=8709:8806#L216">AddChannelReconnect</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddChannelReconnect">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddChannelReconnect(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ChannelReconnect">ChannelReconnect</a>)</pre>
+				<p>
+AddChannelReconnect adds a new middleware to be invoked on a Channel reconnection
+event.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddClose">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=6798:6873#L175">AddClose</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddClose">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddClose(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#Close">Close</a>)</pre>
+				<p>
+AddClose adds a new middleware to be invoked on Channel.Close method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddConfirm">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=9366:9445#L231">AddConfirm</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddConfirm">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddConfirm(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#Confirm">Confirm</a>)</pre>
+				<p>
+AddConfirm adds a new middleware to be invoked on Channel.Confirm method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddConsume">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=13341:13420#L322">AddConsume</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddConsume">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddConsume(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#Consume">Consume</a>)</pre>
+				<p>
+AddConsume adds a new middleware to be invoked on Channel.Consume method calls.
+</p>
+<p>
+NOTE: this is a distinct middleware from AddConsumeEvents, which fires on every
+delivery sent from the broker. This event only fires once when the  Channel.Consume
+method is first called.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddConsumeEvents">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=16092:16183#L385">AddConsumeEvents</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddConsumeEvents">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddConsumeEvents(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ConsumeEvents">ConsumeEvents</a>)</pre>
+				<p>
+AddConsumeEvents adds a new middleware to be invoked on events sent to callers
+of Channel.Consume.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddExchangeBind">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=12216:12305#L297">AddExchangeBind</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddExchangeBind">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddExchangeBind(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ExchangeBind">ExchangeBind</a>)</pre>
+				<p>
+AddExchangeBind adds a new middleware to be invoked on Channel.ExchangeBind
+method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddExchangeDeclare">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=11377:11472#L279">AddExchangeDeclare</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddExchangeDeclare">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddExchangeDeclare(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ExchangeDeclare">ExchangeDeclare</a>)</pre>
+				<p>
+AddExchangeDeclare adds a new middleware to be invoked on Channel.ExchangeDeclare
+method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddExchangeDeclarePassive">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=11663:11765#L285">AddExchangeDeclarePassive</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddExchangeDeclarePassive">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddExchangeDeclarePassive(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ExchangeDeclare">ExchangeDeclare</a>)</pre>
+				<p>
+AddExchangeDeclarePassive adds a new middleware to be invoked on
+Channel.ExchangeDeclarePassive method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddExchangeDelete">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=11954:12047#L291">AddExchangeDelete</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddExchangeDelete">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddExchangeDelete(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ExchangeDelete">ExchangeDelete</a>)</pre>
+				<p>
+AddExchangeDelete adds a new middleware to be invoked on Channel.ExchangeDelete
+method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddExchangeUnbind">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=12474:12567#L303">AddExchangeUnbind</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddExchangeUnbind">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddExchangeUnbind(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ExchangeUnbind">ExchangeUnbind</a>)</pre>
+				<p>
+AddExchangeUnbind adds a new middleware to be invoked on Channel.ExchangeUnbind
+method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddFlow">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=9157:9230#L226">AddFlow</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddFlow">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddFlow(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#Flow">Flow</a>)</pre>
+				<p>
+AddFlow adds a new middleware to be invoked on Channel.Flow method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddGet">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=12936:13007#L313">AddGet</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddGet">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddGet(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#Get">Get</a>)</pre>
+				<p>
+AddGet adds a new middleware to be invoked on Channel.Get method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNack">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=13753:13826#L332">AddNack</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNack">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNack(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#Nack">Nack</a>)</pre>
+				<p>
+AddNack adds a new middleware to be invoked on Channel.Nack method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyCancel">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=15284:15373#L367">AddNotifyCancel</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyCancel">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyCancel(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyCancel">NotifyCancel</a>)</pre>
+				<p>
+AddNotifyCancel adds a new middleware to be invoked on Channel.NotifyCancel method
+calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyCancelEvents">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=17354:17455#L417">AddNotifyCancelEvents</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyCancelEvents">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyCancelEvents(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyCancelEvents">NotifyCancelEvents</a>)</pre>
+				<p>
+AddNotifyCancelEvents adds a new middleware to be invoked on events sent to
+callers of Channel.NotifyCancel.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyClose">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=7040:7127#L181">AddNotifyClose</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyClose">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyClose(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyClose">NotifyClose</a>)</pre>
+				<p>
+AddNotifyClose adds a new middleware to be invoked on Channel.NotifyClose method
+calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyCloseEvents">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=7828:7927#L198">AddNotifyCloseEvents</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyCloseEvents">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyCloseEvents(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyCloseEvents">NotifyCloseEvents</a>)</pre>
+				<p>
+AddNotifyCloseEvents adds a new middleware to be invoked on all events sent to
+callers of Channel.NotifyClose.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyConfirm">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=14452:14543#L349">AddNotifyConfirm</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyConfirm">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyConfirm(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyConfirm">NotifyConfirm</a>)</pre>
+				<p>
+AddNotifyConfirm adds a new middleware to be invoked on Channel.NotifyConfirm method
+calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyConfirmEvents">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=16371:16474#L391">AddNotifyConfirmEvents</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyConfirmEvents">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyConfirmEvents(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyConfirmEvents">NotifyConfirmEvents</a>)</pre>
+				<p>
+AddNotifyConfirmEvents adds a new middleware to be invoked on events sent to callers
+of Channel.NotifyConfirm.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyConfirmOrOrphaned">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=14732:14843#L355">AddNotifyConfirmOrOrphaned</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyConfirmOrOrphaned">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyConfirmOrOrphaned(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyConfirmOrOrphaned">NotifyConfirmOrOrphaned</a>)</pre>
+				<p>
+AddNotifyConfirmOrOrphaned adds a new middleware to be invoked on
+Channel.NotifyConfirmOrOrphaned method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyConfirmOrOrphanedEvents">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=16700:16827#L399">AddNotifyConfirmOrOrphanedEvents</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyConfirmOrOrphanedEvents">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyConfirmOrOrphanedEvents(
+    middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyConfirmOrOrphanedEvents">NotifyConfirmOrOrphanedEvents</a>,
+)</pre>
+				<p>
+AddNotifyConfirmOrOrphanedEvents adds a new middleware to be invoked on events sent to
+callers of Channel.NotifyConfirmOrOrphaned.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyDial">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=7283:7368#L186">AddNotifyDial</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyDial">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyDial(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyDial">NotifyDial</a>)</pre>
+				<p>
+AddNotifyDial adds a new middleware to be invoked on Channel.NotifyDial method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyDialEvents">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=8121:8218#L204">AddNotifyDialEvents</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyDialEvents">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyDialEvents(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyDialEvents">NotifyDialEvents</a>)</pre>
+				<p>
+AddNotifyDialEvents adds a new middleware to be invoked on all events sent to
+callers of Channel.NotifyDial.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyDisconnect">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=7537:7634#L192">AddNotifyDisconnect</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyDisconnect">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyDisconnect(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyDisconnect">NotifyDisconnect</a>)</pre>
+				<p>
+AddNotifyDisconnect adds a new middleware to be invoked on Channel.NotifyDisconnect
+method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyDisconnectEvents">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=8416:8525#L210">AddNotifyDisconnectEvents</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyDisconnectEvents">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyDisconnectEvents(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyDisconnectEvents">NotifyDisconnectEvents</a>)</pre>
+				<p>
+AddNotifyDisconnectEvents adds a new middleware to be invoked on all events sent to
+callers of Channel.NotifyDial.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyFlow">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=15534:15619#L373">AddNotifyFlow</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyFlow">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyFlow(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyFlow">NotifyFlow</a>)</pre>
+				<p>
+AddNotifyFlow adds a new middleware to be invoked on Channel.NotifyFlow method
+calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyFlowEvents">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=17655:17752#L425">AddNotifyFlowEvents</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyFlowEvents">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyFlowEvents(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyFlowEvents">NotifyFlowEvents</a>)</pre>
+				<p>
+AddNotifyFlowEvents adds a new middleware to be invoked on events sent to
+callers of Channel.NotifyCancel.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyPublish">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=14192:14283#L343">AddNotifyPublish</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyPublish">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyPublish(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyPublish">NotifyPublish</a>)</pre>
+				<p>
+AddNotifyPublish adds a new middleware to be invoked on Channel.NotifyPublish method
+calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyPublishEvents">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=15801:15904#L379">AddNotifyPublishEvents</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyPublishEvents">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyPublishEvents(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyPublishEvents">NotifyPublishEvents</a>)</pre>
+				<p>
+AddNotifyPublishEvents adds a new middleware to be invoked on events sent to callers
+of Channel.NotifyPublish.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyReturn">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=15030:15119#L361">AddNotifyReturn</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyReturn">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyReturn(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyReturn">NotifyReturn</a>)</pre>
+				<p>
+AddNotifyReturn adds a new middleware to be invoked on Channel.NotifyReturn method
+calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddNotifyReturnEvents">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=17051:17152#L409">AddNotifyReturnEvents</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddNotifyReturnEvents">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddNotifyReturnEvents(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyReturnEvents">NotifyReturnEvents</a>)</pre>
+				<p>
+AddNotifyReturnEvents adds a new middleware to be invoked on events sent to
+callers of Channel.NotifyReturn.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddProviderFactory">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=6472:6574#L168">AddProviderFactory</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddProviderFactory">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddProviderFactory(factory func() <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ProvidesMiddleware">ProvidesMiddleware</a>)</pre>
+				<p>
+AddProviderFactory adds a factory function which creates a new middleware provider
+value which must implement one of the Middleware Provider interfaces from the
+amqpmiddleware package, like amqpmiddleware.ProvidesQueueDeclare, and must implement
+at-minimum amqpmiddleware.ProvidesMiddleware.
+</p>
+<p>
+When middleware is registered on a new Channel, the provider factory will be called
+and all provider methods will be registered as middleware.
+</p>
+<p>
+If you wish the same provider value&#39;s methods to be used as middleware for every
+*Channel created by a *Connection, consider using AddProviderMethods instead.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddProviderMethods">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=19036:19138#L462">AddProviderMethods</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddProviderMethods">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddProviderMethods(provider <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ProvidesMiddleware">ProvidesMiddleware</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+				<p>
+AddProviderMethods adds a amqpmiddleware.ProvidesMiddleware&#39;s methods as Middleware.
+If this method is invoked directly by the user, the same type value&#39;s method will be
+added to all *Channel values created by a *Connection.
+</p>
+<p>
+If a new provider value should be made for each *Channel, consider using
+AddProviderFactory instead.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddPublish">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=12723:12802#L308">AddPublish</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddPublish">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddPublish(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#Publish">Publish</a>)</pre>
+				<p>
+AddPublish adds a new middleware to be invoked on Channel.Publish method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddQoS">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=8958:9029#L221">AddQoS</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddQoS">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddQoS(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#QoS">QoS</a>)</pre>
+				<p>
+AddQoS adds a new middleware to be invoked on Channel.Qos method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddQueueBind">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=10639:10722#L261">AddQueueBind</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddQueueBind">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddQueueBind(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#QueueBind">QueueBind</a>)</pre>
+				<p>
+AddQueueBind adds a new middleware to be invoked on Channel.QueueBind method
+calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddQueueDeclare">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=9600:9689#L237">AddQueueDeclare</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddQueueDeclare">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddQueueDeclare(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#QueueDeclare">QueueDeclare</a>)</pre>
+				<p>
+AddQueueDeclare adds a new middleware to be invoked on Channel.QueueDeclare method
+calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddQueueDeclarePassive">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=9868:9964#L243">AddQueueDeclarePassive</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddQueueDeclarePassive">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddQueueDeclarePassive(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#QueueDeclare">QueueDeclare</a>)</pre>
+				<p>
+AddQueueDeclarePassive adds a new middleware to be invoked on
+Channel.QueueDeclarePassive method calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddQueueDelete">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=10395:10482#L255">AddQueueDelete</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddQueueDelete">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddQueueDelete(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#QueueDelete">QueueDelete</a>)</pre>
+				<p>
+AddQueueDelete adds a new middleware to be invoked on Channel.QueueDelete method
+calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddQueueInspect">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=10143:10232#L249">AddQueueInspect</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddQueueInspect">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddQueueInspect(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#QueueInspect">QueueInspect</a>)</pre>
+				<p>
+AddQueueInspect adds a new middleware to be invoked on Channel.QueueInspect method
+calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddQueuePurge">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=11125:11210#L273">AddQueuePurge</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddQueuePurge">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddQueuePurge(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#QueuePurge">QueuePurge</a>)</pre>
+				<p>
+AddQueuePurge adds a new middleware to be invoked on Channel.QueuePurge method
+calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddQueueUnbind">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=10879:10966#L267">AddQueueUnbind</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddQueueUnbind">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddQueueUnbind(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#QueueUnbind">QueueUnbind</a>)</pre>
+				<p>
+AddQueueUnbind adds a new middleware to be invoked on Channel.QueueUnbind method
+calls.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelMiddlewares.AddReject">func (*ChannelMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configChannelMiddleware.go?s=13960:14037#L337">AddReject</a>
+					<a class="permalink" href="godoc.8.html#ChannelMiddlewares.AddReject">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>) AddReject(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#Reject">Reject</a>)</pre>
+				<p>
+AddReject adds a new middleware to be invoked on Channel.Reject method calls.
+</p>
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="ChannelTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=51660:51854#L1391">ChannelTesting</a>
+				<a class="permalink" href="godoc.8.html#ChannelTesting">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ChannelTesting exposes a number of methods designed for testing.
+</p>
+
+			<pre>type ChannelTesting struct {
+    <span class="comment">// TransportTesting embedded common methods between Connections and Channels.</span>
+    *<a href="godoc.8.html#TransportTesting">TransportTesting</a>
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+				
+				<h3 id="ChannelTesting.ConnTest">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=51931:51989#L1400">ConnTest</a>
 					<a class="permalink" href="godoc.8.html#ChannelTesting.ConnTest">&#xb6;</a>
 					
 					
@@ -2894,7 +3865,25 @@ ConnTest returns a tester for the RogerConnection feeding this channel.
 				
 			
 				
-				<h3 id="ChannelTesting.ReconnectionCount">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=54524:54580#L1489">ReconnectionCount</a>
+				<h3 id="ChannelTesting.GetMiddlewareProvider">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=52867:52990#L1428">GetMiddlewareProvider</a>
+					<a class="permalink" href="godoc.8.html#ChannelTesting.GetMiddlewareProvider">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (tester *<a href="godoc.8.html#ChannelTesting">ChannelTesting</a>) GetMiddlewareProvider(
+    id <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ProviderTypeID">ProviderTypeID</a>,
+) <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ProvidesMiddleware">ProvidesMiddleware</a></pre>
+				<p>
+GetMiddlewareProvider returns a middleware provider for inspection or fails the test
+immediately.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ChannelTesting.ReconnectionCount">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=52663:52719#L1422">ReconnectionCount</a>
 					<a class="permalink" href="godoc.8.html#ChannelTesting.ReconnectionCount">&#xb6;</a>
 					
 					
@@ -2909,7 +3898,7 @@ ReconnectionCount returns the number of times this channel has been reconnected.
 				
 			
 				
-				<h3 id="ChannelTesting.UnderlyingChannel">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=53985:54048#L1475">UnderlyingChannel</a>
+				<h3 id="ChannelTesting.UnderlyingChannel">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=52229:52292#L1411">UnderlyingChannel</a>
 					<a class="permalink" href="godoc.8.html#ChannelTesting.UnderlyingChannel">&#xb6;</a>
 					
 					
@@ -2924,7 +3913,7 @@ UnderlyingChannel returns the current underlying streadway/amqp.Channel being us
 				
 			
 				
-				<h3 id="ChannelTesting.UnderlyingConnection">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=54285:54354#L1484">UnderlyingConnection</a>
+				<h3 id="ChannelTesting.UnderlyingConnection">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=52456:52525#L1417">UnderlyingConnection</a>
 					<a class="permalink" href="godoc.8.html#ChannelTesting.UnderlyingConnection">&#xb6;</a>
 					
 					
@@ -2942,43 +3931,7 @@ used to feed this Channel.
 		
 			
 			
-			<h2 id="ChannelTestingDefaultMiddlewares">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=52809:53172#L1439">ChannelTestingDefaultMiddlewares</a>
-				<a class="permalink" href="godoc.8.html#ChannelTestingDefaultMiddlewares">&#xb6;</a>
-				
-				
-			</h2>
-			<p>
-ChannelTestingDefaultMiddlewares holds default middleware for inspection during
-tests.
-</p>
-
-			<pre>type ChannelTestingDefaultMiddlewares struct {
-<span id="ChannelTestingDefaultMiddlewares.QoS"></span>    QoS     *<a href="godoc.5.html">defaultMiddlewares</a>.<a href="godoc.5.html#QoSMiddleware">QoSMiddleware</a>
-<span id="ChannelTestingDefaultMiddlewares.Flow"></span>    Flow    *<a href="godoc.5.html">defaultMiddlewares</a>.<a href="godoc.5.html#FlowMiddleware">FlowMiddleware</a>
-<span id="ChannelTestingDefaultMiddlewares.Confirm"></span>    Confirm *<a href="godoc.5.html">defaultMiddlewares</a>.<a href="godoc.5.html#ConfirmsMiddleware">ConfirmsMiddleware</a>
-
-<span id="ChannelTestingDefaultMiddlewares.RouteDeclaration"></span>    RouteDeclaration *<a href="godoc.5.html">defaultMiddlewares</a>.<a href="godoc.5.html#RouteDeclarationMiddleware">RouteDeclarationMiddleware</a>
-
-<span id="ChannelTestingDefaultMiddlewares.PublishTags"></span>    PublishTags  *<a href="godoc.5.html">defaultMiddlewares</a>.<a href="godoc.5.html#PublishTagsMiddleware">PublishTagsMiddleware</a>
-<span id="ChannelTestingDefaultMiddlewares.DeliveryTags"></span>    DeliveryTags *<a href="godoc.5.html">defaultMiddlewares</a>.<a href="godoc.5.html#DeliveryTagsMiddleware">DeliveryTagsMiddleware</a>
-}
-</pre>
-
-			
-
-			
-
-			
-			
-			
-
-			
-
-			
-		
-			
-			
-			<h2 id="Config">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/config.go?s=529:2374#L9">Config</a>
+			<h2 id="Config">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/config.go?s=564:2670#L10">Config</a>
 				<a class="permalink" href="godoc.8.html#Config">&#xb6;</a>
 				
 				
@@ -2992,9 +3945,9 @@ will be stored in the returned connection&#39;s Config field.
 ---
 </p>
 <p>
-ROGER NOTE: This config object is a re-implementation of streadway/amqp.Config. We
+ROGER NOTE: This config type is a re-implementation of streadway/amqp.Config. We
 any code that can declare such a config will work with this type. In the future this
-type may add additional options for rogerRabbit.
+type may add additional options for rogerRabbit-go/amqp.
 </p>
 
 			<pre>type Config struct {
@@ -3004,7 +3957,7 @@ type may add additional options for rogerRabbit.
 <span id="Config.SASL"></span>    SASL []<a href="godoc.8.html#Authentication">Authentication</a>
 
 <span id="Config.Vhost"></span>    <span class="comment">// Vhost specifies the namespace of permissions, exchanges, queues and</span>
-    <span class="comment">// bindings on the server.  Dial sets this to the path parsed from the URL.</span>
+    <span class="comment">// bindings on the server. Dial sets this to the path parsed from the URL.</span>
     Vhost <a href="http://localhost:6161/pkg/builtin/#string">string</a>
 
 <span id="Config.ChannelMax"></span>    ChannelMax <a href="http://localhost:6161/pkg/builtin/#int">int</a>           <span class="comment">// 0 max channels means 2^16 - 1</span>
@@ -3012,7 +3965,7 @@ type may add additional options for rogerRabbit.
 <span id="Config.Heartbeat"></span>    Heartbeat  <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Duration">Duration</a> <span class="comment">// less than 1s uses the server&#39;s interval</span>
 
 <span id="Config.TLSClientConfig"></span>    <span class="comment">// TLSClientConfig specifies the client configuration of the TLS connection</span>
-    <span class="comment">// when establishing a tls transport.</span>
+    <span class="comment">// when establishing a tls livesOnce.</span>
     <span class="comment">// If the URL uses an amqps scheme, then an empty tls.Config with the</span>
     <span class="comment">// ServerName from the URL is used.</span>
     TLSClientConfig *<a href="http://localhost:6161/pkg/crypto/tls/">tls</a>.<a href="http://localhost:6161/pkg/crypto/tls/#Config">Config</a>
@@ -3037,6 +3990,13 @@ type may add additional options for rogerRabbit.
     <span class="comment">// through the associated connection.</span>
 <span id="Config.NoDefaultMiddleware"></span>    NoDefaultMiddleware <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
 
+<span id="Config.ConnectionMiddleware"></span>    <span class="comment">// ConnectionMiddleware holds middleware to add to connection method and event</span>
+    <span class="comment">// handlers.</span>
+    ConnectionMiddleware <a href="godoc.8.html#ConnectionMiddlewares">ConnectionMiddlewares</a>
+
+<span id="Config.ChannelMiddleware"></span>    <span class="comment">// ChannelMiddleware holds middleware to add to channel method and event handlers.</span>
+    ChannelMiddleware <a href="godoc.8.html#ChannelMiddlewares">ChannelMiddlewares</a>
+
     <span class="comment">// The logger to use for internal logging. If none, the default zerolog logger will</span>
     <span class="comment">// be used.</span>
 <span id="Config.Logger"></span>    Logger <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Logger">Logger</a>
@@ -3053,12 +4013,12 @@ type may add additional options for rogerRabbit.
 
 			
 				
-				<h3 id="DefaultConfig">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/config.go?s=2473:2501#L56">DefaultConfig</a>
+				<h3 id="DefaultConfig">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/config.go?s=2769:2796#L64">DefaultConfig</a>
 					<a class="permalink" href="godoc.8.html#DefaultConfig">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func DefaultConfig() *<a href="godoc.8.html#Config">Config</a></pre>
+				<pre>func DefaultConfig() <a href="godoc.8.html#Config">Config</a></pre>
 				<p>
 DefaultConfig returns the default config for Dial() as it is in the streadway
 application.
@@ -3078,10 +4038,10 @@ application.
 				
 			</h2>
 			<p>
-Confirmation is an alias to dataModels.Confirmation.
+Confirmation is an alias to datamodels.Confirmation.
 </p>
 
-			<pre>type Confirmation = <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Confirmation">Confirmation</a></pre>
+			<pre>type Confirmation = <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Confirmation">Confirmation</a></pre>
 
 			
 
@@ -3097,7 +4057,7 @@ Confirmation is an alias to dataModels.Confirmation.
 		
 			
 			
-			<h2 id="Connection">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connection.go?s=2131:2440#L51">Connection</a>
+			<h2 id="Connection">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connection.go?s=1291:1941#L21">Connection</a>
 				<a class="permalink" href="godoc.8.html#Connection">&#xb6;</a>
 				
 				
@@ -3143,7 +4103,7 @@ ErrClosed seems like a good place to start.
 
 			
 				
-				<h3 id="Dial">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connectionDial.go?s=441:483#L5">Dial</a>
+				<h3 id="Dial">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connectionDial.go?s=448:490#L6">Dial</a>
 					<a class="permalink" href="godoc.8.html#Dial">&#xb6;</a>
 					
 					
@@ -3164,7 +4124,7 @@ scheme.  It is equivalent to calling DialTLS(amqp, nil).
 				
 			
 				
-				<h3 id="DialConfig">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connectionDial.go?s=890:953#L17">DialConfig</a>
+				<h3 id="DialConfig">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connectionDial.go?s=901:964#L18">DialConfig</a>
 					<a class="permalink" href="godoc.8.html#DialConfig">&#xb6;</a>
 					
 					
@@ -3172,7 +4132,7 @@ scheme.  It is equivalent to calling DialTLS(amqp, nil).
 				<pre>func DialConfig(url <a href="http://localhost:6161/pkg/builtin/#string">string</a>, config <a href="godoc.8.html#Config">Config</a>) (*<a href="godoc.8.html#Connection">Connection</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 				<p>
 DialConfig accepts a string in the AMQP URI format and a configuration for
-the transport and connection setup, returning a new Connection.  Defaults to
+the livesOnce and connection setup, returning a new Connection.  Defaults to
 a server heartbeat interval of 10 seconds and sets the initial read deadline
 to 30 seconds.
 </p>
@@ -3181,7 +4141,7 @@ to 30 seconds.
 				
 			
 				
-				<h3 id="DialConfigCtx">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connectionDial.go?s=1770:1861#L42">DialConfigCtx</a>
+				<h3 id="DialConfigCtx">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connectionDial.go?s=1863:1954#L46">DialConfigCtx</a>
 					<a class="permalink" href="godoc.8.html#DialConfigCtx">&#xb6;</a>
 					
 					
@@ -3198,7 +4158,7 @@ returned, cancelling ctx does not affect the connection.
 				
 			
 				
-				<h3 id="DialCtx">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connectionDial.go?s=2132:2202#L55">DialCtx</a>
+				<h3 id="DialCtx">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connectionDial.go?s=2308:2378#L62">DialCtx</a>
 					<a class="permalink" href="godoc.8.html#DialCtx">&#xb6;</a>
 					
 					
@@ -3215,7 +4175,7 @@ returned, cancelling ctx does not affect the connection.
 				
 			
 				
-				<h3 id="DialTLS">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connectionDial.go?s=1463:1527#L33">DialTLS</a>
+				<h3 id="DialTLS">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connectionDial.go?s=1557:1621#L37">DialTLS</a>
 					<a class="permalink" href="godoc.8.html#DialTLS">&#xb6;</a>
 					
 					
@@ -3234,7 +4194,7 @@ DialTLS uses the provided tls.Config when encountering an amqps:// scheme.
 				
 			
 				
-				<h3 id="DialTLSCtx">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connectionDial.go?s=2494:2586#L67">DialTLSCtx</a>
+				<h3 id="DialTLSCtx">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connectionDial.go?s=2674:2766#L74">DialTLSCtx</a>
 					<a class="permalink" href="godoc.8.html#DialTLSCtx">&#xb6;</a>
 					
 					
@@ -3253,7 +4213,7 @@ returned, cancelling ctx does not affect the connection.
 
 			
 				
-				<h3 id="Connection.Channel">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connection.go?s=5798:5849#L147">Channel</a>
+				<h3 id="Connection.Channel">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connection.go?s=3980:4031#L112">Channel</a>
 					<a class="permalink" href="godoc.8.html#Connection.Channel">&#xb6;</a>
 					
 					
@@ -3277,7 +4237,7 @@ all errors until Channel.Close() is called.
 				
 			
 				
-				<h3 id="Connection.Close">func (Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=14416:14462#L412">Close</a>
+				<h3 id="Connection.Close">func (Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=15448:15493#L436">Close</a>
 					<a class="permalink" href="godoc.8.html#Connection.Close">&#xb6;</a>
 					
 					
@@ -3293,7 +4253,7 @@ from reconnecting.
 				
 			
 				
-				<h3 id="Connection.IsClosed">func (Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=15747:15795#L449">IsClosed</a>
+				<h3 id="Connection.IsClosed">func (Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=16083:16130#L450">IsClosed</a>
 					<a class="permalink" href="godoc.8.html#Connection.IsClosed">&#xb6;</a>
 					
 					
@@ -3318,7 +4278,7 @@ underlying connection is currently disconnected and waiting to reconnectMiddlewa
 				
 			
 				
-				<h3 id="Connection.NotifyClose">func (Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=11550:11652#L323">NotifyClose</a>
+				<h3 id="Connection.NotifyClose">func (Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=13215:13316#L374">NotifyClose</a>
 					<a class="permalink" href="godoc.8.html#Connection.NotifyClose">&#xb6;</a>
 					
 					
@@ -3331,7 +4291,7 @@ NotifyClose is as NotifyClose on streadway Connection/Channel.NotifyClose.
 Subscribers to Close events will not be notified when a reconnection occurs under
 the hood, only when the roger Connection or Channel is closed by calling the Close
 method. This mirrors the streadway implementation, where Close events are only sent
-once when the transport object becomes unusable.
+once when the livesOnce object becomes unusable.
 </p>
 <p>
 For finer-grained connection status, see NotifyDial and NotifyDisconnect, which
@@ -3343,7 +4303,7 @@ will both send individual events when the connection is lost or re-acquired.
 				
 			
 				
-				<h3 id="Connection.NotifyDial">func (Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=12251:12325#L345">NotifyDial</a>
+				<h3 id="Connection.NotifyDial">func (Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=13706:13779#L387">NotifyDial</a>
 					<a class="permalink" href="godoc.8.html#Connection.NotifyDial">&#xb6;</a>
 					
 					
@@ -3352,7 +4312,7 @@ will both send individual events when the connection is lost or re-acquired.
     receiver chan <a href="http://localhost:6161/pkg/builtin/#error">error</a>,
 ) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 				<p>
-NotifyDial is new for robust Roger Transport objects. NotifyDial will send all
+NotifyDial is new for robust Roger transportType objects. NotifyDial will send all
 subscribers an event notification every time we try to re-acquire a connection. This
 will include both failure AND successes.
 </p>
@@ -3362,7 +4322,7 @@ will include both failure AND successes.
 				
 			
 				
-				<h3 id="Connection.NotifyDisconnect">func (Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=12902:12982#L367">NotifyDisconnect</a>
+				<h3 id="Connection.NotifyDisconnect">func (Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=14133:14212#L400">NotifyDisconnect</a>
 					<a class="permalink" href="godoc.8.html#Connection.NotifyDisconnect">&#xb6;</a>
 					
 					
@@ -3371,7 +4331,7 @@ will include both failure AND successes.
     receiver chan <a href="http://localhost:6161/pkg/builtin/#error">error</a>,
 ) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 				<p>
-NotifyDisconnect is new for robust Roger Transport objects. NotifyDisconnect will
+NotifyDisconnect is new for robust Roger transportType objects. NotifyDisconnect will
 send all subscribers an event notification every time the underlying connection is
 lost.
 </p>
@@ -3381,7 +4341,7 @@ lost.
 				
 			
 				
-				<h3 id="Connection.Test">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connection.go?s=6959:7020#L185">Test</a>
+				<h3 id="Connection.Test">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connection.go?s=5675:5736#L168">Test</a>
 					<a class="permalink" href="godoc.8.html#Connection.Test">&#xb6;</a>
 					
 					
@@ -3390,6 +4350,206 @@ lost.
 				<p>
 Test returns a ConnectionTesting object with a number of helper methods for testing
 Connection objects.
+</p>
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="ConnectionMiddlewares">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configConnMiddleware.go?s=181:1382#L1">ConnectionMiddlewares</a>
+				<a class="permalink" href="godoc.8.html#ConnectionMiddlewares">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ConnectionMiddlewares holds the middleware to add to Connection methods
+and events.
+</p>
+
+			<pre>type ConnectionMiddlewares struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+				
+				<h3 id="ConnectionMiddlewares.AddClose">func (*ConnectionMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configConnMiddleware.go?s=2260:2338#L50">AddClose</a>
+					<a class="permalink" href="godoc.8.html#ConnectionMiddlewares.AddClose">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ConnectionMiddlewares">ConnectionMiddlewares</a>) AddClose(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#Close">Close</a>)</pre>
+				<p>
+AddClose adds a new middleware to be invoked on a Connection.Close call.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ConnectionMiddlewares.AddConnectionReconnect">func (*ConnectionMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configConnMiddleware.go?s=4143:4249#L90">AddConnectionReconnect</a>
+					<a class="permalink" href="godoc.8.html#ConnectionMiddlewares.AddConnectionReconnect">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ConnectionMiddlewares">ConnectionMiddlewares</a>) AddConnectionReconnect(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ConnectionReconnect">ConnectionReconnect</a>)</pre>
+				<p>
+AddNotifyClose adds a new middleware to be invoked when a connection attempts to
+re-establish a connection.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ConnectionMiddlewares.AddNotifyClose">func (*ConnectionMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configConnMiddleware.go?s=2499:2589#L55">AddNotifyClose</a>
+					<a class="permalink" href="godoc.8.html#ConnectionMiddlewares.AddNotifyClose">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ConnectionMiddlewares">ConnectionMiddlewares</a>) AddNotifyClose(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyClose">NotifyClose</a>)</pre>
+				<p>
+AddNotifyClose adds a new middleware to be invoked on a Connection.NotifyClose call.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ConnectionMiddlewares.AddNotifyCloseEvents">func (*ConnectionMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configConnMiddleware.go?s=3848:3950#L84">AddNotifyCloseEvents</a>
+					<a class="permalink" href="godoc.8.html#ConnectionMiddlewares.AddNotifyCloseEvents">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ConnectionMiddlewares">ConnectionMiddlewares</a>) AddNotifyCloseEvents(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyCloseEvents">NotifyCloseEvents</a>)</pre>
+				<p>
+AddNotifyDialEvents adds a new middleware to be invoked on each
+Connection.NotifyDial event.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ConnectionMiddlewares.AddNotifyDial">func (*ConnectionMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configConnMiddleware.go?s=2742:2830#L60">AddNotifyDial</a>
+					<a class="permalink" href="godoc.8.html#ConnectionMiddlewares.AddNotifyDial">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ConnectionMiddlewares">ConnectionMiddlewares</a>) AddNotifyDial(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyDial">NotifyDial</a>)</pre>
+				<p>
+AddNotifyDial adds a new middleware to be invoked on a Connection.NotifyDial call.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ConnectionMiddlewares.AddNotifyDialEvents">func (*ConnectionMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configConnMiddleware.go?s=3272:3372#L72">AddNotifyDialEvents</a>
+					<a class="permalink" href="godoc.8.html#ConnectionMiddlewares.AddNotifyDialEvents">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ConnectionMiddlewares">ConnectionMiddlewares</a>) AddNotifyDialEvents(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyDialEvents">NotifyDialEvents</a>)</pre>
+				<p>
+AddNotifyDialEvents adds a new middleware to be invoked on each
+Connection.NotifyDial event.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ConnectionMiddlewares.AddNotifyDisconnect">func (*ConnectionMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configConnMiddleware.go?s=2996:3096#L66">AddNotifyDisconnect</a>
+					<a class="permalink" href="godoc.8.html#ConnectionMiddlewares.AddNotifyDisconnect">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ConnectionMiddlewares">ConnectionMiddlewares</a>) AddNotifyDisconnect(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyDisconnect">NotifyDisconnect</a>)</pre>
+				<p>
+AddNotifyDisconnect adds a new middleware to be invoked on a
+Connection.NotifyDisconnect call.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ConnectionMiddlewares.AddNotifyDisconnectEvents">func (*ConnectionMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configConnMiddleware.go?s=3548:3660#L78">AddNotifyDisconnectEvents</a>
+					<a class="permalink" href="godoc.8.html#ConnectionMiddlewares.AddNotifyDisconnectEvents">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ConnectionMiddlewares">ConnectionMiddlewares</a>) AddNotifyDisconnectEvents(middleware <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#NotifyDisconnectEvents">NotifyDisconnectEvents</a>)</pre>
+				<p>
+AddNotifyDialEvents adds a new middleware to be invoked on each
+Connection.NotifyDial event.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ConnectionMiddlewares.AddProviderFactory">func (*ConnectionMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configConnMiddleware.go?s=1934:2039#L43">AddProviderFactory</a>
+					<a class="permalink" href="godoc.8.html#ConnectionMiddlewares.AddProviderFactory">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ConnectionMiddlewares">ConnectionMiddlewares</a>) AddProviderFactory(factory func() <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ProvidesMiddleware">ProvidesMiddleware</a>)</pre>
+				<p>
+AddProviderFactory adds a factory function which creates a new middleware provider
+value which must implement one of the Middleware Provider interfaces from the
+amqpmiddleware package, like amqpmiddleware.ProvidesClose.
+</p>
+<p>
+When middleware is registered on a new Connection, the provider factory will be
+called and all provider methods will be registered as middleware.
+</p>
+<p>
+If you wish the same provider value&#39;s methods to be used as middleware for every
+*Connection created by a Config, consider using AddProviderMethods instead.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="ConnectionMiddlewares.AddProviderMethods">func (*ConnectionMiddlewares) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/configConnMiddleware.go?s=5290:5395#L118">AddProviderMethods</a>
+					<a class="permalink" href="godoc.8.html#ConnectionMiddlewares.AddProviderMethods">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (config *<a href="godoc.8.html#ConnectionMiddlewares">ConnectionMiddlewares</a>) AddProviderMethods(provider <a href="godoc.3.html">amqpmiddleware</a>.<a href="godoc.3.html#ProvidesMiddleware">ProvidesMiddleware</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+				<p>
+AddProviderMethods adds a amqpmiddleware.ProvidesMiddleware&#39;s methods as Middleware.
+If this method is invoked directly by the user, the same type value&#39;s method will be
+added to all *Connection values created by a Config
+</p>
+<p>
+If a new provider value should be made for each Connection, consider using
+AddProviderFactory instead.
 </p>
 
 				
@@ -3475,10 +4635,10 @@ digits Scale == 2, Value == 12345, Decimal == 123.45
 				
 			</h2>
 			<p>
-Delivery is an alias to dataModels.Delivery.
+Delivery is an alias to datamodels.Delivery.
 </p>
 
-			<pre>type Delivery = <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Delivery">Delivery</a></pre>
+			<pre>type Delivery = <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Delivery">Delivery</a></pre>
 
 			
 
@@ -3507,7 +4667,7 @@ possible that SOME tags will be orphaned and some will succeed, this error conta
 detailed information on both groups
 </p>
 
-			<pre>type ErrCantAcknowledgeOrphans = <a href="godoc.5.html">defaultMiddlewares</a>.<a href="godoc.5.html#ErrCantAcknowledgeOrphans">ErrCantAcknowledgeOrphans</a></pre>
+			<pre>type ErrCantAcknowledgeOrphans = <a href="godoc.5.html">defaultmiddlewares</a>.<a href="godoc.5.html#ErrCantAcknowledgeOrphans">ErrCantAcknowledgeOrphans</a></pre>
 
 			
 
@@ -3685,7 +4845,7 @@ RabbitMQ expects int32 for integer values.
 		
 			
 			
-			<h2 id="TestReconnectSignaler">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=1298:1467#L31">TestReconnectSignaler</a>
+			<h2 id="TestReconnectSignaler">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=1570:1739#L37">TestReconnectSignaler</a>
 				<a class="permalink" href="godoc.8.html#TestReconnectSignaler">&#xb6;</a>
 				
 				
@@ -3711,14 +4871,14 @@ TestReconnectSignaler allows us to block until a reconnection occurs during a te
 
 			
 				
-				<h3 id="TestReconnectSignaler.WaitOnReconnect">func (*TestReconnectSignaler) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=1704:1779#L42">WaitOnReconnect</a>
+				<h3 id="TestReconnectSignaler.WaitOnReconnect">func (*TestReconnectSignaler) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=1976:2051#L48">WaitOnReconnect</a>
 					<a class="permalink" href="godoc.8.html#TestReconnectSignaler.WaitOnReconnect">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (signaler *<a href="godoc.8.html#TestReconnectSignaler">TestReconnectSignaler</a>) WaitOnReconnect(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>)</pre>
 				<p>
-WaitOnReconnect blocks until a reconnection of the underlying transport occurs. Once
+WaitOnReconnect blocks until a reconnection of the underlying livesOnce occurs. Once
 the first reconnection event occurs, this object will no longer block and a new
 signaler will need to be created for the next re-connection.
 </p>
@@ -3730,7 +4890,7 @@ signaler will need to be created for the next re-connection.
 		
 			
 			
-			<h2 id="TransportTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=2048:2217#L54">TransportTesting</a>
+			<h2 id="TransportTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=2320:2489#L60">TransportTesting</a>
 				<a class="permalink" href="godoc.8.html#TransportTesting">&#xb6;</a>
 				
 				
@@ -3756,14 +4916,14 @@ TransportTesting provides testing methods for testing Channel and Connection.
 
 			
 				
-				<h3 id="TransportTesting.BlockReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=2664:2712#L70">BlockReconnect</a>
+				<h3 id="TransportTesting.BlockReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=2936:2984#L76">BlockReconnect</a>
 					<a class="permalink" href="godoc.8.html#TransportTesting.BlockReconnect">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (tester *<a href="godoc.8.html#TransportTesting">TransportTesting</a>) BlockReconnect()</pre>
 				<p>
-BlockReconnect blocks a transport from reconnecting. If too few calls to
+BlockReconnect blocks a livesOnce from reconnecting. If too few calls to
 UnblockReconnect() are made, the block will be removed at the end of the test.
 </p>
 
@@ -3772,14 +4932,14 @@ UnblockReconnect() are made, the block will be removed at the end of the test.
 				
 			
 				
-				<h3 id="TransportTesting.DisconnectTransport">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=4048:4101#L116">DisconnectTransport</a>
+				<h3 id="TransportTesting.DisconnectTransport">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=4320:4373#L122">DisconnectTransport</a>
 					<a class="permalink" href="godoc.8.html#TransportTesting.DisconnectTransport">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (tester *<a href="godoc.8.html#TransportTesting">TransportTesting</a>) DisconnectTransport()</pre>
 				<p>
-DisconnectTransport closes the underlying transport to force a reconnection.
+DisconnectTransport closes the underlying livesOnce to force a reconnection.
 </p>
 
 				
@@ -3787,7 +4947,7 @@ DisconnectTransport closes the underlying transport to force a reconnection.
 				
 			
 				
-				<h3 id="TransportTesting.ForceReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=4452:4519#L126">ForceReconnect</a>
+				<h3 id="TransportTesting.ForceReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=4746:4813#L132">ForceReconnect</a>
 					<a class="permalink" href="godoc.8.html#TransportTesting.ForceReconnect">&#xb6;</a>
 					
 					
@@ -3804,7 +4964,7 @@ a 3-second timeout will be used instead.
 				
 			
 				
-				<h3 id="TransportTesting.SignalOnReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=3424:3498#L93">SignalOnReconnect</a>
+				<h3 id="TransportTesting.SignalOnReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=3696:3770#L99">SignalOnReconnect</a>
 					<a class="permalink" href="godoc.8.html#TransportTesting.SignalOnReconnect">&#xb6;</a>
 					
 					
@@ -3812,7 +4972,7 @@ a 3-second timeout will be used instead.
 				<pre>func (tester *<a href="godoc.8.html#TransportTesting">TransportTesting</a>) SignalOnReconnect() *<a href="godoc.8.html#TestReconnectSignaler">TestReconnectSignaler</a></pre>
 				<p>
 SignalOnReconnect returns a signaler that can be used to wait on the next
-reconnection event of the transport.
+reconnection event of the livesOnce.
 </p>
 
 				
@@ -3820,7 +4980,7 @@ reconnection event of the transport.
 				
 			
 				
-				<h3 id="TransportTesting.TransportLock">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=2402:2463#L64">TransportLock</a>
+				<h3 id="TransportTesting.TransportLock">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=2674:2735#L70">TransportLock</a>
 					<a class="permalink" href="godoc.8.html#TransportTesting.TransportLock">&#xb6;</a>
 					
 					
@@ -3828,7 +4988,7 @@ reconnection event of the transport.
 				<pre>func (tester *<a href="godoc.8.html#TransportTesting">TransportTesting</a>) TransportLock() *<a href="http://localhost:6161/pkg/sync/">sync</a>.<a href="http://localhost:6161/pkg/sync/#RWMutex">RWMutex</a></pre>
 				<p>
 TransportLock is the underlying lock which controls access to the channel /
-connection. When held for read or write, a reconnection of the underlying transport
+connection. When held for read or write, a reconnection of the underlying livesOnce
 cannot occur.
 </p>
 
@@ -3837,14 +4997,14 @@ cannot occur.
 				
 			
 				
-				<h3 id="TransportTesting.UnblockReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=2886:2936#L77">UnblockReconnect</a>
+				<h3 id="TransportTesting.UnblockReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=3158:3208#L83">UnblockReconnect</a>
 					<a class="permalink" href="godoc.8.html#TransportTesting.UnblockReconnect">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (tester *<a href="godoc.8.html#TransportTesting">TransportTesting</a>) UnblockReconnect()</pre>
 				<p>
-UnblockReconnect unblocks the transport from reconnecting after calling
+UnblockReconnect unblocks the livesOnce from reconnecting after calling
 BlockReconnect()
 </p>
 
@@ -3882,33 +5042,33 @@ BlockReconnect()
 				<tr>
 				
 					<td class="pkg-name" style="padding-left: 0px;">
-						<a href="godoc.3.html">amqpMiddleware</a>
+						<a href="godoc.3.html">amqpmiddleware</a>
 					</td>
 				
 					<td class="pkg-synopsis">
-						amqpMiddleware package defines middleware signatures for methods on *amqp.Channel.
+						package amqpMiddleware defines middleware signatures for methods on *amqp.Channel.
 					</td>
 				</tr>
 			
 				<tr>
 				
 					<td class="pkg-name" style="padding-left: 0px;">
-						<a href="godoc.4.html">dataModels</a>
+						<a href="godoc.4.html">datamodels</a>
 					</td>
 				
 					<td class="pkg-synopsis">
-						dataModels package contains a few data models that are used by both the amqp package and the middleware package.
+						package dataModels contains a few data models that are used by both the amqp package and the middleware package.
 					</td>
 				</tr>
 			
 				<tr>
 				
 					<td class="pkg-name" style="padding-left: 0px;">
-						<a href="godoc.5.html">defaultMiddlewares</a>
+						<a href="godoc.5.html">defaultmiddlewares</a>
 					</td>
 				
 					<td class="pkg-synopsis">
-						defaultMiddlewares houses the default middleware for amqp.Channel that allow features like continuous delivery tag values across channel disconnects.
+						package defaultMiddlewares houses the default middleware for amqp.Channel.
 					</td>
 				</tr>
 			

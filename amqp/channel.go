@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/peake100/rogerRabbit-go/amqp/defaultmiddlewares"
 	"github.com/rs/zerolog"
 	"testing"
 )
@@ -42,11 +41,6 @@ type Channel struct {
 	// handlers Holds all registered handlers and methods for registering new
 	// middleware.
 	handlers channelHandlers
-
-	// defaultMiddlewares holds our default middlewares for testing purposes:
-	//	TODO: maybe turn this into a map and return a key when middleware is
-	//	 registered so non-default middlewares can also be accessed for testing.
-	defaultMiddlewares ChannelTestingDefaultMiddlewares
 
 	// relaySync has all necessary sync objects for controlling the advancement of
 	// all registered eventRelays.
@@ -1403,19 +1397,6 @@ func (channel *Channel) TxRollback() error {
 	panic(panicTransactionMessage("TxRollback"))
 }
 
-// ChannelTestingDefaultMiddlewares holds default middleware for inspection during
-// tests.
-type ChannelTestingDefaultMiddlewares struct {
-	QoS     *defaultmiddlewares.QoSMiddleware
-	Flow    *defaultmiddlewares.FlowMiddleware
-	Confirm *defaultmiddlewares.ConfirmsMiddleware
-
-	RouteDeclaration *defaultmiddlewares.RouteDeclarationMiddleware
-
-	PublishTags  *defaultmiddlewares.PublishTagsMiddleware
-	DeliveryTags *defaultmiddlewares.DeliveryTagsMiddleware
-}
-
 // ChannelTesting exposes a number of methods designed for testing.
 type ChannelTesting struct {
 	// TransportTesting embedded common methods between Connections and Channels.
@@ -1423,10 +1404,6 @@ type ChannelTesting struct {
 
 	// channel is the roger Channel to be tested.
 	channel *Channel
-
-	// DefaultMiddlewares holds middleware objects registered to the channel during
-	// channel creation.
-	DefaultMiddlewares *ChannelTestingDefaultMiddlewares
 }
 
 // ConnTest returns a tester for the RogerConnection feeding this channel.
@@ -1456,6 +1433,19 @@ func (tester *ChannelTesting) ReconnectionCount() uint64 {
 	return tester.channel.reconnectCount
 }
 
+// GetMiddlewareProvider returns a middleware provider for inspection or fails the test
+// immediately.
+func (tester *ChannelTesting) GetMiddlewareProvider(
+	id amqpmiddleware.ProviderTypeID,
+) amqpmiddleware.ProvidesMiddleware {
+	provider, ok := tester.channel.handlers.providers[id]
+	if !ok {
+		tester.t.Errorf("no channel middleware provider %v", id)
+		tester.t.FailNow()
+	}
+	return provider
+}
+
 // Test returns an object with methods for testing the Channel.
 func (channel *Channel) Test(t *testing.T) *ChannelTesting {
 	blocks := int32(0)
@@ -1466,8 +1456,7 @@ func (channel *Channel) Test(t *testing.T) *ChannelTesting {
 			manager: &channel.transportManager,
 			blocks:  &blocks,
 		},
-		channel:            channel,
-		DefaultMiddlewares: &channel.defaultMiddlewares,
+		channel: channel,
 	}
 
 	t.Cleanup(chanTester.cleanup)

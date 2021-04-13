@@ -109,58 +109,6 @@ func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 	return channel, err
 }
 
-// newChannelApplyMiddleware applies the default middleware to a new Channel.
-func newChannelApplyMiddleware(
-	channel *Channel,
-	config Config,
-	transportHandlers transportManagerHandlers,
-) Config {
-	mConfig := config.ChannelMiddleware
-
-	if !config.NoDefaultMiddleware {
-		middlewareStorage := &channel.defaultMiddlewares
-
-		// QoS middleware
-		qosMiddleware := defaultmiddlewares.NewQosMiddleware()
-		mConfig.AddProviderMethods(qosMiddleware)
-		middlewareStorage.QoS = qosMiddleware
-
-		// Flow middleware
-		flowMiddleware := defaultmiddlewares.NewFlowMiddleware()
-		mConfig.AddProviderMethods(flowMiddleware)
-		middlewareStorage.Flow = flowMiddleware
-
-		// Confirmation middleware
-		confirmMiddleware := defaultmiddlewares.NewConfirmMiddleware()
-		mConfig.AddProviderMethods(confirmMiddleware)
-		middlewareStorage.Confirm = confirmMiddleware
-
-		// Publish Tags middleware
-		publishTagsMiddleware := defaultmiddlewares.NewPublishTagsMiddleware()
-		mConfig.AddProviderMethods(publishTagsMiddleware)
-		middlewareStorage.PublishTags = publishTagsMiddleware
-
-		// Delivery Tags middleware
-		deliveryTagsMiddleware := defaultmiddlewares.NewDeliveryTagsMiddleware()
-		mConfig.AddProviderMethods(deliveryTagsMiddleware)
-		middlewareStorage.DeliveryTags = deliveryTagsMiddleware
-
-		// Route declaration middleware
-		declarationMiddleware := defaultmiddlewares.NewRouteDeclarationMiddleware()
-		mConfig.AddProviderMethods(declarationMiddleware)
-		middlewareStorage.RouteDeclaration = declarationMiddleware
-	}
-
-	channel.handlers = newChannelHandlers(
-		channel.rogerConn,
-		channel,
-		transportHandlers,
-		mConfig,
-	)
-
-	return config
-}
-
 /*
 Channel opens a unique, concurrent server channelConsume to process the bulk of AMQP
 messages.  Any error from methods on this receiver will render the receiver
@@ -173,16 +121,22 @@ all errors until Channel.Close() is called.
 */
 func (conn *Connection) Channel() (*Channel, error) {
 	rogerChannel := &Channel{
-		underlyingChannel:  nil,
-		rogerConn:          conn,
-		handlers:           channelHandlers{},
-		defaultMiddlewares: ChannelTestingDefaultMiddlewares{},
-		relaySync:          channelRelaySync{},
-		logger:             zerolog.Logger{},
-		transportManager:   transportManager{},
+		underlyingChannel: nil,
+		rogerConn:         conn,
+		handlers:          channelHandlers{},
+		relaySync:         channelRelaySync{},
+		logger:            zerolog.Logger{},
+		transportManager:  transportManager{},
 	}
 
 	chanMiddleware := conn.dialConfig.ChannelMiddleware
+
+	// Invoke any provider factories to make fresh provider values.
+	err := chanMiddleware.buildAndAddProviderFactories()
+	if err != nil {
+		return nil, err
+	}
+
 	transportMiddleware := transportManagerMiddleware{
 		notifyClose:            chanMiddleware.notifyClose,
 		notifyDial:             chanMiddleware.notifyDial,
@@ -203,13 +157,15 @@ func (conn *Connection) Channel() (*Channel, error) {
 		shared: newSharedSync(rogerChannel),
 	}
 
-	// Add default middleware around these handlers.
-	newChannelApplyMiddleware(
-		rogerChannel, conn.dialConfig, rogerChannel.transportManager.handlers,
+	rogerChannel.handlers = newChannelHandlers(
+		rogerChannel.rogerConn,
+		rogerChannel,
+		rogerChannel.transportManager.handlers,
+		chanMiddleware,
 	)
 
 	// Try and establish a channel using the connection's context.
-	err := rogerChannel.reconnect(conn.ctx, true)
+	err = rogerChannel.reconnect(conn.ctx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +188,7 @@ func (conn *Connection) Test(t *testing.T) *ConnectionTesting {
 }
 
 // newConnection gets a new roger connection for a given url and connection middlewares.
-func newConnection(url string, config Config) *Connection {
+func newConnection(url string, config Config) (*Connection, error) {
 	// Extract our config into a streadway.Config
 	streadwayConfig := streadway.Config{
 		SASL:            config.SASL,
@@ -244,6 +200,23 @@ func newConnection(url string, config Config) *Connection {
 		Properties:      config.Properties,
 		Locale:          config.Locale,
 		Dial:            config.Dial,
+	}
+
+	// Add default middleware provider factories. Since the config is passed-by-value,
+	// this will not mutate the caller's config.
+	if !config.NoDefaultMiddleware {
+		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewQosMiddleware)
+		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewFlowMiddleware)
+		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewConfirmMiddleware)
+		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewPublishTagsMiddleware)
+		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewDeliveryTagsMiddleware)
+		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewRouteDeclarationMiddleware)
+	}
+
+	// Invoke middleware provider factories.
+	err := config.ConnectionMiddleware.buildAndAddProviderFactories()
+	if err != nil {
+		return nil, err
 	}
 
 	middlewares := transportManagerMiddleware{
@@ -283,5 +256,5 @@ func newConnection(url string, config Config) *Connection {
 
 	conn.handlerReconnect = reconnectHandler
 
-	return conn
+	return conn, nil
 }

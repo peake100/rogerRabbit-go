@@ -6,15 +6,25 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
+// QoSMiddlewareID can be used to retrieve the running instance of QoSMiddleware during
+// testing.
+const QoSMiddlewareID amqpmiddleware.ProviderTypeID = "DefaultQoS"
+
 // QoSMiddleware saves most recent QoS settings and re-applies them on restart.
 //
 // This method is currently racy if multiple goroutines call QoS with different
 // settings.
 type QoSMiddleware struct {
-	// qosArgs is the latest args passed to QoS()
+	// qosArgs is the latest args passed to QoS().
 	qosArgs amqpmiddleware.ArgsQoS
 	// isSet is whether qosArgs has been set.
 	isSet bool
+}
+
+// TypeID implements amqpmiddleware.ProvidesMiddleware and returns a static type ID for
+// retrieving the active middleware value during testing.
+func (middleware *QoSMiddleware) TypeID() amqpmiddleware.ProviderTypeID {
+	return QoSMiddlewareID
 }
 
 // QosArgs returns current args. For testing.
@@ -71,7 +81,7 @@ func (middleware *QoSMiddleware) QoS(
 }
 
 // NewQosMiddleware creates a new QoSMiddleware.
-func NewQosMiddleware() *QoSMiddleware {
+func NewQosMiddleware() amqpmiddleware.ProvidesMiddleware {
 	return &QoSMiddleware{
 		qosArgs: amqpmiddleware.ArgsQoS{},
 		isSet:   false,

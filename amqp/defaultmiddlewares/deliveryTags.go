@@ -9,6 +9,10 @@ import (
 	"sync/atomic"
 )
 
+// DeliveryTagsMiddlewareID can be used to retrieve the running instance of
+// DeliveryTagsMiddleware during testing.
+const DeliveryTagsMiddlewareID amqpmiddleware.ProviderTypeID = "DefaultDeliveryTags"
+
 // DeliveryTagsMiddleware creates continuous delivery tags across reconnections.
 type DeliveryTagsMiddleware struct {
 	// As tagPublishCount, but for delivery tags of delivered messages.
@@ -22,8 +26,14 @@ type DeliveryTagsMiddleware struct {
 	orphanCheckLock *sync.Mutex
 }
 
-// Reconnect establishes our current delivery tag offset based on how many deliveries
-// have been consumed across all of our connections so far.
+// TypeID implements amqpmiddleware.ProvidesMiddleware and returns a static type ID for
+// retrieving the active middleware value during testing.
+func (middleware *DeliveryTagsMiddleware) TypeID() amqpmiddleware.ProviderTypeID {
+	return DeliveryTagsMiddlewareID
+}
+
+// ChannelReconnect establishes our current delivery tag offset based on how many
+// deliveries have been consumed across all of our connections so far.
 func (middleware *DeliveryTagsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
@@ -207,7 +217,7 @@ func (middleware *DeliveryTagsMiddleware) ConsumeEvents(
 }
 
 // NewDeliveryTagsMiddleware creates a new DeliveryTagsMiddleware for an amqp.Channel.
-func NewDeliveryTagsMiddleware() *DeliveryTagsMiddleware {
+func NewDeliveryTagsMiddleware() amqpmiddleware.ProvidesMiddleware {
 	tagConsumeCount := uint64(0)
 
 	return &DeliveryTagsMiddleware{

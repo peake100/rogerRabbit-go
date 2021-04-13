@@ -7,6 +7,10 @@ import (
 	"sync"
 )
 
+// FlowMiddlewareID can be used to retrieve the running instance of FlowMiddleware
+// during testing.
+const FlowMiddlewareID amqpmiddleware.ProviderTypeID = "DefaultFlow"
+
 // FlowMiddleware tracks the Flow state of the channel, and if it is set to false by the
 // user, re-established channels to flow=false.
 type FlowMiddleware struct {
@@ -14,6 +18,12 @@ type FlowMiddleware struct {
 	active bool
 	// Lock for active in cae multiple goroutines try to set the flow simultaneously.
 	activeLock *sync.Mutex
+}
+
+// TypeID implements amqpmiddleware.ProvidesMiddleware and returns a static type ID for
+// retrieving the active middleware value during testing.
+func (middleware *FlowMiddleware) TypeID() amqpmiddleware.ProviderTypeID {
+	return FlowMiddlewareID
 }
 
 // Active returns whether flow is currently active. For testing.
@@ -62,7 +72,7 @@ func (middleware *FlowMiddleware) Flow(
 }
 
 // NewFlowMiddleware creates a new FlowMiddleware for a channel.
-func NewFlowMiddleware() *FlowMiddleware {
+func NewFlowMiddleware() amqpmiddleware.ProvidesMiddleware {
 	return &FlowMiddleware{
 		active:     true,
 		activeLock: new(sync.Mutex),

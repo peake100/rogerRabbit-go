@@ -6,6 +6,10 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
+// ConfirmsMiddlewareID can be used to retrieve the running instance of
+// ConfirmsMiddleware during testing.
+const ConfirmsMiddlewareID amqpmiddleware.ProviderTypeID = "DefaultConfirms"
+
 // ConfirmsMiddleware saves most recent amqp.Channel.Confirm() settings and re-applies
 // them on restart.
 type ConfirmsMiddleware struct {
@@ -13,13 +17,19 @@ type ConfirmsMiddleware struct {
 	confirmsOn bool
 }
 
+// TypeID implements amqpmiddleware.ProvidesMiddleware and returns a static type ID for
+// retrieving the active middleware value during testing.
+func (middleware *ConfirmsMiddleware) TypeID() amqpmiddleware.ProviderTypeID {
+	return ConfirmsMiddlewareID
+}
+
 // ConfirmsOn returns whether Confirm() has been called on this channel. For testing.
 func (middleware *ConfirmsMiddleware) ConfirmsOn() bool {
 	return middleware.confirmsOn
 }
 
-// Reconnect puts the new, underlying connection into confirmation mode if Confirm()
-// has been called.
+// ChannelReconnect puts the new, underlying connection into confirmation mode if
+// Confirm() has been called.
 func (middleware *ConfirmsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
@@ -58,7 +68,7 @@ func (middleware *ConfirmsMiddleware) Confirm(
 }
 
 // NewConfirmMiddleware creates a new *ConfirmsMiddleware to register with a channel.
-func NewConfirmMiddleware() *ConfirmsMiddleware {
+func NewConfirmMiddleware() amqpmiddleware.ProvidesMiddleware {
 	return &ConfirmsMiddleware{
 		confirmsOn: false,
 	}

@@ -8,6 +8,10 @@ import (
 	"sync/atomic"
 )
 
+// PublishTagsMiddlewareID can be used to retrieve the running instance of
+// PublishTagsMiddleware during testing.
+const PublishTagsMiddlewareID amqpmiddleware.ProviderTypeID = "DefaultPublishTags"
+
 // PublishTagsMiddleware keeps track of client-facing and internal Publishing
 // DeliveryTags and applies the correct offset so tags are continuous, even over
 // re-connections.
@@ -36,6 +40,12 @@ type PublishTagsMiddleware struct {
 	// List of functions to send outstanding orphans
 	sendOrphans     []func()
 	sendOrphansLock *sync.Mutex
+}
+
+// TypeID implements amqpmiddleware.ProvidesMiddleware and returns a static type ID for
+// retrieving the active middleware value during testing.
+func (middleware *PublishTagsMiddleware) TypeID() amqpmiddleware.ProviderTypeID {
+	return PublishTagsMiddlewareID
 }
 
 // PublishCount returns the number of messages published that this middleware has
@@ -213,7 +223,7 @@ func (middleware *PublishTagsMiddleware) NotifyPublishEvents(
 }
 
 // NewPublishTagsMiddleware creates a new PublishTagsMiddleware.
-func NewPublishTagsMiddleware() *PublishTagsMiddleware {
+func NewPublishTagsMiddleware() amqpmiddleware.ProvidesMiddleware {
 	count := uint64(0)
 	return &PublishTagsMiddleware{
 		confirmMode:     false,

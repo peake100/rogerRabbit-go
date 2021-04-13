@@ -744,64 +744,188 @@ API expansions over streadway/amqp.
 
 Middleware signatures are defined in the `amqp/amqpMiddleware` package.
 
-Registering a new middleware:
+Registering Middleware
+----------------------
 
-.. code-block::
+.. code-block:: go
 
-  // define our new middleware
-  queueDeclareMiddleware := func(
-    next amqpMiddleware.HandlerQueueDeclare,
-  ) amqpMiddleware.HandlerQueueDeclare {
-    return func(args *amqpMiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
-      fmt.Println("MIDDLEWARE INVOKED FOR QUEUE")
-      fmt.Println("QUEUE NAME :", args.Name)
-      fmt.Println("AUTO-DELETE:", args.AutoDelete)
-      return next(args)
+    // define our new middleware
+    queueDeclareMiddleware := func(
+        next amqpmiddleware.HandlerQueueDeclare,
+    ) amqpmiddleware.HandlerQueueDeclare {
+        return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+            fmt.Println("MIDDLEWARE INVOKED FOR QUEUE")
+            fmt.Println("QUEUE NAME :", args.Name)
+            fmt.Println("AUTO-DELETE:", args.AutoDelete)
+            return next(args)
+        }
     }
-  }
 
-  // Get a new connection to our test broker.
-  connection, err := amqp.Dial(amqpTest.TestDialAddress)
-  if err != nil {
-    panic(err)
-  }
-  defer connection.Close()
+    // Create a config and add our middleware to it.
+    config := amqp.DefaultConfig()
+    config.ChannelMiddleware.AddQueueDeclare(queueDeclareMiddleware)
 
-  // Get a new channel from our robust connection for publishing. The channel is
-  // created with our default middleware.
-  channel, err := connection.Channel()
-  if err != nil {
-    panic(err)
-  }
+    // Get a new connection to our test broker.
+    connection, err := amqp.DialConfigCtx(
+        context.Background(), amqptest.TestDialAddress, config,
+    )
+    if err != nil {
+        panic(err)
+    }
+    defer connection.Close()
 
-  // Register our middleware for queue declare.
-  channel.Middleware().AddQueueDeclare(queueDeclareMiddleware)
+    // Get a new channel from our robust connection for publishing. The channel is
+    // created with our default middleware.
+    channel, err := connection.Channel()
+    if err != nil {
+        panic(err)
+    }
 
-  // Declare our queue, our middleware will be invoked and print a message.
-  _, err = channel.QueueDeclare(
-    "example_middleware",
-    false,
-    true,
-    false,
-    false,
-    nil,
-  )
-  if err != nil {
-    panic(err)
-  }
+    // Declare our queue, our middleware will be invoked and print a message.
+    _, err = channel.QueueDeclare(
+        "example_middleware",
+        false,
+        true,
+        false,
+        false,
+        nil,
+    )
+    if err != nil {
+        panic(err)
+    }
 
-  // Output:
-  // MIDDLEWARE INVOKED FOR QUEUE
-  // QUEUE NAME : example_middleware
-  // AUTO-DELETE: true
+    // MIDDLEWARE INVOKED FOR QUEUE
+    // QUEUE NAME : example_middleware
+    // AUTO-DELETE: true
 
-.. Note::
+Middleware Providers
+--------------------
 
-  Middleware is currently only implemented for methods required for use by the default
-  middleware that supplies most of the `Channel` type's features.
+For more complex middleware, you can implement middleware providers, which expose
+methods that implement middleware. You can then register a factory method that will
+generate a new provider value whenever a new Connection or Channel is created, and
+the middleware methods will be automatically registered for you.
 
-  If you wish to have middleware support added to a method currently missing it, please
-  open an issue and it will be added!
+This can help build complex middlewares. Let's define a custom middleware provider and
+factory method:
+
+.. code-block:: go
+
+    // CustomMiddlewareProvider exposes methods for middlewares that need to coordinate.
+    type CustomMiddlewareProvider struct {
+        InvocationCount int
+    }
+
+    // TypeID implements amqpmiddleware.ProvidesMiddleware and returns a unique type ID
+    // that can be used to fetch middleware values when testing.
+    func (middleware *CustomMiddlewareProvider) TypeID() amqpmiddleware.ProviderTypeID {
+        return "CustomMiddleware"
+    }
+
+    // QueueDeclare implements amqpmiddleware.ProvidesQueueDeclare.
+    func (middleware *CustomMiddlewareProvider) QueueDeclare(
+        next amqpmiddleware.HandlerQueueDeclare,
+    ) amqpmiddleware.HandlerQueueDeclare {
+        return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+            middleware.InvocationCount++
+            fmt.Printf(
+                "DECLARED: %v, TOTAL: %v\n", args.Name, middleware.InvocationCount,
+            )
+            return next(args)
+        }
+    }
+
+    // QueueDelete implements amqpmiddleware.ProvidesQueueDelete.
+    func (middleware *CustomMiddlewareProvider) QueueDelete(
+        next amqpmiddleware.HandlerQueueDeclare,
+    ) amqpmiddleware.HandlerQueueDeclare {
+        return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+            middleware.InvocationCount++
+            fmt.Printf(
+                "DELETED: %v, TOTAL: %v\n", args.Name, middleware.InvocationCount,
+            )
+            return next(args)
+        }
+    }
+
+    // NewCustomMiddlewareProvider creates a new CustomMiddlewareProvider.
+    func NewCustomMiddlewareProvider() amqpmiddleware.ProvidesMiddleware {
+        return new(CustomMiddlewareProvider)
+    }
+
+We can register it on our Config so that every channel created from a connection
+gets a fresh instance of our provider:
+
+.. code-block:: go
+
+    // Create a config and add our middleware provider factory to it.
+    config := amqp.DefaultConfig()
+    config.ChannelMiddleware.AddProviderFactory(NewCustomMiddlewareProvider)
+
+    // Get a new connection to our test broker.
+    connection, err := amqp.DialConfigCtx(
+        context.Background(), amqptest.TestDialAddress, config,
+    )
+    if err != nil {
+        panic(err)
+    }
+    defer connection.Close()
+
+    // Get a new channel from our robust connection for publishing. The channel is
+    // created with our default middleware.
+    channel, err := connection.Channel()
+    if err != nil {
+        panic(err)
+    }
+
+    // Declare our queue, our middleware will be invoked and print a message.
+    _, err = channel.QueueDeclare(
+        "example_middleware",
+        false, // durable
+        true, // autoDelete
+        false, // exclusive
+        false, // noWait
+        nil, // args
+    )
+    if err != nil {
+        panic(err)
+    }
+
+    // Delete our queue, our middleware will be invoked and print a message.
+    _, err = channel.QueueDelete(
+        "example_middleware",
+        false, // ifUnused
+        false, // ifEmpty
+        false, // noWait
+    )
+    if err != nil {
+        panic(err)
+    }
+
+    // MIDDLEWARE INVOKED FOR QUEUE
+    // DECLARED: example_middleware, TOTAL: 1
+    // DELETED: example_middleware, TOTAL: 2
+    // AUTO-DELETE: true
+
+if, for some reason, we wanted every Channel to share the *same* instance of the
+provider, we could make the following adjustment:
+
+.. code-block:: go
+
+    // Create an instance of our provider:
+    provider := NewCustomMiddlewareProvider()
+
+    config := amqp.DefaultConfig()
+    config.ChannelMiddleware.AddProviderMethods(provider)
+
+This will add the methods once and re-use them for all Channels rather than making a
+fresh provider every time a channel is generated.
+
+.. note::
+
+    Many of rogerRabbit's more complex features are implemented through middleware
+    providers. Check the ``defaultmiddlewares`` package to see practical examples of
+    middleware providers used in this library.
 
 Testing
 =======
