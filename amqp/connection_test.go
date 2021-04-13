@@ -142,7 +142,7 @@ func Test0040_Connection_Reconnect(t *testing.T) {
 	conn := amqptest.GetTestConnection(t)
 	connTester := conn.Test(t)
 
-	// Reconnect 10 times
+	// ChannelReconnect 10 times
 	for i := 0; i < 10; i++ {
 		// Check that the internal connection is initially open.
 		if !assert.False(

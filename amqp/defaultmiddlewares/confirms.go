@@ -22,7 +22,7 @@ func (middleware *ConfirmsMiddleware) ConfirmsOn() bool {
 
 // Reconnect puts the new, underlying connection into confirmation mode if Confirm()
 // has been called.
-func (middleware *ConfirmsMiddleware) Reconnect(
+func (middleware *ConfirmsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
 	return func(

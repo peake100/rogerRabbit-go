@@ -26,7 +26,7 @@ type DeliveryTagsMiddleware struct {
 
 // Reconnect establishes our current delivery tag offset based on how many deliveries
 // have been consumed across all of our connections so far.
-func (middleware *DeliveryTagsMiddleware) Reconnect(
+func (middleware *DeliveryTagsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
 	handler = func(
@@ -193,9 +193,9 @@ func (middleware *DeliveryTagsMiddleware) Reject(
 	return handler
 }
 
-// ConsumeEvent is invoked whenever an event is sent to a caller of
+// ConsumeEvents is invoked whenever an event is sent to a caller of
 // amqp.Channel.Consume(), and handles applying the delivery tag offset.
-func (middleware *DeliveryTagsMiddleware) ConsumeEvent(
+func (middleware *DeliveryTagsMiddleware) ConsumeEvents(
 	next amqpmiddleware.HandlerConsumeEvents,
 ) (handler amqpmiddleware.HandlerConsumeEvents) {
 	handler = func(event amqpmiddleware.EventConsume) {

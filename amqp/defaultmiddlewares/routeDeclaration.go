@@ -479,7 +479,7 @@ func (middle *RouteDeclarationMiddleware) reconnectHandler(
 // Reconnect is invoked on reconnection of the underlying amqp Channel, and makes sure
 // our queue and exchange topology is re-configured to present a seamless experience
 // to the caller.
-func (middle *RouteDeclarationMiddleware) Reconnect(
+func (middle *RouteDeclarationMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
 	handler = func(

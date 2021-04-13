@@ -98,9 +98,7 @@ type HandlerGet func(args ArgsGet) (msg datamodels.Delivery, ok bool, err error)
 //
 // NOTE: this is separate from HandlerConsumeEvents, which handles each event. This
 // handler only fires on the initial call
-type HandlerConsume func(args ArgsConsume) (
-	deliveryChan <-chan datamodels.Delivery, err error,
-)
+type HandlerConsume func(args ArgsConsume) (deliveryChan <-chan datamodels.Delivery, err error)
 
 // HandlerAck: signature for handlers invoked when amqp.Channel.Ack() is called.
 type HandlerAck func(args ArgsAck) error
@@ -133,9 +131,7 @@ type HandlerNotifyConfirm func(args ArgsNotifyConfirm) (chan uint64, chan uint64
 
 // HandlerNotifyConfirmOrOrphaned: signature for handlers invoked when
 // amqp.Channel.NotifyConfirmOrOrphaned() is called.
-type HandlerNotifyConfirmOrOrphaned func(args ArgsNotifyConfirmOrOrphaned) (
-	chan uint64, chan uint64, chan uint64,
-)
+type HandlerNotifyConfirmOrOrphaned func(args ArgsNotifyConfirmOrOrphaned) (chan uint64, chan uint64, chan uint64)
 
 // HandlerNotifyReturn signature for handlers invoked when amqp.Channel.NotifyReturn()
 // is called.

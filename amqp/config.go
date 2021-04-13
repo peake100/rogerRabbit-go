@@ -62,7 +62,7 @@ type Config struct {
 	ConnectionMiddleware ConnectionMiddleware
 
 	// ChannelMiddleware holds middleware to add to channel method and event handlers.
-	ChannelMiddleware ChannelMiddleware
+	ChannelMiddleware ChannelMiddlewares
 
 	// The logger to use for internal logging. If none, the default zerolog logger will
 	// be used.

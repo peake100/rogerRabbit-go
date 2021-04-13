@@ -120,53 +120,34 @@ func newChannelApplyMiddleware(
 
 	mConfig := config.ChannelMiddleware
 
-	// Qos middleware
+	// QoS middleware
 	qosMiddleware := defaultmiddlewares.NewQosMiddleware()
-	mConfig.AddChannelReconnect(qosMiddleware.Reconnect)
-	mConfig.AddQoS(qosMiddleware.Qos)
+	mConfig.AddProviderMethods(qosMiddleware)
 	middlewareStorage.QoS = qosMiddleware
 
 	// Flow middleware
 	flowMiddleware := defaultmiddlewares.NewFlowMiddleware()
-	mConfig.AddChannelReconnect(flowMiddleware.Reconnect)
-	mConfig.AddFlow(flowMiddleware.Flow)
+	mConfig.AddProviderMethods(flowMiddleware)
 	middlewareStorage.Flow = flowMiddleware
 
 	// Confirmation middleware
 	confirmMiddleware := defaultmiddlewares.NewConfirmMiddleware()
-	mConfig.AddChannelReconnect(confirmMiddleware.Reconnect)
-	mConfig.AddConfirm(confirmMiddleware.Confirm)
+	mConfig.AddProviderMethods(confirmMiddleware)
 	middlewareStorage.Confirm = confirmMiddleware
 
 	// Publish Tags middleware
 	publishTagsMiddleware := defaultmiddlewares.NewPublishTagsMiddleware()
-	mConfig.AddChannelReconnect(publishTagsMiddleware.Reconnect)
-	mConfig.AddConfirm(publishTagsMiddleware.Confirm)
-	mConfig.AddPublish(publishTagsMiddleware.Publish)
-	mConfig.AddNotifyPublishEvent(publishTagsMiddleware.NotifyPublishEvent)
+	mConfig.AddProviderMethods(publishTagsMiddleware)
 	middlewareStorage.PublishTags = publishTagsMiddleware
 
 	// Delivery Tags middleware
 	deliveryTagsMiddleware := defaultmiddlewares.NewDeliveryTagsMiddleware()
-	mConfig.AddChannelReconnect(deliveryTagsMiddleware.Reconnect)
-	mConfig.AddGet(deliveryTagsMiddleware.Get)
-	mConfig.AddConsumeEvent(deliveryTagsMiddleware.ConsumeEvent)
-	mConfig.AddAck(deliveryTagsMiddleware.Ack)
-	mConfig.AddNack(deliveryTagsMiddleware.Nack)
-	mConfig.AddReject(deliveryTagsMiddleware.Reject)
+	mConfig.AddProviderMethods(deliveryTagsMiddleware)
 	middlewareStorage.DeliveryTags = deliveryTagsMiddleware
 
 	// Route declaration middleware
 	declarationMiddleware := defaultmiddlewares.NewRouteDeclarationMiddleware()
-	mConfig.AddChannelReconnect(declarationMiddleware.Reconnect)
-	mConfig.AddQueueDeclare(declarationMiddleware.QueueDeclare)
-	mConfig.AddQueueDelete(declarationMiddleware.QueueDelete)
-	mConfig.AddQueueBind(declarationMiddleware.QueueBind)
-	mConfig.AddQueueUnbind(declarationMiddleware.QueueUnbind)
-	mConfig.AddExchangeDeclare(declarationMiddleware.ExchangeDeclare)
-	mConfig.AddExchangeDelete(declarationMiddleware.ExchangeDelete)
-	mConfig.AddExchangeBind(declarationMiddleware.ExchangeBind)
-	mConfig.AddExchangeUnbind(declarationMiddleware.ExchangeUnbind)
+	mConfig.AddProviderMethods(declarationMiddleware)
 	middlewareStorage.RouteDeclaration = declarationMiddleware
 
 	channel.handlers = newChannelHandlers(

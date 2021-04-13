@@ -31,7 +31,7 @@ func (middleware *QoSMiddleware) IsSet() bool {
 
 // Reconnect is called whenever the underlying channel is reconnected. This middleware
 // re-applies any QoS calls to the channel.
-func (middleware *QoSMiddleware) Reconnect(
+func (middleware *QoSMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
 	return func(
@@ -59,9 +59,9 @@ func (middleware *QoSMiddleware) Reconnect(
 	}
 }
 
-// Qos is called in amqp.Channel.Qos(). Saves the QoS settings passed to the QoS
+// QoS is called in amqp.Channel.QoS(). Saves the QoS settings passed to the QoS
 // function
-func (middleware *QoSMiddleware) Qos(
+func (middleware *QoSMiddleware) QoS(
 	next amqpmiddleware.HandlerQoS,
 ) (handler amqpmiddleware.HandlerQoS) {
 	return func(args amqpmiddleware.ArgsQoS) error {

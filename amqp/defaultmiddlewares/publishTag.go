@@ -72,7 +72,7 @@ func (middleware *PublishTagsMiddleware) reconnectSendOrphans() {
 // Reconnect is called during a channel reconnection events. We update the current
 // offset based on the current publish count, and send orphan events to all
 // amqp.Channel.NotifyPublish() listeners.
-func (middleware *PublishTagsMiddleware) Reconnect(
+func (middleware *PublishTagsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
 	handler = func(
@@ -175,9 +175,9 @@ func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
 	return sentCount
 }
 
-// NotifyPublishEvent is invoked when a channel passed to amqp.Channel.NotifyPublish is
+// NotifyPublishEvents is invoked when a channel passed to amqp.Channel.NotifyPublish is
 // sent an event.
-func (middleware *PublishTagsMiddleware) NotifyPublishEvent(
+func (middleware *PublishTagsMiddleware) NotifyPublishEvents(
 	next amqpmiddleware.HandlerNotifyPublishEvents,
 ) (handler amqpmiddleware.HandlerNotifyPublishEvents) {
 	// We need to know the total number of confirmation that have been sent. We can

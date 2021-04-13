@@ -117,7 +117,7 @@ arguments =[3]
 
 # Warns in the presence of code lines longer than a configured maximum.
 [rule.line-length-limit]
-arguments = [88]
+arguments = [120]
 
 # A method that modifies its receiver value can have undesired behavior.
 # The modification can be also the root of a bug because the actual value receiver could

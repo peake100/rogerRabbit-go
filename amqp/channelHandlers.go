@@ -98,7 +98,7 @@ func newChannelHandlers(
 	conn *Connection,
 	channel *Channel,
 	transportHandlers transportManagerHandlers,
-	config ChannelMiddleware,
+	config ChannelMiddlewares,
 ) channelHandlers {
 	baseBuilder := channelHandlerBuilder{
 		connection:  conn,
