@@ -68,7 +68,7 @@ func (channel *Channel) runEventRelayCycleSetup(
 	if legLogger.Debug().Enabled() {
 		legLogger.Debug().Msg("setting up relay leg")
 	}
-	setupErr = relay.SetupForRelayLeg(channel.transportChannel.BasicChannel)
+	setupErr = relay.SetupForRelayLeg(channel.underlyingChannel)
 	if setupErr != nil {
 		legLogger.Err(setupErr).Msg("error setting up event relay leg")
 	}
@@ -147,7 +147,7 @@ func (channel *Channel) setupAndLaunchEventRelay(relay eventRelay) error {
 		Logger()
 
 	// Launch the runner
-	thisSync := newRelaySync(channel.transportChannel.relaySync.shared)
+	thisSync := newRelaySync(channel.relaySync.shared)
 	go channel.runEventRelay(relay, thisSync, logger)
 	err := thisSync.WaitForInit(channel.ctx)
 	if err != nil {

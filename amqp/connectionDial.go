@@ -21,7 +21,7 @@ func Dial(url string) (*Connection, error) {
 }
 
 // DialConfig accepts a string in the AMQP URI format and a configuration for
-// the transport and connection setup, returning a new Connection.  Defaults to
+// the livesOnce and connection setup, returning a new Connection.  Defaults to
 // a server heartbeat interval of 10 seconds and sets the initial read deadline
 // to 30 seconds.
 func DialConfig(url string, config Config) (*Connection, error) {

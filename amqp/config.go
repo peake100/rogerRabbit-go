@@ -3,6 +3,7 @@ package amqp
 import (
 	"crypto/tls"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"net"
 	"time"
 )
@@ -31,7 +32,7 @@ type Config struct {
 	Heartbeat  time.Duration // less than 1s uses the server's interval
 
 	// TLSClientConfig specifies the client configuration of the TLS connection
-	// when establishing a tls transport.
+	// when establishing a tls livesOnce.
 	// If the URL uses an amqps scheme, then an empty tls.Config with the
 	// ServerName from the URL is used.
 	TLSClientConfig *tls.Config
@@ -74,5 +75,6 @@ func DefaultConfig() Config {
 	return Config{
 		Heartbeat: defaultHeartbeat,
 		Locale:    defaultLocale,
+		Logger:    log.Logger,
 	}
 }

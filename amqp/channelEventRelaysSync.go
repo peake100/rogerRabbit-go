@@ -29,7 +29,7 @@ type sharedSync struct {
 	transportCtx context.Context
 
 	// transportLock is the transportManager lock. Relays should acquire for read when
-	// setting up (first time only) so the sync between the relay and it's transport
+	// setting up (first time only) so the sync between the relay and it's livesOnce
 	// only has a single entry point (between reconnection events, but not during them).
 	transportLock *sync.RWMutex
 
@@ -91,7 +91,7 @@ type channelRelaySync struct {
 // should be called by the transportManager when all relays have completed their last
 // leg, and a new channel is available after reconnection.
 //
-// The transport manager should block on WaitOnSetup after calling this method.
+// The livesOnce manager should block on WaitOnSetup after calling this method.
 func (chanSync *channelRelaySync) AllowSetup() {
 	chanSync.shared.runLeg.Add(1)
 	chanSync.shared.runSetup.Done()
@@ -106,7 +106,7 @@ func (chanSync *channelRelaySync) WaitOnSetup() {
 
 // AllowRelayLegRun signals all relays to being their next leg.
 //
-// The transport manager should block on
+// The livesOnce manager should block on
 func (chanSync *channelRelaySync) AllowRelayLegRun() {
 	// Acquire the run setup group to stop relays from running setup on
 	chanSync.shared.runSetup.Add(1)
@@ -180,7 +180,7 @@ func (relaySync *relaySync) IsDone() bool {
 //
 // The eventRelay runner should then call eventRelay.SetupForRelayLeg().
 func (relaySync *relaySync) WaitToSetup() {
-	// If this is the first time we are setting up, we are going to grab the transport
+	// If this is the first time we are setting up, we are going to grab the livesOnce
 	// lock so that we can set up without waiting for the connection to go down.
 	if !relaySync.firstSetupDone {
 		relaySync.shared.transportLock.RLock()
@@ -193,11 +193,11 @@ func (relaySync *relaySync) WaitToSetup() {
 // SetupComplete should be called by the eventRelay runner after
 // eventRelay.SetupForRelayLeg() returns before blocking on WaitToRunLeg.
 func (relaySync *relaySync) SetupComplete() {
-	// If this was the first setup, release the transport lock.
+	// If this was the first setup, release the livesOnce lock.
 	if !relaySync.firstSetupDone {
 		defer relaySync.shared.transportLock.RUnlock()
 		// Mark that we are through the first setup so we do not try to acquire the
-		// transport lock on the next go-around
+		// livesOnce lock on the next go-around
 		relaySync.firstSetupDone = true
 		close(relaySync.firstSetupWait)
 	} else {

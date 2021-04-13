@@ -8,5 +8,5 @@ type ConnectionTesting struct {
 
 // UnderlyingConn returns the current underlying streadway/amqp.Connection.
 func (tester *ConnectionTesting) UnderlyingConn() *BasicConnection {
-	return tester.conn.transportConn.BasicConnection
+	return tester.conn.underlyingConn
 }

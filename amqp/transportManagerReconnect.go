@@ -5,7 +5,7 @@ import (
 	streadway "github.com/streadway/amqp"
 )
 
-// reconnectRedialOnce attempts to reconnect the transport a single time.
+// reconnectRedialOnce attempts to reconnect the livesOnce a single time.
 func (manager *transportManager) reconnectRedialOnce(ctx context.Context) error {
 	// Make the connection.
 	if manager.logger.Debug().Enabled() {
@@ -44,7 +44,7 @@ func (manager *transportManager) reconnectRedialOnce(ctx context.Context) error 
 	return nil
 }
 
-// reconnectRedial tries to reconnect the transport until successful or ctx is
+// reconnectRedial tries to reconnect the livesOnce until successful or ctx is
 // cancelled.
 func (manager *transportManager) reconnectRedial(
 	ctx context.Context, retry bool,
@@ -64,7 +64,7 @@ func (manager *transportManager) reconnectRedial(
 	}
 }
 
-// reconnectListenForClose listens for a close event from the underlying transport, and
+// reconnectListenForClose listens for a close event from the underlying livesOnce, and
 // starts the reconnection process.
 func (manager *transportManager) reconnectListenForClose(
 	closeChan <-chan *streadway.Error,
@@ -107,7 +107,7 @@ func (manager *transportManager) reconnect(ctx context.Context, retry bool) erro
 
 	// Register a notification channelConsume for the new connection's closure.
 	closeChan := make(chan *streadway.Error, 1)
-	manager.transport.NotifyClose(closeChan)
+	manager.transport.underlyingTransport().NotifyClose(closeChan)
 
 	// Launch a goroutine to reconnectMiddleware on connection closure.
 	go manager.reconnectListenForClose(closeChan)

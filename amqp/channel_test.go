@@ -178,6 +178,70 @@ func (suite *ChannelLifetimeSuite) Test0060_NewChannel() {
 	)
 }
 
+// Test0065_OperationOverDisconnect tests that an operation will complete over
+// a disconnect
+func (suite *ChannelLifetimeSuite) Test0065_OperationOverDisconnect() {
+	queueName := "OperationOverDisconnect"
+
+	suite.ReplaceChannels()
+	suite.CreateTestQueue(
+		queueName,
+		"",
+		queueName,
+		true,
+	)
+
+	tester := suite.ChannelPublish().Test(suite.T())
+
+	// Block reconnections from occurring and disconnect the underlying transport so
+	// that we attempt to fetch queue info during a disconnection event.
+	tester.BlockReconnect()
+	tester.DisconnectTransport()
+
+	var queue amqp.Queue
+	var err error
+
+	// While the channel is disconnected, and reconnecting is blocked we are going to
+	// try to inspect the queue. If it returns without an error, we'll know that we
+	// successfully executed a command over a disconnect.
+
+	// This channel will signal once the routine starts executing code
+	running := make(chan struct{})
+	// This channel will signal once the routine exits.
+	complete := make(chan struct{})
+	go func() {
+		defer close(complete)
+		close(running)
+		queue, err = suite.ChannelPublish().QueueInspect(queueName)
+	}()
+
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+
+	select {
+	case <-running:
+	case <-timer.C:
+		tester.UnblockReconnect()
+		suite.T().Error("timeout waiting for goroutine start")
+		suite.T().FailNow()
+	}
+
+	// Wait 50ms for good measure, then unblock the reconnect.
+	time.Sleep(50 * time.Millisecond)
+	tester.UnblockReconnect()
+
+	select {
+	case <-complete:
+	case <-timer.C:
+		tester.UnblockReconnect()
+		suite.T().Error("timeout waiting for goroutine close")
+		suite.T().FailNow()
+	}
+
+	suite.NoError(err, "get queue info")
+	suite.Equal(queueName, queue.Name, "corect queue info fetched")
+}
+
 // Test that closing the robust connection also permanently closes the channelConsume.
 func (suite *ChannelLifetimeSuite) Test0070_CloseConnection_ClosesChannel() {
 	err := suite.ConnConsume().Close()
@@ -602,7 +666,7 @@ func (suite *ChannelMethodsSuite) Test0120_QueueDeclare_RedeclareAfterDisconnect
 
 	chanTester := suite.ChannelPublishTester()
 
-	// grab the channel transport lock so our channel cannot reopen immediately.
+	// grab the channel livesOnce lock so our channel cannot reopen immediately.
 	chanTester.BlockReconnect()
 	chanTester.DisconnectTransport()
 

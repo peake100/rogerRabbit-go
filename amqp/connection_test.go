@@ -405,7 +405,7 @@ func TestConnection_IsClosed(t *testing.T) {
 	}
 
 	func() {
-		// grab a lock on the transport so we don't auto-reconnectMiddleware
+		// grab a lock on the livesOnce so we don't auto-reconnectMiddleware
 		connTester.BlockReconnect()
 
 		// release the lock to let the connection reconnectMiddleware
