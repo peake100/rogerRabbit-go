@@ -3,6 +3,7 @@ package amqp
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 )
 
 // Dial accepts a string in the AMQP URI format and returns a new Connection
@@ -26,9 +27,12 @@ func Dial(url string) (*Connection, error) {
 // to 30 seconds.
 func DialConfig(url string, config Config) (*Connection, error) {
 	// Create the robust connection object.
-	conn := newConnection(url, config)
+	conn, err := newConnection(url, config)
+	if err != nil {
+		return nil, fmt.Errorf("error building connection value")
+	}
 	// Make our initial connection
-	err := conn.reconnect(conn.ctx, false)
+	err = conn.reconnect(conn.ctx, false)
 	if err != nil {
 		return nil, err
 	}
@@ -52,8 +56,11 @@ func DialTLS(url string, amqps *tls.Config) (*Connection, error) {
 func DialConfigCtx(
 	ctx context.Context, url string, config Config,
 ) (*Connection, error) {
-	conn := newConnection(url, config)
-	err := conn.reconnect(ctx, true)
+	conn, err := newConnection(url, config)
+	if err != nil {
+		return nil, fmt.Errorf("error building connection value")
+	}
+	err = conn.reconnect(ctx, true)
 	if err != nil {
 		return nil, err
 	}

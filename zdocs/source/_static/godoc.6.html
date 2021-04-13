@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#375EAB">
 
-  <title>amqpTest - Go Documentation Server</title>
+  <title>amqptest - Go Documentation Server</title>
 
 <link type="text/css" rel="stylesheet" href="style.css">
 
@@ -43,7 +43,7 @@
 
 
   <h1>
-    Package amqpTest
+    Package amqptest
     <span class="text-muted"></span>
   </h1>
 
@@ -77,7 +77,7 @@
 		
 		<div id="short-nav">
 			<dl>
-			<dd><code>import "github.com/peake100/rogerRabbit-go/amqpTest"</code></dd>
+			<dd><code>import "github.com/peake100/rogerRabbit-go/amqptest"</code></dd>
 			</dl>
 			<dl>
 			<dd><a href="godoc.6.html#pkg-overview" class="overviewLink">Overview</a></dd>
@@ -93,7 +93,10 @@
 			</div>
 			<div class="expanded">
 				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
-				
+				<p>
+package amqptest contains testing utilities for amqp types.
+</p>
+
 				
 			</div>
 		</div>
@@ -120,45 +123,53 @@
 				
 				<dd><a href="godoc.6.html#AmqpSuite">type AmqpSuite</a></dd>
 				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#NewAmqpSuite">func NewAmqpSuite(innerSuite InnerSuite, opts *ChannelSuiteOpts) AmqpSuite</a></dd>
+				
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ChannelConsume">func (suite *AmqpSuite) ChannelConsume() *amqp.Channel</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ChannelConsume">func (amqpSuite *AmqpSuite) ChannelConsume() *amqp.Channel</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ChannelConsumeTester">func (suite *AmqpSuite) ChannelConsumeTester() *amqp.ChannelTesting</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ChannelConsumeTester">func (amqpSuite *AmqpSuite) ChannelConsumeTester() *amqp.ChannelTesting</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ChannelPublish">func (suite *AmqpSuite) ChannelPublish() *amqp.Channel</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ChannelPublish">func (amqpSuite *AmqpSuite) ChannelPublish() *amqp.Channel</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ChannelPublishTester">func (suite *AmqpSuite) ChannelPublishTester() *amqp.ChannelTesting</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ChannelPublishTester">func (amqpSuite *AmqpSuite) ChannelPublishTester() *amqp.ChannelTesting</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ConnConsume">func (suite *AmqpSuite) ConnConsume() *amqp.Connection</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ConnConsume">func (amqpSuite *AmqpSuite) ConnConsume() *amqp.Connection</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ConnPublish">func (suite *AmqpSuite) ConnPublish() *amqp.Connection</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ConnPublish">func (amqpSuite *AmqpSuite) ConnPublish() *amqp.Connection</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.CreateTestExchange">func (suite *AmqpSuite) CreateTestExchange(name string, kind string, cleanup bool)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.CreateTestExchange">func (amqpSuite *AmqpSuite) CreateTestExchange(name string, kind string, cleanup bool)</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.CreateTestQueue">func (suite *AmqpSuite) CreateTestQueue(name string, exchange string, exchangeKey string, cleanup bool) amqp.Queue</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.CreateTestQueue">func (amqpSuite *AmqpSuite) CreateTestQueue(name string, exchange string, exchangeKey string, cleanup bool) amqp.Queue</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.GetMessage">func (suite *AmqpSuite) GetMessage(queueName string, autoAck bool) dataModels.Delivery</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.GetMessage">func (amqpSuite *AmqpSuite) GetMessage(queueName string, autoAck bool) datamodels.Delivery</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.PublishMessages">func (suite *AmqpSuite) PublishMessages(t *testing.T, exchange string, key string, count int)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.PublishMessages">func (amqpSuite *AmqpSuite) PublishMessages(t *testing.T, exchange string, key string, count int)</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ReplaceChannels">func (suite *AmqpSuite) ReplaceChannels()</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.ReplaceChannels">func (amqpSuite *AmqpSuite) ReplaceChannels()</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.SetupSuite">func (suite *AmqpSuite) SetupSuite()</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.SetupSuite">func (amqpSuite *AmqpSuite) SetupSuite()</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.TearDownSuite">func (suite *AmqpSuite) TearDownSuite()</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.TearDownSuite">func (amqpSuite *AmqpSuite) TearDownSuite()</a></dd>
+				
+			
+				
+				<dd><a href="godoc.6.html#Assertions">type Assertions</a></dd>
+				
 				
 			
 				
@@ -172,7 +183,7 @@
 					<dd>&nbsp; &nbsp; <a href="godoc.6.html#ChannelSuiteOpts.WithDialAddress">func (opts *ChannelSuiteOpts) WithDialAddress(amqpURI string) *ChannelSuiteOpts</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.6.html#ChannelSuiteOpts.WithDialConfig">func (opts *ChannelSuiteOpts) WithDialConfig(config *amqp.Config) *ChannelSuiteOpts</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#ChannelSuiteOpts.WithDialConfig">func (opts *ChannelSuiteOpts) WithDialConfig(config amqp.Config) *ChannelSuiteOpts</a></dd>
 				
 			
 				
@@ -182,6 +193,11 @@
 			
 				
 				<dd><a href="godoc.6.html#ConnectionTesting">type ConnectionTesting</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.6.html#InnerSuite">type InnerSuite</a></dd>
 				
 				
 			
@@ -196,11 +212,15 @@
 			<p>
 			<span style="font-size:90%">
 			
-				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go">testSuite.go</a>
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/assertionsInterface.go">assertionsInterface.go</a>
 			
-				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testUtils.go">testUtils.go</a>
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/doc.go">doc.go</a>
 			
-				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testers.go">testers.go</a>
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go">testSuite.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testUtils.go">testUtils.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testers.go">testers.go</a>
 			
 			</span>
 			</p>
@@ -224,7 +244,7 @@
 		
 			
 			
-			<h2 id="GetTestConnection">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testUtils.go?s=445:498#L11">GetTestConnection</a>
+			<h2 id="GetTestConnection">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testUtils.go?s=445:498#L11">GetTestConnection</a>
 				<a class="permalink" href="godoc.6.html#GetTestConnection">&#xb6;</a>
 				
 				
@@ -245,7 +265,7 @@ t.FailNot() is called on any errors.
 		
 			
 			
-			<h2 id="AmqpSuite">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=1492:2073#L38">AmqpSuite</a>
+			<h2 id="AmqpSuite">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=1604:2184#L45">AmqpSuite</a>
 				<a class="permalink" href="godoc.6.html#AmqpSuite">&#xb6;</a>
 				
 				
@@ -259,7 +279,7 @@ handling test setup / teardown.
 
 			<pre>type AmqpSuite struct {
     <span class="comment">// Suite is the embedded suite type.</span>
-    <a href="http://localhost:6161/pkg/github.com/stretchr/testify/suite/">suite</a>.<a href="http://localhost:6161/pkg/github.com/stretchr/testify/suite/#Suite">Suite</a>
+    <a href="godoc.6.html#InnerSuite">InnerSuite</a>
 
 <span id="AmqpSuite.Opts"></span>    <span class="comment">// Opts is our Options object and can be set on suite instantiation or during setup.</span>
     Opts *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a>
@@ -276,15 +296,26 @@ handling test setup / teardown.
 			
 
 			
+				
+				<h3 id="NewAmqpSuite">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=11792:11866#L419">NewAmqpSuite</a>
+					<a class="permalink" href="godoc.6.html#NewAmqpSuite">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewAmqpSuite(innerSuite <a href="godoc.6.html#InnerSuite">InnerSuite</a>, opts *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a>) <a href="godoc.6.html#AmqpSuite">AmqpSuite</a></pre>
+				
+				
+				
+			
 
 			
 				
-				<h3 id="AmqpSuite.ChannelConsume">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=3414:3468#L104">ChannelConsume</a>
+				<h3 id="AmqpSuite.ChannelConsume">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=4571:4629#L146">ChannelConsume</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ChannelConsume">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelConsume() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Channel">Channel</a></pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelConsume() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Channel">Channel</a></pre>
 				<p>
 ChannelConsume returns an *amqp.Channel to be used for consuming methods. The
 returned channel object will be the same each time this methods is called, until
@@ -296,12 +327,12 @@ ReplaceChannels is called.
 				
 			
 				
-				<h3 id="AmqpSuite.ChannelConsumeTester">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=3742:3809#L114">ChannelConsumeTester</a>
+				<h3 id="AmqpSuite.ChannelConsumeTester">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=4927:4998#L156">ChannelConsumeTester</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ChannelConsumeTester">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelConsumeTester() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#ChannelTesting">ChannelTesting</a></pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelConsumeTester() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#ChannelTesting">ChannelTesting</a></pre>
 				<p>
 ChannelConsumeTester returns *amqp.ChannelTesting object for ChannelConsume with the
 current suite.T().
@@ -312,12 +343,12 @@ current suite.T().
 				
 			
 				
-				<h3 id="AmqpSuite.ChannelPublish">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=4411:4465#L131">ChannelPublish</a>
+				<h3 id="AmqpSuite.ChannelPublish">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=5632:5690#L173">ChannelPublish</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ChannelPublish">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelPublish() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Channel">Channel</a></pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelPublish() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Channel">Channel</a></pre>
 				<p>
 ChannelPublish returns an *amqp.Channel to be used for consuming methods. The
 returned channel object will be the same each time this methods is called, until
@@ -329,12 +360,12 @@ ReplaceChannels is called.
 				
 			
 				
-				<h3 id="AmqpSuite.ChannelPublishTester">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=4739:4806#L141">ChannelPublishTester</a>
+				<h3 id="AmqpSuite.ChannelPublishTester">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=5988:6059#L183">ChannelPublishTester</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ChannelPublishTester">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelPublishTester() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#ChannelTesting">ChannelTesting</a></pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelPublishTester() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#ChannelTesting">ChannelTesting</a></pre>
 				<p>
 ChannelConsumeTester returns *amqp.ChannelTesting object for ChannelConsume with the
 current suite.T().
@@ -345,12 +376,12 @@ current suite.T().
 				
 			
 				
-				<h3 id="AmqpSuite.ConnConsume">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=3028:3082#L93">ConnConsume</a>
+				<h3 id="AmqpSuite.ConnConsume">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=4161:4219#L135">ConnConsume</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ConnConsume">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ConnConsume() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Connection">Connection</a></pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ConnConsume() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Connection">Connection</a></pre>
 				<p>
 ConnConsume returns an *amqp.Connection to be used for consuming methods. The
 returned connection object will be the same each time this methods is called.
@@ -361,12 +392,12 @@ returned connection object will be the same each time this methods is called.
 				
 			
 				
-				<h3 id="AmqpSuite.ConnPublish">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=4025:4079#L120">ConnPublish</a>
+				<h3 id="AmqpSuite.ConnPublish">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=5222:5280#L162">ConnPublish</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ConnPublish">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ConnPublish() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Connection">Connection</a></pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ConnPublish() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Connection">Connection</a></pre>
 				<p>
 ConnPublish returns an *amqp.Connection to be used for publishing methods. The
 returned connection object will be the same each time this methods is called.
@@ -377,12 +408,12 @@ returned connection object will be the same each time this methods is called.
 				
 			
 				
-				<h3 id="AmqpSuite.CreateTestExchange">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=7293:7379#L235">CreateTestExchange</a>
+				<h3 id="AmqpSuite.CreateTestExchange">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=8682:8772#L281">CreateTestExchange</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.CreateTestExchange">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) CreateTestExchange(
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) CreateTestExchange(
     name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, kind <a href="http://localhost:6161/pkg/builtin/#string">string</a>, cleanup <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
 )</pre>
 				<p>
@@ -398,12 +429,12 @@ suite.T() that will delete the exchange at the end of the test.
 				
 			
 				
-				<h3 id="AmqpSuite.CreateTestQueue">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=6717:6835#L218">CreateTestQueue</a>
+				<h3 id="AmqpSuite.CreateTestQueue">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=8086:8208#L264">CreateTestQueue</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.CreateTestQueue">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) CreateTestQueue(
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) CreateTestQueue(
     name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, exchange <a href="http://localhost:6161/pkg/builtin/#string">string</a>, exchangeKey <a href="http://localhost:6161/pkg/builtin/#string">string</a>, cleanup <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
 ) <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Queue">Queue</a></pre>
 				<p>
@@ -421,14 +452,14 @@ suite.T() to delete the queues at the end of the test.
 				
 			
 				
-				<h3 id="AmqpSuite.GetMessage">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=9983:10073#L358">GetMessage</a>
+				<h3 id="AmqpSuite.GetMessage">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=11448:11542#L404">GetMessage</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.GetMessage">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) GetMessage(
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) GetMessage(
     queueName <a href="http://localhost:6161/pkg/builtin/#string">string</a>, autoAck <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
-) <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Delivery">Delivery</a></pre>
+) <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Delivery">Delivery</a></pre>
 				<p>
 GetMessage gets a single message, failing the test immediately if there is not a
 message waiting or the get message fails.
@@ -439,12 +470,12 @@ message waiting or the get message fails.
 				
 			
 				
-				<h3 id="AmqpSuite.PublishMessages">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=9132:9229#L330">PublishMessages</a>
+				<h3 id="AmqpSuite.PublishMessages">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=10577:10678#L376">PublishMessages</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.PublishMessages">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) PublishMessages(
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) PublishMessages(
     t *<a href="http://localhost:6161/pkg/testing/">testing</a>.<a href="http://localhost:6161/pkg/testing/#T">T</a>, exchange <a href="http://localhost:6161/pkg/builtin/#string">string</a>, key <a href="http://localhost:6161/pkg/builtin/#string">string</a>, count <a href="http://localhost:6161/pkg/builtin/#int">int</a>,
 )</pre>
 				<p>
@@ -461,12 +492,12 @@ Messages bodies are simply the index of the message starting at 0, so publishing
 				
 			
 				
-				<h3 id="AmqpSuite.ReplaceChannels">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=5083:5124#L148">ReplaceChannels</a>
+				<h3 id="AmqpSuite.ReplaceChannels">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=6344:6389#L190">ReplaceChannels</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ReplaceChannels">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ReplaceChannels()</pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ReplaceChannels()</pre>
 				<p>
 ReplaceChannels replace and close the current ChannelConsume and ChannelPublish for
 fresh ones. Most helpfully used as a cleanup function when persisting the current
@@ -478,12 +509,12 @@ channels to the next test method is not desirable.
 				
 			
 				
-				<h3 id="AmqpSuite.SetupSuite">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=10432:10468#L375">SetupSuite</a>
+				<h3 id="AmqpSuite.SetupSuite">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=2315:2355#L65">SetupSuite</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.SetupSuite">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) SetupSuite()</pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) SetupSuite()</pre>
 				<p>
 SetupSuite implements, suite.SetupAllSuite, and sets suite.Opts to
 NewChannelSuiteOpts if no other opts has been provided.
@@ -494,12 +525,12 @@ NewChannelSuiteOpts if no other opts has been provided.
 				
 			
 				
-				<h3 id="AmqpSuite.TearDownSuite">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=10685:10724#L383">TearDownSuite</a>
+				<h3 id="AmqpSuite.TearDownSuite">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=2681:2724#L77">TearDownSuite</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.TearDownSuite">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (suite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) TearDownSuite()</pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) TearDownSuite()</pre>
 				<p>
 TearDownSuite implements suite.TearDownAllSuite, and closes all open test connections
 and channels created form this suite&#39;s helper methods.
@@ -512,7 +543,169 @@ and channels created form this suite&#39;s helper methods.
 		
 			
 			
-			<h2 id="ChannelSuiteOpts">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=422:500#L8">ChannelSuiteOpts</a>
+			<h2 id="Assertions">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/assertionsInterface.go?s=189:11490#L3">Assertions</a>
+				<a class="permalink" href="godoc.6.html#Assertions">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+Assertions is an extracted interface for testify assertions object.
+</p>
+
+			<pre>type Assertions interface {
+    Condition(comp <a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/">assert</a>.<a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/#Comparison">Comparison</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Conditionf(comp <a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/">assert</a>.<a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/#Comparison">Comparison</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Contains(s interface{}, contains interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Containsf(s interface{}, contains interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    DirExists(path <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    DirExistsf(path <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    ElementsMatch(listA interface{}, listB interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    ElementsMatchf(listA interface{}, listB interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Empty(object interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Emptyf(object interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Equal(expected interface{}, actual interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    EqualError(theError <a href="http://localhost:6161/pkg/builtin/#error">error</a>, errString <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    EqualErrorf(theError <a href="http://localhost:6161/pkg/builtin/#error">error</a>, errString <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    EqualValues(expected interface{}, actual interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    EqualValuesf(expected interface{}, actual interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Equalf(expected interface{}, actual interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Error(err <a href="http://localhost:6161/pkg/builtin/#error">error</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    ErrorAs(err <a href="http://localhost:6161/pkg/builtin/#error">error</a>, target interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    ErrorAsf(err <a href="http://localhost:6161/pkg/builtin/#error">error</a>, target interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    ErrorIs(err <a href="http://localhost:6161/pkg/builtin/#error">error</a>, target <a href="http://localhost:6161/pkg/builtin/#error">error</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    ErrorIsf(err <a href="http://localhost:6161/pkg/builtin/#error">error</a>, target <a href="http://localhost:6161/pkg/builtin/#error">error</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Errorf(err <a href="http://localhost:6161/pkg/builtin/#error">error</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Eventually(condition func() <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, waitFor <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Duration">Duration</a>, tick <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Duration">Duration</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Eventuallyf(condition func() <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, waitFor <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Duration">Duration</a>, tick <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Duration">Duration</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Exactly(expected interface{}, actual interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Exactlyf(expected interface{}, actual interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Fail(failureMessage <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    FailNow(failureMessage <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    FailNowf(failureMessage <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Failf(failureMessage <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    False(value <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Falsef(value <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    FileExists(path <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    FileExistsf(path <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Greater(e1 interface{}, e2 interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    GreaterOrEqual(e1 interface{}, e2 interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    GreaterOrEqualf(e1 interface{}, e2 interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Greaterf(e1 interface{}, e2 interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    HTTPBodyContains(handler <a href="http://localhost:6161/pkg/net/http/">http</a>.<a href="http://localhost:6161/pkg/net/http/#HandlerFunc">HandlerFunc</a>, method <a href="http://localhost:6161/pkg/builtin/#string">string</a>, url <a href="http://localhost:6161/pkg/builtin/#string">string</a>, values <a href="http://localhost:6161/pkg/net/url/">url</a>.<a href="http://localhost:6161/pkg/net/url/#Values">Values</a>, str interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    HTTPBodyContainsf(handler <a href="http://localhost:6161/pkg/net/http/">http</a>.<a href="http://localhost:6161/pkg/net/http/#HandlerFunc">HandlerFunc</a>, method <a href="http://localhost:6161/pkg/builtin/#string">string</a>, url <a href="http://localhost:6161/pkg/builtin/#string">string</a>, values <a href="http://localhost:6161/pkg/net/url/">url</a>.<a href="http://localhost:6161/pkg/net/url/#Values">Values</a>, str interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    HTTPBodyNotContains(handler <a href="http://localhost:6161/pkg/net/http/">http</a>.<a href="http://localhost:6161/pkg/net/http/#HandlerFunc">HandlerFunc</a>, method <a href="http://localhost:6161/pkg/builtin/#string">string</a>, url <a href="http://localhost:6161/pkg/builtin/#string">string</a>, values <a href="http://localhost:6161/pkg/net/url/">url</a>.<a href="http://localhost:6161/pkg/net/url/#Values">Values</a>, str interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    HTTPBodyNotContainsf(handler <a href="http://localhost:6161/pkg/net/http/">http</a>.<a href="http://localhost:6161/pkg/net/http/#HandlerFunc">HandlerFunc</a>, method <a href="http://localhost:6161/pkg/builtin/#string">string</a>, url <a href="http://localhost:6161/pkg/builtin/#string">string</a>, values <a href="http://localhost:6161/pkg/net/url/">url</a>.<a href="http://localhost:6161/pkg/net/url/#Values">Values</a>, str interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    HTTPError(handler <a href="http://localhost:6161/pkg/net/http/">http</a>.<a href="http://localhost:6161/pkg/net/http/#HandlerFunc">HandlerFunc</a>, method <a href="http://localhost:6161/pkg/builtin/#string">string</a>, url <a href="http://localhost:6161/pkg/builtin/#string">string</a>, values <a href="http://localhost:6161/pkg/net/url/">url</a>.<a href="http://localhost:6161/pkg/net/url/#Values">Values</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    HTTPErrorf(handler <a href="http://localhost:6161/pkg/net/http/">http</a>.<a href="http://localhost:6161/pkg/net/http/#HandlerFunc">HandlerFunc</a>, method <a href="http://localhost:6161/pkg/builtin/#string">string</a>, url <a href="http://localhost:6161/pkg/builtin/#string">string</a>, values <a href="http://localhost:6161/pkg/net/url/">url</a>.<a href="http://localhost:6161/pkg/net/url/#Values">Values</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    HTTPRedirect(handler <a href="http://localhost:6161/pkg/net/http/">http</a>.<a href="http://localhost:6161/pkg/net/http/#HandlerFunc">HandlerFunc</a>, method <a href="http://localhost:6161/pkg/builtin/#string">string</a>, url <a href="http://localhost:6161/pkg/builtin/#string">string</a>, values <a href="http://localhost:6161/pkg/net/url/">url</a>.<a href="http://localhost:6161/pkg/net/url/#Values">Values</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    HTTPRedirectf(handler <a href="http://localhost:6161/pkg/net/http/">http</a>.<a href="http://localhost:6161/pkg/net/http/#HandlerFunc">HandlerFunc</a>, method <a href="http://localhost:6161/pkg/builtin/#string">string</a>, url <a href="http://localhost:6161/pkg/builtin/#string">string</a>, values <a href="http://localhost:6161/pkg/net/url/">url</a>.<a href="http://localhost:6161/pkg/net/url/#Values">Values</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    HTTPStatusCode(handler <a href="http://localhost:6161/pkg/net/http/">http</a>.<a href="http://localhost:6161/pkg/net/http/#HandlerFunc">HandlerFunc</a>, method <a href="http://localhost:6161/pkg/builtin/#string">string</a>, url <a href="http://localhost:6161/pkg/builtin/#string">string</a>, values <a href="http://localhost:6161/pkg/net/url/">url</a>.<a href="http://localhost:6161/pkg/net/url/#Values">Values</a>, statuscode <a href="http://localhost:6161/pkg/builtin/#int">int</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    HTTPStatusCodef(handler <a href="http://localhost:6161/pkg/net/http/">http</a>.<a href="http://localhost:6161/pkg/net/http/#HandlerFunc">HandlerFunc</a>, method <a href="http://localhost:6161/pkg/builtin/#string">string</a>, url <a href="http://localhost:6161/pkg/builtin/#string">string</a>, values <a href="http://localhost:6161/pkg/net/url/">url</a>.<a href="http://localhost:6161/pkg/net/url/#Values">Values</a>, statuscode <a href="http://localhost:6161/pkg/builtin/#int">int</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    HTTPSuccess(handler <a href="http://localhost:6161/pkg/net/http/">http</a>.<a href="http://localhost:6161/pkg/net/http/#HandlerFunc">HandlerFunc</a>, method <a href="http://localhost:6161/pkg/builtin/#string">string</a>, url <a href="http://localhost:6161/pkg/builtin/#string">string</a>, values <a href="http://localhost:6161/pkg/net/url/">url</a>.<a href="http://localhost:6161/pkg/net/url/#Values">Values</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    HTTPSuccessf(handler <a href="http://localhost:6161/pkg/net/http/">http</a>.<a href="http://localhost:6161/pkg/net/http/#HandlerFunc">HandlerFunc</a>, method <a href="http://localhost:6161/pkg/builtin/#string">string</a>, url <a href="http://localhost:6161/pkg/builtin/#string">string</a>, values <a href="http://localhost:6161/pkg/net/url/">url</a>.<a href="http://localhost:6161/pkg/net/url/#Values">Values</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Implements(interfaceObject interface{}, object interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Implementsf(interfaceObject interface{}, object interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    InDelta(expected interface{}, actual interface{}, delta <a href="http://localhost:6161/pkg/builtin/#float64">float64</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    InDeltaMapValues(expected interface{}, actual interface{}, delta <a href="http://localhost:6161/pkg/builtin/#float64">float64</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    InDeltaMapValuesf(expected interface{}, actual interface{}, delta <a href="http://localhost:6161/pkg/builtin/#float64">float64</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    InDeltaSlice(expected interface{}, actual interface{}, delta <a href="http://localhost:6161/pkg/builtin/#float64">float64</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    InDeltaSlicef(expected interface{}, actual interface{}, delta <a href="http://localhost:6161/pkg/builtin/#float64">float64</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    InDeltaf(expected interface{}, actual interface{}, delta <a href="http://localhost:6161/pkg/builtin/#float64">float64</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    InEpsilon(expected interface{}, actual interface{}, epsilon <a href="http://localhost:6161/pkg/builtin/#float64">float64</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    InEpsilonSlice(expected interface{}, actual interface{}, epsilon <a href="http://localhost:6161/pkg/builtin/#float64">float64</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    InEpsilonSlicef(expected interface{}, actual interface{}, epsilon <a href="http://localhost:6161/pkg/builtin/#float64">float64</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    InEpsilonf(expected interface{}, actual interface{}, epsilon <a href="http://localhost:6161/pkg/builtin/#float64">float64</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    IsDecreasing(object interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    IsDecreasingf(object interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    IsIncreasing(object interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    IsIncreasingf(object interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    IsNonDecreasing(object interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    IsNonDecreasingf(object interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    IsNonIncreasing(object interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    IsNonIncreasingf(object interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    IsType(expectedType interface{}, object interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    IsTypef(expectedType interface{}, object interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    JSONEq(expected <a href="http://localhost:6161/pkg/builtin/#string">string</a>, actual <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    JSONEqf(expected <a href="http://localhost:6161/pkg/builtin/#string">string</a>, actual <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Len(object interface{}, length <a href="http://localhost:6161/pkg/builtin/#int">int</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Lenf(object interface{}, length <a href="http://localhost:6161/pkg/builtin/#int">int</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Less(e1 interface{}, e2 interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    LessOrEqual(e1 interface{}, e2 interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    LessOrEqualf(e1 interface{}, e2 interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Lessf(e1 interface{}, e2 interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Negative(e interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Negativef(e interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Never(condition func() <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, waitFor <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Duration">Duration</a>, tick <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Duration">Duration</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Neverf(condition func() <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, waitFor <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Duration">Duration</a>, tick <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Duration">Duration</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Nil(object interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Nilf(object interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NoDirExists(path <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NoDirExistsf(path <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NoError(err <a href="http://localhost:6161/pkg/builtin/#error">error</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NoErrorf(err <a href="http://localhost:6161/pkg/builtin/#error">error</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NoFileExists(path <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NoFileExistsf(path <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotContains(s interface{}, contains interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotContainsf(s interface{}, contains interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotEmpty(object interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotEmptyf(object interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotEqual(expected interface{}, actual interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotEqualValues(expected interface{}, actual interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotEqualValuesf(expected interface{}, actual interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotEqualf(expected interface{}, actual interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotErrorIs(err <a href="http://localhost:6161/pkg/builtin/#error">error</a>, target <a href="http://localhost:6161/pkg/builtin/#error">error</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotErrorIsf(err <a href="http://localhost:6161/pkg/builtin/#error">error</a>, target <a href="http://localhost:6161/pkg/builtin/#error">error</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotNil(object interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotNilf(object interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotPanics(f <a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/">assert</a>.<a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/#PanicTestFunc">PanicTestFunc</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotPanicsf(f <a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/">assert</a>.<a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/#PanicTestFunc">PanicTestFunc</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotRegexp(rx interface{}, str interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotRegexpf(rx interface{}, str interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotSame(expected interface{}, actual interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotSamef(expected interface{}, actual interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotSubset(list interface{}, subset interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotSubsetf(list interface{}, subset interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotZero(i interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    NotZerof(i interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Panics(f <a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/">assert</a>.<a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/#PanicTestFunc">PanicTestFunc</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    PanicsWithError(errString <a href="http://localhost:6161/pkg/builtin/#string">string</a>, f <a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/">assert</a>.<a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/#PanicTestFunc">PanicTestFunc</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    PanicsWithErrorf(errString <a href="http://localhost:6161/pkg/builtin/#string">string</a>, f <a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/">assert</a>.<a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/#PanicTestFunc">PanicTestFunc</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    PanicsWithValue(expected interface{}, f <a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/">assert</a>.<a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/#PanicTestFunc">PanicTestFunc</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    PanicsWithValuef(expected interface{}, f <a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/">assert</a>.<a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/#PanicTestFunc">PanicTestFunc</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Panicsf(f <a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/">assert</a>.<a href="http://localhost:6161/pkg/github.com/stretchr/testify/assert/#PanicTestFunc">PanicTestFunc</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Positive(e interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Positivef(e interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Regexp(rx interface{}, str interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Regexpf(rx interface{}, str interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Same(expected interface{}, actual interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Samef(expected interface{}, actual interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Subset(list interface{}, subset interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Subsetf(list interface{}, subset interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    True(value <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Truef(value <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    WithinDuration(expected <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Time">Time</a>, actual <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Time">Time</a>, delta <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Duration">Duration</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    WithinDurationf(expected <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Time">Time</a>, actual <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Time">Time</a>, delta <a href="http://localhost:6161/pkg/time/">time</a>.<a href="http://localhost:6161/pkg/time/#Duration">Duration</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    YAMLEq(expected <a href="http://localhost:6161/pkg/builtin/#string">string</a>, actual <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    YAMLEqf(expected <a href="http://localhost:6161/pkg/builtin/#string">string</a>, actual <a href="http://localhost:6161/pkg/builtin/#string">string</a>, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Zero(i interface{}, msgAndArgs ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+    Zerof(i interface{}, msg <a href="http://localhost:6161/pkg/builtin/#string">string</a>, args ...interface{}) <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ChannelSuiteOpts">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=485:586#L13">ChannelSuiteOpts</a>
 				<a class="permalink" href="godoc.6.html#ChannelSuiteOpts">&#xb6;</a>
 				
 				
@@ -537,7 +730,7 @@ into a testify suite.Suite to gain a number of useful testing methods.
 
 			
 				
-				<h3 id="NewChannelSuiteOpts">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=1058:1102#L28">NewChannelSuiteOpts</a>
+				<h3 id="NewChannelSuiteOpts">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=1170:1214#L35">NewChannelSuiteOpts</a>
 					<a class="permalink" href="godoc.6.html#NewChannelSuiteOpts">&#xb6;</a>
 					
 					
@@ -553,7 +746,7 @@ NewChannelSuiteOpts returns a new ChannelSuiteOpts with default values
 
 			
 				
-				<h3 id="ChannelSuiteOpts.WithDialAddress">func (*ChannelSuiteOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=613:692#L15">WithDialAddress</a>
+				<h3 id="ChannelSuiteOpts.WithDialAddress">func (*ChannelSuiteOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=699:778#L21">WithDialAddress</a>
 					<a class="permalink" href="godoc.6.html#ChannelSuiteOpts.WithDialAddress">&#xb6;</a>
 					
 					
@@ -569,12 +762,12 @@ Default: amqp://localhost:57018
 				
 			
 				
-				<h3 id="ChannelSuiteOpts.WithDialConfig">func (*ChannelSuiteOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testSuite.go?s=856:939#L22">WithDialConfig</a>
+				<h3 id="ChannelSuiteOpts.WithDialConfig">func (*ChannelSuiteOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=942:1024#L28">WithDialConfig</a>
 					<a class="permalink" href="godoc.6.html#ChannelSuiteOpts.WithDialConfig">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (opts *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a>) WithDialConfig(config *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Config">Config</a>) *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a></pre>
+				<pre>func (opts *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a>) WithDialConfig(config <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Config">Config</a>) *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a></pre>
 				<p>
 WithDialConfig sets the amqp.Config object to use when dialing the test brocker.
 Default: amqp.DefaultConfig()
@@ -587,7 +780,7 @@ Default: amqp.DefaultConfig()
 		
 			
 			
-			<h2 id="ChannelTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testers.go?s=271:312#L1">ChannelTesting</a>
+			<h2 id="ChannelTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testers.go?s=271:312#L1">ChannelTesting</a>
 				<a class="permalink" href="godoc.6.html#ChannelTesting">&#xb6;</a>
 				
 				
@@ -612,7 +805,7 @@ ChannelTesting exposes some internals of the Channel type for testing.
 		
 			
 			
-			<h2 id="ConnectionTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqpTest/testers.go?s=148:195#L1">ConnectionTesting</a>
+			<h2 id="ConnectionTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testers.go?s=148:195#L1">ConnectionTesting</a>
 				<a class="permalink" href="godoc.6.html#ConnectionTesting">&#xb6;</a>
 				
 				
@@ -622,6 +815,31 @@ ConnectionTesting exposes some internals of the Connection type for testing.
 </p>
 
 			<pre>type ConnectionTesting = <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#ConnectionTesting">ConnectionTesting</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="InnerSuite">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=274:335#L6">InnerSuite</a>
+				<a class="permalink" href="godoc.6.html#InnerSuite">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type InnerSuite interface {
+    <a href="godoc.6.html#Assertions">Assertions</a>
+    <a href="http://localhost:6161/pkg/github.com/stretchr/testify/suite/">suite</a>.<a href="http://localhost:6161/pkg/github.com/stretchr/testify/suite/#TestingSuite">TestingSuite</a>
+}</pre>
 
 			
 

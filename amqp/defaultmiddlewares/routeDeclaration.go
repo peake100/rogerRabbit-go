@@ -1,14 +1,16 @@
 package defaultmiddlewares
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
 )
+
+// RouteDeclarationMiddlewareID can be used to retrieve the running instance of
+// RouteDeclarationMiddleware during testing.
+const RouteDeclarationMiddlewareID amqpmiddleware.ProviderTypeID = "DefaultRouteDeclaration"
 
 // RouteDeclarationMiddleware implements handlers for re-declaring queues, exchanges,
 // and bindings upon reconnectMiddleware.
@@ -30,14 +32,20 @@ type RouteDeclarationMiddleware struct {
 	bindExchangesLock *sync.Mutex
 }
 
+// TypeID implements amqpmiddleware.ProvidesMiddleware and returns a static type ID for
+// retrieving the active middleware value during testing.
+func (middleware *RouteDeclarationMiddleware) TypeID() amqpmiddleware.ProviderTypeID {
+	return RouteDeclarationMiddlewareID
+}
+
 // removeQueue Removes a queue from the list of queues to be redeclared on
 // reconnectMiddleware.
-func (middle *RouteDeclarationMiddleware) removeQueue(queueName string) {
+func (middleware *RouteDeclarationMiddleware) removeQueue(queueName string) {
 	// Remove the queue.
-	middle.declareQueues.Delete(queueName)
+	middleware.declareQueues.Delete(queueName)
 	// Remove all binding commands associated with this queue from the re-bind on
 	// reconnectMiddleware list.
-	middle.removeQueueBindings(
+	middleware.removeQueueBindings(
 		queueName,
 		"",
 		"",
@@ -93,36 +101,36 @@ func removeQueueBindingOk(
 
 // removeQueueBindingsFromSlice iterates over all queue bindings, and removes any
 // relevant to the detailed removeQueueBindingOpts.
-func (middle *RouteDeclarationMiddleware) removeQueueBindingsFromSlice(
+func (middleware *RouteDeclarationMiddleware) removeQueueBindingsFromSlice(
 	opts removeQueueBindingOpts,
 ) {
 	// Rather than creating a new slice, we are going to filter out any matching
 	// bind declarations we find, then constrain the slice to the number if items
 	// we have left.
 	i := 0
-	for _, thisBinding := range middle.bindQueues {
+	for _, thisBinding := range middleware.bindQueues {
 		if removeQueueBindingOk(thisBinding, opts) {
 			continue
 		}
 
-		middle.bindQueues[i] = thisBinding
+		middleware.bindQueues[i] = thisBinding
 		i++
 	}
 
-	middle.bindQueues = middle.bindQueues[0:i]
+	middleware.bindQueues = middleware.bindQueues[0:i]
 }
 
 // removeQueueBindings removes a re-connection queue binding when a queue, exchange, or
 // binding is removed.
-func (middle *RouteDeclarationMiddleware) removeQueueBindings(
+func (middleware *RouteDeclarationMiddleware) removeQueueBindings(
 	queueName string,
 	exchangeName string,
 	routingKey string,
 ) {
-	middle.bindQueuesLock.Lock()
-	defer middle.bindQueuesLock.Unlock()
+	middleware.bindQueuesLock.Lock()
+	defer middleware.bindQueuesLock.Unlock()
 
-	middle.removeQueueBindingsFromSlice(
+	middleware.removeQueueBindingsFromSlice(
 		removeQueueBindingOpts{
 			queueName:    queueName,
 			exchangeName: exchangeName,
@@ -143,13 +151,13 @@ func (middle *RouteDeclarationMiddleware) removeQueueBindings(
 
 // removeExchange removes an exchange from the re-declaration list, as well as all queue
 // and inter-exchange bindings it was a part of.
-func (middle *RouteDeclarationMiddleware) removeExchange(exchangeName string) {
+func (middleware *RouteDeclarationMiddleware) removeExchange(exchangeName string) {
 	// Remove the exchange from the list of exchanges we need to re-declare
-	middle.declareExchanges.Delete(exchangeName)
+	middleware.declareExchanges.Delete(exchangeName)
 	// Remove all bindings associated with this exchange from the list of bindings
 	// to re-declare on re-connections.
-	middle.removeQueueBindings("", exchangeName, "")
-	middle.removeExchangeBindings(
+	middleware.removeQueueBindings("", exchangeName, "")
+	middleware.removeExchangeBindings(
 		exchangeName, "", exchangeName, true,
 	)
 }
@@ -206,29 +214,29 @@ func removeExchangeBindingOk(
 
 // removeExchangeBindingsFromSlice removes all exchange bindings relevant to
 // removeExchangeBindingOpts.
-func (middle *RouteDeclarationMiddleware) removeExchangeBindingsFromSlice(
+func (middleware *RouteDeclarationMiddleware) removeExchangeBindingsFromSlice(
 	opts removeExchangeBindingOpts,
 ) {
 	// Rather than creating a new slice, we are going to filter out any matching
 	// bind declarations we find, then constrain the slice to the number if items
 	// we have left.
 	i := 0
-	for _, thisBinding := range middle.bindExchanges {
+	for _, thisBinding := range middleware.bindExchanges {
 		// If we are to remove the binding, continue.
 		if removeExchangeBindingOk(thisBinding, opts) {
 			continue
 		}
 
-		middle.bindExchanges[i] = thisBinding
+		middleware.bindExchanges[i] = thisBinding
 		i++
 	}
 
-	middle.bindQueues = middle.bindQueues[0:i]
+	middleware.bindQueues = middleware.bindQueues[0:i]
 }
 
 // removeExchangeBindings removes a re-connection binding when a binding or exchange is
 // removed.
-func (middle *RouteDeclarationMiddleware) removeExchangeBindings(
+func (middleware *RouteDeclarationMiddleware) removeExchangeBindings(
 	destination string,
 	key string,
 	source string,
@@ -236,10 +244,10 @@ func (middle *RouteDeclarationMiddleware) removeExchangeBindings(
 	// destination matches
 	destinationOrSource bool,
 ) {
-	middle.bindQueuesLock.Lock()
-	defer middle.bindQueuesLock.Unlock()
+	middleware.bindQueuesLock.Lock()
+	defer middleware.bindQueuesLock.Unlock()
 
-	middle.removeExchangeBindingsFromSlice(
+	middleware.removeExchangeBindingsFromSlice(
 		removeExchangeBindingOpts{
 			destination:            destination,
 			key:                    key,
@@ -254,7 +262,7 @@ func (middle *RouteDeclarationMiddleware) removeExchangeBindings(
 
 // reconnectDeclareQueues re-declares all previously declared queues on a amqp.Channel
 // reconnection.
-func (middle *RouteDeclarationMiddleware) reconnectDeclareQueues(
+func (middleware *RouteDeclarationMiddleware) reconnectDeclareQueues(
 	channel *streadway.Channel,
 ) error {
 	var err error
@@ -293,7 +301,7 @@ func (middle *RouteDeclarationMiddleware) reconnectDeclareQueues(
 				// do, then we should remove this queue from the list of queues that is
 				// to be re-declared, so that we don't get caught in an endless loop
 				// of reconnects.
-				middle.removeQueue(thisQueue.Name)
+				middleware.removeQueue(thisQueue.Name)
 			}
 
 			err = fmt.Errorf(
@@ -305,14 +313,14 @@ func (middle *RouteDeclarationMiddleware) reconnectDeclareQueues(
 		return true
 	}
 	// Redeclare all queues in the map.
-	middle.declareQueues.Range(redeclareQueues)
+	middleware.declareQueues.Range(redeclareQueues)
 
 	return err
 }
 
 // reconnectDeclareExchanges re-declares all exchanges previously declared on am
 // amqp.Channel during reconnection.
-func (middle *RouteDeclarationMiddleware) reconnectDeclareExchanges(
+func (middleware *RouteDeclarationMiddleware) reconnectDeclareExchanges(
 	channel *streadway.Channel,
 ) error {
 	var err error
@@ -350,7 +358,7 @@ func (middle *RouteDeclarationMiddleware) reconnectDeclareExchanges(
 				// do, then we should remove this queue from the list of queues that is
 				// to be re-declared, so that we don't get caught in an endless loop
 				// of reconnects.
-				middle.removeExchange(thisExchange.Name)
+				middleware.removeExchange(thisExchange.Name)
 			}
 			err = fmt.Errorf(
 				"error re-declaring exchange '%v': %w", thisExchange.Name, err,
@@ -362,24 +370,24 @@ func (middle *RouteDeclarationMiddleware) reconnectDeclareExchanges(
 	}
 
 	// Redeclare all queues in the map.
-	middle.declareExchanges.Range(redeclareExchanges)
+	middleware.declareExchanges.Range(redeclareExchanges)
 
 	return err
 }
 
 // reconnectBindQueues re-declares queue bindings previously made on an amqp.Channel
 // during reconnection.
-func (middle *RouteDeclarationMiddleware) reconnectBindQueues(
+func (middleware *RouteDeclarationMiddleware) reconnectBindQueues(
 	channel *streadway.Channel,
 ) error {
 	// We shouldn't meed to lock this resource here, since this method will only be
 	// used when we have a write lock on the transport, and all methods that modify the
 	// binding list must first acquire the same lock for read, but we will put this here
 	// in case that changes in the future.
-	middle.bindQueuesLock.Lock()
-	defer middle.bindQueuesLock.Unlock()
+	middleware.bindQueuesLock.Lock()
+	defer middleware.bindQueuesLock.Unlock()
 
-	for _, thisBinding := range middle.bindQueues {
+	for _, thisBinding := range middleware.bindQueues {
 		err := channel.QueueBind(
 			thisBinding.Name,
 			thisBinding.Key,
@@ -405,17 +413,17 @@ func (middle *RouteDeclarationMiddleware) reconnectBindQueues(
 
 // reconnectBindExchanges re-declares all exchange bindings previously made on an
 // amqp.Channel during reconnection.
-func (middle *RouteDeclarationMiddleware) reconnectBindExchanges(
+func (middleware *RouteDeclarationMiddleware) reconnectBindExchanges(
 	channel *streadway.Channel,
 ) error {
 	// We shouldn't meed to lock this resource here, since this method will only be
 	// used when we have a write lock on the transport, and all methods that modify the
 	// binding list must first acquire the same lock for read, but we will put this here
 	// in case that changes in the future.
-	middle.bindExchangesLock.Lock()
-	defer middle.bindExchangesLock.Unlock()
+	middleware.bindExchangesLock.Lock()
+	defer middleware.bindExchangesLock.Unlock()
 
-	for _, thisBinding := range middle.bindExchanges {
+	for _, thisBinding := range middleware.bindExchanges {
 		err := channel.ExchangeBind(
 			thisBinding.Destination,
 			thisBinding.Key,
@@ -441,34 +449,32 @@ func (middle *RouteDeclarationMiddleware) reconnectBindExchanges(
 
 // reconnectHandler re-establishes queue and exchange topologies on a channel
 // reconnection event.
-func (middle *RouteDeclarationMiddleware) reconnectHandler(
-	ctx context.Context,
-	attempt uint64,
-	logger zerolog.Logger,
+func (middleware *RouteDeclarationMiddleware) reconnectHandler(
+	args amqpmiddleware.ArgsChannelReconnect,
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (*streadway.Channel, error) {
-	channel, err := next(ctx, attempt, logger)
+	channel, err := next(args)
 	// If there was an error, pass it up the chain.
 	if err != nil {
 		return channel, err
 	}
 
-	err = middle.reconnectDeclareQueues(channel)
+	err = middleware.reconnectDeclareQueues(channel)
 	if err != nil {
 		return channel, err
 	}
 
-	err = middle.reconnectDeclareExchanges(channel)
+	err = middleware.reconnectDeclareExchanges(channel)
 	if err != nil {
 		return channel, err
 	}
 
-	err = middle.reconnectBindExchanges(channel)
+	err = middleware.reconnectBindExchanges(channel)
 	if err != nil {
 		return channel, err
 	}
 
-	err = middle.reconnectBindQueues(channel)
+	err = middleware.reconnectBindQueues(channel)
 	if err != nil {
 		return channel, err
 	}
@@ -479,15 +485,11 @@ func (middle *RouteDeclarationMiddleware) reconnectHandler(
 // Reconnect is invoked on reconnection of the underlying amqp Channel, and makes sure
 // our queue and exchange topology is re-configured to present a seamless experience
 // to the caller.
-func (middle *RouteDeclarationMiddleware) Reconnect(
+func (middleware *RouteDeclarationMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
-	handler = func(
-		ctx context.Context,
-		attempt uint64,
-		logger zerolog.Logger,
-	) (*streadway.Channel, error) {
-		return middle.reconnectHandler(ctx, attempt, logger, next)
+	handler = func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+		return middleware.reconnectHandler(args, next)
 	}
 
 	return handler
@@ -495,7 +497,7 @@ func (middle *RouteDeclarationMiddleware) Reconnect(
 
 // QueueDeclare captures amqp.Channel.QueueDeclare() calls and stores their arguments
 // for re-declaring channels on disconnect.
-func (middle *RouteDeclarationMiddleware) QueueDeclare(
+func (middleware *RouteDeclarationMiddleware) QueueDeclare(
 	next amqpmiddleware.HandlerQueueDeclare,
 ) (handler amqpmiddleware.HandlerQueueDeclare) {
 	handler = func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
@@ -506,7 +508,7 @@ func (middle *RouteDeclarationMiddleware) QueueDeclare(
 		}
 
 		// Store the queue name so we can re-declare it
-		middle.declareQueues.Store(args.Name, args)
+		middleware.declareQueues.Store(args.Name, args)
 		return queue, err
 	}
 
@@ -515,7 +517,7 @@ func (middle *RouteDeclarationMiddleware) QueueDeclare(
 
 // QueueDelete captures amqp.Channel.QueueDelete() calls and removes all relevant
 // saved queues and bindings so they are not re-declared on a channel reconnect.
-func (middle *RouteDeclarationMiddleware) QueueDelete(
+func (middleware *RouteDeclarationMiddleware) QueueDelete(
 	next amqpmiddleware.HandlerQueueDelete,
 ) (handler amqpmiddleware.HandlerQueueDelete) {
 	// If there is any sort of error, pass it on.
@@ -526,7 +528,7 @@ func (middle *RouteDeclarationMiddleware) QueueDelete(
 		}
 
 		// Remove the queue from our list of queue to redeclare.
-		middle.removeQueue(args.Name)
+		middleware.removeQueue(args.Name)
 
 		return count, err
 	}
@@ -536,7 +538,7 @@ func (middle *RouteDeclarationMiddleware) QueueDelete(
 
 // QueueBind captures amqp.Channel.QueueBind() saves queue bind arguments, so they can
 // be re-declared on channel reconnection.
-func (middle *RouteDeclarationMiddleware) QueueBind(
+func (middleware *RouteDeclarationMiddleware) QueueBind(
 	next amqpmiddleware.HandlerQueueBind,
 ) (handler amqpmiddleware.HandlerQueueBind) {
 	// If there is any sort of error, pass it on.
@@ -546,10 +548,10 @@ func (middle *RouteDeclarationMiddleware) QueueBind(
 			return err
 		}
 
-		middle.bindQueuesLock.Lock()
-		defer middle.bindQueuesLock.Unlock()
+		middleware.bindQueuesLock.Lock()
+		defer middleware.bindQueuesLock.Unlock()
 
-		middle.bindQueues = append(middle.bindQueues, args)
+		middleware.bindQueues = append(middleware.bindQueues, args)
 		return nil
 	}
 
@@ -558,7 +560,7 @@ func (middle *RouteDeclarationMiddleware) QueueBind(
 
 // QueueUnbind captures amqp.Channel.QueueUnbind() calls and removes all relevant saved
 // bindings so they are not re-declared on a channel reconnect.
-func (middle *RouteDeclarationMiddleware) QueueUnbind(
+func (middleware *RouteDeclarationMiddleware) QueueUnbind(
 	next amqpmiddleware.HandlerQueueUnbind,
 ) (handler amqpmiddleware.HandlerQueueUnbind) {
 	handler = func(args amqpmiddleware.ArgsQueueUnbind) error {
@@ -569,7 +571,7 @@ func (middle *RouteDeclarationMiddleware) QueueUnbind(
 		}
 
 		// Remove this binding from the list of bindings to re-create on reconnect.
-		middle.removeQueueBindings(
+		middleware.removeQueueBindings(
 			args.Name,
 			args.Exchange,
 			args.Key,
@@ -583,7 +585,7 @@ func (middle *RouteDeclarationMiddleware) QueueUnbind(
 
 // ExchangeDeclare captures amqp.Channel.ExchangeDeclare() saves passed arguments so
 // exchanges can be re-declared on channel reconnection.
-func (middle *RouteDeclarationMiddleware) ExchangeDeclare(
+func (middleware *RouteDeclarationMiddleware) ExchangeDeclare(
 	next amqpmiddleware.HandlerExchangeDeclare,
 ) (handler amqpmiddleware.HandlerExchangeDeclare) {
 	handler = func(args amqpmiddleware.ArgsExchangeDeclare) error {
@@ -593,7 +595,7 @@ func (middle *RouteDeclarationMiddleware) ExchangeDeclare(
 			return err
 		}
 
-		middle.declareExchanges.Store(args.Name, args)
+		middleware.declareExchanges.Store(args.Name, args)
 		return nil
 	}
 
@@ -602,7 +604,7 @@ func (middle *RouteDeclarationMiddleware) ExchangeDeclare(
 
 // ExchangeDelete captures amqp.Channel.ExchangeDelete() calls and removes all relevant
 // saved exchanges so they are not re-declared on a channel reconnect.
-func (middle *RouteDeclarationMiddleware) ExchangeDelete(
+func (middleware *RouteDeclarationMiddleware) ExchangeDelete(
 	next amqpmiddleware.HandlerExchangeDelete,
 ) (handler amqpmiddleware.HandlerExchangeDelete) {
 	handler = func(args amqpmiddleware.ArgsExchangeDelete) error {
@@ -613,7 +615,7 @@ func (middle *RouteDeclarationMiddleware) ExchangeDelete(
 		}
 
 		// Remove the exchange from our re-declare on reconnect lists.
-		middle.removeExchange(args.Name)
+		middleware.removeExchange(args.Name)
 
 		return nil
 	}
@@ -623,7 +625,7 @@ func (middle *RouteDeclarationMiddleware) ExchangeDelete(
 
 // ExchangeBind captures amqp.Channel.ExchangeBind() saves passed arguments, so exchange
 // bindings can be re-declared on channel reconnection.
-func (middle *RouteDeclarationMiddleware) ExchangeBind(
+func (middleware *RouteDeclarationMiddleware) ExchangeBind(
 	next amqpmiddleware.HandlerExchangeBind,
 ) (handler amqpmiddleware.HandlerExchangeBind) {
 	// If there is any sort of error, pass it on.
@@ -634,10 +636,10 @@ func (middle *RouteDeclarationMiddleware) ExchangeBind(
 		}
 
 		// Store this binding so we can re-bind it if we lose and regain the connection.
-		middle.bindExchangesLock.Lock()
-		defer middle.bindExchangesLock.Unlock()
+		middleware.bindExchangesLock.Lock()
+		defer middleware.bindExchangesLock.Unlock()
 
-		middle.bindExchanges = append(middle.bindExchanges, args)
+		middleware.bindExchanges = append(middleware.bindExchanges, args)
 
 		return nil
 	}
@@ -647,7 +649,7 @@ func (middle *RouteDeclarationMiddleware) ExchangeBind(
 
 // ExchangeUnbind captures amqp.Channel.ExchangeUnbind() calls and removes all relevant
 // saved bindings so they are not re-declared on a channel reconnect.
-func (middle *RouteDeclarationMiddleware) ExchangeUnbind(
+func (middleware *RouteDeclarationMiddleware) ExchangeUnbind(
 	next amqpmiddleware.HandlerExchangeUnbind,
 ) (handler amqpmiddleware.HandlerExchangeUnbind) {
 	// If there is any sort of error, pass it on.
@@ -657,7 +659,7 @@ func (middle *RouteDeclarationMiddleware) ExchangeUnbind(
 			return err
 		}
 
-		middle.removeExchangeBindings(
+		middleware.removeExchangeBindings(
 			args.Destination, args.Key, args.Source, false,
 		)
 
@@ -668,7 +670,7 @@ func (middle *RouteDeclarationMiddleware) ExchangeUnbind(
 }
 
 // NewRouteDeclarationMiddleware creates a new RouteDeclarationMiddleware.
-func NewRouteDeclarationMiddleware() *RouteDeclarationMiddleware {
+func NewRouteDeclarationMiddleware() amqpmiddleware.ProvidesMiddleware {
 	middleware := &RouteDeclarationMiddleware{
 		declareQueues:     new(sync.Map),
 		declareExchanges:  new(sync.Map),

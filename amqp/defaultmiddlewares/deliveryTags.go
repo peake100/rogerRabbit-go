@@ -1,15 +1,17 @@
 package defaultmiddlewares
 
 import (
-	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
 	"sync/atomic"
 )
+
+// DeliveryTagsMiddlewareID can be used to retrieve the running instance of
+// DeliveryTagsMiddleware during testing.
+const DeliveryTagsMiddlewareID amqpmiddleware.ProviderTypeID = "DefaultDeliveryTags"
 
 // DeliveryTagsMiddleware creates continuous delivery tags across reconnections.
 type DeliveryTagsMiddleware struct {
@@ -24,19 +26,21 @@ type DeliveryTagsMiddleware struct {
 	orphanCheckLock *sync.Mutex
 }
 
-// Reconnect establishes our current delivery tag offset based on how many deliveries
-// have been consumed across all of our connections so far.
-func (middleware *DeliveryTagsMiddleware) Reconnect(
+// TypeID implements amqpmiddleware.ProvidesMiddleware and returns a static type ID for
+// retrieving the active middleware value during testing.
+func (middleware *DeliveryTagsMiddleware) TypeID() amqpmiddleware.ProviderTypeID {
+	return DeliveryTagsMiddlewareID
+}
+
+// ChannelReconnect establishes our current delivery tag offset based on how many
+// deliveries have been consumed across all of our connections so far.
+func (middleware *DeliveryTagsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
-	handler = func(
-		ctx context.Context,
-		attempt uint64,
-		logger zerolog.Logger,
-	) (*streadway.Channel, error) {
+	handler = func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
 		middleware.tagConsumeOffset = *middleware.tagConsumeCount
 
-		channel, err := next(ctx, attempt, logger)
+		channel, err := next(args)
 		if err != nil {
 			return channel, err
 
@@ -193,9 +197,9 @@ func (middleware *DeliveryTagsMiddleware) Reject(
 	return handler
 }
 
-// ConsumeEvent is invoked whenever an event is sent to a caller of
+// ConsumeEvents is invoked whenever an event is sent to a caller of
 // amqp.Channel.Consume(), and handles applying the delivery tag offset.
-func (middleware *DeliveryTagsMiddleware) ConsumeEvent(
+func (middleware *DeliveryTagsMiddleware) ConsumeEvents(
 	next amqpmiddleware.HandlerConsumeEvents,
 ) (handler amqpmiddleware.HandlerConsumeEvents) {
 	handler = func(event amqpmiddleware.EventConsume) {
@@ -213,7 +217,7 @@ func (middleware *DeliveryTagsMiddleware) ConsumeEvent(
 }
 
 // NewDeliveryTagsMiddleware creates a new DeliveryTagsMiddleware for an amqp.Channel.
-func NewDeliveryTagsMiddleware() *DeliveryTagsMiddleware {
+func NewDeliveryTagsMiddleware() amqpmiddleware.ProvidesMiddleware {
 	tagConsumeCount := uint64(0)
 
 	return &DeliveryTagsMiddleware{

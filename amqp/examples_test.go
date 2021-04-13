@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqptest"
+	streadway "github.com/streadway/amqp"
 	"sync"
 	"testing"
 	"time"
@@ -475,54 +477,6 @@ func ExampleChannel_QueueDeclare_reDeclare() {
 	// INSPECTION: example_queue_declare_robust
 }
 
-//func ExampleChannel_Middleware() {
-//	// define our new middleware
-//	queueDeclareMiddleware := func(
-//		next amqpmiddleware.HandlerQueueDeclare,
-//	) amqpmiddleware.HandlerQueueDeclare {
-//		return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
-//			fmt.Println("MIDDLEWARE INVOKED FOR QUEUE")
-//			fmt.Println("QUEUE NAME :", args.Name)
-//			fmt.Println("AUTO-DELETE:", args.AutoDelete)
-//			return next(args)
-//		}
-//	}
-//
-//	// Get a new connection to our test broker.
-//	connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
-//	if err != nil {
-//		panic(err)
-//	}
-//	defer connection.Close()
-//
-//	// Get a new channel from our robust connection for publishing. The channel is
-//	// created with our default middleware.
-//	channel, err := connection.Channel()
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	// Register our middleware for queue declare.
-//	channel.Middleware().AddQueueDeclare(queueDeclareMiddleware)
-//
-//	// Declare our queue, our middleware will be invoked and print a message.
-//	_, err = channel.QueueDeclare(
-//		"example_middleware",
-//		false,
-//		true,
-//		false,
-//		false,
-//		nil,
-//	)
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	// MIDDLEWARE INVOKED FOR QUEUE
-//	// QUEUE NAME : example_middleware
-//	// AUTO-DELETE: true
-//}
-
 func ExampleChannel_Test() {
 	// Get a new connection to our test broker.
 	connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
@@ -555,4 +509,149 @@ func ExampleChannel_Test() {
 	// exit.
 
 	// RECONNECTION COUNT: 2
+}
+
+// Add a custom middleware to channels created by a connection.
+func ExampleChannel_addMiddleware() {
+	// define our new middleware
+	queueDeclareMiddleware := func(
+		next amqpmiddleware.HandlerQueueDeclare,
+	) amqpmiddleware.HandlerQueueDeclare {
+		return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+			fmt.Println("MIDDLEWARE INVOKED FOR QUEUE")
+			fmt.Println("QUEUE NAME :", args.Name)
+			fmt.Println("AUTO-DELETE:", args.AutoDelete)
+			return next(args)
+		}
+	}
+
+	// Create a config and add our middleware to it.
+	config := amqp.DefaultConfig()
+	config.ChannelMiddleware.AddQueueDeclare(queueDeclareMiddleware)
+
+	// Get a new connection to our test broker.
+	connection, err := amqp.DialConfigCtx(
+		context.Background(), amqptest.TestDialAddress, config,
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer connection.Close()
+
+	// Get a new channel from our robust connection for publishing. The channel is
+	// created with our default middleware.
+	channel, err := connection.Channel()
+	if err != nil {
+		panic(err)
+	}
+
+	// Declare our queue, our middleware will be invoked and print a message.
+	_, err = channel.QueueDeclare(
+		"example_middleware",
+		false,
+		true,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	// MIDDLEWARE INVOKED FOR QUEUE
+	// QUEUE NAME : example_middleware
+	// AUTO-DELETE: true
+}
+
+// CustomMiddlewareProvider exposes methods for middlewares that need to coordinate.
+type CustomMiddlewareProvider struct {
+	InvocationCount int
+}
+
+// TypeID implements amqpmiddleware.ProvidesMiddleware and returns a unique type ID
+// that can be used to fetch middleware values when testing.
+func (middleware *CustomMiddlewareProvider) TypeID() amqpmiddleware.ProviderTypeID {
+	return "CustomMiddleware"
+}
+
+// QueueDeclare implements amqpmiddleware.ProvidesQueueDeclare.
+func (middleware *CustomMiddlewareProvider) QueueDeclare(
+	next amqpmiddleware.HandlerQueueDeclare,
+) amqpmiddleware.HandlerQueueDeclare {
+	return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+		middleware.InvocationCount++
+		fmt.Printf(
+			"DECLARED: %v, TOTAL: %v\n", args.Name, middleware.InvocationCount,
+		)
+		return next(args)
+	}
+}
+
+// QueueDelete implements amqpmiddleware.ProvidesQueueDelete.
+func (middleware *CustomMiddlewareProvider) QueueDelete(
+	next amqpmiddleware.HandlerQueueDeclare,
+) amqpmiddleware.HandlerQueueDeclare {
+	return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+		middleware.InvocationCount++
+		fmt.Printf(
+			"DELETED: %v, TOTAL: %v\n", args.Name, middleware.InvocationCount,
+		)
+		return next(args)
+	}
+}
+
+// NewCustomMiddlewareProvider creates a new CustomMiddlewareProvider.
+func NewCustomMiddlewareProvider() amqpmiddleware.ProvidesMiddleware {
+	return new(CustomMiddlewareProvider)
+}
+
+func ExampleChannel_customMiddlewareProvider() {
+	// Create a config and add our middleware provider factory to it.
+	config := amqp.DefaultConfig()
+	config.ChannelMiddleware.AddProviderFactory(NewCustomMiddlewareProvider)
+
+	// Get a new connection to our test broker.
+	connection, err := amqp.DialConfigCtx(
+		context.Background(), amqptest.TestDialAddress, config,
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer connection.Close()
+
+	// Get a new channel from our robust connection for publishing. The channel is
+	// created with our default middleware.
+	channel, err := connection.Channel()
+	if err != nil {
+		panic(err)
+	}
+
+	// Declare our queue, our middleware will be invoked and print a message.
+	_, err = channel.QueueDeclare(
+		"example_middleware",
+		false, // durable
+		true,  // autoDelete
+		false, // exclusive
+		false, // noWait
+		nil,   // args
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	// Delete our queue, our middleware will be invoked and print a message.
+	_, err = channel.QueueDelete(
+		"example_middleware",
+		false, // ifUnused
+		false, // ifEmpty
+		false, // noWait
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	// MIDDLEWARE INVOKED FOR QUEUE
+	// DECLARED: example_middleware, TOTAL: 1
+	// DELETED: example_middleware, TOTAL: 2
+	// AUTO-DELETE: true
 }

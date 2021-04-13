@@ -1,14 +1,16 @@
 package defaultmiddlewares
 
 import (
-	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
 	"sync/atomic"
 )
+
+// PublishTagsMiddlewareID can be used to retrieve the running instance of
+// PublishTagsMiddleware during testing.
+const PublishTagsMiddlewareID amqpmiddleware.ProviderTypeID = "DefaultPublishTags"
 
 // PublishTagsMiddleware keeps track of client-facing and internal Publishing
 // DeliveryTags and applies the correct offset so tags are continuous, even over
@@ -38,6 +40,12 @@ type PublishTagsMiddleware struct {
 	// List of functions to send outstanding orphans
 	sendOrphans     []func()
 	sendOrphansLock *sync.Mutex
+}
+
+// TypeID implements amqpmiddleware.ProvidesMiddleware and returns a static type ID for
+// retrieving the active middleware value during testing.
+func (middleware *PublishTagsMiddleware) TypeID() amqpmiddleware.ProviderTypeID {
+	return PublishTagsMiddlewareID
 }
 
 // PublishCount returns the number of messages published that this middleware has
@@ -72,14 +80,10 @@ func (middleware *PublishTagsMiddleware) reconnectSendOrphans() {
 // Reconnect is called during a channel reconnection events. We update the current
 // offset based on the current publish count, and send orphan events to all
 // amqp.Channel.NotifyPublish() listeners.
-func (middleware *PublishTagsMiddleware) Reconnect(
+func (middleware *PublishTagsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
-	handler = func(
-		ctx context.Context,
-		attempt uint64,
-		logger zerolog.Logger,
-	) (*streadway.Channel, error) {
+	handler = func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
 		// The current count becomes the offset we apply to tags on this channel.
 		middleware.tagOffset = *middleware.publishCount
 
@@ -91,7 +95,7 @@ func (middleware *PublishTagsMiddleware) Reconnect(
 		}()
 
 		// While those are cooking , we can move forward with getting the channel.
-		channel, err := next(ctx, attempt, logger)
+		channel, err := next(args)
 		// Once the channel returns, wait for all our orphan notifications to be sent
 		// out.
 		sendDone.Wait()
@@ -175,9 +179,9 @@ func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
 	return sentCount
 }
 
-// NotifyPublishEvent is invoked when a channel passed to amqp.Channel.NotifyPublish is
+// NotifyPublishEvents is invoked when a channel passed to amqp.Channel.NotifyPublish is
 // sent an event.
-func (middleware *PublishTagsMiddleware) NotifyPublishEvent(
+func (middleware *PublishTagsMiddleware) NotifyPublishEvents(
 	next amqpmiddleware.HandlerNotifyPublishEvents,
 ) (handler amqpmiddleware.HandlerNotifyPublishEvents) {
 	// We need to know the total number of confirmation that have been sent. We can
@@ -219,7 +223,7 @@ func (middleware *PublishTagsMiddleware) NotifyPublishEvent(
 }
 
 // NewPublishTagsMiddleware creates a new PublishTagsMiddleware.
-func NewPublishTagsMiddleware() *PublishTagsMiddleware {
+func NewPublishTagsMiddleware() amqpmiddleware.ProvidesMiddleware {
 	count := uint64(0)
 	return &PublishTagsMiddleware{
 		confirmMode:     false,

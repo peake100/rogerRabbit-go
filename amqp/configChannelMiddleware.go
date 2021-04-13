@@ -1,11 +1,34 @@
 package amqp
 
-import "github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
+import (
+	"errors"
+	"fmt"
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
+)
 
-type ChannelMiddleware struct {
+var ErrDuplicateProvider = errors.New(
+	"amqp middleware provider already registered. providers must only be registered once",
+)
+
+var ErrNoMiddlewareMethods = errors.New(
+	"amqp middleware provider does not implement any middleware methods",
+)
+
+type providersStorage map[amqpmiddleware.ProviderTypeID]amqpmiddleware.ProvidesMiddleware
+
+func (storage providersStorage) checkContains(id amqpmiddleware.ProviderTypeID) error {
+	if _, ok := storage[id]; ok {
+		return ErrDuplicateProvider
+	}
+	return nil
+}
+
+type ChannelMiddlewares struct {
 	// TRANSPORT METHOD HANDLERS
 	// -------------------------
 
+	// transportClose is the handler invoked when transportManager.Close is called.
+	transportClose []amqpmiddleware.Close
 	// notifyClose is the handler invoked when transportManager.NotifyClose is called.
 	notifyClose []amqpmiddleware.NotifyClose
 	// notifyDial is the handler invoked when transportManager.NotifyDial is called.
@@ -13,14 +36,12 @@ type ChannelMiddleware struct {
 	// notifyDisconnect is the handler invoked when transportManager.NotifyDisconnect
 	// is called.
 	notifyDisconnect []amqpmiddleware.NotifyDisconnect
-	// transportClose is the handler invoked when transportManager.Close is called.
-	transportClose []amqpmiddleware.Close
 
 	// TRANSPORT EVENT MIDDLEWARE
 	// --------------------------
+	notifyCloseEvents      []amqpmiddleware.NotifyCloseEvents
 	notifyDialEvents       []amqpmiddleware.NotifyDialEvents
 	notifyDisconnectEvents []amqpmiddleware.NotifyDisconnectEvents
-	notifyCloseEvents      []amqpmiddleware.NotifyCloseEvents
 
 	// CHANNEL MIDDLEWARE
 	// ------------------
@@ -112,18 +133,18 @@ type ChannelMiddleware struct {
 	// EVENT MIDDLEWARE
 	// ----------------
 
-	// notifyPublishEvent is middleware to be registered on a
+	// notifyPublishEvents is middleware to be registered on a
 	// notifyPublishRelay.
-	notifyPublishEvent []amqpmiddleware.NotifyPublishEvents
-	// consumeEvent is middleware to be registered on a
+	notifyPublishEvents []amqpmiddleware.NotifyPublishEvents
+	// consumeEvents is middleware to be registered on a
 	// consumeRelay.
-	consumeEvent []amqpmiddleware.ConsumeEvents
-	// notifyConfirmEvent is a middleware to be registered on events for
+	consumeEvents []amqpmiddleware.ConsumeEvents
+	// notifyConfirmEvents is a middleware to be registered on events for
 	// Channel.NotifyConfirm.
-	notifyConfirmEvent []amqpmiddleware.NotifyConfirmEvents
-	// notifyConfirmOrOrphanedEvent is a middleware to be registered on events for
+	notifyConfirmEvents []amqpmiddleware.NotifyConfirmEvents
+	// notifyConfirmOrOrphanedEvents is a middleware to be registered on events for
 	// Channel.NotifyConfirmOrOrphaned.
-	notifyConfirmOrOrphanedEvent []amqpmiddleware.NotifyConfirmOrOrphanedEvents
+	notifyConfirmOrOrphanedEvents []amqpmiddleware.NotifyConfirmOrOrphanedEvents
 	// notifyReturnEvents is a middleware to be registered on events for
 	// Channel.NotifyReturn.
 	notifyReturnEvents []amqpmiddleware.NotifyReturnEvents
@@ -133,256 +154,269 @@ type ChannelMiddleware struct {
 	// notifyFlowEvents is a middleware to be registered on events for
 	// Channel.NotifyFlow.
 	notifyFlowEvents []amqpmiddleware.NotifyFlowEvents
+
+	// providerFactory
+	providerFactory []struct {
+		Factory func() amqpmiddleware.ProvidesMiddleware
+	}
+
+	// providers stores amqpmiddleware.ProvidesMiddleware that supply middleware
+	// to this config.
+	providers providersStorage
+}
+
+// AddProviderFactory adds a factory function which creates a new middleware provider
+// value which must implement one of the Middleware Provider interfaces from the
+// amqpmiddleware package, like amqpmiddleware.ProvidesQueueDeclare, and must implement
+// at-minimum amqpmiddleware.ProvidesMiddleware.
+//
+// When middleware is registered on a new Channel, the provider factory will be called
+// and all provider methods will be registered as middleware.
+//
+// If you wish the same provider value's methods to be used as middleware for every
+// *Channel created by a *Connection, consider using AddProviderMethods instead.
+func (config *ChannelMiddlewares) AddProviderFactory(factory func() amqpmiddleware.ProvidesMiddleware) {
+	config.providerFactory = append(config.providerFactory, struct {
+		Factory func() amqpmiddleware.ProvidesMiddleware
+	}{Factory: factory})
+}
+
+// AddClose adds a new middleware to be invoked on Channel.Close method calls.
+func (config *ChannelMiddlewares) AddClose(middleware amqpmiddleware.Close) {
+	config.transportClose = append(config.transportClose, middleware)
+}
+
+// AddNotifyClose adds a new middleware to be invoked on Channel.NotifyClose method
+// calls.
+func (config *ChannelMiddlewares) AddNotifyClose(middleware amqpmiddleware.NotifyClose) {
+	config.notifyClose = append(config.notifyClose, middleware)
+}
+
+// AddNotifyDial adds a new middleware to be invoked on Channel.NotifyDial method calls.
+func (config *ChannelMiddlewares) AddNotifyDial(middleware amqpmiddleware.NotifyDial) {
+	config.notifyDial = append(config.notifyDial, middleware)
+}
+
+// AddNotifyDisconnect adds a new middleware to be invoked on Channel.NotifyDisconnect
+// method calls.
+func (config *ChannelMiddlewares) AddNotifyDisconnect(middleware amqpmiddleware.NotifyDisconnect) {
+	config.notifyDisconnect = append(config.notifyDisconnect, middleware)
+}
+
+// AddNotifyCloseEvents adds a new middleware to be invoked on all events sent to
+// callers of Channel.NotifyClose.
+func (config *ChannelMiddlewares) AddNotifyCloseEvents(middleware amqpmiddleware.NotifyCloseEvents) {
+	config.notifyCloseEvents = append(config.notifyCloseEvents, middleware)
+}
+
+// AddNotifyDialEvents adds a new middleware to be invoked on all events sent to
+// callers of Channel.NotifyDial.
+func (config *ChannelMiddlewares) AddNotifyDialEvents(middleware amqpmiddleware.NotifyDialEvents) {
+	config.notifyDialEvents = append(config.notifyDialEvents, middleware)
+}
+
+// AddNotifyDisconnectEvents adds a new middleware to be invoked on all events sent to
+// callers of Channel.NotifyDial.
+func (config *ChannelMiddlewares) AddNotifyDisconnectEvents(middleware amqpmiddleware.NotifyDisconnectEvents) {
+	config.notifyDisconnectEvents = append(config.notifyDisconnectEvents, middleware)
 }
 
 // AddChannelReconnect adds a new middleware to be invoked on a Channel reconnection
 // event.
-func (config *ChannelMiddleware) AddChannelReconnect(
-	middleware amqpmiddleware.ChannelReconnect,
-) {
+func (config *ChannelMiddlewares) AddChannelReconnect(middleware amqpmiddleware.ChannelReconnect) {
 	config.channelReconnect = append(config.channelReconnect, middleware)
 }
 
 // AddQoS adds a new middleware to be invoked on Channel.Qos method calls.
-func (config *ChannelMiddleware) AddQoS(middleware amqpmiddleware.QoS) {
+func (config *ChannelMiddlewares) AddQoS(middleware amqpmiddleware.QoS) {
 	config.qos = append(config.qos, middleware)
 }
 
 // AddFlow adds a new middleware to be invoked on Channel.Flow method calls.
-func (config *ChannelMiddleware) AddFlow(middleware amqpmiddleware.Flow) {
+func (config *ChannelMiddlewares) AddFlow(middleware amqpmiddleware.Flow) {
 	config.flow = append(config.flow, middleware)
 }
 
 // AddConfirm adds a new middleware to be invoked on Channel.Confirm method calls.
-func (config *ChannelMiddleware) AddConfirm(middleware amqpmiddleware.Confirm) {
+func (config *ChannelMiddlewares) AddConfirm(middleware amqpmiddleware.Confirm) {
 	config.confirm = append(config.confirm, middleware)
 }
 
 // AddQueueDeclare adds a new middleware to be invoked on Channel.QueueDeclare method
 // calls.
-func (config *ChannelMiddleware) AddQueueDeclare(
-	middleware amqpmiddleware.QueueDeclare,
-) {
+func (config *ChannelMiddlewares) AddQueueDeclare(middleware amqpmiddleware.QueueDeclare) {
 	config.queueDeclare = append(config.queueDeclare, middleware)
 }
 
 // AddQueueDeclarePassive adds a new middleware to be invoked on
 // Channel.QueueDeclarePassive method calls.
-func (config *ChannelMiddleware) AddQueueDeclarePassive(
-	middleware amqpmiddleware.QueueDeclare,
-) {
+func (config *ChannelMiddlewares) AddQueueDeclarePassive(middleware amqpmiddleware.QueueDeclare) {
 	config.queueDeclarePassive = append(config.queueDeclarePassive, middleware)
 }
 
 // AddQueueInspect adds a new middleware to be invoked on Channel.QueueInspect method
 // calls.
-func (config *ChannelMiddleware) AddQueueInspect(
-	middleware amqpmiddleware.QueueInspect,
-) {
+func (config *ChannelMiddlewares) AddQueueInspect(middleware amqpmiddleware.QueueInspect) {
 	config.queueInspect = append(config.queueInspect, middleware)
 }
 
 // AddQueueDelete adds a new middleware to be invoked on Channel.QueueDelete method
 // calls.
-func (config *ChannelMiddleware) AddQueueDelete(middleware amqpmiddleware.QueueDelete) {
+func (config *ChannelMiddlewares) AddQueueDelete(middleware amqpmiddleware.QueueDelete) {
 	config.queueDelete = append(config.queueDelete, middleware)
 }
 
 // AddQueueBind adds a new middleware to be invoked on Channel.QueueBind method
 // calls.
-func (config *ChannelMiddleware) AddQueueBind(middleware amqpmiddleware.QueueBind) {
+func (config *ChannelMiddlewares) AddQueueBind(middleware amqpmiddleware.QueueBind) {
 	config.queueBind = append(config.queueBind, middleware)
 }
 
 // AddQueueUnbind adds a new middleware to be invoked on Channel.QueueUnbind method
 // calls.
-func (config *ChannelMiddleware) AddQueueUnbind(middleware amqpmiddleware.QueueUnbind) {
+func (config *ChannelMiddlewares) AddQueueUnbind(middleware amqpmiddleware.QueueUnbind) {
 	config.queueUnbind = append(config.queueUnbind, middleware)
 }
 
 // AddQueuePurge adds a new middleware to be invoked on Channel.QueuePurge method
 // calls.
-func (config *ChannelMiddleware) AddQueuePurge(
-	middleware amqpmiddleware.QueuePurge,
-) {
+func (config *ChannelMiddlewares) AddQueuePurge(middleware amqpmiddleware.QueuePurge) {
 	config.queuePurge = append(config.queuePurge, middleware)
 }
 
 // AddExchangeDeclare adds a new middleware to be invoked on Channel.ExchangeDeclare
 // method calls.
-func (config *ChannelMiddleware) AddExchangeDeclare(
-	middleware amqpmiddleware.ExchangeDeclare,
-) {
+func (config *ChannelMiddlewares) AddExchangeDeclare(middleware amqpmiddleware.ExchangeDeclare) {
 	config.exchangeDeclare = append(config.exchangeDeclare, middleware)
 }
 
 // AddExchangeDeclarePassive adds a new middleware to be invoked on
 // Channel.ExchangeDeclarePassive method calls.
-func (config *ChannelMiddleware) AddExchangeDeclarePassive(
-	middleware amqpmiddleware.ExchangeDeclare,
-) {
+func (config *ChannelMiddlewares) AddExchangeDeclarePassive(middleware amqpmiddleware.ExchangeDeclare) {
 	config.exchangeDeclarePassive = append(config.exchangeDeclarePassive, middleware)
 }
 
 // AddExchangeDelete adds a new middleware to be invoked on Channel.ExchangeDelete
 // method calls.
-func (config *ChannelMiddleware) AddExchangeDelete(
-	middleware amqpmiddleware.ExchangeDelete,
-) {
+func (config *ChannelMiddlewares) AddExchangeDelete(middleware amqpmiddleware.ExchangeDelete) {
 	config.exchangeDelete = append(config.exchangeDelete, middleware)
 }
 
 // AddExchangeBind adds a new middleware to be invoked on Channel.ExchangeBind
 // method calls.
-func (config *ChannelMiddleware) AddExchangeBind(
-	middleware amqpmiddleware.ExchangeBind,
-) {
+func (config *ChannelMiddlewares) AddExchangeBind(middleware amqpmiddleware.ExchangeBind) {
 	config.exchangeBind = append(config.exchangeBind, middleware)
 }
 
 // AddExchangeUnbind adds a new middleware to be invoked on Channel.ExchangeUnbind
 // method calls.
-func (config *ChannelMiddleware) AddExchangeUnbind(
-	middleware amqpmiddleware.ExchangeUnbind,
-) {
+func (config *ChannelMiddlewares) AddExchangeUnbind(middleware amqpmiddleware.ExchangeUnbind) {
 	config.exchangeUnbind = append(config.exchangeUnbind, middleware)
 }
 
 // AddPublish adds a new middleware to be invoked on Channel.Publish method calls.
-func (config *ChannelMiddleware) AddPublish(
-	middleware amqpmiddleware.Publish,
-) {
+func (config *ChannelMiddlewares) AddPublish(middleware amqpmiddleware.Publish) {
 	config.publish = append(config.publish, middleware)
 }
 
 // AddGet adds a new middleware to be invoked on Channel.Get method calls.
-func (config *ChannelMiddleware) AddGet(
-	middleware amqpmiddleware.Get,
-) {
+func (config *ChannelMiddlewares) AddGet(middleware amqpmiddleware.Get) {
 	config.get = append(config.get, middleware)
 }
 
 // AddConsume adds a new middleware to be invoked on Channel.Consume method calls.
 //
-// NOTE: this is a distinct middleware from AddConsumeEvent, which fires on every
+// NOTE: this is a distinct middleware from AddConsumeEvents, which fires on every
 // delivery sent from the broker. This event only fires once when the  Channel.Consume
 // method is first called.
-func (config *ChannelMiddleware) AddConsume(
-	middleware amqpmiddleware.Consume,
-) {
+func (config *ChannelMiddlewares) AddConsume(middleware amqpmiddleware.Consume) {
 	config.consume = append(config.consume, middleware)
 }
 
 // AddAck adds a new middleware to be invoked on Channel.Ack method calls.
-func (config *ChannelMiddleware) AddAck(
-	middleware amqpmiddleware.Ack,
-) {
+func (config *ChannelMiddlewares) AddAck(middleware amqpmiddleware.Ack) {
 	config.ack = append(config.ack, middleware)
 }
 
 // AddNack adds a new middleware to be invoked on Channel.Nack method calls.
-func (config *ChannelMiddleware) AddNack(
-	middleware amqpmiddleware.Nack,
-) {
+func (config *ChannelMiddlewares) AddNack(middleware amqpmiddleware.Nack) {
 	config.nack = append(config.nack, middleware)
 }
 
 // AddReject adds a new middleware to be invoked on Channel.Reject method calls.
-func (config *ChannelMiddleware) AddReject(
-	middleware amqpmiddleware.Reject,
-) {
+func (config *ChannelMiddlewares) AddReject(middleware amqpmiddleware.Reject) {
 	config.reject = append(config.reject, middleware)
 }
 
 // AddNotifyPublish adds a new middleware to be invoked on Channel.NotifyPublish method
 // calls.
-func (config *ChannelMiddleware) AddNotifyPublish(
-	middleware amqpmiddleware.NotifyPublish,
-) {
+func (config *ChannelMiddlewares) AddNotifyPublish(middleware amqpmiddleware.NotifyPublish) {
 	config.notifyPublish = append(config.notifyPublish, middleware)
 }
 
 // AddNotifyConfirm adds a new middleware to be invoked on Channel.NotifyConfirm method
 // calls.
-func (config *ChannelMiddleware) AddNotifyConfirm(
-	middleware amqpmiddleware.NotifyConfirm,
-) {
+func (config *ChannelMiddlewares) AddNotifyConfirm(middleware amqpmiddleware.NotifyConfirm) {
 	config.notifyConfirm = append(config.notifyConfirm, middleware)
 }
 
 // AddNotifyConfirmOrOrphaned adds a new middleware to be invoked on
 // Channel.NotifyConfirmOrOrphaned method calls.
-func (config *ChannelMiddleware) AddNotifyConfirmOrOrphaned(
-	middleware amqpmiddleware.NotifyConfirmOrOrphaned,
-) {
+func (config *ChannelMiddlewares) AddNotifyConfirmOrOrphaned(middleware amqpmiddleware.NotifyConfirmOrOrphaned) {
 	config.notifyConfirmOrOrphaned = append(config.notifyConfirmOrOrphaned, middleware)
 }
 
 // AddNotifyReturn adds a new middleware to be invoked on Channel.NotifyReturn method
 // calls.
-func (config *ChannelMiddleware) AddNotifyReturn(
-	middleware amqpmiddleware.NotifyReturn,
-) {
+func (config *ChannelMiddlewares) AddNotifyReturn(middleware amqpmiddleware.NotifyReturn) {
 	config.notifyReturn = append(config.notifyReturn, middleware)
 }
 
 // AddNotifyCancel adds a new middleware to be invoked on Channel.NotifyCancel method
 // calls.
-func (config *ChannelMiddleware) AddNotifyCancel(
-	middleware amqpmiddleware.NotifyCancel,
-) {
+func (config *ChannelMiddlewares) AddNotifyCancel(middleware amqpmiddleware.NotifyCancel) {
 	config.notifyCancel = append(config.notifyCancel, middleware)
 }
 
 // AddNotifyFlow adds a new middleware to be invoked on Channel.NotifyFlow method
 // calls.
-func (config *ChannelMiddleware) AddNotifyFlow(
-	middleware amqpmiddleware.NotifyFlow,
-) {
+func (config *ChannelMiddlewares) AddNotifyFlow(middleware amqpmiddleware.NotifyFlow) {
 	config.notifyFlow = append(config.notifyFlow, middleware)
 }
 
-// AddNotifyPublishEvent adds a new middleware to be invoked on events sent to callers
+// AddNotifyPublishEvents adds a new middleware to be invoked on events sent to callers
 // of Channel.NotifyPublish.
-func (config *ChannelMiddleware) AddNotifyPublishEvent(
-	middleware amqpmiddleware.NotifyPublishEvents,
-) {
-	config.notifyPublishEvent = append(config.notifyPublishEvent, middleware)
+func (config *ChannelMiddlewares) AddNotifyPublishEvents(middleware amqpmiddleware.NotifyPublishEvents) {
+	config.notifyPublishEvents = append(config.notifyPublishEvents, middleware)
 }
 
-// AddConsumeEvent adds a new middleware to be invoked on events sent to callers
+// AddConsumeEvents adds a new middleware to be invoked on events sent to callers
 // of Channel.Consume.
-func (config *ChannelMiddleware) AddConsumeEvent(
-	middleware amqpmiddleware.ConsumeEvents,
-) {
-	config.consumeEvent = append(config.consumeEvent, middleware)
+func (config *ChannelMiddlewares) AddConsumeEvents(middleware amqpmiddleware.ConsumeEvents) {
+	config.consumeEvents = append(config.consumeEvents, middleware)
 }
 
-// AddNotifyConfirmEvent adds a new middleware to be invoked on events sent to callers
+// AddNotifyConfirmEvents adds a new middleware to be invoked on events sent to callers
 // of Channel.NotifyConfirm.
-func (config *ChannelMiddleware) AddNotifyConfirmEvent(
-	middleware amqpmiddleware.NotifyConfirmEvents,
-) {
-	config.notifyConfirmEvent = append(
-		config.notifyConfirmEvent, middleware,
+func (config *ChannelMiddlewares) AddNotifyConfirmEvents(middleware amqpmiddleware.NotifyConfirmEvents) {
+	config.notifyConfirmEvents = append(
+		config.notifyConfirmEvents, middleware,
 	)
 }
 
-// AddNotifyConfirmOrOrphanedEvent adds a new middleware to be invoked on events sent to
+// AddNotifyConfirmOrOrphanedEvents adds a new middleware to be invoked on events sent to
 // callers of Channel.NotifyConfirmOrOrphaned.
-func (config *ChannelMiddleware) AddNotifyConfirmOrOrphanedEvent(
+func (config *ChannelMiddlewares) AddNotifyConfirmOrOrphanedEvents(
 	middleware amqpmiddleware.NotifyConfirmOrOrphanedEvents,
 ) {
-	config.notifyConfirmOrOrphanedEvent = append(
-		config.notifyConfirmOrOrphanedEvent, middleware,
+	config.notifyConfirmOrOrphanedEvents = append(
+		config.notifyConfirmOrOrphanedEvents, middleware,
 	)
 }
 
 // AddNotifyReturnEvents adds a new middleware to be invoked on events sent to
 // callers of Channel.NotifyReturn.
-func (config *ChannelMiddleware) AddNotifyReturnEvents(
-	middleware amqpmiddleware.NotifyReturnEvents,
-) {
+func (config *ChannelMiddlewares) AddNotifyReturnEvents(middleware amqpmiddleware.NotifyReturnEvents) {
 	config.notifyReturnEvents = append(
 		config.notifyReturnEvents, middleware,
 	)
@@ -390,9 +424,7 @@ func (config *ChannelMiddleware) AddNotifyReturnEvents(
 
 // AddNotifyCancelEvents adds a new middleware to be invoked on events sent to
 // callers of Channel.NotifyCancel.
-func (config *ChannelMiddleware) AddNotifyCancelEvents(
-	middleware amqpmiddleware.NotifyCancelEvents,
-) {
+func (config *ChannelMiddlewares) AddNotifyCancelEvents(middleware amqpmiddleware.NotifyCancelEvents) {
 	config.notifyCancelEvents = append(
 		config.notifyCancelEvents, middleware,
 	)
@@ -400,10 +432,282 @@ func (config *ChannelMiddleware) AddNotifyCancelEvents(
 
 // AddNotifyFlowEvents adds a new middleware to be invoked on events sent to
 // callers of Channel.NotifyCancel.
-func (config *ChannelMiddleware) AddNotifyFlowEvents(
-	middleware amqpmiddleware.NotifyFlowEvents,
-) {
+func (config *ChannelMiddlewares) AddNotifyFlowEvents(middleware amqpmiddleware.NotifyFlowEvents) {
 	config.notifyFlowEvents = append(
 		config.notifyFlowEvents, middleware,
 	)
+}
+
+// buildAndAddProviderFactories builds invokes all provider factories passed to
+// AddProviderFactory and adds their methods as middleware. A copy of the config should
+// be made before this call is made, and then discarded once channel handlers are
+// created.
+func (config *ChannelMiddlewares) buildAndAddProviderFactories() error {
+	for _, registered := range config.providerFactory {
+		provider := registered.Factory()
+		err := config.AddProviderMethods(provider)
+		if err != nil {
+			return fmt.Errorf(
+				"error adding '%v' middleware provider: %w", provider.TypeID(), err,
+			)
+		}
+	}
+
+	return nil
+}
+
+// The sheer number of type asserts in the method below breaks the cyclomatic and
+// cognitive complexity checks implemented by revive, so we will disable them for this
+// method.
+
+//revive:disable:cognitive-complexity
+//revive:disable:cyclomatic
+
+// AddProviderMethods adds a amqpmiddleware.ProvidesMiddleware's methods as Middleware.
+// If this method is invoked directly by the user, the same type value's method will be
+// added to all *Channel values created by a *Connection.
+//
+// If a new provider value should be made for each *Channel, consider using
+// AddProviderFactory instead.
+func (config *ChannelMiddlewares) AddProviderMethods(provider amqpmiddleware.ProvidesMiddleware) error {
+	if config.providers == nil {
+		config.providers = make(providersStorage)
+	}
+
+	return addProviderMethodsBookkeeping(config.providers, provider, config.innerAddProviderMethods)
+}
+
+func (config *ChannelMiddlewares) innerAddProviderMethods(
+	provider amqpmiddleware.ProvidesMiddleware,
+) (methodsFound bool) {
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesClose); ok {
+		config.AddClose(hasMethods.Close)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyClose); ok {
+		config.AddNotifyClose(hasMethods.NotifyClose)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyDial); ok {
+		config.AddNotifyDial(hasMethods.NotifyDial)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyDisconnect); ok {
+		config.AddNotifyDisconnect(hasMethods.NotifyDisconnect)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyCloseEvents); ok {
+		config.AddNotifyCloseEvents(hasMethods.NotifyCloseEvents)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyDialEvents); ok {
+		config.AddNotifyDialEvents(hasMethods.NotifyDialEvents)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyDisconnectEvents); ok {
+		config.AddNotifyDisconnectEvents(hasMethods.NotifyDisconnectEvents)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesChannelReconnect); ok {
+		config.AddChannelReconnect(hasMethods.ChannelReconnect)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesQueueDeclare); ok {
+		config.AddQueueDeclare(hasMethods.QueueDeclare)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesQueueDeclarePassive); ok {
+		config.AddQueueDeclarePassive(hasMethods.QueueDeclarePassive)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesQueueInspect); ok {
+		config.AddQueueInspect(hasMethods.QueueInspect)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesQueueDelete); ok {
+		config.AddQueueDelete(hasMethods.QueueDelete)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesQueueBind); ok {
+		config.AddQueueBind(hasMethods.QueueBind)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesQueueUnbind); ok {
+		config.AddQueueUnbind(hasMethods.QueueUnbind)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesQueuePurge); ok {
+		config.AddQueuePurge(hasMethods.QueuePurge)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesExchangeDeclare); ok {
+		config.AddExchangeDeclare(hasMethods.ExchangeDeclare)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesExchangeDeclarePassive); ok {
+		config.AddExchangeDeclarePassive(hasMethods.ExchangeDeclarePassive)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesExchangeDelete); ok {
+		config.AddExchangeDelete(hasMethods.ExchangeDelete)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesExchangeBind); ok {
+		config.AddExchangeBind(hasMethods.ExchangeBind)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesExchangeUnbind); ok {
+		config.AddExchangeUnbind(hasMethods.ExchangeUnbind)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesQoS); ok {
+		config.AddQoS(hasMethods.QoS)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesFlow); ok {
+		config.AddFlow(hasMethods.Flow)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesConfirm); ok {
+		config.AddConfirm(hasMethods.Confirm)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesPublish); ok {
+		config.AddPublish(hasMethods.Publish)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesGet); ok {
+		config.AddGet(hasMethods.Get)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesConsume); ok {
+		config.AddConsume(hasMethods.Consume)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesAck); ok {
+		config.AddAck(hasMethods.Ack)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNack); ok {
+		config.AddNack(hasMethods.Nack)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesReject); ok {
+		config.AddReject(hasMethods.Reject)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyPublish); ok {
+		config.AddNotifyPublish(hasMethods.NotifyPublish)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyConfirm); ok {
+		config.AddNotifyConfirm(hasMethods.NotifyConfirm)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyConfirmOrOrphaned); ok {
+		config.AddNotifyConfirmOrOrphaned(hasMethods.NotifyConfirmOrOrphaned)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyReturn); ok {
+		config.AddNotifyReturn(hasMethods.NotifyReturn)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyCancel); ok {
+		config.AddNotifyCancel(hasMethods.NotifyCancel)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyFlow); ok {
+		config.AddNotifyFlow(hasMethods.NotifyFlow)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyPublishEvents); ok {
+		config.AddNotifyPublishEvents(hasMethods.NotifyPublishEvents)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesConsumeEvents); ok {
+		config.AddConsumeEvents(hasMethods.ConsumeEvents)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyConfirmEvents); ok {
+		config.AddNotifyConfirmEvents(hasMethods.NotifyConfirmEvents)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyConfirmOrOrphanedEvents); ok {
+		config.AddNotifyConfirmOrOrphanedEvents(hasMethods.NotifyConfirmOrOrphanedEvents)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyReturnEvents); ok {
+		config.AddNotifyReturnEvents(hasMethods.NotifyReturnEvents)
+		methodsFound = true
+	}
+
+	if hasMethods, ok := provider.(amqpmiddleware.ProvidesNotifyFlowEvents); ok {
+		config.AddNotifyFlowEvents(hasMethods.NotifyFlowEvents)
+		methodsFound = true
+	}
+
+	return methodsFound
+}
+
+//revive:enable:cognitive-complexity
+//revive:enable:cyclomatic
+
+// addProviderMethodsBookkeeping handles the identical bookkeeping surrounding adding
+// provider methods for ChannelMiddlewares and ConnectionMiddlewares
+func addProviderMethodsBookkeeping(
+	storage providersStorage,
+	provider amqpmiddleware.ProvidesMiddleware,
+	addMethods func(provider amqpmiddleware.ProvidesMiddleware) (methodsFound bool),
+) error {
+	if err := storage.checkContains(provider.TypeID()); err != nil {
+		return err
+	}
+
+	methodsFound := addMethods(provider)
+	if !methodsFound {
+		return ErrNoMiddlewareMethods
+	}
+
+	// Add the provider to the internal storage
+	storage[provider.TypeID()] = provider
+	return nil
 }

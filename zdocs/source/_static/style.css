@@ -403,7 +403,7 @@ div#about {
 	margin: 0 auto 1.875rem;
 }
 div#gopher {
-	background: url(frontpage.png) no-repeat;
+	background: url(http://localhost:6161/doc/gopher/frontpage.png) no-repeat;
 	background-position: center top;
 	height: 9.688rem;
 	max-height: 200px; /* Setting in px to prevent the gopher from blowing up in very high default font-sizes */
@@ -433,7 +433,7 @@ div#learn .popout {
 	display: block;
 	cursor: pointer;
 	font-size: 0.75rem;
-	background: url(share.png) no-repeat;
+	background: url(http://localhost:6161/doc/share.png) no-repeat;
 	background-position: right center;
 	padding: 0.375rem 1.688rem;
 }

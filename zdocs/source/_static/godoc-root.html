@@ -96,19 +96,7 @@
 			<div class="expanded">
 				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
 				<p>
-Roger, Rabbit is broken into two packages:
-</p>
-<p>
-- amqp: A drop-in replacement for streadway/amqp with automatic re-dials,
-</p>
-<pre>method middleware, and more
-</pre>
-<p>
-- roger: Higher level abstractions for publishing and consuming messages.
-</p>
-<p>
-Other packages are used for development organizational purposes and can be ignored by
-end users.
+rogerRabbit is a set of packages for working more easily with github.com/streadway/amqp.
 </p>
 
 				
@@ -194,44 +182,44 @@ end users.
 				<tr>
 				
 					<td class="pkg-name" style="padding-left: 20px;">
-						<a href="godoc.3.html">amqpMiddleware</a>
+						<a href="godoc.3.html">amqpmiddleware</a>
 					</td>
 				
 					<td class="pkg-synopsis">
-						amqpMiddleware package defines middleware signatures for methods on *amqp.Channel.
+						package amqpMiddleware defines middleware signatures for methods on *amqp.Channel.
 					</td>
 				</tr>
 			
 				<tr>
 				
 					<td class="pkg-name" style="padding-left: 20px;">
-						<a href="godoc.4.html">dataModels</a>
+						<a href="godoc.4.html">datamodels</a>
 					</td>
 				
 					<td class="pkg-synopsis">
-						dataModels package contains a few data models that are used by both the amqp package and the middleware package.
+						package dataModels contains a few data models that are used by both the amqp package and the middleware package.
 					</td>
 				</tr>
 			
 				<tr>
 				
 					<td class="pkg-name" style="padding-left: 20px;">
-						<a href="godoc.5.html">defaultMiddlewares</a>
+						<a href="godoc.5.html">defaultmiddlewares</a>
 					</td>
 				
 					<td class="pkg-synopsis">
-						defaultMiddlewares houses the default middleware for amqp.Channel that allow features like continuous delivery tag values across channel disconnects.
+						package defaultMiddlewares houses the default middleware for amqp.Channel.
 					</td>
 				</tr>
 			
 				<tr>
 				
 					<td class="pkg-name" style="padding-left: 0px;">
-						<a href="godoc.6.html">amqpTest</a>
+						<a href="godoc.6.html">amqptest</a>
 					</td>
 				
 					<td class="pkg-synopsis">
-						
+						package amqptest contains testing utilities for amqp types.
 					</td>
 				</tr>
 			

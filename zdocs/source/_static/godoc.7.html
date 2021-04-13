@@ -194,6 +194,9 @@ top of the amqp package.
 					<dd>&nbsp; &nbsp; <a href="godoc.7.html#Producer.Publish">func (producer *Producer) Publish(ctx context.Context, exchange string, key string, mandatory bool, immediate bool, msg amqp.Publishing) (err error)</a></dd>
 				
 					
+					<dd>&nbsp; &nbsp; <a href="godoc.7.html#Producer.QueueForPublication">func (producer *Producer) QueueForPublication(ctx context.Context, exchange string, key string, mandatory bool, immediate bool, msg amqp.Publishing) (order *Publication, err error)</a></dd>
+				
+					
 					<dd>&nbsp; &nbsp; <a href="godoc.7.html#Producer.Run">func (producer *Producer) Run() error</a></dd>
 				
 					
@@ -212,6 +215,14 @@ top of the amqp package.
 				
 					
 					<dd>&nbsp; &nbsp; <a href="godoc.7.html#ProducerOpts.WithInternalQueueCapacity">func (opts *ProducerOpts) WithInternalQueueCapacity(size int) *ProducerOpts</a></dd>
+				
+			
+				
+				<dd><a href="godoc.7.html#Publication">type Publication</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.7.html#Publication.WaitOnConfirmation">func (order *Publication) WaitOnConfirmation() error</a></dd>
 				
 			
 			
@@ -255,7 +266,7 @@ top of the amqp package.
 		
 			
 			
-			<h2 id="AmqpDeliveryProcessor">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=2098:2994#L53">AmqpDeliveryProcessor</a>
+			<h2 id="AmqpDeliveryProcessor">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=2155:3051#L54">AmqpDeliveryProcessor</a>
 				<a class="permalink" href="godoc.7.html#AmqpDeliveryProcessor">&#xb6;</a>
 				
 				
@@ -277,7 +288,7 @@ Implementors of this interface will be registered with a consumer.
     <span class="comment">// result in it being logged and the delivery being nacked. If requeue is true, the</span>
     <span class="comment">// nacked delivery will be requeued. If err is nil, requeue is ignored.</span>
     HandleDelivery(
-        ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, delivery <a href="godoc.4.html">dataModels</a>.<a href="godoc.4.html#Delivery">Delivery</a>, logger <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Logger">Logger</a>,
+        ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, delivery <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Delivery">Delivery</a>, logger <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Logger">Logger</a>,
     ) (err <a href="http://localhost:6161/pkg/builtin/#error">error</a>, requeue <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>)
 
     <span class="comment">// Cleanup is called at shutdown to allow the route handler to clean up any</span>
@@ -299,7 +310,7 @@ Implementors of this interface will be registered with a consumer.
 		
 			
 			
-			<h2 id="AmqpRouteManager">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=423:1355#L7">AmqpRouteManager</a>
+			<h2 id="AmqpRouteManager">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=423:1412#L7">AmqpRouteManager</a>
 				<a class="permalink" href="godoc.7.html#AmqpRouteManager">&#xb6;</a>
 				
 				
@@ -324,6 +335,7 @@ a channel. These are the only methods we want SetupChannel to have access to.
     QueueInspect(name <a href="http://localhost:6161/pkg/builtin/#string">string</a>) (queue <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Queue">Queue</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
     QueueBind(name, key, exchange <a href="http://localhost:6161/pkg/builtin/#string">string</a>, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Table">Table</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a>
     QueueDelete(name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, ifUnused, ifEmpty, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>) (count <a href="http://localhost:6161/pkg/builtin/#int">int</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
+    Qos(prefetchCount, prefetchSize <a href="http://localhost:6161/pkg/builtin/#int">int</a>, global <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a>
 
     ExchangeDeclare(
         name, kind <a href="http://localhost:6161/pkg/builtin/#string">string</a>, durable, autoDelete, internal, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Table">Table</a>,
@@ -351,7 +363,7 @@ a channel. These are the only methods we want SetupChannel to have access to.
 		
 			
 			
-			<h2 id="ConsumeArgs">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=1420:1948#L36">ConsumeArgs</a>
+			<h2 id="ConsumeArgs">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=1477:2005#L37">ConsumeArgs</a>
 				<a class="permalink" href="godoc.7.html#ConsumeArgs">&#xb6;</a>
 				
 				
@@ -390,7 +402,7 @@ ConsumeArgs are the args the consumer will be created with.
 		
 			
 			
-			<h2 id="Consumer">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3931:4605#L102">Consumer</a>
+			<h2 id="Consumer">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3988:4662#L103">Consumer</a>
 				<a class="permalink" href="godoc.7.html#Consumer">&#xb6;</a>
 				
 				
@@ -414,7 +426,7 @@ Consumer is a service helper for consuming messages from one or more queues.
 
 			
 				
-				<h3 id="NewConsumer">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=10527:10600#L349">NewConsumer</a>
+				<h3 id="NewConsumer">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=10584:10657#L350">NewConsumer</a>
 					<a class="permalink" href="godoc.7.html#NewConsumer">&#xb6;</a>
 					
 					
@@ -432,7 +444,7 @@ NewConsumer returns a new consumer using the passed amqp.Channel.
 
 			
 				
-				<h3 id="Consumer.RegisterProcessor">func (*Consumer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=4704:4784#L130">RegisterProcessor</a>
+				<h3 id="Consumer.RegisterProcessor">func (*Consumer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=4761:4841#L131">RegisterProcessor</a>
 					<a class="permalink" href="godoc.7.html#Consumer.RegisterProcessor">&#xb6;</a>
 					
 					
@@ -450,7 +462,7 @@ start.
 				
 			
 				
-				<h3 id="Consumer.Run">func (*Consumer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=9151:9188#L299">Run</a>
+				<h3 id="Consumer.Run">func (*Consumer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=9208:9245#L300">Run</a>
 					<a class="permalink" href="godoc.7.html#Consumer.Run">&#xb6;</a>
 					
 					
@@ -465,7 +477,7 @@ Run the consumer. This method blocks until the consumer has completed shutdown.
 				
 			
 				
-				<h3 id="Consumer.StartShutdown">func (*Consumer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=10383:10424#L344">StartShutdown</a>
+				<h3 id="Consumer.StartShutdown">func (*Consumer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=10440:10481#L345">StartShutdown</a>
 					<a class="permalink" href="godoc.7.html#Consumer.StartShutdown">&#xb6;</a>
 					
 					
@@ -483,7 +495,7 @@ it does not block until shutdown is complete.
 		
 			
 			
-			<h2 id="ConsumerOpts">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3050:3202#L74">ConsumerOpts</a>
+			<h2 id="ConsumerOpts">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3107:3259#L75">ConsumerOpts</a>
 				<a class="permalink" href="godoc.7.html#ConsumerOpts">&#xb6;</a>
 				
 				
@@ -507,7 +519,7 @@ ConsumerOpts holds options for running a consumer.
 
 			
 				
-				<h3 id="NewConsumerOpts">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3760:3796#L97">NewConsumerOpts</a>
+				<h3 id="NewConsumerOpts">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3817:3853#L98">NewConsumerOpts</a>
 					<a class="permalink" href="godoc.7.html#NewConsumerOpts">&#xb6;</a>
 					
 					
@@ -523,7 +535,7 @@ NewConsumerOpts returns new ConsumerOpts object with default settings.
 
 			
 				
-				<h3 id="ConsumerOpts.WithLogger">func (*ConsumerOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3572:3645#L91">WithLogger</a>
+				<h3 id="ConsumerOpts.WithLogger">func (*ConsumerOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3629:3702#L92">WithLogger</a>
 					<a class="permalink" href="godoc.7.html#ConsumerOpts.WithLogger">&#xb6;</a>
 					
 					
@@ -539,7 +551,7 @@ the global settings applied.
 				
 			
 				
-				<h3 id="ConsumerOpts.WithMaxWorkers">func (*ConsumerOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3347:3410#L84">WithMaxWorkers</a>
+				<h3 id="ConsumerOpts.WithMaxWorkers">func (*ConsumerOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/consumer.go?s=3404:3467#L85">WithMaxWorkers</a>
 					<a class="permalink" href="godoc.7.html#ConsumerOpts.WithMaxWorkers">&#xb6;</a>
 					
 					
@@ -663,7 +675,7 @@ Unwrap implements xerrors.Wrapper and returns the original Amqp error.
 		
 			
 			
-			<h2 id="Producer">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=3076:3891#L93">Producer</a>
+			<h2 id="Producer">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=3498:4311#L106">Producer</a>
 				<a class="permalink" href="godoc.7.html#Producer">&#xb6;</a>
 				
 				
@@ -688,7 +700,7 @@ publishings, retrying nacked messages, and other useful quality of life features
 
 			
 				
-				<h3 id="NewProducer">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=12295:12368#L376">NewProducer</a>
+				<h3 id="NewProducer">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=13952:14025#L432">NewProducer</a>
 					<a class="permalink" href="godoc.7.html#NewProducer">&#xb6;</a>
 					
 					
@@ -726,8 +738,9 @@ If opts is nil, default options will be used.
 		
 		
 			<p>Code:</p>
-			<pre class="code"><span class="comment">// Get a new connection to our test broker.</span>
-connection, err := amqp.Dial(amqpTest.TestDialAddress)
+			<pre class="code">
+<span class="comment">// Get a new connection to our test broker.</span>
+connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 if err != nil {
     panic(err)
 }
@@ -754,7 +767,7 @@ queue, err := channel.QueueDeclare(
 <span class="comment">// default opts being used. By default, a Producer will put the passed channel in</span>
 <span class="comment">// confirmation mode, and each time publish is called, will block until a</span>
 <span class="comment">// confirmation from the server has been received.</span>
-producer := NewProducer(channel, nil)
+producer := roger.NewProducer(channel, nil)
 producerComplete := make(chan struct{})
 
 <span class="comment">// Run the producer in it&#39;s own goroutine.</span>
@@ -813,19 +826,16 @@ producer.StartShutdown()
 
 <span class="comment">// exit.</span>
 
-<span class="comment"></pre>
-			
-			<p>Output:</p>
-			<pre class="output">Message Published!
-Message Published!
-Message Published!
-Message Published!
-Message Published!
-Message Published!
-Message Published!
-Message Published!
-Message Published!
-Message Published!
+<span class="comment">// Message Published!</span>
+<span class="comment">// Message Published!</span>
+<span class="comment">// Message Published!</span>
+<span class="comment">// Message Published!</span>
+<span class="comment">// Message Published!</span>
+<span class="comment">// Message Published!</span>
+<span class="comment">// Message Published!</span>
+<span class="comment">// Message Published!</span>
+<span class="comment">// Message Published!</span>
+<span class="comment">// Message Published!</span>
 </pre>
 			
 		
@@ -837,7 +847,7 @@ Message Published!
 
 			
 				
-				<h3 id="Producer.Publish">func (*Producer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=6878:7035#L204">Publish</a>
+				<h3 id="Producer.Publish">func (*Producer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=7332:7489#L217">Publish</a>
 					<a class="permalink" href="godoc.7.html#Producer.Publish">&#xb6;</a>
 					
 					
@@ -865,7 +875,34 @@ if the message has already been sent to thr broker and we are waiting for a resp
 				
 			
 				
-				<h3 id="Producer.Run">func (*Producer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=8702:8739#L272">Run</a>
+				<h3 id="Producer.QueueForPublication">func (*Producer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=8473:8662#L259">QueueForPublication</a>
+					<a class="permalink" href="godoc.7.html#Producer.QueueForPublication">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (producer *<a href="godoc.7.html#Producer">Producer</a>) QueueForPublication(
+    ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>,
+    exchange <a href="http://localhost:6161/pkg/builtin/#string">string</a>,
+    key <a href="http://localhost:6161/pkg/builtin/#string">string</a>,
+    mandatory <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
+    immediate <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
+    msg <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Publishing">Publishing</a>,
+) (order *<a href="godoc.7.html#Publication">Publication</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+				<p>
+QueueForPublication is as Publish, but only puts the order into an internal queue
+before returning, allowing the user to wait on publication confirmation themselves
+through the returned Publication value.
+</p>
+<p>
+Useful when ensuring publication order is important.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="Producer.Run">func (*Producer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=10359:10396#L328">Run</a>
 					<a class="permalink" href="godoc.7.html#Producer.Run">&#xb6;</a>
 					
 					
@@ -880,7 +917,7 @@ Run the producer, this method blocks until the producer has been shut down.
 				
 			
 				
-				<h3 id="Producer.StartShutdown">func (*Producer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=11188:11229#L349">StartShutdown</a>
+				<h3 id="Producer.StartShutdown">func (*Producer) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=12845:12886#L405">StartShutdown</a>
 					<a class="permalink" href="godoc.7.html#Producer.StartShutdown">&#xb6;</a>
 					
 					
@@ -898,7 +935,7 @@ remaining work is completed.
 		
 			
 			
-			<h2 id="ProducerOpts">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=1932:2117#L62">ProducerOpts</a>
+			<h2 id="ProducerOpts">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=2354:2539#L75">ProducerOpts</a>
 				<a class="permalink" href="godoc.7.html#ProducerOpts">&#xb6;</a>
 				
 				
@@ -922,7 +959,7 @@ ProducerOpts holds options for Producer.
 
 			
 				
-				<h3 id="NewProducerOpts">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=11359:11395#L355">NewProducerOpts</a>
+				<h3 id="NewProducerOpts">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=13016:13052#L411">NewProducerOpts</a>
 					<a class="permalink" href="godoc.7.html#NewProducerOpts">&#xb6;</a>
 					
 					
@@ -938,7 +975,7 @@ NewProducerOpts returns a new ProducerOpts with default options.
 
 			
 				
-				<h3 id="ProducerOpts.WithConfirmPublish">func (*ProducerOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=2371:2443#L74">WithConfirmPublish</a>
+				<h3 id="ProducerOpts.WithConfirmPublish">func (*ProducerOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=2793:2865#L87">WithConfirmPublish</a>
 					<a class="permalink" href="godoc.7.html#ProducerOpts.WithConfirmPublish">&#xb6;</a>
 					
 					
@@ -958,7 +995,7 @@ Default: true.
 				
 			
 				
-				<h3 id="ProducerOpts.WithInternalQueueCapacity">func (*ProducerOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=2774:2849#L86">WithInternalQueueCapacity</a>
+				<h3 id="ProducerOpts.WithInternalQueueCapacity">func (*ProducerOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=3196:3271#L99">WithInternalQueueCapacity</a>
 					<a class="permalink" href="godoc.7.html#ProducerOpts.WithInternalQueueCapacity">&#xb6;</a>
 					
 					
@@ -974,6 +1011,50 @@ for those internal queues.
 </p>
 <p>
 Default: 64
+</p>
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="Publication">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=1493:1916#L46">Publication</a>
+				<a class="permalink" href="godoc.7.html#Publication">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+Publication is t he order for a publications.
+</p>
+
+			<pre>type Publication struct {
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+				
+				<h3 id="Publication.WaitOnConfirmation">func (*Publication) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/producer.go?s=2047:2099#L64">WaitOnConfirmation</a>
+					<a class="permalink" href="godoc.7.html#Publication.WaitOnConfirmation">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (order *<a href="godoc.7.html#Publication">Publication</a>) WaitOnConfirmation() <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+				<p>
+WaitOnConfirmation blocks until the message is confirmed / nacked by the broker
+or the context of the publication cancels.
 </p>
 
 				

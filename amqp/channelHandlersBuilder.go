@@ -1,10 +1,8 @@
 package amqp
 
 import (
-	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
 
@@ -14,11 +12,8 @@ type channelHandlerBuilder struct {
 	connection *Connection
 	channel    *Channel
 
-	middlewares ChannelMiddleware
+	middlewares ChannelMiddlewares
 }
-
-//revive:disable:line-length-limit
-// we need to disable this here since the builder signatures are so long.
 
 // createChannelReconnect returns the base handler invoked on a Channel
 // reconnection.
@@ -26,12 +21,8 @@ func (builder channelHandlerBuilder) createChannelReconnect() amqpmiddleware.Han
 	// capture connection into the closure.
 	connection := builder.connection
 
-	handler := func(
-		ctx context.Context,
-		attempt uint64,
-		logger zerolog.Logger,
-	) (*streadway.Channel, error) {
-		channel, err := connection.getStreadwayChannel(ctx)
+	handler := func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+		channel, err := connection.getStreadwayChannel(args.Ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -424,7 +415,7 @@ func (builder channelHandlerBuilder) createConsume() amqpmiddleware.HandlerConsu
 	// capture the channel into the closure
 	channel := builder.channel
 	// Capture the event middleware in this closure.
-	eventMiddleware := builder.middlewares.consumeEvent
+	eventMiddleware := builder.middlewares.consumeEvents
 
 	handler := func(
 		args amqpmiddleware.ArgsConsume,
@@ -521,7 +512,7 @@ func (builder channelHandlerBuilder) createReject() amqpmiddleware.HandlerReject
 // that invokes the method of the underlying streadway/amqp.Channel.
 func (builder channelHandlerBuilder) createNotifyPublish() amqpmiddleware.HandlerNotifyPublish {
 	// Capture the event middleware in the closure.
-	eventMiddleware := builder.middlewares.notifyPublishEvent
+	eventMiddleware := builder.middlewares.notifyPublishEvents
 	channel := builder.channel
 
 	handler := func(args amqpmiddleware.ArgsNotifyPublish) chan Confirmation {
@@ -549,7 +540,7 @@ func (builder channelHandlerBuilder) createNotifyPublish() amqpmiddleware.Handle
 // that invokes the method of the underlying streadway/amqp.Channel.
 func (builder channelHandlerBuilder) createNotifyConfirm() amqpmiddleware.HandlerNotifyConfirm {
 	// capture te event middleware in the closure
-	eventMiddleware := builder.middlewares.notifyConfirmEvent
+	eventMiddleware := builder.middlewares.notifyConfirmEvents
 	channel := builder.channel
 
 	handler := func(args amqpmiddleware.ArgsNotifyConfirm) (chan uint64, chan uint64) {
@@ -587,8 +578,7 @@ func (builder channelHandlerBuilder) createNotifyConfirm() amqpmiddleware.Handle
 // runNotifyConfirm relay the NotifyConfirm events to the caller by calling
 // NotifyPublish.
 func (builder channelHandlerBuilder) runNotifyConfirm(
-	args amqpmiddleware.ArgsNotifyConfirm,
-	eventHandler amqpmiddleware.HandlerNotifyConfirmEvents,
+	args amqpmiddleware.ArgsNotifyConfirm, eventHandler amqpmiddleware.HandlerNotifyConfirmEvents,
 ) {
 	defer notifyConfirmCloseConfirmChannels(args.Ack, args.Nack)
 
@@ -611,7 +601,7 @@ func (builder channelHandlerBuilder) runNotifyConfirm(
 // createNotifyConfirmOrOrphaned returns the base handler for
 // Channel.NotifyConfirmOrOrphaned.
 func (builder channelHandlerBuilder) createNotifyConfirmOrOrphaned() amqpmiddleware.HandlerNotifyConfirmOrOrphaned {
-	eventMiddlewares := builder.middlewares.notifyConfirmOrOrphanedEvent
+	eventMiddlewares := builder.middlewares.notifyConfirmOrOrphanedEvents
 	channel := builder.channel
 
 	handler := func(

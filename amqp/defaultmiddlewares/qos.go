@@ -1,22 +1,30 @@
 package defaultmiddlewares
 
 import (
-	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
+
+// QoSMiddlewareID can be used to retrieve the running instance of QoSMiddleware during
+// testing.
+const QoSMiddlewareID amqpmiddleware.ProviderTypeID = "DefaultQoS"
 
 // QoSMiddleware saves most recent QoS settings and re-applies them on restart.
 //
 // This method is currently racy if multiple goroutines call QoS with different
 // settings.
 type QoSMiddleware struct {
-	// qosArgs is the latest args passed to QoS()
+	// qosArgs is the latest args passed to QoS().
 	qosArgs amqpmiddleware.ArgsQoS
 	// isSet is whether qosArgs has been set.
 	isSet bool
+}
+
+// TypeID implements amqpmiddleware.ProvidesMiddleware and returns a static type ID for
+// retrieving the active middleware value during testing.
+func (middleware *QoSMiddleware) TypeID() amqpmiddleware.ProviderTypeID {
+	return QoSMiddlewareID
 }
 
 // QosArgs returns current args. For testing.
@@ -31,26 +39,22 @@ func (middleware *QoSMiddleware) IsSet() bool {
 
 // Reconnect is called whenever the underlying channel is reconnected. This middleware
 // re-applies any QoS calls to the channel.
-func (middleware *QoSMiddleware) Reconnect(
+func (middleware *QoSMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
-	return func(
-		ctx context.Context,
-		attempt uint64,
-		logger zerolog.Logger,
-	) (*streadway.Channel, error) {
-		channel, err := next(ctx, attempt, logger)
+	return func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+		channel, err := next(args)
 		// If there was an error or QoS() has not been called, return results.
 		if err != nil || !middleware.isSet {
 			return channel, err
 		}
 
 		// Otherwise re-apply the QoS settings.
-		args := middleware.qosArgs
+		qosArgs := middleware.qosArgs
 		err = channel.Qos(
-			args.PrefetchCount,
-			args.PrefetchSize,
-			args.Global,
+			qosArgs.PrefetchCount,
+			qosArgs.PrefetchSize,
+			qosArgs.Global,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error re-applying QoS args: %w", err)
@@ -59,9 +63,9 @@ func (middleware *QoSMiddleware) Reconnect(
 	}
 }
 
-// Qos is called in amqp.Channel.Qos(). Saves the QoS settings passed to the QoS
+// QoS is called in amqp.Channel.QoS(). Saves the QoS settings passed to the QoS
 // function
-func (middleware *QoSMiddleware) Qos(
+func (middleware *QoSMiddleware) QoS(
 	next amqpmiddleware.HandlerQoS,
 ) (handler amqpmiddleware.HandlerQoS) {
 	return func(args amqpmiddleware.ArgsQoS) error {
@@ -77,7 +81,7 @@ func (middleware *QoSMiddleware) Qos(
 }
 
 // NewQosMiddleware creates a new QoSMiddleware.
-func NewQosMiddleware() *QoSMiddleware {
+func NewQosMiddleware() amqpmiddleware.ProvidesMiddleware {
 	return &QoSMiddleware{
 		qosArgs: amqpmiddleware.ArgsQoS{},
 		isSet:   false,

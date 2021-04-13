@@ -1,13 +1,15 @@
 package defaultmiddlewares
 
 import (
-	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 	"sync"
 )
+
+// FlowMiddlewareID can be used to retrieve the running instance of FlowMiddleware
+// during testing.
+const FlowMiddlewareID amqpmiddleware.ProviderTypeID = "DefaultFlow"
 
 // FlowMiddleware tracks the Flow state of the channel, and if it is set to false by the
 // user, re-established channels to flow=false.
@@ -18,6 +20,12 @@ type FlowMiddleware struct {
 	activeLock *sync.Mutex
 }
 
+// TypeID implements amqpmiddleware.ProvidesMiddleware and returns a static type ID for
+// retrieving the active middleware value during testing.
+func (middleware *FlowMiddleware) TypeID() amqpmiddleware.ProviderTypeID {
+	return FlowMiddlewareID
+}
+
 // Active returns whether flow is currently active. For testing.
 func (middleware *FlowMiddleware) Active() bool {
 	return middleware.active
@@ -25,15 +33,11 @@ func (middleware *FlowMiddleware) Active() bool {
 
 // Reconnect sets amqp.Channel.Flow(flow=false) on the underlying channel as soon as a
 // reconnection occurs if the user has paused the flow on the channel.
-func (middleware *FlowMiddleware) Reconnect(
+func (middleware *FlowMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
-	return func(
-		ctx context.Context,
-		attempt uint64,
-		logger zerolog.Logger,
-	) (*streadway.Channel, error) {
-		channel, err := next(ctx, attempt, logger)
+	return func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+		channel, err := next(args)
 		// New channels start out active, so if flow is active we can keep chugging.
 		if err != nil || middleware.active {
 			return channel, err
@@ -68,7 +72,7 @@ func (middleware *FlowMiddleware) Flow(
 }
 
 // NewFlowMiddleware creates a new FlowMiddleware for a channel.
-func NewFlowMiddleware() *FlowMiddleware {
+func NewFlowMiddleware() amqpmiddleware.ProvidesMiddleware {
 	return &FlowMiddleware{
 		active:     true,
 		activeLock: new(sync.Mutex),

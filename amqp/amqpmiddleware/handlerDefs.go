@@ -1,9 +1,7 @@
 package amqpmiddleware
 
 import (
-	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
 
@@ -23,21 +21,13 @@ const TransportTypeChannel = "CHANNEL"
 // re-established.
 //
 // Attempt is the attempt number, including all previous failures and successes.
-type HandlerConnectionReconnect = func(
-	ctx context.Context,
-	attempt uint64,
-	logger zerolog.Logger,
-) (*streadway.Connection, error)
+type HandlerConnectionReconnect = func(args ArgsConnectionReconnect) (*streadway.Connection, error)
 
 // HandlerChannelReconnect: signature for handlers triggered when a channel is being
 // re-established.
 //
 // Attempt is the attempt number, including all previous failures and successes.
-type HandlerChannelReconnect = func(
-	ctx context.Context,
-	attempt uint64,
-	logger zerolog.Logger,
-) (*streadway.Channel, error)
+type HandlerChannelReconnect = func(args ArgsChannelReconnect) (*streadway.Channel, error)
 
 // HandlerQueueDeclare: signature for handlers invoked when amqp.Channel.QueueDeclare()
 // is called.
@@ -98,9 +88,7 @@ type HandlerGet func(args ArgsGet) (msg datamodels.Delivery, ok bool, err error)
 //
 // NOTE: this is separate from HandlerConsumeEvents, which handles each event. This
 // handler only fires on the initial call
-type HandlerConsume func(args ArgsConsume) (
-	deliveryChan <-chan datamodels.Delivery, err error,
-)
+type HandlerConsume func(args ArgsConsume) (deliveryChan <-chan datamodels.Delivery, err error)
 
 // HandlerAck: signature for handlers invoked when amqp.Channel.Ack() is called.
 type HandlerAck func(args ArgsAck) error
@@ -133,9 +121,7 @@ type HandlerNotifyConfirm func(args ArgsNotifyConfirm) (chan uint64, chan uint64
 
 // HandlerNotifyConfirmOrOrphaned: signature for handlers invoked when
 // amqp.Channel.NotifyConfirmOrOrphaned() is called.
-type HandlerNotifyConfirmOrOrphaned func(args ArgsNotifyConfirmOrOrphaned) (
-	chan uint64, chan uint64, chan uint64,
-)
+type HandlerNotifyConfirmOrOrphaned func(args ArgsNotifyConfirmOrOrphaned) (chan uint64, chan uint64, chan uint64)
 
 // HandlerNotifyReturn signature for handlers invoked when amqp.Channel.NotifyReturn()
 // is called.
