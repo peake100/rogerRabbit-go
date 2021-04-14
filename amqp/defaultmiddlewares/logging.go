@@ -29,7 +29,7 @@ func (middleware loggingMiddlewareCore) createMethodLogger(
 ) zerolog.Logger {
 	return middleware.Logger.
 		With().
-		Str("METHOD_CALL", methodName).
+		Str(":METHOD_CALL", methodName).
 		Timestamp().
 		Logger()
 }
@@ -39,8 +39,7 @@ func (middleware loggingMiddlewareCore) createEventLogger(
 ) zerolog.Logger {
 	return middleware.Logger.
 		With().
-		Str("EVENTS", eventType).
-		Timestamp().
+		Str(":EVENTS", eventType).
 		Logger()
 }
 
@@ -71,14 +70,14 @@ func (middleware loggingMiddlewareCore) logMethod(
 	methodInfo := amqpmiddleware.GetMethodInfo(ctx)
 	event.Int("OP_ATTEMPT", methodInfo.OpAttempt)
 
-	if middleware.LogArgsResultsLevel >= eventLevel {
+	if middleware.LogArgsResultsLevel <= eventLevel {
 		event.Interface("zARGS", args)
 		if err == nil && results != nil {
 			event.Interface("zRESULTS", results)
 		}
 	}
 
-	event.Send()
+	event.Timestamp().Send()
 }
 
 func (middleware loggingMiddlewareCore) logEvent(
@@ -103,11 +102,11 @@ func (middleware loggingMiddlewareCore) logEvent(
 		event.Int("RELAY_LEG", eventInfo.RelayLeg)
 	}
 
-	if middleware.LogArgsResultsLevel >= eventLevel {
+	if middleware.LogArgsResultsLevel <= eventLevel {
 		event.Interface("VALUE", eventVal)
 	}
 
-	event.Send()
+	event.Timestamp().Send()
 }
 
 func (loggingMiddlewareCore) addCtxLogger(

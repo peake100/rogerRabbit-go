@@ -8,37 +8,16 @@ import (
 // reconnectRedialOnce attempts to reconnect the livesOnce a single time.
 func (manager *transportManager) reconnectRedialOnce(ctx context.Context) error {
 	// Make the connection.
-	if manager.logger.Debug().Enabled() {
-		manager.logger.
-			Debug().
-			Uint64("RECONNECT_COUNT", manager.reconnectCount).
-			Msg("attempting connection")
-	}
 	err := manager.transport.tryReconnect(ctx, manager.reconnectCount)
-	if err != nil {
-		manager.logger.Debug().Err(err).Msg("error re-dialing connection")
-	}
 	// Send a notification to all listeners subscribed to dial events.
 	manager.sendDialNotifications(err)
 	if err != nil {
-		manager.logger.
-			Error().
-			Err(err).
-			Uint64("RECONNECT_COUNT", manager.reconnectCount).
-			Msg("reconnectMiddleware error")
-
 		// Otherwise, return (and possibly try again).
 		return err
 	}
 
 	// Increment our reconnection count tracker.
 	manager.reconnectCount++
-
-	if manager.logger.Info().Enabled() {
-		manager.logger.Info().
-			Uint64("RECONNECT_COUNT", manager.reconnectCount).
-			Msg("AMQP BROKER CONNECTED")
-	}
 
 	// If there was no error, break out of the loop.
 	return nil
@@ -71,11 +50,6 @@ func (manager *transportManager) reconnectListenForClose(
 ) {
 	// Wait for the current connection to close
 	disconnectEvent := <-closeChan
-	if manager.logger.Info().Enabled() {
-		manager.logger.Info().Msgf(
-			"AMQP BROKER DISCONNECTED: %v", disconnectEvent,
-		)
-	}
 	// Send a disconnect event to all interested subscribers.
 	manager.sendDisconnectNotifications(disconnectEvent)
 

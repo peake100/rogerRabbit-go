@@ -126,7 +126,6 @@ func (conn *Connection) Channel() (*Channel, error) {
 		rogerConn:         conn,
 		handlers:          channelHandlers{},
 		relaySync:         channelRelaySync{},
-		logger:            zerolog.Logger{},
 		transportManager:  transportManager{},
 	}
 
@@ -149,10 +148,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 	}
 
 	// Setup the transport manager.
-	rogerChannel.transportManager.setup(
-		conn.ctx, rogerChannel, transportMiddleware, conn.logger,
-	)
-	rogerChannel.logger = rogerChannel.transportManager.logger
+	rogerChannel.transportManager.setup(conn.ctx, rogerChannel, transportMiddleware,)
 
 	rogerChannel.relaySync = channelRelaySync{
 		shared: newSharedSync(rogerChannel),
@@ -254,10 +250,7 @@ func newConnection(url string, config Config) (*Connection, error) {
 	}
 
 	// Setup the transport manager.
-	conn.transportManager.setup(
-		context.Background(), conn, middlewares, conn.dialConfig.Logger,
-	)
-	conn.logger = conn.transportManager.logger
+	conn.transportManager.setup(context.Background(), conn, middlewares)
 
 	// Create the reconnect handler.
 	reconnectHandler := conn.basicReconnectHandler

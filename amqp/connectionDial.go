@@ -69,9 +69,7 @@ func DialConfigCtx(
 
 // As Dial, but endlessly redials the connection until ctx is cancelled. Once
 // returned, cancelling ctx does not affect the connection.
-func DialCtx(
-	ctx context.Context, url string,
-) (*Connection, error) {
+func DialCtx(ctx context.Context, url string) (*Connection, error) {
 	// Use the same default middlewares as streadway/amqp.
 	config := DefaultConfig()
 
@@ -81,9 +79,7 @@ func DialCtx(
 
 // As DialTLS, but endlessly redials the connection until ctx is cancelled. Once
 // returned, cancelling ctx does not affect the connection.
-func DialTLSCtx(
-	ctx context.Context, url string, amqps *tls.Config,
-) (*Connection, error) {
+func DialTLSCtx(ctx context.Context, url string, amqps *tls.Config) (*Connection, error) {
 	config := DefaultConfig()
 	config.TLSClientConfig = amqps
 

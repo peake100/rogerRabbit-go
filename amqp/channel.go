@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/rs/zerolog"
 	"testing"
 )
 
@@ -46,9 +45,6 @@ type Channel struct {
 	// all registered eventRelays.
 	relaySync channelRelaySync
 
-	// logger for the channel transport
-	logger zerolog.Logger
-
 	// transportManager embedded object. Manages the lifetime of the connection: such as
 	// automatic reconnects, connection status events, and closing.
 	transportManager
@@ -80,23 +76,12 @@ func (channel *Channel) tryReconnect(
 ) error {
 	// Wait for all event processors processing events from the previous channel to be
 	// ready.
-	logger := channel.logger.With().Str("STATUS", "CONNECTING").Logger()
-	debugEnabled := logger.Debug().Enabled()
-
-	if debugEnabled {
-		logger.Debug().Msg("waiting for event relays to finish")
-	}
 	channel.relaySync.WaitOnLegComplete()
-
-	if debugEnabled {
-		logger.Debug().Msg("getting new channel")
-	}
 
 	// Invoke all our reconnection middleware and channelReconnect the channel.
 	ags := amqpmiddleware.ArgsChannelReconnect{
 		Ctx:     ctx,
 		Attempt: attempt,
-		Logger:  logger,
 	}
 	result, err := channel.handlers.channelReconnect(channel.ctx, ags)
 	if err != nil {
@@ -105,16 +90,10 @@ func (channel *Channel) tryReconnect(
 
 	// Set up the new channel
 	channel.underlyingChannel = result.Channel
-	// Allow the relays to advance to the setup stage.
-	if debugEnabled {
-		logger.Debug().Msg("advancing event relays to setup")
-	}
+
+	// Synchronize the relays
 	channel.relaySync.AllowSetup()
 	channel.relaySync.WaitOnSetup()
-
-	if debugEnabled {
-		logger.Debug().Msg("restarting event relay processing")
-	}
 	channel.relaySync.AllowRelayLegRun()
 
 	return nil
@@ -1172,26 +1151,10 @@ mainLoop:
 
 // notifyConfirmHandleAckAndNack handles splitting confirmations between the ack and
 // nack channels.
-func notifyConfirmHandleAckAndNack(
-	confirmation datamodels.Confirmation, ack, nack chan uint64, logger zerolog.Logger,
-) {
+func notifyConfirmHandleAckAndNack(confirmation datamodels.Confirmation, ack, nack chan uint64) {
 	if confirmation.Ack {
-		if logger.Debug().Enabled() {
-			logger.Debug().
-				Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
-				Bool("ACK", confirmation.Ack).
-				Str("CHANNEL", "ACK").
-				Msg("ack confirmation sent")
-		}
 		ack <- confirmation.DeliveryTag
 	} else {
-		if logger.Debug().Enabled() {
-			logger.Debug().
-				Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
-				Bool("ACK", confirmation.Ack).
-				Str("CHANNEL", "NACK").
-				Msg("nack confirmation sent")
-		}
 		nack <- confirmation.DeliveryTag
 	}
 }

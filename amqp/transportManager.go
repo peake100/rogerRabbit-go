@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	streadway "github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -202,9 +200,6 @@ type transportManager struct {
 	// Mutex for notification subscriber lists. Allows subscribers to be added during
 	// an active redial loop.
 	notificationSubscriberLock *sync.Mutex
-
-	// Logger
-	logger zerolog.Logger
 }
 
 // repeatErrCodes are errors that should cause an automatic reattempt of an operation.
@@ -250,11 +245,6 @@ func (manager transportManager) retryOperationOnClosedSingle(
 	// If the context of our robust livesOnce mechanism is closed, return an
 	// ErrClosed.
 	if transportCtx.Err() != nil {
-		if manager.logger.Debug().Enabled() {
-			log.Debug().Caller(1).Msg(
-				"operation attempted after context close",
-			)
-		}
 		return streadway.ErrClosed
 	}
 
@@ -304,11 +294,6 @@ func (manager transportManager) retryOperationOnClosed(
 		}
 
 		// Otherwise retry the operation once the connection has been established.
-		if manager.logger.Debug().Enabled() {
-			log.Debug().Caller(1).Msgf(
-				"repeating operation on error: %v", err,
-			)
-		}
 		attempt++
 	}
 }
@@ -362,10 +347,6 @@ func (manager transportManager) sendDisconnectNotifications(
 
 // sendCloseNotifications sends notification to all NotifyOnClose subscribers.
 func (manager transportManager) sendCloseNotifications(err *streadway.Error) {
-	if manager.logger.Debug().Enabled() {
-		manager.logger.Debug().Msg("sending close notifications")
-	}
-
 	manager.notificationSubscriberLock.Lock()
 	defer manager.notificationSubscriberLock.Unlock()
 
@@ -376,10 +357,6 @@ func (manager transportManager) sendCloseNotifications(err *streadway.Error) {
 	}
 	for _, receiver := range manager.notifyCloseEventHandlers {
 		receiver(make(amqpmiddleware.EventMetadata), event)
-	}
-
-	if manager.logger.Debug().Enabled() {
-		manager.logger.Debug().Msg("close notifications sent")
 	}
 }
 
@@ -488,7 +465,6 @@ func (manager *transportManager) setup(
 	ctx context.Context,
 	transport reconnects,
 	middleware transportManagerMiddleware,
-	logger zerolog.Logger,
 ) {
 	ctx, cancelFunc := context.WithCancel(ctx)
 
@@ -498,8 +474,6 @@ func (manager *transportManager) setup(
 	manager.transportLock = new(sync.RWMutex)
 	manager.notificationSubscriberLock = new(sync.Mutex)
 	manager.reconnectCond = sync.NewCond(manager.transportLock)
-	manager.logger = logger.With().
-		Str("TRANSPORT", string(transport.transportType())).Logger()
 
 	// Create the base method handlers.
 	manager.handlers = newTransportManagerHandlers(manager, middleware)

@@ -543,9 +543,6 @@ func (builder channelHandlerBuilder) createNotifyPublish() amqpmiddleware.Handle
 		err := channel.setupAndLaunchEventRelay(relay)
 		// On an error, close the channel.
 		if err != nil {
-			channel.logger.Error().
-				Err(err).
-				Msg("error setting up NotifyPublish event relay")
 			close(args.Confirm)
 		}
 		return amqpmiddleware.ResultsNotifyPublish{Confirm: args.Confirm}
@@ -563,20 +560,14 @@ func (builder channelHandlerBuilder) createNotifyPublish() amqpmiddleware.Handle
 func (builder channelHandlerBuilder) createNotifyConfirm() amqpmiddleware.HandlerNotifyConfirm {
 	// capture te event middleware in the closure
 	eventMiddleware := builder.middlewares.notifyConfirmEvents
-	channel := builder.channel
 
 	handler := func(
 		ctx context.Context, args amqpmiddleware.ArgsNotifyConfirm,
 	) amqpmiddleware.ResultsNotifyConfirm {
-		logger := channel.logger.With().
-			Str("EVENT_TYPE", "NOTIFY_CONFIRM").
-			Logger()
 
 		// Set up the innermost event handler.
 		eventHandler := func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyConfirm) {
-			notifyConfirmHandleAckAndNack(
-				event.Confirmation, args.Ack, args.Nack, logger,
-			)
+			notifyConfirmHandleAckAndNack(event.Confirmation, args.Ack, args.Nack)
 		}
 
 		// Wrap the event handler in the user-supplied middleware.
@@ -658,25 +649,12 @@ func (builder channelHandlerBuilder) createEventNotifyConfirmOrOrphaned(
 	eventMiddlewares []amqpmiddleware.NotifyConfirmOrOrphanedEvents,
 ) amqpmiddleware.HandlerNotifyConfirmOrOrphanedEvents {
 	// Capture the channel in the closure
-	channel := builder.channel
-
-	logger := channel.logger.With().
-		Str("EVENT_TYPE", "NOTIFY_CONFIRM_OR_ORPHAN").
-		Logger()
-
 	eventHandler := func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyConfirmOrOrphaned) {
 		confirmation := event.Confirmation
 		if confirmation.DisconnectOrphan {
-			if logger.Debug().Enabled() {
-				logger.Debug().
-					Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
-					Bool("ACK", confirmation.Ack).
-					Str("CHANNEL", "ORPHANED").
-					Msg("orphaned confirmation sent")
-			}
 			args.Orphaned <- confirmation.DeliveryTag
 		} else {
-			notifyConfirmHandleAckAndNack(confirmation, args.Ack, args.Nack, logger)
+			notifyConfirmHandleAckAndNack(confirmation, args.Ack, args.Nack)
 		}
 	}
 
@@ -698,7 +676,6 @@ func (builder channelHandlerBuilder) createNotifyReturn() amqpmiddleware.Handler
 		err := channel.setupAndLaunchEventRelay(relay)
 		if err != nil {
 			close(args.Returns)
-			channel.logger.Err(err).Msg("error setting up notify return relay")
 		}
 		return amqpmiddleware.ResultsNotifyReturn{Returns: args.Returns}
 	}
@@ -718,7 +695,6 @@ func (builder channelHandlerBuilder) createNotifyCancel() amqpmiddleware.Handler
 		err := channel.setupAndLaunchEventRelay(relay)
 		if err != nil {
 			close(args.Cancellations)
-			channel.logger.Err(err).Msg("error setting up notify cancel relay")
 		}
 
 		return amqpmiddleware.ResultsNotifyCancel{Cancellations: args.Cancellations}
@@ -745,7 +721,6 @@ func (builder channelHandlerBuilder) createNotifyFlow() amqpmiddleware.HandlerNo
 		err := channel.setupAndLaunchEventRelay(relay)
 		if err != nil {
 			close(args.FlowNotifications)
-			channel.logger.Err(err).Msg("error setting up notify cancel relay")
 		}
 
 		return amqpmiddleware.ResultsNotifyFlow{FlowNotifications: args.FlowNotifications}
