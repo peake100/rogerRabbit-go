@@ -3,7 +3,7 @@ module github.com/peake100/rogerRabbit-go
 go 1.15
 
 require (
-	code.cloudfoundry.org/go-diodes v0.0.0-20190809170250-f77fb823c7ee // indirect
+	code.cloudfoundry.org/go-diodes v0.0.0-20190809170250-f77fb823c7ee
 	github.com/GeertJohan/go.rice v1.0.0 // indirect
 	github.com/ains/go-test-html v0.0.0-20161021131355-c8eb28a2a5f2
 	github.com/illuscio-dev/docmodule-go v0.1.0
