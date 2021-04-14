@@ -3,12 +3,15 @@ package amqp
 import (
 	"context"
 	streadway "github.com/streadway/amqp"
+	"sync/atomic"
 )
 
 // reconnectRedialOnce attempts to reconnect the livesOnce a single time.
 func (manager *transportManager) reconnectRedialOnce(ctx context.Context) error {
 	// Make the connection.
-	err := manager.transport.tryReconnect(ctx, manager.reconnectCount)
+	err := manager.transport.tryReconnect(
+		ctx, atomic.LoadUint64(manager.reconnectCount),
+	)
 	// Send a notification to all listeners subscribed to dial events.
 	manager.sendDialNotifications(err)
 	if err != nil {
@@ -17,7 +20,7 @@ func (manager *transportManager) reconnectRedialOnce(ctx context.Context) error 
 	}
 
 	// Increment our reconnection count tracker.
-	manager.reconnectCount++
+	atomic.AddUint64(manager.reconnectCount, 1)
 
 	// If there was no error, break out of the loop.
 	return nil

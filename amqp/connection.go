@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/diode"
 	streadway "github.com/streadway/amqp"
 	"os"
+	"sync"
 	"testing"
 	"time"
 )
@@ -35,7 +36,8 @@ import (
 // ErrClosed seems like a good place to start.
 type Connection struct {
 	// Embedded streadway/amqp.Connection
-	underlyingConn *BasicConnection
+	underlyingConn     *BasicConnection
+	underlyingConnLock *sync.Mutex
 
 	// dialURL is the address to dial for the broker.
 	dialURL string
@@ -63,7 +65,14 @@ func (conn *Connection) transportType() amqpmiddleware.TransportType {
 // underlyingTransport implements reconnects and returns the underlying
 // streadway.Connection as a livesOnce interface.
 func (conn *Connection) underlyingTransport() livesOnce {
-	return conn.underlyingConn
+	// Grab the lock and only release it once we have moved the pointer for the current
+	// connection into a variable. We don't want it switching out from under us as we
+	// return.
+	conn.underlyingConnLock.Lock()
+	defer conn.underlyingConnLock.Unlock()
+
+	current := conn.underlyingConn
+	return current
 }
 
 // cleanup implements reconnects. Does nothing for transportConnection.
@@ -83,6 +92,9 @@ func (conn *Connection) tryReconnect(ctx context.Context, attempt uint64) error 
 		return err
 	}
 
+	// Grab the lock before swapping it out.
+	conn.underlyingConnLock.Lock()
+	defer conn.underlyingConnLock.Unlock()
 	conn.underlyingConn = results.Connection
 	return nil
 }
@@ -126,11 +138,12 @@ all errors until Channel.Close() is called.
 */
 func (conn *Connection) Channel() (*Channel, error) {
 	rogerChannel := &Channel{
-		underlyingChannel: nil,
-		rogerConn:         conn,
-		handlers:          channelHandlers{},
-		relaySync:         channelRelaySync{},
-		transportManager:  transportManager{},
+		underlyingChannel:     nil,
+		underlyingChannelLock: new(sync.Mutex),
+		rogerConn:             conn,
+		handlers:              channelHandlers{},
+		relaySync:             channelRelaySync{},
+		transportManager:      transportManager{},
 	}
 
 	chanMiddleware := conn.dialConfig.ChannelMiddleware
@@ -242,10 +255,11 @@ func newConnection(url string, config Config) (*Connection, error) {
 
 	// Create a new connection
 	conn := &Connection{
-		underlyingConn:  nil,
-		dialURL:         url,
-		dialConfig:      config,
-		streadwayConfig: streadwayConfig,
+		underlyingConn:     nil,
+		underlyingConnLock: new(sync.Mutex),
+		dialURL:            url,
+		dialConfig:         config,
+		streadwayConfig:    streadwayConfig,
 
 		// We will defer setting these fields since they need to reference the
 		// connection
