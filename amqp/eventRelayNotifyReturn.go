@@ -23,7 +23,7 @@ type notifyReturnRelay struct {
 }
 
 func (relay *notifyReturnRelay) baseHandler() amqpmiddleware.HandlerNotifyReturnEvents {
-	return func(event amqpmiddleware.EventNotifyReturn) {
+	return func(_ amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyReturn) {
 		if relay.logger.Debug().Enabled() {
 			relay.logger.Debug().
 				Str("EXCHANGE", event.Return.Exchange).
@@ -55,9 +55,14 @@ func (relay *notifyReturnRelay) SetupForRelayLeg(newChannel *streadway.Channel) 
 
 // RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyReturn
 // events to the original caller.
-func (relay *notifyReturnRelay) RunRelayLeg() (done bool, err error) {
+func (relay *notifyReturnRelay) RunRelayLeg(legNum int) (done bool, err error) {
+	eventNum := int64(0)
 	for thisReturn := range relay.brokerReturns {
-		relay.handler(amqpmiddleware.EventNotifyReturn{Return: thisReturn})
+		relay.handler(
+			createEventMetadata(legNum, eventNum),
+			amqpmiddleware.EventNotifyReturn{Return: thisReturn},
+		)
+		eventNum++
 	}
 
 	return false, nil

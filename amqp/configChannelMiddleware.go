@@ -157,7 +157,7 @@ type ChannelMiddlewares struct {
 
 	// providerFactory
 	providerFactory []struct {
-		Factory func() amqpmiddleware.ProvidesMiddleware
+		Factory amqpmiddleware.ProviderFactory
 	}
 
 	// providers stores amqpmiddleware.ProvidesMiddleware that supply middleware
@@ -175,7 +175,7 @@ type ChannelMiddlewares struct {
 //
 // If you wish the same provider value's methods to be used as middleware for every
 // *Channel created by a *Connection, consider using AddProviderMethods instead.
-func (config *ChannelMiddlewares) AddProviderFactory(factory func() amqpmiddleware.ProvidesMiddleware) {
+func (config *ChannelMiddlewares) AddProviderFactory(factory amqpmiddleware.ProviderFactory) {
 	config.providerFactory = append(config.providerFactory, struct {
 		Factory func() amqpmiddleware.ProvidesMiddleware
 	}{Factory: factory})

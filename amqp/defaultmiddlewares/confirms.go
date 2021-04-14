@@ -1,9 +1,9 @@
 package defaultmiddlewares
 
 import (
+	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	streadway "github.com/streadway/amqp"
 )
 
 // ConfirmsMiddlewareID can be used to retrieve the running instance of
@@ -33,20 +33,22 @@ func (middleware *ConfirmsMiddleware) ConfirmsOn() bool {
 func (middleware *ConfirmsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
-	return func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
-		channel, err := next(args)
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsChannelReconnect,
+	) (amqpmiddleware.ResultsChannelReconnect, error) {
+		results, err := next(ctx, args)
 		// If there was an error or QoS() has not been called, return results.
 		if err != nil || !middleware.confirmsOn {
-			return channel, err
+			return results, err
 		}
 
-		err = channel.Confirm(false)
+		err = results.Channel.Confirm(false)
 		if err != nil {
-			return nil, fmt.Errorf(
+			return results, fmt.Errorf(
 				"error setting channel to confirms mode: %w", err,
 			)
 		}
-		return channel, nil
+		return results, nil
 	}
 }
 
@@ -55,8 +57,8 @@ func (middleware *ConfirmsMiddleware) ChannelReconnect(
 func (middleware *ConfirmsMiddleware) Confirm(
 	next amqpmiddleware.HandlerConfirm,
 ) (handler amqpmiddleware.HandlerConfirm) {
-	return func(args amqpmiddleware.ArgsConfirms) error {
-		err := next(args)
+	return func(ctx context.Context, args amqpmiddleware.ArgsConfirms) error {
+		err := next(ctx, args)
 		if err != nil {
 			return err
 		}

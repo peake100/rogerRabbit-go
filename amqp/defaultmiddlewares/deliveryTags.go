@@ -1,10 +1,9 @@
 package defaultmiddlewares
 
 import (
+	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	streadway "github.com/streadway/amqp"
 	"sync"
 	"sync/atomic"
 )
@@ -36,17 +35,20 @@ func (middleware *DeliveryTagsMiddleware) TypeID() amqpmiddleware.ProviderTypeID
 // deliveries have been consumed across all of our connections so far.
 func (middleware *DeliveryTagsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
-) (handler amqpmiddleware.HandlerChannelReconnect) {
-	handler = func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+) amqpmiddleware.HandlerChannelReconnect {
+
+	handler := func(
+		ctx context.Context, args amqpmiddleware.ArgsChannelReconnect,
+	) (amqpmiddleware.ResultsChannelReconnect, error) {
 		middleware.tagConsumeOffset = *middleware.tagConsumeCount
 
-		channel, err := next(args)
+		results, err := next(ctx, args)
 		if err != nil {
-			return channel, err
+			return results, err
 
 		}
 
-		return channel, err
+		return results, err
 	}
 
 	return handler
@@ -54,33 +56,27 @@ func (middleware *DeliveryTagsMiddleware) ChannelReconnect(
 
 // Get applies our current delivery tag offset and increments our delivery count
 // whenever amqp.Channel.Get() is called.
-func (middleware *DeliveryTagsMiddleware) Get(
-	next amqpmiddleware.HandlerGet,
-) (handler amqpmiddleware.HandlerGet) {
-	handler = func(
-		args amqpmiddleware.ArgsGet,
-	) (msg datamodels.Delivery, ok bool, err error) {
-		msg, ok, err = next(args)
+func (middleware *DeliveryTagsMiddleware) Get(next amqpmiddleware.HandlerGet) amqpmiddleware.HandlerGet {
+	handler := func(ctx context.Context, args amqpmiddleware.ArgsGet) (amqpmiddleware.ResultsGet, error) {
+		results, err := next(ctx, args)
 		if err != nil {
-			return msg, ok, err
+			return results, err
 		}
 
 		// Apply the offset if there was not an error
-		msg.TagOffset = middleware.tagConsumeOffset
-		msg.DeliveryTag += middleware.tagConsumeOffset
+		results.Msg.TagOffset = middleware.tagConsumeOffset
+		results.Msg.DeliveryTag += middleware.tagConsumeOffset
 
 		atomic.AddUint64(middleware.tagConsumeCount, 1)
 
-		return msg, ok, err
+		return results, err
 	}
 
 	return handler
 }
 
 // Determines whether an ACK, NACK, etc request includes orphan tags.
-func (middleware *DeliveryTagsMiddleware) containsOrphans(
-	tag uint64, multiple bool,
-) bool {
+func (middleware *DeliveryTagsMiddleware) containsOrphans(tag uint64, multiple bool) bool {
 	// If the tag is above our current offset and not part of a multi-ack, it's not an
 	// orphan
 	if tag > middleware.tagConsumeOffset && !multiple {
@@ -108,9 +104,7 @@ func (middleware *DeliveryTagsMiddleware) updateOrphanTracking(tag uint64) {
 }
 
 // Returns an error if an ACK, NACK, etc request involves orphans.
-func (middleware *DeliveryTagsMiddleware) resolveOrphans(
-	tag uint64, multiple bool,
-) error {
+func (middleware *DeliveryTagsMiddleware) resolveOrphans(tag uint64, multiple bool) error {
 	// We only need to lock the orphan resources if this is a multi-ack
 	if multiple {
 		// Acquire the lock
@@ -132,9 +126,7 @@ func (middleware *DeliveryTagsMiddleware) resolveOrphans(
 }
 
 // Generic method for running an ACK, NACK, or REJECT request with orphan handling.
-func (middleware *DeliveryTagsMiddleware) runAckMethod(
-	method func() error, tag uint64, multiple bool,
-) error {
+func (middleware *DeliveryTagsMiddleware) runAckMethod(method func() error, tag uint64, multiple bool) error {
 	// If the tag is from this connection, we will handle it, otherwise we know right
 	// off the bat it's an orphan.
 	if tag > middleware.tagConsumeOffset {
@@ -152,12 +144,10 @@ func (middleware *DeliveryTagsMiddleware) runAckMethod(
 // Ack is invoked when amqp.Channel.Ack() is called, and handles converting the delivery
 // tag back to the original value for the underlying channel, as well as returning
 // errors on an attempt to ACK an orphan.
-func (middleware *DeliveryTagsMiddleware) Ack(
-	next amqpmiddleware.HandlerAck,
-) (handler amqpmiddleware.HandlerAck) {
-	handler = func(args amqpmiddleware.ArgsAck) error {
+func (middleware *DeliveryTagsMiddleware) Ack(next amqpmiddleware.HandlerAck) amqpmiddleware.HandlerAck {
+	handler := func(ctx context.Context, args amqpmiddleware.ArgsAck) error {
 		method := func() error {
-			return next(args)
+			return next(ctx, args)
 		}
 		return middleware.runAckMethod(method, args.Tag, args.Multiple)
 	}
@@ -168,12 +158,10 @@ func (middleware *DeliveryTagsMiddleware) Ack(
 // Nack is invoked when amqp.Channel.Nack() is called, and handles converting the
 // delivery tag back to the original value for the underlying channel, as well as
 // returning errors on an attempt to NACK an orphan.
-func (middleware *DeliveryTagsMiddleware) Nack(
-	next amqpmiddleware.HandlerNack,
-) (handler amqpmiddleware.HandlerNack) {
-	handler = func(args amqpmiddleware.ArgsNack) error {
+func (middleware *DeliveryTagsMiddleware) Nack(next amqpmiddleware.HandlerNack) amqpmiddleware.HandlerNack {
+	handler := func(ctx context.Context, args amqpmiddleware.ArgsNack) error {
 		method := func() error {
-			return next(args)
+			return next(ctx, args)
 		}
 		return middleware.runAckMethod(method, args.Tag, args.Multiple)
 	}
@@ -184,12 +172,10 @@ func (middleware *DeliveryTagsMiddleware) Nack(
 // Reject is invoked when amqp.Channel.Reject() is called, and handles converting the
 // delivery tag back to the original value for the underlying channel, as well as
 // returning errors on an attempt to NACK an orphan.
-func (middleware *DeliveryTagsMiddleware) Reject(
-	next amqpmiddleware.HandlerReject,
-) (handler amqpmiddleware.HandlerReject) {
-	handler = func(args amqpmiddleware.ArgsReject) error {
+func (middleware *DeliveryTagsMiddleware) Reject(next amqpmiddleware.HandlerReject) amqpmiddleware.HandlerReject {
+	handler := func(ctx context.Context, args amqpmiddleware.ArgsReject) error {
 		method := func() error {
-			return next(args)
+			return next(ctx, args)
 		}
 		return middleware.runAckMethod(method, args.Tag, false)
 	}
@@ -201,8 +187,8 @@ func (middleware *DeliveryTagsMiddleware) Reject(
 // amqp.Channel.Consume(), and handles applying the delivery tag offset.
 func (middleware *DeliveryTagsMiddleware) ConsumeEvents(
 	next amqpmiddleware.HandlerConsumeEvents,
-) (handler amqpmiddleware.HandlerConsumeEvents) {
-	handler = func(event amqpmiddleware.EventConsume) {
+) amqpmiddleware.HandlerConsumeEvents {
+	handler := func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventConsume) {
 		// Apply the offset to our delivery
 		event.Delivery.TagOffset = middleware.tagConsumeOffset
 		event.Delivery.DeliveryTag += middleware.tagConsumeOffset
@@ -210,7 +196,7 @@ func (middleware *DeliveryTagsMiddleware) ConsumeEvents(
 		// Increment the counter
 		atomic.AddUint64(middleware.tagConsumeCount, 1)
 
-		next(event)
+		next(metadata, event)
 	}
 
 	return handler

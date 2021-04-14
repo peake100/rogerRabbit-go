@@ -293,9 +293,10 @@ type ProvidesNotifyFlowEvents interface {
 // PROVIDES ALL INTERFACES ############################
 // ####################################################
 
-// ProvidesAllConnection is a convenience interface for generating middleware providers
-// that implement all Connection middleware providers interfaces.
-type ProvidesAllConnection interface {
+// ProvidesAllShared is a convenience interface for generating middleware providers
+// that implement all shared methods between Connection and Channel middleware provider
+// interfaces.
+type ProvidesAllShared interface {
 	ProvidesClose
 	ProvidesNotifyClose
 	ProvidesNotifyDial
@@ -303,19 +304,19 @@ type ProvidesAllConnection interface {
 	ProvidesNotifyDialEvents
 	ProvidesNotifyDisconnectEvents
 	ProvidesNotifyCloseEvents
+}
+
+// ProvidesAllConnection is a convenience interface for generating middleware providers
+// that implement all Connection middleware providers interfaces.
+type ProvidesAllConnection interface {
+	ProvidesAllShared
 	ProvidesConnectionReconnect
 }
 
 // ProvidesAllChannel is a convenience interface for generating middleware providers
 // that implement all Channel middleware provider interfaces.
 type ProvidesAllChannel interface {
-	ProvidesClose
-	ProvidesNotifyClose
-	ProvidesNotifyDial
-	ProvidesNotifyDisconnect
-	ProvidesNotifyCloseEvents
-	ProvidesNotifyDialEvents
-	ProvidesNotifyDisconnectEvents
+	ProvidesAllShared
 
 	ProvidesChannelReconnect
 	ProvidesQueueDeclare
@@ -360,3 +361,6 @@ type ProvidesAllMiddleware interface {
 	ProvidesAllConnection
 	ProvidesAllChannel
 }
+
+// ProviderFactory is a function that creates a fresh instance of a middleware provider.
+type ProviderFactory = func() ProvidesMiddleware

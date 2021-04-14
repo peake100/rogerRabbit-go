@@ -27,7 +27,7 @@ type notifyPublishRelay struct {
 func (relay *notifyPublishRelay) baseHandler() (
 	handler amqpmiddleware.HandlerNotifyPublishEvents,
 ) {
-	return func(event amqpmiddleware.EventNotifyPublish) {
+	return func(_ amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyPublish) {
 		relay.CallerConfirmations <- event.Confirmation
 	}
 }
@@ -63,7 +63,8 @@ func (relay *notifyPublishRelay) logConfirmation(confirmation datamodels.Confirm
 
 // RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyPublish
 // events to the original caller.
-func (relay *notifyPublishRelay) RunRelayLeg() (done bool, err error) {
+func (relay *notifyPublishRelay) RunRelayLeg(legNum int) (done bool, err error) {
+	eventNum := int64(0)
 	// Range over the confirmations from the broker.
 	for brokerConf := range relay.brokerConfirmations {
 		// Apply the offset to the delivery tag.
@@ -74,7 +75,11 @@ func (relay *notifyPublishRelay) RunRelayLeg() (done bool, err error) {
 		if relay.logger.Debug().Enabled() {
 			relay.logConfirmation(confirmation)
 		}
-		relay.handler(amqpmiddleware.EventNotifyPublish{Confirmation: confirmation})
+		relay.handler(
+			createEventMetadata(legNum, eventNum),
+			amqpmiddleware.EventNotifyPublish{Confirmation: confirmation},
+		)
+		eventNum++
 	}
 
 	// Otherwise continue to the next channel.

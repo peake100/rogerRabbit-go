@@ -3,9 +3,8 @@ package amqp
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	streadway "github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -50,20 +49,34 @@ type TestReconnectSignaler struct {
 
 	// reconnectSignal will close when a reconnection occurs.
 	reconnectSignal chan struct{}
+
+	original livesOnce
+	manager  *transportManager
 }
 
 // WaitOnReconnect blocks until a reconnection of the underlying livesOnce occurs. Once
 // the first reconnection event occurs, this object will no longer block and a new
 // signaler will need to be created for the next re-connection.
+//
+// If no context is passed a context with 3-second timeout will be used.
 func (signaler *TestReconnectSignaler) WaitOnReconnect(ctx context.Context) {
-	select {
-	case <-signaler.reconnectSignal:
-	case <-ctx.Done():
-		signaler.t.Error(
-			"context cancelled before reconnection occurred: %w", ctx.Err(),
-		)
-		signaler.t.FailNow()
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
 	}
+
+	for signaler.original == signaler.manager.transport.underlyingTransport() {
+		select {
+		case <-signaler.reconnectSignal:
+		case <-ctx.Done():
+			signaler.t.Error(
+				"context cancelled before reconnection occurred: %w", ctx.Err(),
+			)
+			signaler.t.FailNow()
+		}
+	}
+
 }
 
 // TransportTesting provides testing methods for testing Channel and Connection.
@@ -123,6 +136,8 @@ func (tester *TransportTesting) SignalOnReconnect() *TestReconnectSignaler {
 	signaler := &TestReconnectSignaler{
 		t:               tester.t,
 		reconnectSignal: reconnected,
+		original:        tester.manager.transport.underlyingTransport(),
+		manager:         tester.manager,
 	}
 
 	return signaler
@@ -146,14 +161,27 @@ func (tester *TransportTesting) ForceReconnect(ctx context.Context) {
 		defer cancel()
 	}
 
-	// Register a channel to be closed when a reconnection occurs
-	reconnected := tester.SignalOnReconnect()
+	// Get the current transport
+	tester.TransportLock().RLock()
+	current := tester.manager.transport.underlyingTransport()
+	// Wait until the underlying transport pointer has changed. The first time we signal
+	// might be from the previous reconnect.
+	tester.TransportLock().RUnlock()
 
-	// Disconnect the livesOnce
-	tester.DisconnectTransport()
+	for current == tester.manager.transport.underlyingTransport() {
+		// Register a channel to be closed when a reconnection occurs
+		reconnected := tester.SignalOnReconnect()
 
-	// Wait for the connection to be re-connected.
-	reconnected.WaitOnReconnect(ctx)
+		// Disconnect the livesOnce
+		tester.DisconnectTransport()
+
+		// Wait for the connection to be re-connected.
+		reconnected.WaitOnReconnect(ctx)
+		// If the context has cancelled, return.
+		if ctx.Err() != nil {
+			return
+		}
+	}
 }
 
 // transportManager handles lifetime of underlying livesOnce method, such as
@@ -201,9 +229,6 @@ type transportManager struct {
 	// Mutex for notification subscriber lists. Allows subscribers to be added during
 	// an active redial loop.
 	notificationSubscriberLock *sync.Mutex
-
-	// Logger
-	logger zerolog.Logger
 }
 
 // repeatErrCodes are errors that should cause an automatic reattempt of an operation.
@@ -237,21 +262,23 @@ func isRepeatErr(err error) bool {
 	return false
 }
 
+// revive:disable:context-as-argument - we have two contexts here, they can't both be first.
+
 // retryOperationOnClosedSingle attempts a Connection or Channel channel method a single
 // time.
 func (manager transportManager) retryOperationOnClosedSingle(
-	ctx context.Context,
-	operation func() error,
+	transportCtx context.Context,
+	opCtx context.Context,
+	operation func(ctx context.Context) error,
 ) error {
 	// If the context of our robust livesOnce mechanism is closed, return an
 	// ErrClosed.
-	if ctx.Err() != nil {
-		if manager.logger.Debug().Enabled() {
-			log.Debug().Caller(1).Msg(
-				"operation attempted after context close",
-			)
-		}
+	if transportCtx.Err() != nil {
 		return streadway.ErrClosed
+	}
+
+	if opCtx.Err() != nil {
+		return fmt.Errorf("operation context closed: %w", opCtx.Err())
 	}
 
 	// Run the operation in a closure so we can acquire and release the
@@ -268,35 +295,35 @@ func (manager transportManager) retryOperationOnClosedSingle(
 		manager.transportLock.RLock()
 		defer manager.transportLock.RUnlock()
 
-		err = operation()
+		err = operation(opCtx)
 	}()
 	return err
 }
+
+// revive:enable:context-as-argument
 
 // retryOperationOnClosed repeats operation / method call until a non-closed error is
 // returned or ctx expires. This is a helper method for implementing methods like
 // Channel.QueueBind, in which we want to retry the operation if our underlying
 // livesOnce mechanism has connection issues.
 func (manager transportManager) retryOperationOnClosed(
-	ctx context.Context,
-	operation func() error,
+	transportCtx context.Context,
+	operation func(ctx context.Context) error,
 	retry bool,
 ) error {
+	attempt := 0
 	for {
-		err := manager.retryOperationOnClosedSingle(ctx, operation)
+		opCtx := context.WithValue(transportCtx, "opAttempt", attempt)
+		err := manager.retryOperationOnClosedSingle(transportCtx, opCtx, operation)
 
 		// If there was no error, we are not trying, or this is not a repeat error,
 		// or our context has cancelled: return.
-		if err == nil || !retry || !isRepeatErr(err) || ctx.Err() != nil {
+		if err == nil || !retry || !isRepeatErr(err) || transportCtx.Err() != nil {
 			return err
 		}
 
 		// Otherwise retry the operation once the connection has been established.
-		if manager.logger.Debug().Enabled() {
-			log.Debug().Caller(1).Msgf(
-				"repeating operation on error: %v", err,
-			)
-		}
+		attempt++
 	}
 }
 
@@ -314,7 +341,7 @@ func (manager transportManager) sendDialNotifications(err error) {
 
 	// Notify all our close subscribers.
 	for _, receiver := range manager.notifyDialEventHandlers {
-		receiver(event)
+		receiver(make(amqpmiddleware.EventMetadata), event)
 	}
 }
 
@@ -343,16 +370,12 @@ func (manager transportManager) sendDisconnectNotifications(
 
 	// Notify all our close subscribers.
 	for _, handler := range manager.notifyDisconnectEventHandlers {
-		handler(event)
+		handler(make(amqpmiddleware.EventMetadata), event)
 	}
 }
 
 // sendCloseNotifications sends notification to all NotifyOnClose subscribers.
 func (manager transportManager) sendCloseNotifications(err *streadway.Error) {
-	if manager.logger.Debug().Enabled() {
-		manager.logger.Debug().Msg("sending close notifications")
-	}
-
 	manager.notificationSubscriberLock.Lock()
 	defer manager.notificationSubscriberLock.Unlock()
 
@@ -362,11 +385,7 @@ func (manager transportManager) sendCloseNotifications(err *streadway.Error) {
 		Err:           err,
 	}
 	for _, receiver := range manager.notifyCloseEventHandlers {
-		receiver(event)
-	}
-
-	if manager.logger.Debug().Enabled() {
-		manager.logger.Debug().Msg("close notifications sent")
+		receiver(make(amqpmiddleware.EventMetadata), event)
 	}
 }
 
@@ -388,7 +407,7 @@ func (manager transportManager) NotifyClose(
 		Receiver:      receiver,
 		TransportType: manager.transport.transportType(),
 	}
-	return manager.handlers.notifyClose(args)
+	return manager.handlers.notifyClose(manager.ctx, args).CallerChan
 }
 
 // NotifyDial is new for robust Roger transportType objects. NotifyDial will send all
@@ -401,7 +420,7 @@ func (manager transportManager) NotifyDial(
 		TransportType: manager.transport.transportType(),
 		Receiver:      receiver,
 	}
-	return manager.handlers.notifyDial(args)
+	return manager.handlers.notifyDial(manager.ctx, args)
 }
 
 // NotifyDisconnect is new for robust Roger transportType objects. NotifyDisconnect will
@@ -414,7 +433,7 @@ func (manager transportManager) NotifyDisconnect(
 		TransportType: manager.transport.transportType(),
 		Receiver:      receiver,
 	}
-	return manager.handlers.notifyDisconnect(args)
+	return manager.handlers.notifyDisconnect(manager.ctx, args)
 }
 
 // cancelCtxCloseTransport cancels the main context and closes the underlying connection
@@ -445,7 +464,7 @@ func (manager transportManager) cancelCtxCloseTransport() {
 // from reconnecting.
 func (manager transportManager) Close() error {
 	args := amqpmiddleware.ArgsClose{TransportType: manager.transport.transportType()}
-	return manager.handlers.transportClose(args)
+	return manager.handlers.transportClose(manager.ctx, args)
 }
 
 // IsClosed returns true if the connection is marked as closed, otherwise false
@@ -475,7 +494,6 @@ func (manager *transportManager) setup(
 	ctx context.Context,
 	transport reconnects,
 	middleware transportManagerMiddleware,
-	logger zerolog.Logger,
 ) {
 	ctx, cancelFunc := context.WithCancel(ctx)
 
@@ -485,8 +503,6 @@ func (manager *transportManager) setup(
 	manager.transportLock = new(sync.RWMutex)
 	manager.notificationSubscriberLock = new(sync.Mutex)
 	manager.reconnectCond = sync.NewCond(manager.transportLock)
-	manager.logger = logger.With().
-		Str("TRANSPORT", string(transport.transportType())).Logger()
 
 	// Create the base method handlers.
 	manager.handlers = newTransportManagerHandlers(manager, middleware)

@@ -1,12 +1,17 @@
 package amqp
 
 import (
+	_ "code.cloudfoundry.org/go-diodes" // import for lockless writing
 	"context"
+	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/defaultmiddlewares"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/diode"
 	streadway "github.com/streadway/amqp"
+	"os"
 	"testing"
+	"time"
 )
 
 // Connection manages the serialization and deserialization of frames from IO
@@ -67,29 +72,29 @@ func (conn *Connection) cleanup() error {
 }
 
 // tryReconnect implements reconnects and tries to re-dial the broker one time.
-func (conn *Connection) tryReconnect(
-	ctx context.Context, attempt uint64,
-) error {
+func (conn *Connection) tryReconnect(ctx context.Context, attempt uint64) error {
 	args := amqpmiddleware.ArgsConnectionReconnect{
 		Ctx:     ctx,
 		Attempt: attempt,
 		Logger:  conn.dialConfig.Logger,
 	}
-	basicConn, err := conn.handlerReconnect(args)
+	results, err := conn.handlerReconnect(conn.ctx, args)
 	if err != nil {
 		return err
 	}
 
-	conn.underlyingConn = basicConn
+	conn.underlyingConn = results.Connection
 	return nil
 }
 
 // basicReconnectHandler is the innermost reconnection handler for the
 // transportConnection.
 func (conn *Connection) basicReconnectHandler(
-	args amqpmiddleware.ArgsConnectionReconnect,
-) (*streadway.Connection, error) {
-	return streadway.DialConfig(conn.dialURL, conn.streadwayConfig)
+	ctx context.Context, args amqpmiddleware.ArgsConnectionReconnect,
+) (amqpmiddleware.ResultsConnectionReconnect, error) {
+	basicConn, err := streadway.DialConfig(conn.dialURL, conn.streadwayConfig)
+	results := amqpmiddleware.ResultsConnectionReconnect{Connection: basicConn}
+	return results, err
 }
 
 // getStreadwayChannel gets a streadway/amqp.Channel from the current underlying
@@ -97,7 +102,7 @@ func (conn *Connection) basicReconnectHandler(
 func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 	channel *BasicChannel, err error,
 ) {
-	operation := func() error {
+	operation := func(ctx context.Context) error {
 		var channelErr error
 		channel, channelErr = conn.underlyingConn.Channel()
 		return channelErr
@@ -125,7 +130,6 @@ func (conn *Connection) Channel() (*Channel, error) {
 		rogerConn:         conn,
 		handlers:          channelHandlers{},
 		relaySync:         channelRelaySync{},
-		logger:            zerolog.Logger{},
 		transportManager:  transportManager{},
 	}
 
@@ -148,10 +152,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 	}
 
 	// Setup the transport manager.
-	rogerChannel.transportManager.setup(
-		conn.ctx, rogerChannel, transportMiddleware, conn.logger,
-	)
-	rogerChannel.logger = rogerChannel.transportManager.logger
+	rogerChannel.transportManager.setup(conn.ctx, rogerChannel, transportMiddleware)
 
 	rogerChannel.relaySync = channelRelaySync{
 		shared: newSharedSync(rogerChannel),
@@ -211,6 +212,16 @@ func newConnection(url string, config Config) (*Connection, error) {
 		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewPublishTagsMiddleware)
 		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewDeliveryTagsMiddleware)
 		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewRouteDeclarationMiddleware)
+
+		connLoggerFactory, chanLoggerFactory := defaultmiddlewares.NewLoggerFactories(
+			createDefaultLogger(),
+			"default",
+			zerolog.DebugLevel,
+			zerolog.DebugLevel,
+		)
+
+		config.ConnectionMiddleware.AddProviderFactory(connLoggerFactory)
+		config.ChannelMiddleware.AddProviderFactory(chanLoggerFactory)
 	}
 
 	// Invoke middleware provider factories.
@@ -243,10 +254,7 @@ func newConnection(url string, config Config) (*Connection, error) {
 	}
 
 	// Setup the transport manager.
-	conn.transportManager.setup(
-		context.Background(), conn, middlewares, conn.dialConfig.Logger,
-	)
-	conn.logger = conn.transportManager.logger
+	conn.transportManager.setup(context.Background(), conn, middlewares)
 
 	// Create the reconnect handler.
 	reconnectHandler := conn.basicReconnectHandler
@@ -257,4 +265,11 @@ func newConnection(url string, config Config) (*Connection, error) {
 	conn.handlerReconnect = reconnectHandler
 
 	return conn, nil
+}
+
+func createDefaultLogger() zerolog.Logger {
+	wr := diode.NewWriter(os.Stdout, 1000, 10*time.Millisecond, func(missed int) {
+		_, _ = fmt.Printf("Logger Dropped %d messages", missed)
+	})
+	return zerolog.New(zerolog.ConsoleWriter{Out: wr})
 }

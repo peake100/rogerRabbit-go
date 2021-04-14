@@ -23,7 +23,7 @@ type notifyCancelRelay struct {
 }
 
 func (relay *notifyCancelRelay) baseHandler() amqpmiddleware.HandlerNotifyCancelEvents {
-	return func(event amqpmiddleware.EventNotifyCancel) {
+	return func(_ amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyCancel) {
 		if relay.logger.Debug().Enabled() {
 			relay.logger.Debug().
 				Str("CANCELLATION", event.Cancellation).
@@ -52,9 +52,14 @@ func (relay *notifyCancelRelay) SetupForRelayLeg(newChannel *streadway.Channel) 
 
 // RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyCancel
 // events to the original caller.
-func (relay *notifyCancelRelay) RunRelayLeg() (done bool, err error) {
+func (relay *notifyCancelRelay) RunRelayLeg(legNum int) (done bool, err error) {
+	eventNum := int64(0)
 	for thisCancellation := range relay.brokerCancellations {
-		relay.handler(amqpmiddleware.EventNotifyCancel{Cancellation: thisCancellation})
+		relay.handler(
+			createEventMetadata(legNum, eventNum),
+			amqpmiddleware.EventNotifyCancel{Cancellation: thisCancellation},
+		)
+		eventNum++
 	}
 
 	return false, nil

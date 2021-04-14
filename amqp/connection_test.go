@@ -6,22 +6,11 @@ import (
 	"context"
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/amqptest"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	streadway "github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
-	"os"
 	"testing"
 	"time"
 )
-
-func init() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMicro
-
-	// Default level for this example is info, unless debug flag is present
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-}
 
 // Test that dial creates a robust connection with a working inner connection, and that
 // the robust connection can be closed.

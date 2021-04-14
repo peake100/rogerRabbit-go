@@ -1,6 +1,7 @@
 package amqp
 
 import (
+	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	streadway "github.com/streadway/amqp"
 )
@@ -45,24 +46,24 @@ func (builder transportHandlersBuilder) createNotifyClose() amqpmiddleware.Handl
 	manager := builder.manager
 	eventMiddlewares := builder.middleware.notifyCloseEvents
 
-	handler := func(args amqpmiddleware.ArgsNotifyClose) chan *streadway.Error {
+	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyClose) (results amqpmiddleware.ResultsNotifyClose) {
 		manager.notificationSubscriberLock.Lock()
 		defer manager.notificationSubscriberLock.Unlock()
+
+		results.CallerChan = args.Receiver
 
 		// If the context of the livesOnce manager has been cancelled, close the
 		// receiver and exit.
 		if manager.ctx.Err() != nil {
 			close(args.Receiver)
-			return args.Receiver
+			return results
 		}
 
 		manager.notificationSubscriberClose = append(
 			manager.notificationSubscriberClose, args.Receiver,
 		)
 
-		var eventHandler amqpmiddleware.HandlerNotifyCloseEvents = func(
-			event amqpmiddleware.EventNotifyClose,
-		) {
+		eventHandler := func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyClose) {
 			// We send the error then close the channel. This handler will only be
 			// called once on the final livesOnce close.
 			args.Receiver <- event.Err
@@ -77,7 +78,7 @@ func (builder transportHandlersBuilder) createNotifyClose() amqpmiddleware.Handl
 			manager.notifyCloseEventHandlers, eventHandler,
 		)
 
-		return args.Receiver
+		return results
 	}
 
 	for _, middleware := range builder.middleware.notifyClose {
@@ -92,7 +93,7 @@ func (builder transportHandlersBuilder) createNotifyDial() amqpmiddleware.Handle
 	manager := builder.manager
 	eventMiddlewares := builder.middleware.notifyDialEvents
 
-	handler := func(args amqpmiddleware.ArgsNotifyDial) error {
+	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyDial) error {
 		manager.notificationSubscriberLock.Lock()
 		defer manager.notificationSubscriberLock.Unlock()
 
@@ -108,9 +109,7 @@ func (builder transportHandlersBuilder) createNotifyDial() amqpmiddleware.Handle
 		)
 
 		// Add the event handler to the list of event handlers.
-		var eventHandler amqpmiddleware.HandlerNotifyDialEvents = func(
-			event amqpmiddleware.EventNotifyDial,
-		) {
+		eventHandler := func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyDial) {
 			args.Receiver <- event.Err
 		}
 
@@ -138,7 +137,7 @@ func (builder transportHandlersBuilder) createNotifyDisconnect() amqpmiddleware.
 	manager := builder.manager
 	eventMiddlewares := builder.middleware.notifyDisconnectEvents
 
-	handler := func(args amqpmiddleware.ArgsNotifyDisconnect) error {
+	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyDisconnect) error {
 		manager.notificationSubscriberLock.Lock()
 		defer manager.notificationSubscriberLock.Unlock()
 
@@ -154,9 +153,7 @@ func (builder transportHandlersBuilder) createNotifyDisconnect() amqpmiddleware.
 		)
 
 		// Set up the event handler for this receiver.
-		var eventHandler amqpmiddleware.HandlerNotifyDisconnectEvents = func(
-			event amqpmiddleware.EventNotifyDisconnect,
-		) {
+		eventHandler := func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyDisconnect) {
 			args.Receiver <- event.Err
 		}
 
@@ -182,7 +179,7 @@ func (builder transportHandlersBuilder) createNotifyDisconnect() amqpmiddleware.
 func (builder transportHandlersBuilder) createClose() amqpmiddleware.HandlerClose {
 	manager := builder.manager
 
-	handler := func(args amqpmiddleware.ArgsClose) error {
+	handler := func(ctx context.Context, args amqpmiddleware.ArgsClose) error {
 
 		// If the context has already been cancelled, we can exit.
 		if manager.ctx.Err() != nil {

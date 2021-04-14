@@ -88,8 +88,6 @@ type ArgsChannelReconnect struct {
 	// made and increments by 1 each time a reconnect is attempted. It does not reset
 	// on successful reconnections.
 	Attempt uint64
-	// Logger is the channel logger.
-	Logger zerolog.Logger
 }
 
 // ArgsQueueDeclare stores args to amqp.Channel.QueueDeclare() for middleware to

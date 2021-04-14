@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/rs/zerolog"
 	"testing"
 )
 
@@ -46,9 +45,6 @@ type Channel struct {
 	// all registered eventRelays.
 	relaySync channelRelaySync
 
-	// logger for the channel transport
-	logger zerolog.Logger
-
 	// transportManager embedded object. Manages the lifetime of the connection: such as
 	// automatic reconnects, connection status events, and closing.
 	transportManager
@@ -80,41 +76,24 @@ func (channel *Channel) tryReconnect(
 ) error {
 	// Wait for all event processors processing events from the previous channel to be
 	// ready.
-	logger := channel.logger.With().Str("STATUS", "CONNECTING").Logger()
-	debugEnabled := logger.Debug().Enabled()
-
-	if debugEnabled {
-		logger.Debug().Msg("waiting for event relays to finish")
-	}
 	channel.relaySync.WaitOnLegComplete()
-
-	if debugEnabled {
-		logger.Debug().Msg("getting new channel")
-	}
 
 	// Invoke all our reconnection middleware and channelReconnect the channel.
 	ags := amqpmiddleware.ArgsChannelReconnect{
 		Ctx:     ctx,
 		Attempt: attempt,
-		Logger:  logger,
 	}
-	underlyingChan, err := channel.handlers.channelReconnect(ags)
+	result, err := channel.handlers.channelReconnect(channel.ctx, ags)
 	if err != nil {
 		return err
 	}
 
 	// Set up the new channel
-	channel.underlyingChannel = underlyingChan
-	// Allow the relays to advance to the setup stage.
-	if debugEnabled {
-		logger.Debug().Msg("advancing event relays to setup")
-	}
+	channel.underlyingChannel = result.Channel
+
+	// Synchronize the relays
 	channel.relaySync.AllowSetup()
 	channel.relaySync.WaitOnSetup()
-
-	if debugEnabled {
-		logger.Debug().Msg("restarting event relay processing")
-	}
 	channel.relaySync.AllowRelayLegRun()
 
 	return nil
@@ -153,8 +132,8 @@ underlying tag.
 func (channel *Channel) Confirm(noWait bool) error {
 	args := amqpmiddleware.ArgsConfirms{NoWait: noWait}
 
-	op := func() error {
-		return channel.handlers.confirm(args)
+	op := func(ctx context.Context) error {
+		return channel.handlers.confirm(ctx, args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, op, true)
@@ -202,8 +181,8 @@ func (channel *Channel) Qos(prefetchCount, prefetchSize int, global bool) error 
 		Global:        global,
 	}
 
-	op := func() error {
-		return channel.handlers.qos(args)
+	op := func(ctx context.Context) error {
+		return channel.handlers.qos(ctx, args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, op, true)
@@ -236,8 +215,8 @@ func (channel *Channel) Flow(active bool) error {
 		Active: active,
 	}
 
-	op := func() error {
-		return channel.handlers.flow(args)
+	op := func(ctx context.Context) error {
+		return channel.handlers.flow(ctx, args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, op, true)
@@ -324,9 +303,10 @@ func (channel *Channel) QueueDeclare(
 	}
 
 	// Wrap the hook runner in a closure.
-	operation := func() error {
+	operation := func(ctx context.Context) error {
 		var opErr error
-		queue, opErr = channel.handlers.queueDeclare(queueArgs)
+		results, opErr := channel.handlers.queueDeclare(ctx, queueArgs)
+		queue = results.Queue
 		return opErr
 	}
 
@@ -363,9 +343,9 @@ func (channel *Channel) QueueDeclarePassive(
 	}
 
 	// Wrap the hook runner in a closure.
-	operation := func() error {
-		var opErr error
-		queue, opErr = channel.handlers.queueDeclarePassive(queueArgs)
+	operation := func(ctx context.Context) error {
+		results, opErr := channel.handlers.queueDeclarePassive(ctx, queueArgs)
+		queue = results.Queue
 		return opErr
 	}
 
@@ -397,9 +377,9 @@ func (channel *Channel) QueueInspect(name string) (queue Queue, err error) {
 	}
 
 	// Wrap the hook runner in a closure.
-	operation := func() error {
-		var opErr error
-		queue, opErr = channel.handlers.queueInspect(inspectArgs)
+	operation := func(ctx context.Context) error {
+		results, opErr := channel.handlers.queueInspect(ctx, inspectArgs)
+		queue = results.Queue
 		return opErr
 	}
 
@@ -466,8 +446,8 @@ func (channel *Channel) QueueBind(
 	}
 
 	// Wrap the method handler
-	operation := func() error {
-		return channel.handlers.queueBind(bindArgs)
+	operation := func(ctx context.Context) error {
+		return channel.handlers.queueBind(ctx, bindArgs)
 	}
 
 	err := channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -490,8 +470,8 @@ func (channel *Channel) QueueUnbind(name, key, exchange string, args Table) erro
 		Args:     copyTable(args),
 	}
 
-	operation := func() error {
-		return channel.handlers.queueUnbind(unbindArgs)
+	operation := func(ctx context.Context) error {
+		return channel.handlers.queueUnbind(ctx, unbindArgs)
 	}
 
 	err := channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -516,9 +496,9 @@ func (channel *Channel) QueuePurge(name string, noWait bool) (
 		NoWait: noWait,
 	}
 
-	operation := func() error {
-		var opErr error
-		count, opErr = channel.handlers.queuePurge(unbindArgs)
+	operation := func(ctx context.Context) error {
+		results, opErr := channel.handlers.queuePurge(ctx, unbindArgs)
+		count = results.Count
 		return opErr
 	}
 
@@ -559,9 +539,9 @@ func (channel *Channel) QueueDelete(
 		NoWait:   noWait,
 	}
 
-	operation := func() error {
-		var opErr error
-		count, opErr = channel.handlers.queueDelete(deleteArgs)
+	operation := func(ctx context.Context) error {
+		results, opErr := channel.handlers.queueDelete(ctx, deleteArgs)
+		count = results.Count
 		return opErr
 	}
 
@@ -648,8 +628,8 @@ func (channel *Channel) ExchangeDeclare(
 		Args: copyTable(args),
 	}
 
-	operation := func() error {
-		return channel.handlers.exchangeDeclare(exchangeArgs)
+	operation := func(ctx context.Context) error {
+		return channel.handlers.exchangeDeclare(ctx, exchangeArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -680,8 +660,8 @@ func (channel *Channel) ExchangeDeclarePassive(
 		Args: copyTable(args),
 	}
 
-	operation := func() error {
-		return channel.handlers.exchangeDeclarePassive(exchangeArgs)
+	operation := func(ctx context.Context) error {
+		return channel.handlers.exchangeDeclarePassive(ctx, exchangeArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -717,8 +697,8 @@ func (channel *Channel) ExchangeDelete(
 		NoWait:   noWait,
 	}
 
-	operation := func() error {
-		return channel.handlers.exchangeDelete(deleteArgs)
+	operation := func(ctx context.Context) error {
+		return channel.handlers.exchangeDelete(ctx, deleteArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -771,8 +751,8 @@ func (channel *Channel) ExchangeBind(
 		Args:        copyTable(args),
 	}
 
-	operation := func() error {
-		return channel.handlers.exchangeBind(bindArgs)
+	operation := func(ctx context.Context) error {
+		return channel.handlers.exchangeBind(ctx, bindArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -809,8 +789,8 @@ func (channel *Channel) ExchangeUnbind(
 		Args:        copyTable(args),
 	}
 
-	operation := func() error {
-		return channel.handlers.exchangeUnbind(unbindArgs)
+	operation := func(ctx context.Context) error {
+		return channel.handlers.exchangeUnbind(ctx, unbindArgs)
 	}
 
 	err = channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -872,8 +852,8 @@ func (channel *Channel) Publish(
 	}
 
 	// Run an an operation to get automatic retries on channel dis-connections.
-	operation := func() error {
-		return channel.handlers.publish(args)
+	operation := func(ctx context.Context) error {
+		return channel.handlers.publish(ctx, args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -913,9 +893,10 @@ func (channel *Channel) Get(
 	}
 
 	// Run an an operation to get automatic retries on channel dis-connections.
-	operation := func() error {
-		var opErr error
-		msg, ok, opErr = channel.handlers.get(args)
+	operation := func(ctx context.Context) error {
+		results, opErr := channel.handlers.get(ctx, args)
+		msg = results.Msg
+		ok = results.Ok
 		if opErr != nil {
 			return opErr
 		}
@@ -1002,7 +983,8 @@ func (channel *Channel) Consume(
 		NoWait:    noWait,
 		Args:      copyTable(args),
 	}
-	return channel.handlers.consume(callArgs)
+	results, err := channel.handlers.consume(channel.ctx, callArgs)
+	return results.DeliveryChan, err
 }
 
 /*
@@ -1031,8 +1013,8 @@ func (channel *Channel) Ack(tag uint64, multiple bool) error {
 		Multiple: multiple,
 	}
 
-	operation := func() error {
-		return channel.handlers.ack(args)
+	operation := func(ctx context.Context) error {
+		return channel.handlers.ack(ctx, args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -1064,8 +1046,8 @@ func (channel *Channel) Nack(tag uint64, multiple bool, requeue bool) error {
 		Requeue:  requeue,
 	}
 
-	operation := func() error {
-		return channel.handlers.nack(args)
+	operation := func(ctx context.Context) error {
+		return channel.handlers.nack(ctx, args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -1095,8 +1077,8 @@ func (channel *Channel) Reject(tag uint64, requeue bool) error {
 		Requeue: requeue,
 	}
 
-	operation := func() error {
-		return channel.handlers.reject(args)
+	operation := func(ctx context.Context) error {
+		return channel.handlers.reject(ctx, args)
 	}
 
 	return channel.retryOperationOnClosed(channel.ctx, operation, true)
@@ -1145,7 +1127,7 @@ func (channel *Channel) NotifyPublish(
 	// Setup and launch the event relay that will handle these events across multiple
 	// connections.
 	args := amqpmiddleware.ArgsNotifyPublish{Confirm: confirm}
-	return channel.handlers.notifyPublish(args)
+	return channel.handlers.notifyPublish(channel.ctx, args).Confirm
 }
 
 // notifyConfirmCloseConfirmChannels closes confirmation tag channels for NotifyConfirm
@@ -1169,26 +1151,10 @@ mainLoop:
 
 // notifyConfirmHandleAckAndNack handles splitting confirmations between the ack and
 // nack channels.
-func notifyConfirmHandleAckAndNack(
-	confirmation datamodels.Confirmation, ack, nack chan uint64, logger zerolog.Logger,
-) {
+func notifyConfirmHandleAckAndNack(confirmation datamodels.Confirmation, ack, nack chan uint64) {
 	if confirmation.Ack {
-		if logger.Debug().Enabled() {
-			logger.Debug().
-				Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
-				Bool("ACK", confirmation.Ack).
-				Str("CHANNEL", "ACK").
-				Msg("ack confirmation sent")
-		}
 		ack <- confirmation.DeliveryTag
 	} else {
-		if logger.Debug().Enabled() {
-			logger.Debug().
-				Uint64("DELIVERY_TAG", confirmation.DeliveryTag).
-				Bool("ACK", confirmation.Ack).
-				Str("CHANNEL", "NACK").
-				Msg("nack confirmation sent")
-		}
 		nack <- confirmation.DeliveryTag
 	}
 }
@@ -1212,7 +1178,8 @@ func (channel *Channel) NotifyConfirm(
 		Ack:  ack,
 		Nack: nack,
 	}
-	return channel.handlers.notifyConfirm(callArgs)
+	results := channel.handlers.notifyConfirm(channel.ctx, callArgs)
+	return results.Ack, results.Nack
 }
 
 /*
@@ -1227,7 +1194,8 @@ func (channel *Channel) NotifyConfirmOrOrphaned(
 		Nack:     nack,
 		Orphaned: orphaned,
 	}
-	return channel.handlers.notifyConfirmOrOrphaned(callArgs)
+	results := channel.handlers.notifyConfirmOrOrphaned(channel.ctx, callArgs)
+	return results.Ack, results.Nack, results.Orphaned
 }
 
 // runNotifyConfirmOrOrphaned should be launched as a goroutine and handles sending
@@ -1243,7 +1211,7 @@ func (channel *Channel) runNotifyConfirmOrOrphaned(
 	// range over confirmation events and place them in the ack and nack channels.
 	for confirmation := range confirmEvents {
 		event := amqpmiddleware.EventNotifyConfirmOrOrphaned{Confirmation: confirmation}
-		eventHandler(event)
+		eventHandler(make(amqpmiddleware.EventMetadata), event)
 	}
 }
 
@@ -1263,7 +1231,7 @@ therefore will be missed. You can subscribe to disconnection events through.
 */
 func (channel *Channel) NotifyReturn(returns chan Return) chan Return {
 	args := amqpmiddleware.ArgsNotifyReturn{Returns: returns}
-	return channel.handlers.notifyReturn(args)
+	return channel.handlers.notifyReturn(channel.ctx, args).Returns
 }
 
 /*
@@ -1275,7 +1243,7 @@ The subscription tag is returned to the listener.
 */
 func (channel *Channel) NotifyCancel(cancellations chan string) chan string {
 	args := amqpmiddleware.ArgsNotifyCancel{Cancellations: cancellations}
-	return channel.handlers.notifyCancel(args)
+	return channel.handlers.notifyCancel(channel.ctx, args).Cancellations
 }
 
 /*
@@ -1321,7 +1289,7 @@ even when using RabbitMQ.
 */
 func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool {
 	args := amqpmiddleware.ArgsNotifyFlow{FlowNotifications: flowNotifications}
-	return channel.handlers.notifyFlow(args)
+	return channel.handlers.notifyFlow(channel.ctx, args).FlowNotifications
 }
 
 // returns error we should pass to transaction panics until they are implemented.

@@ -1,9 +1,9 @@
 package defaultmiddlewares
 
 import (
+	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	streadway "github.com/streadway/amqp"
 )
 
 // QoSMiddlewareID can be used to retrieve the running instance of QoSMiddleware during
@@ -41,35 +41,35 @@ func (middleware *QoSMiddleware) IsSet() bool {
 // re-applies any QoS calls to the channel.
 func (middleware *QoSMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
-) (handler amqpmiddleware.HandlerChannelReconnect) {
-	return func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
-		channel, err := next(args)
+) amqpmiddleware.HandlerChannelReconnect {
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsChannelReconnect,
+	) (amqpmiddleware.ResultsChannelReconnect, error) {
+		results, err := next(ctx, args)
 		// If there was an error or QoS() has not been called, return results.
 		if err != nil || !middleware.isSet {
-			return channel, err
+			return results, err
 		}
 
 		// Otherwise re-apply the QoS settings.
 		qosArgs := middleware.qosArgs
-		err = channel.Qos(
+		err = results.Channel.Qos(
 			qosArgs.PrefetchCount,
 			qosArgs.PrefetchSize,
 			qosArgs.Global,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error re-applying QoS args: %w", err)
+			return results, fmt.Errorf("error re-applying QoS args: %w", err)
 		}
-		return channel, nil
+		return results, nil
 	}
 }
 
 // QoS is called in amqp.Channel.QoS(). Saves the QoS settings passed to the QoS
 // function
-func (middleware *QoSMiddleware) QoS(
-	next amqpmiddleware.HandlerQoS,
-) (handler amqpmiddleware.HandlerQoS) {
-	return func(args amqpmiddleware.ArgsQoS) error {
-		err := next(args)
+func (middleware *QoSMiddleware) QoS(next amqpmiddleware.HandlerQoS) amqpmiddleware.HandlerQoS {
+	return func(ctx context.Context, args amqpmiddleware.ArgsQoS) error {
+		err := next(ctx, args)
 		if err != nil {
 			return err
 		}
