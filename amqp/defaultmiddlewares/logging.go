@@ -1,6 +1,5 @@
 package defaultmiddlewares
 
-
 import (
 	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
@@ -497,7 +496,8 @@ func (middleware LoggingMiddlewareChannel) NotifyPublish(
 	logger := middleware.createMethodLogger("NotifyPublish")
 	return func(
 		ctx context.Context, args amqpmiddleware.ArgsNotifyPublish,
-	) amqpmiddleware.ResultsNotifyPublish {ctx = middleware.addCtxLogger(ctx, logger)
+	) amqpmiddleware.ResultsNotifyPublish {
+		ctx = middleware.addCtxLogger(ctx, logger)
 		results := next(ctx, args)
 		middleware.logMethod(ctx, logger, args, results, nil)
 		return results
@@ -627,7 +627,6 @@ func (middleware LoggingMiddlewareChannel) NotifyFlowEvents(
 	}
 }
 
-
 // NewChannelLoggerFactory creates a new factory for making connection and channel
 // logger middleware.
 func NewLoggerFactories(
@@ -654,8 +653,8 @@ func NewLoggerFactories(
 
 		return LoggingMiddlewareConnection{
 			loggingMiddlewareCore{
-				Logger: connLogger,
-				SuccessLogLevel: successLogLevel,
+				Logger:              connLogger,
+				SuccessLogLevel:     successLogLevel,
 				LogArgsResultsLevel: logArgsResultsLevel,
 			},
 		}
@@ -673,8 +672,8 @@ func NewLoggerFactories(
 
 		return LoggingMiddlewareChannel{
 			loggingMiddlewareCore{
-				Logger: chanLogger,
-				SuccessLogLevel: successLogLevel,
+				Logger:              chanLogger,
+				SuccessLogLevel:     successLogLevel,
 				LogArgsResultsLevel: logArgsResultsLevel,
 			},
 		}

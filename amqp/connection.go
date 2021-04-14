@@ -148,7 +148,7 @@ func (conn *Connection) Channel() (*Channel, error) {
 	}
 
 	// Setup the transport manager.
-	rogerChannel.transportManager.setup(conn.ctx, rogerChannel, transportMiddleware,)
+	rogerChannel.transportManager.setup(conn.ctx, rogerChannel, transportMiddleware)
 
 	rogerChannel.relaySync = channelRelaySync{
 		shared: newSharedSync(rogerChannel),
