@@ -10,8 +10,8 @@ import (
 
 const MetadataKey = "DefaultLogger"
 
-// LoggingMiddlewareID can be used to retrieve the running instance of loggingMiddlewareCore
-// during testing.
+// LoggingMiddlewareID can be used to retrieve the running instance of
+// LoggingMiddlewareConnection or LoggingMiddlewareChannel during testing.
 const LoggingMiddlewareID amqpmiddleware.ProviderTypeID = "DefaultLogging"
 
 // loggingMiddlewareCore implements basic logging on every middleware available.
@@ -136,7 +136,9 @@ func (middleware loggingMiddlewareCore) Close(next amqpmiddleware.HandlerClose) 
 	}
 }
 
-func (middleware loggingMiddlewareCore) NotifyClose(next amqpmiddleware.HandlerNotifyClose) amqpmiddleware.HandlerNotifyClose {
+func (middleware loggingMiddlewareCore) NotifyClose(
+	next amqpmiddleware.HandlerNotifyClose,
+) amqpmiddleware.HandlerNotifyClose {
 	logger := middleware.createMethodLogger("NotifyClose")
 	return func(ctx context.Context, args amqpmiddleware.ArgsNotifyClose) amqpmiddleware.ResultsNotifyClose {
 		ctx = middleware.addCtxLogger(ctx, logger)
@@ -146,7 +148,9 @@ func (middleware loggingMiddlewareCore) NotifyClose(next amqpmiddleware.HandlerN
 	}
 }
 
-func (middleware loggingMiddlewareCore) NotifyDial(next amqpmiddleware.HandlerNotifyDial) amqpmiddleware.HandlerNotifyDial {
+func (middleware loggingMiddlewareCore) NotifyDial(
+	next amqpmiddleware.HandlerNotifyDial,
+) amqpmiddleware.HandlerNotifyDial {
 	logger := middleware.createMethodLogger("NotifyDial")
 	return func(ctx context.Context, args amqpmiddleware.ArgsNotifyDial) error {
 		ctx = middleware.addCtxLogger(ctx, logger)
@@ -156,7 +160,9 @@ func (middleware loggingMiddlewareCore) NotifyDial(next amqpmiddleware.HandlerNo
 	}
 }
 
-func (middleware loggingMiddlewareCore) NotifyDisconnect(next amqpmiddleware.HandlerNotifyDisconnect) amqpmiddleware.HandlerNotifyDisconnect {
+func (middleware loggingMiddlewareCore) NotifyDisconnect(
+	next amqpmiddleware.HandlerNotifyDisconnect,
+) amqpmiddleware.HandlerNotifyDisconnect {
 	logger := middleware.createMethodLogger("NotifyDisconnect")
 	return func(ctx context.Context, args amqpmiddleware.ArgsNotifyDisconnect) error {
 		ctx = middleware.addCtxLogger(ctx, logger)
@@ -177,7 +183,9 @@ func (middleware loggingMiddlewareCore) NotifyDialEvents(
 	}
 }
 
-func (middleware loggingMiddlewareCore) NotifyDisconnectEvents(next amqpmiddleware.HandlerNotifyDisconnectEvents) amqpmiddleware.HandlerNotifyDisconnectEvents {
+func (middleware loggingMiddlewareCore) NotifyDisconnectEvents(
+	next amqpmiddleware.HandlerNotifyDisconnectEvents,
+) amqpmiddleware.HandlerNotifyDisconnectEvents {
 	logger := middleware.createMethodLogger("NotifyDisconnectEvents")
 	return func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyDisconnect) {
 		middleware.logEvent(metadata, logger, event)
@@ -186,7 +194,9 @@ func (middleware loggingMiddlewareCore) NotifyDisconnectEvents(next amqpmiddlewa
 	}
 }
 
-func (middleware loggingMiddlewareCore) NotifyCloseEvents(next amqpmiddleware.HandlerNotifyCloseEvents) amqpmiddleware.HandlerNotifyCloseEvents {
+func (middleware loggingMiddlewareCore) NotifyCloseEvents(
+	next amqpmiddleware.HandlerNotifyCloseEvents,
+) amqpmiddleware.HandlerNotifyCloseEvents {
 	logger := middleware.createMethodLogger("NotifyCloseEvents")
 	return func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyClose) {
 		middleware.logEvent(metadata, logger, event)
@@ -199,7 +209,9 @@ type LoggingMiddlewareConnection struct {
 	loggingMiddlewareCore
 }
 
-func (middleware LoggingMiddlewareConnection) ConnectionReconnect(next amqpmiddleware.HandlerConnectionReconnect) amqpmiddleware.HandlerConnectionReconnect {
+func (middleware LoggingMiddlewareConnection) ConnectionReconnect(
+	next amqpmiddleware.HandlerConnectionReconnect,
+) amqpmiddleware.HandlerConnectionReconnect {
 	logger := middleware.createMethodLogger("ConnectionReconnect")
 	return func(
 		ctx context.Context, args amqpmiddleware.ArgsConnectionReconnect,
@@ -215,9 +227,13 @@ type LoggingMiddlewareChannel struct {
 	loggingMiddlewareCore
 }
 
-func (middleware LoggingMiddlewareChannel) ChannelReconnect(next amqpmiddleware.HandlerChannelReconnect) amqpmiddleware.HandlerChannelReconnect {
+func (middleware LoggingMiddlewareChannel) ChannelReconnect(
+	next amqpmiddleware.HandlerChannelReconnect,
+) amqpmiddleware.HandlerChannelReconnect {
 	logger := middleware.createMethodLogger("ConnectionReconnect")
-	return func(ctx context.Context, args amqpmiddleware.ArgsChannelReconnect) (amqpmiddleware.ResultsChannelReconnect, error) {
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsChannelReconnect,
+	) (amqpmiddleware.ResultsChannelReconnect, error) {
 		ctx = middleware.addCtxLogger(ctx, logger)
 		results, err := next(ctx, args)
 		middleware.logMethod(ctx, logger, args, results, err)
@@ -225,9 +241,13 @@ func (middleware LoggingMiddlewareChannel) ChannelReconnect(next amqpmiddleware.
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) QueueDeclare(next amqpmiddleware.HandlerQueueDeclare) amqpmiddleware.HandlerQueueDeclare {
+func (middleware LoggingMiddlewareChannel) QueueDeclare(
+	next amqpmiddleware.HandlerQueueDeclare,
+) amqpmiddleware.HandlerQueueDeclare {
 	logger := middleware.createMethodLogger("QueueDeclare")
-	return func(ctx context.Context, args amqpmiddleware.ArgsQueueDeclare) (amqpmiddleware.ResultsQueueDeclare, error) {
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsQueueDeclare,
+	) (amqpmiddleware.ResultsQueueDeclare, error) {
 		ctx = middleware.addCtxLogger(ctx, logger)
 		results, err := next(ctx, args)
 		middleware.logMethod(ctx, logger, args, results, err)
@@ -235,9 +255,13 @@ func (middleware LoggingMiddlewareChannel) QueueDeclare(next amqpmiddleware.Hand
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) QueueDeclarePassive(next amqpmiddleware.HandlerQueueDeclare) amqpmiddleware.HandlerQueueDeclare {
+func (middleware LoggingMiddlewareChannel) QueueDeclarePassive(
+	next amqpmiddleware.HandlerQueueDeclare,
+) amqpmiddleware.HandlerQueueDeclare {
 	logger := middleware.createMethodLogger("QueueDeclarePassive")
-	return func(ctx context.Context, args amqpmiddleware.ArgsQueueDeclare) (amqpmiddleware.ResultsQueueDeclare, error) {
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsQueueDeclare,
+	) (amqpmiddleware.ResultsQueueDeclare, error) {
 		ctx = middleware.addCtxLogger(ctx, logger)
 		results, err := next(ctx, args)
 		middleware.logMethod(ctx, logger, args, results, err)
@@ -245,9 +269,13 @@ func (middleware LoggingMiddlewareChannel) QueueDeclarePassive(next amqpmiddlewa
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) QueueInspect(next amqpmiddleware.HandlerQueueInspect) amqpmiddleware.HandlerQueueInspect {
+func (middleware LoggingMiddlewareChannel) QueueInspect(
+	next amqpmiddleware.HandlerQueueInspect,
+) amqpmiddleware.HandlerQueueInspect {
 	logger := middleware.createMethodLogger("QueueInspect")
-	return func(ctx context.Context, args amqpmiddleware.ArgsQueueInspect) (amqpmiddleware.ResultsQueueInspect, error) {
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsQueueInspect,
+	) (amqpmiddleware.ResultsQueueInspect, error) {
 		ctx = middleware.addCtxLogger(ctx, logger)
 		results, err := next(ctx, args)
 		middleware.logMethod(ctx, logger, args, results, err)
@@ -255,9 +283,13 @@ func (middleware LoggingMiddlewareChannel) QueueInspect(next amqpmiddleware.Hand
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) QueueDelete(next amqpmiddleware.HandlerQueueDelete) amqpmiddleware.HandlerQueueDelete {
+func (middleware LoggingMiddlewareChannel) QueueDelete(
+	next amqpmiddleware.HandlerQueueDelete,
+) amqpmiddleware.HandlerQueueDelete {
 	logger := middleware.createMethodLogger("QueueDelete")
-	return func(ctx context.Context, args amqpmiddleware.ArgsQueueDelete) (amqpmiddleware.ResultsQueueDelete, error) {
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsQueueDelete,
+	) (amqpmiddleware.ResultsQueueDelete, error) {
 		ctx = middleware.addCtxLogger(ctx, logger)
 		results, err := next(ctx, args)
 		middleware.logMethod(ctx, logger, args, results, err)
@@ -265,7 +297,9 @@ func (middleware LoggingMiddlewareChannel) QueueDelete(next amqpmiddleware.Handl
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) QueueBind(next amqpmiddleware.HandlerQueueBind) amqpmiddleware.HandlerQueueBind {
+func (middleware LoggingMiddlewareChannel) QueueBind(
+	next amqpmiddleware.HandlerQueueBind,
+) amqpmiddleware.HandlerQueueBind {
 	logger := middleware.createMethodLogger("QueueBind")
 	return func(ctx context.Context, args amqpmiddleware.ArgsQueueBind) error {
 		ctx = middleware.addCtxLogger(ctx, logger)
@@ -275,7 +309,9 @@ func (middleware LoggingMiddlewareChannel) QueueBind(next amqpmiddleware.Handler
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) QueueUnbind(next amqpmiddleware.HandlerQueueUnbind) amqpmiddleware.HandlerQueueUnbind {
+func (middleware LoggingMiddlewareChannel) QueueUnbind(
+	next amqpmiddleware.HandlerQueueUnbind,
+) amqpmiddleware.HandlerQueueUnbind {
 	logger := middleware.createMethodLogger("QueueUnbind")
 	return func(ctx context.Context, args amqpmiddleware.ArgsQueueUnbind) error {
 		ctx = middleware.addCtxLogger(ctx, logger)
@@ -285,7 +321,9 @@ func (middleware LoggingMiddlewareChannel) QueueUnbind(next amqpmiddleware.Handl
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) QueuePurge(next amqpmiddleware.HandlerQueuePurge) amqpmiddleware.HandlerQueuePurge {
+func (middleware LoggingMiddlewareChannel) QueuePurge(
+	next amqpmiddleware.HandlerQueuePurge,
+) amqpmiddleware.HandlerQueuePurge {
 	logger := middleware.createMethodLogger("QueuePurge")
 	return func(ctx context.Context, args amqpmiddleware.ArgsQueuePurge) (amqpmiddleware.ResultsQueuePurge, error) {
 		ctx = middleware.addCtxLogger(ctx, logger)
@@ -295,7 +333,9 @@ func (middleware LoggingMiddlewareChannel) QueuePurge(next amqpmiddleware.Handle
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) ExchangeDeclare(next amqpmiddleware.HandlerExchangeDeclare) amqpmiddleware.HandlerExchangeDeclare {
+func (middleware LoggingMiddlewareChannel) ExchangeDeclare(
+	next amqpmiddleware.HandlerExchangeDeclare,
+) amqpmiddleware.HandlerExchangeDeclare {
 	logger := middleware.createMethodLogger("ExchangeDeclare")
 	return func(ctx context.Context, args amqpmiddleware.ArgsExchangeDeclare) error {
 		ctx = middleware.addCtxLogger(ctx, logger)
@@ -305,7 +345,9 @@ func (middleware LoggingMiddlewareChannel) ExchangeDeclare(next amqpmiddleware.H
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) ExchangeDeclarePassive(next amqpmiddleware.HandlerExchangeDeclare) amqpmiddleware.HandlerExchangeDeclare {
+func (middleware LoggingMiddlewareChannel) ExchangeDeclarePassive(
+	next amqpmiddleware.HandlerExchangeDeclare,
+) amqpmiddleware.HandlerExchangeDeclare {
 	logger := middleware.createMethodLogger("ExchangeDeclarePassive")
 	return func(ctx context.Context, args amqpmiddleware.ArgsExchangeDeclare) error {
 		ctx = middleware.addCtxLogger(ctx, logger)
@@ -315,7 +357,9 @@ func (middleware LoggingMiddlewareChannel) ExchangeDeclarePassive(next amqpmiddl
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) ExchangeDelete(next amqpmiddleware.HandlerExchangeDelete) amqpmiddleware.HandlerExchangeDelete {
+func (middleware LoggingMiddlewareChannel) ExchangeDelete(
+	next amqpmiddleware.HandlerExchangeDelete,
+) amqpmiddleware.HandlerExchangeDelete {
 	logger := middleware.createMethodLogger("ExchangeDelete")
 	return func(ctx context.Context, args amqpmiddleware.ArgsExchangeDelete) error {
 		ctx = middleware.addCtxLogger(ctx, logger)
@@ -325,7 +369,9 @@ func (middleware LoggingMiddlewareChannel) ExchangeDelete(next amqpmiddleware.Ha
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) ExchangeBind(next amqpmiddleware.HandlerExchangeBind) amqpmiddleware.HandlerExchangeBind {
+func (middleware LoggingMiddlewareChannel) ExchangeBind(
+	next amqpmiddleware.HandlerExchangeBind,
+) amqpmiddleware.HandlerExchangeBind {
 	logger := middleware.createMethodLogger("ExchangeBind")
 	return func(ctx context.Context, args amqpmiddleware.ArgsExchangeBind) error {
 		ctx = middleware.addCtxLogger(ctx, logger)
@@ -335,7 +381,9 @@ func (middleware LoggingMiddlewareChannel) ExchangeBind(next amqpmiddleware.Hand
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) ExchangeUnbind(next amqpmiddleware.HandlerExchangeUnbind) amqpmiddleware.HandlerExchangeUnbind {
+func (middleware LoggingMiddlewareChannel) ExchangeUnbind(
+	next amqpmiddleware.HandlerExchangeUnbind,
+) amqpmiddleware.HandlerExchangeUnbind {
 	logger := middleware.createMethodLogger("ExchangeUnbind")
 	return func(ctx context.Context, args amqpmiddleware.ArgsExchangeUnbind) error {
 		ctx = middleware.addCtxLogger(ctx, logger)
@@ -365,7 +413,9 @@ func (middleware LoggingMiddlewareChannel) Flow(next amqpmiddleware.HandlerFlow)
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) Confirm(next amqpmiddleware.HandlerConfirm) amqpmiddleware.HandlerConfirm {
+func (middleware LoggingMiddlewareChannel) Confirm(
+	next amqpmiddleware.HandlerConfirm,
+) amqpmiddleware.HandlerConfirm {
 	logger := middleware.createMethodLogger("Confirm")
 	return func(ctx context.Context, args amqpmiddleware.ArgsConfirms) error {
 		ctx = middleware.addCtxLogger(ctx, logger)
@@ -375,7 +425,9 @@ func (middleware LoggingMiddlewareChannel) Confirm(next amqpmiddleware.HandlerCo
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) Publish(next amqpmiddleware.HandlerPublish) amqpmiddleware.HandlerPublish {
+func (middleware LoggingMiddlewareChannel) Publish(
+	next amqpmiddleware.HandlerPublish,
+) amqpmiddleware.HandlerPublish {
 	logger := middleware.createMethodLogger("Publish")
 	return func(ctx context.Context, args amqpmiddleware.ArgsPublish) error {
 		ctx = middleware.addCtxLogger(ctx, logger)
@@ -395,9 +447,13 @@ func (middleware LoggingMiddlewareChannel) Get(next amqpmiddleware.HandlerGet) a
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) Consume(next amqpmiddleware.HandlerConsume) amqpmiddleware.HandlerConsume {
+func (middleware LoggingMiddlewareChannel) Consume(
+	next amqpmiddleware.HandlerConsume,
+) amqpmiddleware.HandlerConsume {
 	logger := middleware.createMethodLogger("Consume")
-	return func(ctx context.Context, args amqpmiddleware.ArgsConsume) (results amqpmiddleware.ResultsConsume, err error) {
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsConsume,
+	) (results amqpmiddleware.ResultsConsume, err error) {
 		ctx = middleware.addCtxLogger(ctx, logger)
 		results, err = next(ctx, args)
 		middleware.logMethod(ctx, logger, args, nil, err)
@@ -435,16 +491,22 @@ func (middleware LoggingMiddlewareChannel) Reject(next amqpmiddleware.HandlerRej
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) NotifyPublish(next amqpmiddleware.HandlerNotifyPublish) amqpmiddleware.HandlerNotifyPublish {
+func (middleware LoggingMiddlewareChannel) NotifyPublish(
+	next amqpmiddleware.HandlerNotifyPublish,
+) amqpmiddleware.HandlerNotifyPublish {
 	logger := middleware.createMethodLogger("NotifyPublish")
-	return func(ctx context.Context, args amqpmiddleware.ArgsNotifyPublish) amqpmiddleware.ResultsNotifyPublish {ctx = middleware.addCtxLogger(ctx, logger)
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsNotifyPublish,
+	) amqpmiddleware.ResultsNotifyPublish {ctx = middleware.addCtxLogger(ctx, logger)
 		results := next(ctx, args)
 		middleware.logMethod(ctx, logger, args, results, nil)
 		return results
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) NotifyConfirm(next amqpmiddleware.HandlerNotifyConfirm) amqpmiddleware.HandlerNotifyConfirm {
+func (middleware LoggingMiddlewareChannel) NotifyConfirm(
+	next amqpmiddleware.HandlerNotifyConfirm,
+) amqpmiddleware.HandlerNotifyConfirm {
 	logger := middleware.createMethodLogger("NotifyConfirm")
 	return func(ctx context.Context, args amqpmiddleware.ArgsNotifyConfirm) amqpmiddleware.ResultsNotifyConfirm {
 		results := next(ctx, args)
@@ -453,16 +515,22 @@ func (middleware LoggingMiddlewareChannel) NotifyConfirm(next amqpmiddleware.Han
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) NotifyConfirmOrOrphaned(next amqpmiddleware.HandlerNotifyConfirmOrOrphaned) amqpmiddleware.HandlerNotifyConfirmOrOrphaned {
+func (middleware LoggingMiddlewareChannel) NotifyConfirmOrOrphaned(
+	next amqpmiddleware.HandlerNotifyConfirmOrOrphaned,
+) amqpmiddleware.HandlerNotifyConfirmOrOrphaned {
 	logger := middleware.createMethodLogger("NotifyConfirmOrOrphaned")
-	return func(ctx context.Context, args amqpmiddleware.ArgsNotifyConfirmOrOrphaned) amqpmiddleware.ResultsNotifyConfirmOrOrphaned {
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsNotifyConfirmOrOrphaned,
+	) amqpmiddleware.ResultsNotifyConfirmOrOrphaned {
 		results := next(ctx, args)
 		middleware.logMethod(ctx, logger, args, results, nil)
 		return results
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) NotifyReturn(next amqpmiddleware.HandlerNotifyReturn) amqpmiddleware.HandlerNotifyReturn {
+func (middleware LoggingMiddlewareChannel) NotifyReturn(
+	next amqpmiddleware.HandlerNotifyReturn,
+) amqpmiddleware.HandlerNotifyReturn {
 	logger := middleware.createMethodLogger("NotifyReturn")
 	return func(ctx context.Context, args amqpmiddleware.ArgsNotifyReturn) amqpmiddleware.ResultsNotifyReturn {
 		results := next(ctx, args)
@@ -471,7 +539,9 @@ func (middleware LoggingMiddlewareChannel) NotifyReturn(next amqpmiddleware.Hand
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) NotifyCancel(next amqpmiddleware.HandlerNotifyCancel) amqpmiddleware.HandlerNotifyCancel {
+func (middleware LoggingMiddlewareChannel) NotifyCancel(
+	next amqpmiddleware.HandlerNotifyCancel,
+) amqpmiddleware.HandlerNotifyCancel {
 	logger := middleware.createMethodLogger("NotifyCancel")
 	return func(ctx context.Context, args amqpmiddleware.ArgsNotifyCancel) amqpmiddleware.ResultsNotifyCancel {
 		results := next(ctx, args)
@@ -480,7 +550,9 @@ func (middleware LoggingMiddlewareChannel) NotifyCancel(next amqpmiddleware.Hand
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) NotifyFlow(next amqpmiddleware.HandlerNotifyFlow) amqpmiddleware.HandlerNotifyFlow {
+func (middleware LoggingMiddlewareChannel) NotifyFlow(
+	next amqpmiddleware.HandlerNotifyFlow,
+) amqpmiddleware.HandlerNotifyFlow {
 	logger := middleware.createMethodLogger("NotifyFlow")
 	return func(ctx context.Context, args amqpmiddleware.ArgsNotifyFlow) amqpmiddleware.ResultsNotifyFlow {
 		results := next(ctx, args)
@@ -489,7 +561,9 @@ func (middleware LoggingMiddlewareChannel) NotifyFlow(next amqpmiddleware.Handle
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) NotifyPublishEvents(next amqpmiddleware.HandlerNotifyPublishEvents) amqpmiddleware.HandlerNotifyPublishEvents {
+func (middleware LoggingMiddlewareChannel) NotifyPublishEvents(
+	next amqpmiddleware.HandlerNotifyPublishEvents,
+) amqpmiddleware.HandlerNotifyPublishEvents {
 	logger := middleware.createEventLogger("NotifyPublishEvents")
 	return func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyPublish) {
 		middleware.logEvent(metadata, logger, event)
@@ -498,7 +572,9 @@ func (middleware LoggingMiddlewareChannel) NotifyPublishEvents(next amqpmiddlewa
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) ConsumeEvents(next amqpmiddleware.HandlerConsumeEvents) amqpmiddleware.HandlerConsumeEvents {
+func (middleware LoggingMiddlewareChannel) ConsumeEvents(
+	next amqpmiddleware.HandlerConsumeEvents,
+) amqpmiddleware.HandlerConsumeEvents {
 	logger := middleware.createEventLogger("ConsumeEvents")
 	return func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventConsume) {
 		middleware.logEvent(metadata, logger, event)
@@ -507,7 +583,9 @@ func (middleware LoggingMiddlewareChannel) ConsumeEvents(next amqpmiddleware.Han
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) NotifyConfirmEvents(next amqpmiddleware.HandlerNotifyConfirmEvents) amqpmiddleware.HandlerNotifyConfirmEvents {
+func (middleware LoggingMiddlewareChannel) NotifyConfirmEvents(
+	next amqpmiddleware.HandlerNotifyConfirmEvents,
+) amqpmiddleware.HandlerNotifyConfirmEvents {
 	logger := middleware.createEventLogger("NotifyConfirmEvents")
 	return func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyConfirm) {
 		middleware.logEvent(metadata, logger, event)
@@ -516,7 +594,9 @@ func (middleware LoggingMiddlewareChannel) NotifyConfirmEvents(next amqpmiddlewa
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) NotifyConfirmOrOrphanedEvents(next amqpmiddleware.HandlerNotifyConfirmOrOrphanedEvents) amqpmiddleware.HandlerNotifyConfirmOrOrphanedEvents {
+func (middleware LoggingMiddlewareChannel) NotifyConfirmOrOrphanedEvents(
+	next amqpmiddleware.HandlerNotifyConfirmOrOrphanedEvents,
+) amqpmiddleware.HandlerNotifyConfirmOrOrphanedEvents {
 	logger := middleware.createEventLogger("NotifyConfirmOrOrphanedEvents")
 	return func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyConfirmOrOrphaned) {
 		middleware.logEvent(metadata, logger, event)
@@ -525,7 +605,9 @@ func (middleware LoggingMiddlewareChannel) NotifyConfirmOrOrphanedEvents(next am
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) NotifyReturnEvents(next amqpmiddleware.HandlerNotifyReturnEvents) amqpmiddleware.HandlerNotifyReturnEvents {
+func (middleware LoggingMiddlewareChannel) NotifyReturnEvents(
+	next amqpmiddleware.HandlerNotifyReturnEvents,
+) amqpmiddleware.HandlerNotifyReturnEvents {
 	logger := middleware.createEventLogger("NotifyReturnEvents")
 	return func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyReturn) {
 		middleware.logEvent(metadata, logger, event)
@@ -534,7 +616,9 @@ func (middleware LoggingMiddlewareChannel) NotifyReturnEvents(next amqpmiddlewar
 	}
 }
 
-func (middleware LoggingMiddlewareChannel) NotifyFlowEvents(next amqpmiddleware.HandlerNotifyFlowEvents) amqpmiddleware.HandlerNotifyFlowEvents {
+func (middleware LoggingMiddlewareChannel) NotifyFlowEvents(
+	next amqpmiddleware.HandlerNotifyFlowEvents,
+) amqpmiddleware.HandlerNotifyFlowEvents {
 	logger := middleware.createEventLogger("NotifyFlowEvents")
 	return func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyFlow) {
 		middleware.logEvent(metadata, logger, event)
