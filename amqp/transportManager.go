@@ -238,6 +238,8 @@ func isRepeatErr(err error) bool {
 	return false
 }
 
+// revive:disable:context-as-argument - we have two contexts here, they can't both be first.
+
 // retryOperationOnClosedSingle attempts a Connection or Channel channel method a single
 // time.
 func (manager transportManager) retryOperationOnClosedSingle(
@@ -278,6 +280,8 @@ func (manager transportManager) retryOperationOnClosedSingle(
 	}()
 	return err
 }
+
+// revive:enable:context-as-argument
 
 // retryOperationOnClosed repeats operation / method call until a non-closed error is
 // returned or ctx expires. This is a helper method for implementing methods like
@@ -397,7 +401,7 @@ func (manager transportManager) NotifyClose(
 		Receiver:      receiver,
 		TransportType: manager.transport.transportType(),
 	}
-	return manager.handlers.notifyClose(manager.ctx, args)
+	return manager.handlers.notifyClose(manager.ctx, args).CallerChan
 }
 
 // NotifyDial is new for robust Roger transportType objects. NotifyDial will send all

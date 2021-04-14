@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	streadway "github.com/streadway/amqp"
 )
 
 // QoSMiddlewareID can be used to retrieve the running instance of QoSMiddleware during
@@ -43,24 +42,26 @@ func (middleware *QoSMiddleware) IsSet() bool {
 func (middleware *QoSMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) amqpmiddleware.HandlerChannelReconnect {
-	return func(ctx context.Context, args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
-		channel, err := next(ctx, args)
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsChannelReconnect,
+	) (amqpmiddleware.ResultsChannelReconnect, error) {
+		results, err := next(ctx, args)
 		// If there was an error or QoS() has not been called, return results.
 		if err != nil || !middleware.isSet {
-			return channel, err
+			return results, err
 		}
 
 		// Otherwise re-apply the QoS settings.
 		qosArgs := middleware.qosArgs
-		err = channel.Qos(
+		err = results.Channel.Qos(
 			qosArgs.PrefetchCount,
 			qosArgs.PrefetchSize,
 			qosArgs.Global,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error re-applying QoS args: %w", err)
+			return results, fmt.Errorf("error re-applying QoS args: %w", err)
 		}
-		return channel, nil
+		return results, nil
 	}
 }
 

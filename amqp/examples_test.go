@@ -7,7 +7,6 @@ import (
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqptest"
-	streadway "github.com/streadway/amqp"
 	"sync"
 	"testing"
 	"time"
@@ -517,7 +516,9 @@ func ExampleChannel_addMiddleware() {
 	queueDeclareMiddleware := func(
 		next amqpmiddleware.HandlerQueueDeclare,
 	) amqpmiddleware.HandlerQueueDeclare {
-		return func(ctx context.Context, args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+		return func(
+			ctx context.Context, args amqpmiddleware.ArgsQueueDeclare,
+		) (amqpmiddleware.ResultsQueueDeclare, error) {
 			fmt.Println("MIDDLEWARE INVOKED FOR QUEUE")
 			fmt.Println("QUEUE NAME :", args.Name)
 			fmt.Println("AUTO-DELETE:", args.AutoDelete)
@@ -578,7 +579,9 @@ func (middleware *CustomMiddlewareProvider) TypeID() amqpmiddleware.ProviderType
 func (middleware *CustomMiddlewareProvider) QueueDeclare(
 	next amqpmiddleware.HandlerQueueDeclare,
 ) amqpmiddleware.HandlerQueueDeclare {
-	return func(ctx context.Context, args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsQueueDeclare,
+	) (amqpmiddleware.ResultsQueueDeclare, error) {
 		middleware.InvocationCount++
 		fmt.Printf(
 			"DECLARED: %v, TOTAL: %v\n", args.Name, middleware.InvocationCount,
@@ -589,9 +592,11 @@ func (middleware *CustomMiddlewareProvider) QueueDeclare(
 
 // QueueDelete implements amqpmiddleware.ProvidesQueueDelete.
 func (middleware *CustomMiddlewareProvider) QueueDelete(
-	next amqpmiddleware.HandlerQueueDeclare,
-) amqpmiddleware.HandlerQueueDeclare {
-	return func(ctx context.Context, args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+	next amqpmiddleware.HandlerQueueDelete,
+) amqpmiddleware.HandlerQueueDelete {
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsQueueDelete,
+	) (amqpmiddleware.ResultsQueueDelete, error) {
 		middleware.InvocationCount++
 		fmt.Printf(
 			"DELETED: %v, TOTAL: %v\n", args.Name, middleware.InvocationCount,

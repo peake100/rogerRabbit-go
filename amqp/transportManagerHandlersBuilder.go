@@ -46,15 +46,17 @@ func (builder transportHandlersBuilder) createNotifyClose() amqpmiddleware.Handl
 	manager := builder.manager
 	eventMiddlewares := builder.middleware.notifyCloseEvents
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyClose) chan *streadway.Error {
+	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyClose) (results amqpmiddleware.ResultsNotifyClose) {
 		manager.notificationSubscriberLock.Lock()
 		defer manager.notificationSubscriberLock.Unlock()
+
+		results.CallerChan = args.Receiver
 
 		// If the context of the livesOnce manager has been cancelled, close the
 		// receiver and exit.
 		if manager.ctx.Err() != nil {
 			close(args.Receiver)
-			return args.Receiver
+			return results
 		}
 
 		manager.notificationSubscriberClose = append(
@@ -76,7 +78,7 @@ func (builder transportHandlersBuilder) createNotifyClose() amqpmiddleware.Handl
 			manager.notifyCloseEventHandlers, eventHandler,
 		)
 
-		return args.Receiver
+		return results
 	}
 
 	for _, middleware := range builder.middleware.notifyClose {

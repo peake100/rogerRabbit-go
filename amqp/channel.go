@@ -98,13 +98,13 @@ func (channel *Channel) tryReconnect(
 		Attempt: attempt,
 		Logger:  logger,
 	}
-	underlyingChan, err := channel.handlers.channelReconnect(channel.ctx, ags)
+	result, err := channel.handlers.channelReconnect(channel.ctx, ags)
 	if err != nil {
 		return err
 	}
 
 	// Set up the new channel
-	channel.underlyingChannel = underlyingChan
+	channel.underlyingChannel = result.Channel
 	// Allow the relays to advance to the setup stage.
 	if debugEnabled {
 		logger.Debug().Msg("advancing event relays to setup")
@@ -326,7 +326,8 @@ func (channel *Channel) QueueDeclare(
 	// Wrap the hook runner in a closure.
 	operation := func(ctx context.Context) error {
 		var opErr error
-		queue, opErr = channel.handlers.queueDeclare(ctx, queueArgs)
+		results, opErr := channel.handlers.queueDeclare(ctx, queueArgs)
+		queue = results.Queue
 		return opErr
 	}
 
@@ -364,8 +365,8 @@ func (channel *Channel) QueueDeclarePassive(
 
 	// Wrap the hook runner in a closure.
 	operation := func(ctx context.Context) error {
-		var opErr error
-		queue, opErr = channel.handlers.queueDeclarePassive(ctx, queueArgs)
+		results, opErr := channel.handlers.queueDeclarePassive(ctx, queueArgs)
+		queue = results.Queue
 		return opErr
 	}
 
@@ -398,8 +399,8 @@ func (channel *Channel) QueueInspect(name string) (queue Queue, err error) {
 
 	// Wrap the hook runner in a closure.
 	operation := func(ctx context.Context) error {
-		var opErr error
-		queue, opErr = channel.handlers.queueInspect(ctx, inspectArgs)
+		results, opErr := channel.handlers.queueInspect(ctx, inspectArgs)
+		queue = results.Queue
 		return opErr
 	}
 
@@ -517,8 +518,8 @@ func (channel *Channel) QueuePurge(name string, noWait bool) (
 	}
 
 	operation := func(ctx context.Context) error {
-		var opErr error
-		count, opErr = channel.handlers.queuePurge(ctx, unbindArgs)
+		results, opErr := channel.handlers.queuePurge(ctx, unbindArgs)
+		count = results.Count
 		return opErr
 	}
 
@@ -560,8 +561,8 @@ func (channel *Channel) QueueDelete(
 	}
 
 	operation := func(ctx context.Context) error {
-		var opErr error
-		count, opErr = channel.handlers.queueDelete(ctx, deleteArgs)
+		results, opErr := channel.handlers.queueDelete(ctx, deleteArgs)
+		count = results.Count
 		return opErr
 	}
 
@@ -914,8 +915,9 @@ func (channel *Channel) Get(
 
 	// Run an an operation to get automatic retries on channel dis-connections.
 	operation := func(ctx context.Context) error {
-		var opErr error
-		msg, ok, opErr = channel.handlers.get(ctx, args)
+		results, opErr := channel.handlers.get(ctx, args)
+		msg = results.Msg
+		ok = results.Ok
 		if opErr != nil {
 			return opErr
 		}
@@ -1002,7 +1004,8 @@ func (channel *Channel) Consume(
 		NoWait:    noWait,
 		Args:      copyTable(args),
 	}
-	return channel.handlers.consume(channel.ctx, callArgs)
+	results, err := channel.handlers.consume(channel.ctx, callArgs)
+	return results.DeliveryChan, err
 }
 
 /*
@@ -1145,7 +1148,7 @@ func (channel *Channel) NotifyPublish(
 	// Setup and launch the event relay that will handle these events across multiple
 	// connections.
 	args := amqpmiddleware.ArgsNotifyPublish{Confirm: confirm}
-	return channel.handlers.notifyPublish(channel.ctx, args)
+	return channel.handlers.notifyPublish(channel.ctx, args).Confirm
 }
 
 // notifyConfirmCloseConfirmChannels closes confirmation tag channels for NotifyConfirm
@@ -1212,7 +1215,8 @@ func (channel *Channel) NotifyConfirm(
 		Ack:  ack,
 		Nack: nack,
 	}
-	return channel.handlers.notifyConfirm(channel.ctx, callArgs)
+	results := channel.handlers.notifyConfirm(channel.ctx, callArgs)
+	return results.Ack, results.Nack
 }
 
 /*
@@ -1227,7 +1231,8 @@ func (channel *Channel) NotifyConfirmOrOrphaned(
 		Nack:     nack,
 		Orphaned: orphaned,
 	}
-	return channel.handlers.notifyConfirmOrOrphaned(channel.ctx, callArgs)
+	results := channel.handlers.notifyConfirmOrOrphaned(channel.ctx, callArgs)
+	return results.Ack, results.Nack, results.Orphaned
 }
 
 // runNotifyConfirmOrOrphaned should be launched as a goroutine and handles sending
@@ -1263,7 +1268,7 @@ therefore will be missed. You can subscribe to disconnection events through.
 */
 func (channel *Channel) NotifyReturn(returns chan Return) chan Return {
 	args := amqpmiddleware.ArgsNotifyReturn{Returns: returns}
-	return channel.handlers.notifyReturn(channel.ctx, args)
+	return channel.handlers.notifyReturn(channel.ctx, args).Returns
 }
 
 /*
@@ -1275,7 +1280,7 @@ The subscription tag is returned to the listener.
 */
 func (channel *Channel) NotifyCancel(cancellations chan string) chan string {
 	args := amqpmiddleware.ArgsNotifyCancel{Cancellations: cancellations}
-	return channel.handlers.notifyCancel(channel.ctx, args)
+	return channel.handlers.notifyCancel(channel.ctx, args).Cancellations
 }
 
 /*
@@ -1321,7 +1326,7 @@ even when using RabbitMQ.
 */
 func (channel *Channel) NotifyFlow(flowNotifications chan bool) chan bool {
 	args := amqpmiddleware.ArgsNotifyFlow{FlowNotifications: flowNotifications}
-	return channel.handlers.notifyFlow(channel.ctx, args)
+	return channel.handlers.notifyFlow(channel.ctx, args).FlowNotifications
 }
 
 // returns error we should pass to transaction panics until they are implemented.

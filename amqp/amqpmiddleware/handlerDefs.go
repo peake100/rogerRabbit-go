@@ -2,8 +2,6 @@ package amqpmiddleware
 
 import (
 	"context"
-	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	streadway "github.com/streadway/amqp"
 )
 
 // TransportType is passed into handlers who's definition is shared between
@@ -25,7 +23,7 @@ type HandlerClose func(ctx context.Context, args ArgsClose) error
 
 // HandlerNotifyClose: signature for handlers invoked when the NotifyClose method
 // is called on an amqp.Connection or amqp.Channel.
-type HandlerNotifyClose func(ctx context.Context, args ArgsNotifyClose) chan *streadway.Error
+type HandlerNotifyClose func(ctx context.Context, args ArgsNotifyClose) ResultsNotifyClose
 
 // HandlerNotifyDial: signature for handlers invoked when the NotifyDial method
 // is called on an amqp.Connection or amqp.Channel.
@@ -34,32 +32,6 @@ type HandlerNotifyDial func(ctx context.Context, args ArgsNotifyDial) error
 // HandlerNotifyDisconnect: signature for handlers invoked when the NotifyDisconnect
 // method is called on an amqp.Connection or amqp.Channel.
 type HandlerNotifyDisconnect func(ctx context.Context, args ArgsNotifyDisconnect) error
-
-// HandlerNotifyConfirm: signature for handlers invoked when
-// amqp.Channel.NotifyConfirm() is called.
-type HandlerNotifyConfirm func(ctx context.Context, args ArgsNotifyConfirm) (chan uint64, chan uint64)
-
-// HandlerNotifyConfirmOrOrphaned: signature for handlers invoked when
-// amqp.Channel.NotifyConfirmOrOrphaned() is called.
-type HandlerNotifyConfirmOrOrphaned func(
-	ctx context.Context, args ArgsNotifyConfirmOrOrphaned,
-) (chan uint64, chan uint64, chan uint64)
-
-// HandlerNotifyReturn signature for handlers invoked when amqp.Channel.NotifyReturn()
-// is called.
-type HandlerNotifyReturn func(ctx context.Context, args ArgsNotifyReturn) chan streadway.Return
-
-// HandlerNotifyCancel signature for handlers invoked when amqp.Channel.NotifyReturn()
-// is called.
-type HandlerNotifyCancel func(ctx context.Context, args ArgsNotifyCancel) chan string
-
-// HandlerNotifyFlow signature for handlers invoked when amqp.Channel.NotifyFlow() is
-// called.
-type HandlerNotifyFlow func(ctx context.Context, args ArgsNotifyFlow) chan bool
-
-// HandlerNotifyPublish: signature for handlers invoked when
-// amqp.Channel.NotifyPublish() is called.
-type HandlerNotifyPublish func(ctx context.Context, args ArgsNotifyPublish) chan datamodels.Confirmation
 
 // SHARED EVENT HANDLERS ###############################
 // #####################################################
@@ -88,7 +60,7 @@ type HandlerNotifyCloseEvents func(metadata EventMetadata, event EventNotifyClos
 // Attempt is the attempt number, including all previous failures and successes.
 type HandlerConnectionReconnect = func(
 	ctx context.Context, args ArgsConnectionReconnect,
-) (*streadway.Connection, error)
+) (ResultsConnectionReconnect, error)
 
 // CHANNEL METHOD HANDLERS #############################
 // #####################################################
@@ -97,19 +69,19 @@ type HandlerConnectionReconnect = func(
 // re-established.
 //
 // Attempt is the attempt number, including all previous failures and successes.
-type HandlerChannelReconnect = func(ctx context.Context, args ArgsChannelReconnect) (*streadway.Channel, error)
+type HandlerChannelReconnect = func(ctx context.Context, args ArgsChannelReconnect) (ResultsChannelReconnect, error)
 
 // HandlerQueueDeclare: signature for handlers invoked when amqp.Channel.QueueDeclare()
 // is called.
-type HandlerQueueDeclare = func(ctx context.Context, args ArgsQueueDeclare) (streadway.Queue, error)
+type HandlerQueueDeclare = func(ctx context.Context, args ArgsQueueDeclare) (ResultsQueueDeclare, error)
 
 // HandlerQueueInspect: signature for handlers invoked when amqp.Channel.QueueDeclare()
 // is called.
-type HandlerQueueInspect = func(ctx context.Context, args ArgsQueueInspect) (streadway.Queue, error)
+type HandlerQueueInspect = func(ctx context.Context, args ArgsQueueInspect) (ResultsQueueInspect, error)
 
 // HandlerQueueDelete: signature for handlers invoked when amqp.Channel.QueueDelete()
 // is called.
-type HandlerQueueDelete = func(ctx context.Context, args ArgsQueueDelete) (count int, err error)
+type HandlerQueueDelete = func(ctx context.Context, args ArgsQueueDelete) (ResultsQueueDelete, error)
 
 // HandlerQueueBind: signature for handlers invoked when amqp.Channel.QueueBind()
 // is called.
@@ -121,7 +93,7 @@ type HandlerQueueUnbind = func(ctx context.Context, args ArgsQueueUnbind) error
 
 // HandlerQueuePurge: signature for handlers invoked when amqp.Channel.QueuePurge()
 // is called.
-type HandlerQueuePurge = func(ctx context.Context, args ArgsQueuePurge) (int, error)
+type HandlerQueuePurge = func(ctx context.Context, args ArgsQueuePurge) (ResultsQueuePurge, error)
 
 // HandlerExchangeDeclare: signature for handlers invoked when
 // amqp.Channel.ExchangeDeclare() is called.
@@ -152,13 +124,13 @@ type HandlerConfirm func(ctx context.Context, args ArgsConfirms) error
 type HandlerPublish func(ctx context.Context, args ArgsPublish) error
 
 // HandlerGet: signature for handlers invoked when amqp.Channel.Get() is called.
-type HandlerGet func(ctx context.Context, args ArgsGet) (msg datamodels.Delivery, ok bool, err error)
+type HandlerGet func(ctx context.Context, args ArgsGet) (results ResultsGet, err error)
 
 // HandlerConsume: signature for handlers invoked when amqp.Channel.Consume() is called.
 //
 // NOTE: this is separate from HandlerConsumeEvents, which handles each event. This
 // handler only fires on the initial call
-type HandlerConsume func(ctx context.Context, args ArgsConsume) (deliveryChan <-chan datamodels.Delivery, err error)
+type HandlerConsume func(ctx context.Context, args ArgsConsume) (results ResultsConsume, err error)
 
 // HandlerAck: signature for handlers invoked when amqp.Channel.Ack() is called.
 type HandlerAck func(ctx context.Context, args ArgsAck) error
@@ -168,6 +140,32 @@ type HandlerNack func(ctx context.Context, args ArgsNack) error
 
 // HandlerReject: signature for handlers invoked when amqp.Channel.Reject() is called.
 type HandlerReject func(ctx context.Context, args ArgsReject) error
+
+// HandlerNotifyConfirm: signature for handlers invoked when
+// amqp.Channel.NotifyConfirm() is called.
+type HandlerNotifyConfirm func(ctx context.Context, args ArgsNotifyConfirm) ResultsNotifyConfirm
+
+// HandlerNotifyConfirmOrOrphaned: signature for handlers invoked when
+// amqp.Channel.NotifyConfirmOrOrphaned() is called.
+type HandlerNotifyConfirmOrOrphaned func(
+	ctx context.Context, args ArgsNotifyConfirmOrOrphaned,
+) ResultsNotifyConfirmOrOrphaned
+
+// HandlerNotifyReturn signature for handlers invoked when amqp.Channel.NotifyReturn()
+// is called.
+type HandlerNotifyReturn func(ctx context.Context, args ArgsNotifyReturn) ResultsNotifyReturn
+
+// HandlerNotifyCancel signature for handlers invoked when amqp.Channel.NotifyReturn()
+// is called.
+type HandlerNotifyCancel func(ctx context.Context, args ArgsNotifyCancel) ResultsNotifyCancel
+
+// HandlerNotifyFlow signature for handlers invoked when amqp.Channel.NotifyFlow() is
+// called.
+type HandlerNotifyFlow func(ctx context.Context, args ArgsNotifyFlow) ResultsNotifyFlow
+
+// HandlerNotifyPublish: signature for handlers invoked when
+// amqp.Channel.NotifyPublish() is called.
+type HandlerNotifyPublish func(ctx context.Context, args ArgsNotifyPublish) ResultsNotifyPublish
 
 // CHANNEL EVENT HANDLERS ##############################
 // #####################################################

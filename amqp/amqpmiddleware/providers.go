@@ -293,7 +293,6 @@ type ProvidesNotifyFlowEvents interface {
 // PROVIDES ALL INTERFACES ############################
 // ####################################################
 
-
 // ProvidesAllShared is a convenience interface for generating middleware providers
 // that implement all shared methods between Connection and Channel middleware provider
 // interfaces.
@@ -364,4 +363,4 @@ type ProvidesAllMiddleware interface {
 }
 
 // ProviderFactory is a function that creates a fresh instance of a middleware provider.
-type ProviderFactory = func()ProvidesMiddleware
+type ProviderFactory = func() ProvidesMiddleware

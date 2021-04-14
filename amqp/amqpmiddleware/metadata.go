@@ -2,17 +2,17 @@ package amqpmiddleware
 
 import "context"
 
-// MethodCtxInfo holds extracted information from the context passed into a method
+// MethodInfo holds extracted information from the context passed into a method
 // handler.
-type MethodCtxInfo struct {
+type MethodInfo struct {
 	// OpAttempt: Some operations retry over disconnections. This is the attempt number,
 	// starting at 0. Will be -1 if this is not an operation that is re-tried.
 	OpAttempt int
 }
 
-// GetCtxInfo extracts context info from a middleware context.
-func GetCtxInfo(ctx context.Context) (info MethodCtxInfo) {
-	if opAttempt, ok := ctx.Value("opAttempt").(int) ; ok {
+// GetMethodInfo extracts context info from a middleware context.
+func GetMethodInfo(ctx context.Context) (info MethodInfo) {
+	if opAttempt, ok := ctx.Value("opAttempt").(int); ok {
 		info.OpAttempt = opAttempt
 	} else {
 		info.OpAttempt = -1
@@ -42,19 +42,19 @@ type EventInfo struct {
 
 // GetKey gets key from metadata. Returns nil if key could not be found
 func (metadata EventMetadata) GetKey(key string) interface{} {
-	value, _ := metadata["EventNum"]
+	value, _ := metadata[key]
 	return value
 }
 
 // GetEventInfo extracts EventInfo from EventMetadata.
 func GetEventInfo(metadata EventMetadata) (info EventInfo) {
-	if eventNum, ok := metadata.GetKey("EventNum").(int64) ; ok {
+	if eventNum, ok := metadata.GetKey("EventNum").(int64); ok {
 		info.EventNum = eventNum
 	} else {
 		info.EventNum = -1
 	}
 
-	if relayLeg, ok := metadata.GetKey("RelayLeg").(int) ; ok {
+	if relayLeg, ok := metadata.GetKey("LegNum").(int); ok {
 		info.RelayLeg = relayLeg
 	} else {
 		info.RelayLeg = -1
@@ -62,4 +62,3 @@ func GetEventInfo(metadata EventMetadata) (info EventInfo) {
 
 	return info
 }
-

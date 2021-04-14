@@ -22,12 +22,14 @@ func (builder channelHandlerBuilder) createChannelReconnect() amqpmiddleware.Han
 	// capture connection into the closure.
 	connection := builder.connection
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
-		channel, err := connection.getStreadwayChannel(args.Ctx)
+	handler := func(
+		ctx context.Context, args amqpmiddleware.ArgsChannelReconnect,
+	) (results amqpmiddleware.ResultsChannelReconnect, err error) {
+		results.Channel, err = connection.getStreadwayChannel(args.Ctx)
 		if err != nil {
-			return nil, err
+			return results, err
 		}
-		return channel, nil
+		return results, nil
 	}
 
 	for _, middleware := range builder.middlewares.channelReconnect {
@@ -43,8 +45,10 @@ func (builder channelHandlerBuilder) createQueueDeclare() amqpmiddleware.Handler
 	// Capture the channel in the closure
 	channel := builder.channel
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsQueueDeclare) (Queue, error) {
-		return channel.underlyingChannel.QueueDeclare(
+	handler := func(
+		ctx context.Context, args amqpmiddleware.ArgsQueueDeclare,
+	) (results amqpmiddleware.ResultsQueueDeclare, err error) {
+		results.Queue, err = channel.underlyingChannel.QueueDeclare(
 			args.Name,
 			args.Durable,
 			args.AutoDelete,
@@ -52,6 +56,7 @@ func (builder channelHandlerBuilder) createQueueDeclare() amqpmiddleware.Handler
 			args.NoWait,
 			args.Args,
 		)
+		return results, err
 	}
 
 	for _, middleware := range builder.middlewares.queueDeclare {
@@ -68,8 +73,10 @@ func (builder channelHandlerBuilder) createQueueDeclarePassive() amqpmiddleware.
 	// Capture the channel in the closure
 	channel := builder.channel
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsQueueDeclare) (Queue, error) {
-		return channel.underlyingChannel.QueueDeclarePassive(
+	handler := func(
+		ctx context.Context, args amqpmiddleware.ArgsQueueDeclare,
+	) (results amqpmiddleware.ResultsQueueDeclare, err error) {
+		results.Queue, err = channel.underlyingChannel.QueueDeclarePassive(
 			args.Name,
 			args.Durable,
 			args.AutoDelete,
@@ -77,6 +84,7 @@ func (builder channelHandlerBuilder) createQueueDeclarePassive() amqpmiddleware.
 			args.NoWait,
 			args.Args,
 		)
+		return results, err
 	}
 
 	for _, middleware := range builder.middlewares.queueDeclarePassive {
@@ -92,8 +100,11 @@ func (builder channelHandlerBuilder) createQueueInspect() amqpmiddleware.Handler
 	// Capture the channel in the closure
 	channel := builder.channel
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsQueueInspect) (Queue, error) {
-		return channel.underlyingChannel.QueueInspect(args.Name)
+	handler := func(
+		ctx context.Context, args amqpmiddleware.ArgsQueueInspect,
+	) (results amqpmiddleware.ResultsQueueInspect, err error) {
+		results.Queue, err = channel.underlyingChannel.QueueInspect(args.Name)
+		return results, err
 	}
 
 	for _, middleware := range builder.middlewares.queueInspect {
@@ -109,13 +120,16 @@ func (builder channelHandlerBuilder) createQueueDelete() amqpmiddleware.HandlerQ
 	// Capture the channel in the closure
 	channel := builder.channel
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsQueueDelete) (int, error) {
-		return channel.underlyingChannel.QueueDelete(
+	handler := func(
+		ctx context.Context, args amqpmiddleware.ArgsQueueDelete,
+	) (results amqpmiddleware.ResultsQueueDelete, err error) {
+		results.Count, err = channel.underlyingChannel.QueueDelete(
 			args.Name,
 			args.IfUnused,
 			args.IfEmpty,
 			args.NoWait,
 		)
+		return results, err
 	}
 
 	for _, middleware := range builder.middlewares.queueDelete {
@@ -176,11 +190,14 @@ func (builder channelHandlerBuilder) createQueuePurge() amqpmiddleware.HandlerQu
 	// Capture the channel in the closure
 	channel := builder.channel
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsQueuePurge) (int, error) {
-		return channel.underlyingChannel.QueuePurge(
+	handler := func(
+		ctx context.Context, args amqpmiddleware.ArgsQueuePurge,
+	) (results amqpmiddleware.ResultsQueuePurge, err error) {
+		results.Count, err = channel.underlyingChannel.QueuePurge(
 			args.Name,
 			args.NoWait,
 		)
+		return results, err
 	}
 
 	for _, middleware := range builder.middlewares.queuePurge {
@@ -394,13 +411,16 @@ func (builder channelHandlerBuilder) createGet() amqpmiddleware.HandlerGet {
 	// capture the channel into the closure
 	channel := builder.channel
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsGet) (msg Delivery, ok bool, err error) {
+	handler := func(
+		ctx context.Context, args amqpmiddleware.ArgsGet,
+	) (results amqpmiddleware.ResultsGet, err error) {
 		var msgOrig streadway.Delivery
-		msgOrig, ok, err = channel.underlyingChannel.Get(
+		msgOrig, ok, err := channel.underlyingChannel.Get(
 			args.Queue, args.AutoAck,
 		)
-		msg = datamodels.NewDelivery(msgOrig, builder.channel)
-		return msg, ok, err
+		results.Msg = datamodels.NewDelivery(msgOrig, builder.channel)
+		results.Ok = ok
+		return results, err
 	}
 
 	for _, middleware := range builder.middlewares.get {
@@ -420,8 +440,7 @@ func (builder channelHandlerBuilder) createConsume() amqpmiddleware.HandlerConsu
 
 	handler := func(
 		ctx context.Context, args amqpmiddleware.ArgsConsume,
-	) (deliveryChan <-chan datamodels.Delivery, err error) {
-
+	) (results amqpmiddleware.ResultsConsume, err error) {
 		callArgs := &consumeArgs{
 			queue:     args.Queue,
 			consumer:  args.Consumer,
@@ -434,7 +453,6 @@ func (builder channelHandlerBuilder) createConsume() amqpmiddleware.HandlerConsu
 			// to be ready
 			callerDeliveryChan: make(chan datamodels.Delivery, 16),
 		}
-		deliveryChan = callArgs.callerDeliveryChan
 
 		// Create our consumer relay
 		relay := newConsumeRelay(callArgs, channel, eventMiddleware)
@@ -442,11 +460,12 @@ func (builder channelHandlerBuilder) createConsume() amqpmiddleware.HandlerConsu
 		// Pass it to our relay handler.
 		err = channel.setupAndLaunchEventRelay(relay)
 		if err != nil {
-			return nil, err
+			return results, err
 		}
 
+		results.DeliveryChan = callArgs.callerDeliveryChan
 		// If no error, pass the channel back to the caller
-		return deliveryChan, nil
+		return results, nil
 	}
 
 	for _, middleware := range builder.middlewares.consume {
@@ -516,7 +535,9 @@ func (builder channelHandlerBuilder) createNotifyPublish() amqpmiddleware.Handle
 	eventMiddleware := builder.middlewares.notifyPublishEvents
 	channel := builder.channel
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyPublish) chan Confirmation {
+	handler := func(
+		ctx context.Context, args amqpmiddleware.ArgsNotifyPublish,
+	) amqpmiddleware.ResultsNotifyPublish {
 		relay := newNotifyPublishRelay(args.Confirm, eventMiddleware)
 
 		err := channel.setupAndLaunchEventRelay(relay)
@@ -527,7 +548,7 @@ func (builder channelHandlerBuilder) createNotifyPublish() amqpmiddleware.Handle
 				Msg("error setting up NotifyPublish event relay")
 			close(args.Confirm)
 		}
-		return args.Confirm
+		return amqpmiddleware.ResultsNotifyPublish{Confirm: args.Confirm}
 	}
 
 	for _, middleware := range builder.middlewares.notifyPublish {
@@ -544,7 +565,9 @@ func (builder channelHandlerBuilder) createNotifyConfirm() amqpmiddleware.Handle
 	eventMiddleware := builder.middlewares.notifyConfirmEvents
 	channel := builder.channel
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyConfirm) (chan uint64, chan uint64) {
+	handler := func(
+		ctx context.Context, args amqpmiddleware.ArgsNotifyConfirm,
+	) amqpmiddleware.ResultsNotifyConfirm {
 		logger := channel.logger.With().
 			Str("EVENT_TYPE", "NOTIFY_CONFIRM").
 			Logger()
@@ -564,7 +587,7 @@ func (builder channelHandlerBuilder) createNotifyConfirm() amqpmiddleware.Handle
 		// Run the event relay.
 		go builder.runNotifyConfirm(args, eventHandler)
 
-		return args.Ack, args.Nack
+		return amqpmiddleware.ResultsNotifyConfirm{Ack: args.Ack, Nack: args.Nack}
 	}
 
 	for _, middleware := range builder.middlewares.notifyConfirm {
@@ -605,7 +628,7 @@ func (builder channelHandlerBuilder) createNotifyConfirmOrOrphaned() amqpmiddlew
 
 	handler := func(
 		ctx context.Context, args amqpmiddleware.ArgsNotifyConfirmOrOrphaned,
-	) (chan uint64, chan uint64, chan uint64) {
+	) amqpmiddleware.ResultsNotifyConfirmOrOrphaned {
 		ack, nack, orphaned := args.Ack, args.Nack, args.Orphaned
 
 		confirmsEvents := channel.NotifyPublish(
@@ -620,7 +643,9 @@ func (builder channelHandlerBuilder) createNotifyConfirmOrOrphaned() amqpmiddlew
 			eventHandler, ack, nack, orphaned, confirmsEvents,
 		)
 
-		return ack, nack, orphaned
+		return amqpmiddleware.ResultsNotifyConfirmOrOrphaned{
+			Ack: args.Ack, Nack: args.Nack, Orphaned: args.Orphaned,
+		}
 	}
 
 	return handler
@@ -667,7 +692,7 @@ func (builder channelHandlerBuilder) createNotifyReturn() amqpmiddleware.Handler
 	eventMiddlewares := builder.middlewares.notifyReturnEvents
 	channel := builder.channel
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyReturn) chan Return {
+	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyReturn) amqpmiddleware.ResultsNotifyReturn {
 		relay := newNotifyReturnRelay(args.Returns, eventMiddlewares)
 
 		err := channel.setupAndLaunchEventRelay(relay)
@@ -675,7 +700,7 @@ func (builder channelHandlerBuilder) createNotifyReturn() amqpmiddleware.Handler
 			close(args.Returns)
 			channel.logger.Err(err).Msg("error setting up notify return relay")
 		}
-		return args.Returns
+		return amqpmiddleware.ResultsNotifyReturn{Returns: args.Returns}
 	}
 
 	return handler
@@ -687,7 +712,7 @@ func (builder channelHandlerBuilder) createNotifyCancel() amqpmiddleware.Handler
 	eventMiddlewares := builder.middlewares.notifyCancelEvents
 	channel := builder.channel
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyCancel) chan string {
+	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyCancel) amqpmiddleware.ResultsNotifyCancel {
 		relay := newNotifyCancelRelay(args.Cancellations, eventMiddlewares)
 
 		err := channel.setupAndLaunchEventRelay(relay)
@@ -696,7 +721,7 @@ func (builder channelHandlerBuilder) createNotifyCancel() amqpmiddleware.Handler
 			channel.logger.Err(err).Msg("error setting up notify cancel relay")
 		}
 
-		return args.Cancellations
+		return amqpmiddleware.ResultsNotifyCancel{Cancellations: args.Cancellations}
 	}
 
 	return handler
@@ -708,7 +733,7 @@ func (builder channelHandlerBuilder) createNotifyFlow() amqpmiddleware.HandlerNo
 	eventMiddlewares := builder.middlewares.notifyFlowEvents
 	channel := builder.channel
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyFlow) chan bool {
+	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyFlow) amqpmiddleware.ResultsNotifyFlow {
 		// Create a new event relay.
 		relay := newNotifyFlowRelay(
 			channel.ctx,
@@ -723,7 +748,7 @@ func (builder channelHandlerBuilder) createNotifyFlow() amqpmiddleware.HandlerNo
 			channel.logger.Err(err).Msg("error setting up notify cancel relay")
 		}
 
-		return args.FlowNotifications
+		return amqpmiddleware.ResultsNotifyFlow{FlowNotifications: args.FlowNotifications}
 	}
 
 	return handler

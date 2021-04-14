@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	streadway "github.com/streadway/amqp"
 	"sync"
 	"sync/atomic"
 )
@@ -39,16 +37,18 @@ func (middleware *DeliveryTagsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) amqpmiddleware.HandlerChannelReconnect {
 
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+	handler := func(
+		ctx context.Context, args amqpmiddleware.ArgsChannelReconnect,
+	) (amqpmiddleware.ResultsChannelReconnect, error) {
 		middleware.tagConsumeOffset = *middleware.tagConsumeCount
 
-		channel, err := next(ctx, args)
+		results, err := next(ctx, args)
 		if err != nil {
-			return channel, err
+			return results, err
 
 		}
 
-		return channel, err
+		return results, err
 	}
 
 	return handler
@@ -57,19 +57,19 @@ func (middleware *DeliveryTagsMiddleware) ChannelReconnect(
 // Get applies our current delivery tag offset and increments our delivery count
 // whenever amqp.Channel.Get() is called.
 func (middleware *DeliveryTagsMiddleware) Get(next amqpmiddleware.HandlerGet) amqpmiddleware.HandlerGet {
-	handler := func(ctx context.Context, args amqpmiddleware.ArgsGet) (msg datamodels.Delivery, ok bool, err error) {
-		msg, ok, err = next(ctx, args)
+	handler := func(ctx context.Context, args amqpmiddleware.ArgsGet) (amqpmiddleware.ResultsGet, error) {
+		results, err := next(ctx, args)
 		if err != nil {
-			return msg, ok, err
+			return results, err
 		}
 
 		// Apply the offset if there was not an error
-		msg.TagOffset = middleware.tagConsumeOffset
-		msg.DeliveryTag += middleware.tagConsumeOffset
+		results.Msg.TagOffset = middleware.tagConsumeOffset
+		results.Msg.DeliveryTag += middleware.tagConsumeOffset
 
 		atomic.AddUint64(middleware.tagConsumeCount, 1)
 
-		return msg, ok, err
+		return results, err
 	}
 
 	return handler

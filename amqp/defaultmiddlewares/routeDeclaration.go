@@ -454,34 +454,34 @@ func (middleware *RouteDeclarationMiddleware) reconnectHandler(
 	ctx context.Context,
 	args amqpmiddleware.ArgsChannelReconnect,
 	next amqpmiddleware.HandlerChannelReconnect,
-) (*streadway.Channel, error) {
-	channel, err := next(ctx, args)
+) (amqpmiddleware.ResultsChannelReconnect, error) {
+	results, err := next(ctx, args)
 	// If there was an error, pass it up the chain.
 	if err != nil {
-		return channel, err
+		return results, err
 	}
 
-	err = middleware.reconnectDeclareQueues(channel)
+	err = middleware.reconnectDeclareQueues(results.Channel)
 	if err != nil {
-		return channel, err
+		return results, err
 	}
 
-	err = middleware.reconnectDeclareExchanges(channel)
+	err = middleware.reconnectDeclareExchanges(results.Channel)
 	if err != nil {
-		return channel, err
+		return results, err
 	}
 
-	err = middleware.reconnectBindExchanges(channel)
+	err = middleware.reconnectBindExchanges(results.Channel)
 	if err != nil {
-		return channel, err
+		return results, err
 	}
 
-	err = middleware.reconnectBindQueues(channel)
+	err = middleware.reconnectBindQueues(results.Channel)
 	if err != nil {
-		return channel, err
+		return results, err
 	}
 
-	return channel, nil
+	return results, nil
 }
 
 // Reconnect is invoked on reconnection of the underlying amqp Channel, and makes sure
@@ -490,7 +490,9 @@ func (middleware *RouteDeclarationMiddleware) reconnectHandler(
 func (middleware *RouteDeclarationMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
-	handler = func(ctx context.Context, args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+	handler = func(
+		ctx context.Context, args amqpmiddleware.ArgsChannelReconnect,
+	) (amqpmiddleware.ResultsChannelReconnect, error) {
 		return middleware.reconnectHandler(ctx, args, next)
 	}
 
@@ -502,16 +504,18 @@ func (middleware *RouteDeclarationMiddleware) ChannelReconnect(
 func (middleware *RouteDeclarationMiddleware) QueueDeclare(
 	next amqpmiddleware.HandlerQueueDeclare,
 ) (handler amqpmiddleware.HandlerQueueDeclare) {
-	handler = func(ctx context.Context, args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+	handler = func(
+		ctx context.Context, args amqpmiddleware.ArgsQueueDeclare,
+	) (amqpmiddleware.ResultsQueueDeclare, error) {
 		// If there is any sort of error, pass it on.
-		queue, err := next(ctx, args)
+		results, err := next(ctx, args)
 		if err != nil {
-			return queue, err
+			return results, err
 		}
 
-		// Store the queue name so we can re-declare it
+		// Store the results name so we can re-declare it
 		middleware.declareQueues.Store(args.Name, args)
-		return queue, err
+		return results, err
 	}
 
 	return handler
@@ -523,16 +527,18 @@ func (middleware *RouteDeclarationMiddleware) QueueDelete(
 	next amqpmiddleware.HandlerQueueDelete,
 ) (handler amqpmiddleware.HandlerQueueDelete) {
 	// If there is any sort of error, pass it on.
-	handler = func(ctx context.Context, args amqpmiddleware.ArgsQueueDelete) (count int, err error) {
-		count, err = next(ctx, args)
+	handler = func(
+		ctx context.Context, args amqpmiddleware.ArgsQueueDelete,
+	) (amqpmiddleware.ResultsQueueDelete, error) {
+		results, err := next(ctx, args)
 		if err != nil {
-			return count, err
+			return results, err
 		}
 
 		// Remove the queue from our list of queue to redeclare.
 		middleware.removeQueue(args.Name)
 
-		return count, err
+		return results, err
 	}
 
 	return handler

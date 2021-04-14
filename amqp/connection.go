@@ -5,6 +5,7 @@ import (
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/defaultmiddlewares"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	streadway "github.com/streadway/amqp"
 	"testing"
 )
@@ -73,12 +74,12 @@ func (conn *Connection) tryReconnect(ctx context.Context, attempt uint64) error 
 		Attempt: attempt,
 		Logger:  conn.dialConfig.Logger,
 	}
-	basicConn, err := conn.handlerReconnect(conn.ctx, args)
+	results, err := conn.handlerReconnect(conn.ctx, args)
 	if err != nil {
 		return err
 	}
 
-	conn.underlyingConn = basicConn
+	conn.underlyingConn = results.Connection
 	return nil
 }
 
@@ -86,8 +87,10 @@ func (conn *Connection) tryReconnect(ctx context.Context, attempt uint64) error 
 // transportConnection.
 func (conn *Connection) basicReconnectHandler(
 	ctx context.Context, args amqpmiddleware.ArgsConnectionReconnect,
-) (*streadway.Connection, error) {
-	return streadway.DialConfig(conn.dialURL, conn.streadwayConfig)
+) (amqpmiddleware.ResultsConnectionReconnect, error) {
+	basicConn, err := streadway.DialConfig(conn.dialURL, conn.streadwayConfig)
+	results := amqpmiddleware.ResultsConnectionReconnect{Connection: basicConn}
+	return results, err
 }
 
 // getStreadwayChannel gets a streadway/amqp.Channel from the current underlying
@@ -209,6 +212,16 @@ func newConnection(url string, config Config) (*Connection, error) {
 		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewPublishTagsMiddleware)
 		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewDeliveryTagsMiddleware)
 		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewRouteDeclarationMiddleware)
+
+		connLoggerFactory, chanLoggerFactory := defaultmiddlewares.NewLoggerFactories(
+			log.Logger,
+			"default",
+			zerolog.DebugLevel,
+			zerolog.DebugLevel,
+		)
+
+		config.ConnectionMiddleware.AddProviderFactory(connLoggerFactory)
+		config.ChannelMiddleware.AddProviderFactory(chanLoggerFactory)
 	}
 
 	// Invoke middleware provider factories.

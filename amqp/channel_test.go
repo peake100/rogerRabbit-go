@@ -240,7 +240,7 @@ func (suite *ChannelLifetimeSuite) Test0065_OperationOverDisconnect() {
 	}
 
 	suite.NoError(err, "get queue info")
-	suite.Equal(queueName, queue.Name, "corect queue info fetched")
+	suite.Equal(queueName, queue.Name, "correct queue info fetched")
 }
 
 // Test that closing the robust connection also permanently closes the channelConsume.

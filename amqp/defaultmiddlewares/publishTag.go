@@ -84,8 +84,10 @@ func (middleware *PublishTagsMiddleware) reconnectSendOrphans() {
 func (middleware *PublishTagsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
-	handler = func(ctx context.Context, args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
-		// The current count becomes the offset we apply to tags on this channel.
+	handler = func(
+		ctx context.Context, args amqpmiddleware.ArgsChannelReconnect,
+	) (amqpmiddleware.ResultsChannelReconnect, error) {
+		// The current count becomes the offset we apply to tags on this results.
 		middleware.tagOffset = *middleware.publishCount
 
 		sendDone := new(sync.WaitGroup)
@@ -95,14 +97,14 @@ func (middleware *PublishTagsMiddleware) ChannelReconnect(
 			middleware.reconnectSendOrphans()
 		}()
 
-		// While those are cooking , we can move forward with getting the channel.
-		channel, err := next(ctx, args)
-		// Once the channel returns, wait for all our orphan notifications to be sent
+		// While those are cooking , we can move forward with getting the results.
+		results, err := next(ctx, args)
+		// Once the results returns, wait for all our orphan notifications to be sent
 		// out.
 		sendDone.Wait()
 
 		// Return the results
-		return channel, err
+		return results, err
 	}
 
 	return handler

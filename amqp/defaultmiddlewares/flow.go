@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	streadway "github.com/streadway/amqp"
 	"sync"
 )
 
@@ -37,19 +36,21 @@ func (middleware *FlowMiddleware) Active() bool {
 func (middleware *FlowMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) amqpmiddleware.HandlerChannelReconnect {
-	return func(ctx context.Context, args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
-		channel, err := next(ctx, args)
+	return func(
+		ctx context.Context, args amqpmiddleware.ArgsChannelReconnect,
+	) (amqpmiddleware.ResultsChannelReconnect, error) {
+		results, err := next(ctx, args)
 		// New channels start out active, so if flow is active we can keep chugging.
 		if err != nil || middleware.active {
-			return channel, err
+			return results, err
 		}
 
-		err = channel.Flow(middleware.active)
+		err = results.Channel.Flow(middleware.active)
 		if err != nil {
-			return nil, fmt.Errorf("error setting flow to false: %w", err)
+			return results, fmt.Errorf("error setting flow to false: %w", err)
 		}
 
-		return channel, err
+		return results, err
 	}
 }
 
