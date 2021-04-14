@@ -3,7 +3,6 @@ package amqpmiddleware
 import (
 	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
 
@@ -72,8 +71,6 @@ type ArgsConnectionReconnect struct {
 	// made and increments by 1 each time a reconnect is attempted. It does not reset
 	// on successful reconnections.
 	Attempt uint64
-	// Logger is the connection logger.
-	Logger zerolog.Logger
 }
 
 // CHANNEL METHOD ARGS #################################

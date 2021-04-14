@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -41,11 +42,14 @@ func (opts *ChannelSuiteOpts) WithDialConfig(config amqp.Config) *ChannelSuiteOp
 	return opts
 }
 
-// NewChannelSuiteOpts returns a new ChannelSuiteOpts with default values
+// NewChannelSuiteOpts returns a new ChannelSuiteOpts with default values and the logger
+// set to debug.
 func NewChannelSuiteOpts() *ChannelSuiteOpts {
+	config := amqp.DefaultConfig()
+	config.DefaultLoggerLevel = zerolog.DebugLevel
 	return new(ChannelSuiteOpts).
 		WithDialAddress(TestDialAddress).
-		WithDialConfig(amqp.DefaultConfig())
+		WithDialConfig(config)
 }
 
 // AmqpSuite Embed into other suite types to have a connection and channel

@@ -29,7 +29,6 @@ Unlike streadway/amqp.Channel, this channel will remain open when an error is
 returned. Under the hood, the old, closed, channel will be replaced with a new,
 fresh, one -- so operation will continue as normal.
 */
-
 type Channel struct {
 	// transportChannel is the the transport object that contains our current underlying
 	// connection.

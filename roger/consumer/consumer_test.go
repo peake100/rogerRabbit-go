@@ -1,12 +1,14 @@
 //revive:disable
 
-package roger
+package consumer
 
 import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
 	"github.com/peake100/rogerRabbit-go/amqptest"
+	"github.com/peake100/rogerRabbit-go/roger/consumer/middleware"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 	"sync"
 	"testing"
@@ -29,8 +31,8 @@ type BasicTestConsumer struct {
 	SetupComplete chan struct{}
 }
 
-func (consumer *BasicTestConsumer) ConsumeArgs() *ConsumeArgs {
-	return &ConsumeArgs{
+func (consumer *BasicTestConsumer) AmqpArgs() AmqpArgs {
+	return AmqpArgs{
 		ConsumerName: consumer.QueueName,
 		AutoAck:      false,
 		Exclusive:    false,
@@ -39,7 +41,7 @@ func (consumer *BasicTestConsumer) ConsumeArgs() *ConsumeArgs {
 }
 
 func (consumer *BasicTestConsumer) SetupChannel(
-	ctx context.Context, amqpChannel AmqpRouteManager,
+	ctx context.Context, amqpChannel middleware.AmqpRouteManager,
 ) error {
 	defer close(consumer.SetupComplete)
 
@@ -53,6 +55,14 @@ func (consumer *BasicTestConsumer) SetupChannel(
 	)
 	if err != nil {
 		return fmt.Errorf("error declaring Queue: %w", err)
+	}
+
+	_, err = amqpChannel.QueuePurge(
+		consumer.QueueName,
+		false,
+	)
+	if err != nil {
+		return fmt.Errorf("error purging Queue: %w", err)
 	}
 
 	return nil
@@ -73,7 +83,9 @@ func (consumer *BasicTestConsumer) HandleDelivery(
 	return nil, false
 }
 
-func (consumer *BasicTestConsumer) Cleanup(amqpChannel AmqpRouteManager) error {
+func (consumer *BasicTestConsumer) CleanupChannel(
+	_ context.Context, amqpChannel middleware.AmqpRouteManager,
+) error {
 	_, err := amqpChannel.QueueDelete(
 		consumer.QueueName, false, false, false,
 	)
@@ -110,10 +122,13 @@ func (suite *ConsumerSuite) TestConsumeBasicLifecycle() {
 		SetupComplete:        make(chan struct{}),
 	}
 
-	consumer := NewConsumer(suite.ChannelConsume(), nil)
+	consumer := New(suite.ChannelConsume(), DefaultOpts().WithLoggingLevel(zerolog.DebugLevel))
 	suite.T().Cleanup(consumer.StartShutdown)
 
-	consumer.RegisterProcessor(processor)
+	err = consumer.RegisterProcessor(processor)
+	if !suite.NoError(err, "register processor") {
+		suite.T().FailNow()
+	}
 
 	runComplete := make(chan struct{})
 
@@ -170,10 +185,13 @@ func (suite *ConsumerSuite) TestConsumeBasicMessages() {
 		SetupComplete:        make(chan struct{}),
 	}
 
-	consumer := NewConsumer(suite.ChannelConsume(), nil)
+	consumer := New(suite.ChannelConsume(), DefaultOpts().WithLoggingLevel(zerolog.DebugLevel))
 	suite.T().Cleanup(consumer.StartShutdown)
 
-	consumer.RegisterProcessor(processor)
+	err := consumer.RegisterProcessor(processor)
+	if !suite.NoError(err, "register processor") {
+		suite.T().FailNow()
+	}
 
 	runComplete := make(chan struct{})
 

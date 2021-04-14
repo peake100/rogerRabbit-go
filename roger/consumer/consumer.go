@@ -1,4 +1,4 @@
-package roger
+package consumer
 
 import (
 	"context"
@@ -6,96 +6,9 @@ import (
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	streadway "github.com/streadway/amqp"
 	"sync"
+	"time"
 )
-
-// AmqpRouteManager is an interface that only exposes the Queue and exchange methods for
-// a channel. These are the only methods we want SetupChannel to have access to.
-type AmqpRouteManager interface {
-	QueueDeclare(
-		name string,
-		durable bool,
-		autoDelete bool,
-		exclusive bool,
-		noWait bool,
-		args streadway.Table,
-	) (queue amqp.Queue, err error)
-	QueueDeclarePassive(
-		name string, durable, autoDelete, exclusive, noWait bool, args amqp.Table,
-	) (queue amqp.Queue, err error)
-	QueueInspect(name string) (queue amqp.Queue, err error)
-	QueueBind(name, key, exchange string, noWait bool, args amqp.Table) error
-	QueueDelete(name string, ifUnused, ifEmpty, noWait bool) (count int, err error)
-	Qos(prefetchCount, prefetchSize int, global bool) error
-
-	ExchangeDeclare(
-		name, kind string, durable, autoDelete, internal, noWait bool, args amqp.Table,
-	) (err error)
-	ExchangeDeclarePassive(
-		name, kind string, durable, autoDelete, internal, noWait bool, args amqp.Table,
-	) (err error)
-	ExchangeBind(
-		destination, key, source string, noWait bool, args amqp.Table,
-	) (err error)
-	ExchangeDelete(name string, ifUnused, noWait bool) (err error)
-}
-
-// ConsumeArgs are the args the consumer will be created with.
-type ConsumeArgs struct {
-	// Queue is the name of the Queue to consume from
-	Queue string
-	// ConsumerName identifies this consumer with the broker.
-	ConsumerName string
-	// AutoAck is whether the broker should ack messages automatically as it sends them.
-	// Otherwise the consumer will handle acking messages.
-	AutoAck bool
-	// Exclusive is whether this consumer should be the exclusive consumer for this
-	// Queue.
-	Exclusive bool
-	// Args are additional args to pass to the amqp.Channel.Consume() method.
-	Args amqp.Table
-}
-
-// AmqpDeliveryProcessor is an interface for handling consuming from a route.
-// Implementors of this interface will be registered with a consumer.
-type AmqpDeliveryProcessor interface {
-	// ConsumeArgs returns the args that amqp.Channel.Consume should be called with.
-	ConsumeArgs() *ConsumeArgs
-
-	// SetupChannel is called before the consumer is created, and is designed to let
-	// this handler declare any exchanges or queues necessary to handle deliveries.
-	SetupChannel(ctx context.Context, amqpChannel AmqpRouteManager) error
-
-	// HandleDelivery will be called once per delivery. Returning a non-nil err will
-	// result in it being logged and the delivery being nacked. If requeue is true, the
-	// nacked delivery will be requeued. If err is nil, requeue is ignored.
-	HandleDelivery(
-		ctx context.Context, delivery datamodels.Delivery,
-	) (err error, requeue bool)
-
-	// Cleanup is called at shutdown to allow the route handler to clean up any
-	// necessary resources.
-	Cleanup(amqpChannel AmqpRouteManager) error
-}
-
-// ConsumerOpts holds options for running a consumer.
-type ConsumerOpts struct {
-	// The maximum number of workers that can be active at one time.
-	maxWorkers int
-}
-
-// WithMaxWorkers sets the maximum number of workers that can be running at the same
-// time. If 0 or less, no limit will be used. Default: 0.
-func (opts *ConsumerOpts) WithMaxWorkers(max int) *ConsumerOpts {
-	opts.maxWorkers = max
-	return opts
-}
-
-// NewConsumerOpts returns new ConsumerOpts object with default settings.
-func NewConsumerOpts() *ConsumerOpts {
-	return new(ConsumerOpts)
-}
 
 // Consumer is a service helper for consuming messages from one or more queues.
 type Consumer struct {
@@ -107,7 +20,7 @@ type Consumer struct {
 	// The channel we will be consuming from
 	channel *amqp.Channel
 	// Handlers registered to this consumer
-	processors []AmqpDeliveryProcessor
+	processors []deliveryProcessor
 	// Lock for processors.
 	handlersLock sync.Mutex
 
@@ -118,14 +31,14 @@ type Consumer struct {
 	workerThrottle chan struct{}
 
 	// Caller options.
-	opts ConsumerOpts
+	opts Opts
 }
 
-// RegisterProcessor registers a consumer handler. Will panic if called after consumer
-// start.
+// RegisterProcessor registers a AmqpDeliveryProcessor implementation value. Will panic
+// if called after consumer start.
 func (consumer *Consumer) RegisterProcessor(
 	processor AmqpDeliveryProcessor,
-) {
+) error {
 	consumer.handlersLock.Lock()
 	defer consumer.handlersLock.Unlock()
 
@@ -133,25 +46,32 @@ func (consumer *Consumer) RegisterProcessor(
 		panic(errors.New("tried to register processor for started consumer"))
 	}
 
-	consumer.processors = append(consumer.processors, processor)
+	wrappedProcessor, err := newDeliveryProcessor(processor, consumer.opts)
+	if err != nil {
+		return err
+	}
+
+	consumer.processors = append(consumer.processors, wrappedProcessor)
+	return nil
 }
 
 // handleDelivery handles a single delivery.
 func (consumer *Consumer) handleDelivery(
-	handler AmqpDeliveryProcessor,
+	handler deliveryProcessor,
 	delivery datamodels.Delivery,
-	args *ConsumeArgs,
-	complete *sync.WaitGroup,
+	args AmqpArgs,
+	done *sync.WaitGroup,
 ) {
-	defer complete.Done()
-
-	// If we are throttling workers, free a space on the throttle at the end of this
-	// work.
-	if consumer.opts.maxWorkers > 0 {
-		defer func() {
-			<-consumer.workerThrottle
-		}()
-	}
+	defer done.Done()
+	defer func() {
+		// If we are throttling workers, free a space on the throttle at the end
+		// of this work.
+		if consumer.opts.maxWorkers > 0 {
+			defer func() {
+				<-consumer.workerThrottle
+			}()
+		}
+	}()
 
 	// Create a context for this delivery derived from the consumer context.
 	deliveryCtx, deliveryCancel := context.WithCancel(consumer.ctx)
@@ -175,24 +95,21 @@ func (consumer *Consumer) handleDelivery(
 // runProcessor runs an individual consumer pulling from an amqp.Channel.Consume
 // channel.
 func (consumer *Consumer) runProcessor(
-	handler AmqpDeliveryProcessor,
+	processor deliveryProcessor,
 	complete *sync.WaitGroup,
 ) {
 	// Release work complete WaitGroup on exit.
 	defer complete.Done()
 
-	// Cache the consumer args in a var
-	args := handler.ConsumeArgs()
-
 	// Create the consumer channel we will pull deliveries over.
 	consumerChan, err := consumer.channel.Consume(
-		args.Queue,
-		args.ConsumerName,
-		args.AutoAck,
-		args.Exclusive,
+		processor.AmqpArgs.Queue,
+		processor.AmqpArgs.ConsumerName,
+		processor.AmqpArgs.AutoAck,
+		processor.AmqpArgs.Exclusive,
 		false,
 		false,
-		args.Args,
+		processor.AmqpArgs.Args,
 	)
 	if err != nil {
 		// If there is an error here, log it and bring down the whole consumer. This is
@@ -202,39 +119,52 @@ func (consumer *Consumer) runProcessor(
 		return
 	}
 
+	consumer.processDeliveries(processor, consumerChan)
+
+	// Shut down the consumer
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	err = processor.CleanupChannel(ctx, consumer.channel)
+}
+
+func (consumer *Consumer) processDeliveries(
+	processor deliveryProcessor,
+	consumerChan <-chan amqp.Delivery,
+) {
 	// WaitGroup for workers to close when done.
 	workersComplete := new(sync.WaitGroup)
+	// Wait for all outstanding workers to be complete before we exit
+	defer workersComplete.Wait()
 
 	// Pull all deliveries down from the consumer.
 	var delivery datamodels.Delivery
-deliveriesLoop:
+	useThrottle := consumer.opts.maxWorkers > 0
+
 	for {
 		// Pull a delivery or exit on context close.
 		select {
 		case <-consumer.ctx.Done():
-			break deliveriesLoop
+			return
 		case delivery = <-consumerChan:
 		}
 
 		// If we are throttling simultaneous worker count, we need to push to the
 		// throttle channel, if the channel is full (max workers reached) this will
 		// block.
-		if consumer.opts.maxWorkers > 0 {
-			consumer.workerThrottle <- struct{}{}
+		if useThrottle {
+			select {
+			case consumer.workerThrottle <- struct{}{}:
+			case <-consumer.ctx.Done():
+				// Nack this in it's own routine and exit.
+				go delivery.Nack(false, true)
+				return
+			}
 		}
 
-		// Launch a delivery handler.
 		workersComplete.Add(1)
-		go consumer.handleDelivery(
-			handler, delivery, args, workersComplete,
-		)
+		go consumer.handleDelivery(processor, delivery, processor.AmqpArgs, workersComplete)
 	}
-
-	// Wait for all outstanding workers to be complete
-	workersComplete.Wait()
-
-	// Shut down the consumer
-	err = handler.Cleanup(consumer.channel)
 }
 
 // runHandlerSetups runs all the amqp.Channel setups from our registered processors.
@@ -250,7 +180,7 @@ func (consumer *Consumer) runHandlerSetups() error {
 		if err != nil {
 			return fmt.Errorf(
 				"error setting up channel for consumer %v: %w",
-				thisHandler.ConsumeArgs().ConsumerName,
+				thisHandler.AmqpArgs.ConsumerName,
 				err,
 			)
 		}
@@ -309,14 +239,8 @@ func (consumer *Consumer) StartShutdown() {
 	defer consumer.cancelCtx()
 }
 
-// NewConsumer returns a new consumer using the passed amqp.Channel.
-func NewConsumer(
-	channel *amqp.Channel, opts *ConsumerOpts,
-) *Consumer {
-	if opts == nil {
-		opts = NewConsumerOpts()
-	}
-
+// New returns a new consumer which will pull deliveries from the passed amqp.Channel.
+func New(channel *amqp.Channel, opts Opts) *Consumer {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Consumer{
@@ -327,6 +251,6 @@ func NewConsumer(
 		handlersLock:   sync.Mutex{},
 		started:        false,
 		workerThrottle: make(chan struct{}, opts.maxWorkers),
-		opts:           *opts,
+		opts:           opts,
 	}
 }
