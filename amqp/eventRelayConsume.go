@@ -34,7 +34,7 @@ type consumeRelay struct {
 
 // baseHandler returns the base handler to be wrapped in middleware.
 func (relay *consumeRelay) baseHandler() amqpmiddleware.HandlerConsumeEvents {
-	return func(event amqpmiddleware.EventConsume) {
+	return func(_ amqpmiddleware.EventMetadata, event amqpmiddleware.EventConsume) {
 		relay.CallerDeliveries <- event.Delivery
 	}
 }
@@ -71,13 +71,18 @@ func (relay *consumeRelay) SetupForRelayLeg(newChannel *streadway.Channel) error
 
 // RunRelayLeg implements eventRelay and relays all deliveries from the current
 // underlying streadway/amqp.Channel to the caller.
-func (relay *consumeRelay) RunRelayLeg() (done bool, err error) {
+func (relay *consumeRelay) RunRelayLeg(legNum int) (done bool, err error) {
 	// Drain consumer events
+	eventNum := int64(0)
 	for brokerDelivery := range relay.brokerDeliveries {
 		// Wrap the delivery and send on our way.
-		relay.handler(amqpmiddleware.EventConsume{
-			Delivery: datamodels.NewDelivery(brokerDelivery, relay.Acknowledger),
-		})
+		relay.handler(
+			createEventMetadata(legNum, eventNum),
+			amqpmiddleware.EventConsume{
+				Delivery: datamodels.NewDelivery(brokerDelivery, relay.Acknowledger),
+			},
+		)
+		eventNum++
 	}
 
 	return false, nil

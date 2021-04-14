@@ -1,6 +1,7 @@
 package defaultmiddlewares
 
 import (
+	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	streadway "github.com/streadway/amqp"
@@ -41,9 +42,9 @@ func (middleware *QoSMiddleware) IsSet() bool {
 // re-applies any QoS calls to the channel.
 func (middleware *QoSMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
-) (handler amqpmiddleware.HandlerChannelReconnect) {
-	return func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
-		channel, err := next(args)
+) amqpmiddleware.HandlerChannelReconnect {
+	return func(ctx context.Context, args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+		channel, err := next(ctx, args)
 		// If there was an error or QoS() has not been called, return results.
 		if err != nil || !middleware.isSet {
 			return channel, err
@@ -65,11 +66,9 @@ func (middleware *QoSMiddleware) ChannelReconnect(
 
 // QoS is called in amqp.Channel.QoS(). Saves the QoS settings passed to the QoS
 // function
-func (middleware *QoSMiddleware) QoS(
-	next amqpmiddleware.HandlerQoS,
-) (handler amqpmiddleware.HandlerQoS) {
-	return func(args amqpmiddleware.ArgsQoS) error {
-		err := next(args)
+func (middleware *QoSMiddleware) QoS(next amqpmiddleware.HandlerQoS) amqpmiddleware.HandlerQoS {
+	return func(ctx context.Context, args amqpmiddleware.ArgsQoS) error {
+		err := next(ctx, args)
 		if err != nil {
 			return err
 		}

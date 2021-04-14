@@ -33,7 +33,7 @@ type ConnectionMiddlewares struct {
 
 	// providerFactory
 	providerFactory []struct {
-		Factory func() amqpmiddleware.ProvidesMiddleware
+		Factory amqpmiddleware.ProviderFactory
 	}
 
 	// providers stores amqpmiddleware.ProvidesMiddleware that supply middleware
@@ -50,9 +50,9 @@ type ConnectionMiddlewares struct {
 //
 // If you wish the same provider value's methods to be used as middleware for every
 // *Connection created by a Config, consider using AddProviderMethods instead.
-func (config *ConnectionMiddlewares) AddProviderFactory(factory func() amqpmiddleware.ProvidesMiddleware) {
+func (config *ConnectionMiddlewares) AddProviderFactory(factory amqpmiddleware.ProviderFactory) {
 	config.providerFactory = append(config.providerFactory, struct {
-		Factory func() amqpmiddleware.ProvidesMiddleware
+		Factory amqpmiddleware.ProviderFactory
 	}{Factory: factory})
 }
 

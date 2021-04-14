@@ -1,6 +1,7 @@
 package defaultmiddlewares
 
 import (
+	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
 	streadway "github.com/streadway/amqp"
@@ -83,7 +84,7 @@ func (middleware *PublishTagsMiddleware) reconnectSendOrphans() {
 func (middleware *PublishTagsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
-	handler = func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+	handler = func(ctx context.Context, args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
 		// The current count becomes the offset we apply to tags on this channel.
 		middleware.tagOffset = *middleware.publishCount
 
@@ -95,7 +96,7 @@ func (middleware *PublishTagsMiddleware) ChannelReconnect(
 		}()
 
 		// While those are cooking , we can move forward with getting the channel.
-		channel, err := next(args)
+		channel, err := next(ctx, args)
 		// Once the channel returns, wait for all our orphan notifications to be sent
 		// out.
 		sendDone.Wait()
@@ -112,8 +113,8 @@ func (middleware *PublishTagsMiddleware) ChannelReconnect(
 func (middleware *PublishTagsMiddleware) Confirm(
 	next amqpmiddleware.HandlerConfirm,
 ) (handler amqpmiddleware.HandlerConfirm) {
-	handler = func(args amqpmiddleware.ArgsConfirms) error {
-		err := next(args)
+	handler = func(ctx context.Context, args amqpmiddleware.ArgsConfirms) error {
+		err := next(ctx, args)
 		if err != nil {
 			return err
 		}
@@ -130,8 +131,8 @@ func (middleware *PublishTagsMiddleware) Confirm(
 func (middleware *PublishTagsMiddleware) Publish(
 	next amqpmiddleware.HandlerPublish,
 ) (handler amqpmiddleware.HandlerPublish) {
-	handler = func(args amqpmiddleware.ArgsPublish) error {
-		err := next(args)
+	handler = func(ctx context.Context, args amqpmiddleware.ArgsPublish) error {
+		err := next(ctx, args)
 		if err != nil || !middleware.confirmMode {
 			return err
 		}
@@ -165,6 +166,10 @@ func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
 	// on re-connections to better mock the behavior of the original lib, where if the
 	// channel is forcibly closed, the final messages will not be confirmed.
 	for sentCount < middleware.tagOffset {
+		eventMetadata := amqpmiddleware.EventMetadata{
+			"RelayLeg": -1,
+			"EventNum": int64(-1),
+		}
 		confirmation := datamodels.Confirmation{
 			Confirmation: streadway.Confirmation{
 				DeliveryTag: sentCount + 1,
@@ -172,7 +177,7 @@ func (middleware *PublishTagsMiddleware) notifyPublishEventOrphans(
 			},
 			DisconnectOrphan: true,
 		}
-		next(amqpmiddleware.EventNotifyPublish{Confirmation: confirmation})
+		next(eventMetadata, amqpmiddleware.EventNotifyPublish{Confirmation: confirmation})
 		sentCount++
 	}
 
@@ -204,7 +209,7 @@ func (middleware *PublishTagsMiddleware) NotifyPublishEvents(
 	}()
 
 	// Return the middleware.
-	return func(event amqpmiddleware.EventNotifyPublish) {
+	return func(metadata amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyPublish) {
 		// If this is the first ever delivery we have received, update sent to
 		// be equal to it's current value + this delivery tag - 1.
 		//
@@ -217,7 +222,7 @@ func (middleware *PublishTagsMiddleware) NotifyPublishEvents(
 
 		// Apply the offset to the delivery tag.
 		event.Confirmation.DeliveryTag += middleware.tagOffset
-		next(event)
+		next(metadata, event)
 		sent++
 	}
 }

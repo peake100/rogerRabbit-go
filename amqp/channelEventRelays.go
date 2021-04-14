@@ -1,9 +1,18 @@
 package amqp
 
 import (
+	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
+
+// createEventMetadata creates the amqpmiddleware.EventMetadata for an event
+func createEventMetadata(legNum int, eventNum int64) amqpmiddleware.EventMetadata {
+	return map[string]interface{}{
+		"LegNum": legNum,
+		"EventNum": eventNum,
+	}
+}
 
 // eventRelay is a common interface for relaying events from the underlying channels to
 // the client without interruption. The boilerplate of handling all the synchronization
@@ -20,7 +29,10 @@ type eventRelay interface {
 
 	// RunRelayLeg runs the relay until all events from the streadway/amqp.Channel
 	// passed to SetupForRelayLeg() are exhausted,
-	RunRelayLeg() (done bool, err error)
+	//
+	// legNum is the leg number starting from 0 and incrementing each time this relay
+	// is called.
+	RunRelayLeg(legNum int) (done bool, err error)
 
 	// Shutdown is called to exit the relay. This will usually involve closing the
 	// client-facing channel.
@@ -79,12 +91,12 @@ func (channel *Channel) runEventRelayCycleSetup(
 // runEventRelayCycleLeg handles the boilerplate of running an event relay leg (relaying
 // all events from a single underlying streadway/ampq.Channel)
 func (channel *Channel) runEventRelayCycleLeg(
-	relay eventRelay, relaySync *relaySync, legLogger zerolog.Logger,
+	relay eventRelay, relaySync *relaySync, legNum int, legLogger zerolog.Logger,
 ) {
 	if legLogger.Debug().Enabled() {
 		legLogger.Debug().Msg("starting relay leg")
 	}
-	done, runErr := relay.RunRelayLeg()
+	done, runErr := relay.RunRelayLeg(legNum)
 	relaySync.SetDone(done)
 
 	if legLogger.Debug().Enabled() {
@@ -98,7 +110,7 @@ func (channel *Channel) runEventRelayCycleLeg(
 
 // runEventRelayCycle runs a single, full cycle of setting up and running a relay leg.
 func (channel *Channel) runEventRelayCycle(
-	relay eventRelay, relaySync *relaySync, legLogger zerolog.Logger,
+	relay eventRelay, relaySync *relaySync, legNum int, legLogger zerolog.Logger,
 ) {
 	setupErr := channel.runEventRelayCycleSetup(relay, relaySync, legLogger)
 
@@ -115,7 +127,7 @@ func (channel *Channel) runEventRelayCycle(
 
 	// If there was no setup error and our relay is not done, run the leg.
 	if setupErr == nil {
-		channel.runEventRelayCycleLeg(relay, relaySync, legLogger)
+		channel.runEventRelayCycleLeg(relay, relaySync, legNum, legLogger)
 	}
 }
 
@@ -124,14 +136,14 @@ func (channel *Channel) runEventRelayCycle(
 func (channel *Channel) runEventRelay(
 	relay eventRelay, relaySync *relaySync, relayLogger zerolog.Logger,
 ) {
-	relayLeg := 1
+	relayLeg := 0
 	// Shutdown our relay on exit.
 	defer shutdownRelay(relay, relaySync, relayLogger)
 
 	// Start running each leg.
 	for {
 		legLogger := relayLogger.With().Int("LEG", relayLeg).Logger()
-		channel.runEventRelayCycle(relay, relaySync, legLogger)
+		channel.runEventRelayCycle(relay, relaySync, relayLeg, legLogger)
 		if relaySync.IsDone() {
 			return
 		}

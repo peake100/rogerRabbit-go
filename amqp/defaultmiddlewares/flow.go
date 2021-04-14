@@ -1,6 +1,7 @@
 package defaultmiddlewares
 
 import (
+	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	streadway "github.com/streadway/amqp"
@@ -35,9 +36,9 @@ func (middleware *FlowMiddleware) Active() bool {
 // reconnection occurs if the user has paused the flow on the channel.
 func (middleware *FlowMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
-) (handler amqpmiddleware.HandlerChannelReconnect) {
-	return func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
-		channel, err := next(args)
+) amqpmiddleware.HandlerChannelReconnect {
+	return func(ctx context.Context, args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+		channel, err := next(ctx, args)
 		// New channels start out active, so if flow is active we can keep chugging.
 		if err != nil || middleware.active {
 			return channel, err
@@ -54,14 +55,12 @@ func (middleware *FlowMiddleware) ChannelReconnect(
 
 // Flow captures calls to *amqp.Channel.Flow() so channels can be paused on reconnect if
 // the user has paused the channel.
-func (middleware *FlowMiddleware) Flow(
-	next amqpmiddleware.HandlerFlow,
-) (handler amqpmiddleware.HandlerFlow) {
-	return func(args amqpmiddleware.ArgsFlow) error {
+func (middleware *FlowMiddleware) Flow(next amqpmiddleware.HandlerFlow) amqpmiddleware.HandlerFlow {
+	return func(ctx context.Context, args amqpmiddleware.ArgsFlow) error {
 		middleware.activeLock.Lock()
 		defer middleware.activeLock.Unlock()
 
-		err := next(args)
+		err := next(ctx, args)
 		if err != nil {
 			return err
 		}

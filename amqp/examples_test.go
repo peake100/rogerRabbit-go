@@ -517,11 +517,11 @@ func ExampleChannel_addMiddleware() {
 	queueDeclareMiddleware := func(
 		next amqpmiddleware.HandlerQueueDeclare,
 	) amqpmiddleware.HandlerQueueDeclare {
-		return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+		return func(ctx context.Context, args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
 			fmt.Println("MIDDLEWARE INVOKED FOR QUEUE")
 			fmt.Println("QUEUE NAME :", args.Name)
 			fmt.Println("AUTO-DELETE:", args.AutoDelete)
-			return next(args)
+			return next(ctx, args)
 		}
 	}
 
@@ -578,12 +578,12 @@ func (middleware *CustomMiddlewareProvider) TypeID() amqpmiddleware.ProviderType
 func (middleware *CustomMiddlewareProvider) QueueDeclare(
 	next amqpmiddleware.HandlerQueueDeclare,
 ) amqpmiddleware.HandlerQueueDeclare {
-	return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+	return func(ctx context.Context, args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
 		middleware.InvocationCount++
 		fmt.Printf(
 			"DECLARED: %v, TOTAL: %v\n", args.Name, middleware.InvocationCount,
 		)
-		return next(args)
+		return next(ctx, args)
 	}
 }
 
@@ -591,12 +591,12 @@ func (middleware *CustomMiddlewareProvider) QueueDeclare(
 func (middleware *CustomMiddlewareProvider) QueueDelete(
 	next amqpmiddleware.HandlerQueueDeclare,
 ) amqpmiddleware.HandlerQueueDeclare {
-	return func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+	return func(ctx context.Context, args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
 		middleware.InvocationCount++
 		fmt.Printf(
 			"DELETED: %v, TOTAL: %v\n", args.Name, middleware.InvocationCount,
 		)
-		return next(args)
+		return next(ctx, args)
 	}
 }
 

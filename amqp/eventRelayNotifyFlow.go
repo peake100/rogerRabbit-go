@@ -32,7 +32,7 @@ type notifyFlowRelay struct {
 }
 
 func (relay *notifyFlowRelay) baseHandler() amqpmiddleware.HandlerNotifyFlowEvents {
-	return func(event amqpmiddleware.EventNotifyFlow) {
+	return func(_ amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyFlow) {
 		if relay.logger.Debug().Enabled() {
 			relay.logger.Debug().
 				Bool("FLOW", event.FlowNotification).
@@ -59,7 +59,10 @@ func (relay *notifyFlowRelay) SetupForRelayLeg(newChannel *streadway.Channel) er
 		// If we have already setup the relay once, that means we are opening a new
 		// channel, and should send a flow -> true to the caller as a fresh channel
 		// will not have flow turned off yet.
-		relay.handler(amqpmiddleware.EventNotifyFlow{FlowNotification: true})
+		relay.handler(
+			createEventMetadata(-1, -1),
+			amqpmiddleware.EventNotifyFlow{FlowNotification: true},
+		)
 	} else {
 		relay.setup = true
 	}
@@ -76,16 +79,24 @@ func (relay *notifyFlowRelay) SetupForRelayLeg(newChannel *streadway.Channel) er
 
 // RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyFlow
 // events to the original caller.
-func (relay *notifyFlowRelay) RunRelayLeg() (done bool, err error) {
+func (relay *notifyFlowRelay) RunRelayLeg(legNum int) (done bool, err error) {
+	eventNum := int64(0)
 	for thisFlow := range relay.brokerFlow {
-		relay.handler(amqpmiddleware.EventNotifyFlow{FlowNotification: thisFlow})
+		relay.handler(
+			createEventMetadata(legNum, eventNum),
+			amqpmiddleware.EventNotifyFlow{FlowNotification: thisFlow},
+		)
+		eventNum++
 	}
 
 	// Turn flow to false on broker disconnection if the roger channel has not been
 	// closed and the last notification sent was a ``true`` (we don't want to send two
 	// false values in a row).
 	if relay.ChannelCtx.Err() == nil && relay.lastEvent {
-		relay.handler(amqpmiddleware.EventNotifyFlow{FlowNotification: false})
+		relay.handler(
+			createEventMetadata(-1, -1),
+			amqpmiddleware.EventNotifyFlow{FlowNotification: false},
+		)
 	}
 
 	return false, nil

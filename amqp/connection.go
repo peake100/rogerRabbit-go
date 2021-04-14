@@ -67,15 +67,13 @@ func (conn *Connection) cleanup() error {
 }
 
 // tryReconnect implements reconnects and tries to re-dial the broker one time.
-func (conn *Connection) tryReconnect(
-	ctx context.Context, attempt uint64,
-) error {
+func (conn *Connection) tryReconnect(ctx context.Context, attempt uint64) error {
 	args := amqpmiddleware.ArgsConnectionReconnect{
 		Ctx:     ctx,
 		Attempt: attempt,
 		Logger:  conn.dialConfig.Logger,
 	}
-	basicConn, err := conn.handlerReconnect(args)
+	basicConn, err := conn.handlerReconnect(conn.ctx, args)
 	if err != nil {
 		return err
 	}
@@ -87,7 +85,7 @@ func (conn *Connection) tryReconnect(
 // basicReconnectHandler is the innermost reconnection handler for the
 // transportConnection.
 func (conn *Connection) basicReconnectHandler(
-	args amqpmiddleware.ArgsConnectionReconnect,
+	ctx context.Context, args amqpmiddleware.ArgsConnectionReconnect,
 ) (*streadway.Connection, error) {
 	return streadway.DialConfig(conn.dialURL, conn.streadwayConfig)
 }
@@ -97,7 +95,7 @@ func (conn *Connection) basicReconnectHandler(
 func (conn *Connection) getStreadwayChannel(ctx context.Context) (
 	channel *BasicChannel, err error,
 ) {
-	operation := func() error {
+	operation := func(ctx context.Context) error {
 		var channelErr error
 		channel, channelErr = conn.underlyingConn.Channel()
 		return channelErr

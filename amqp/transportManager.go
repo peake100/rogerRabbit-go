@@ -3,6 +3,7 @@ package amqp
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -240,18 +241,23 @@ func isRepeatErr(err error) bool {
 // retryOperationOnClosedSingle attempts a Connection or Channel channel method a single
 // time.
 func (manager transportManager) retryOperationOnClosedSingle(
-	ctx context.Context,
-	operation func() error,
+	transportCtx context.Context,
+	opCtx context.Context,
+	operation func(ctx context.Context) error,
 ) error {
 	// If the context of our robust livesOnce mechanism is closed, return an
 	// ErrClosed.
-	if ctx.Err() != nil {
+	if transportCtx.Err() != nil {
 		if manager.logger.Debug().Enabled() {
 			log.Debug().Caller(1).Msg(
 				"operation attempted after context close",
 			)
 		}
 		return streadway.ErrClosed
+	}
+
+	if opCtx.Err() != nil {
+		return fmt.Errorf("operation context closed: %w", opCtx.Err())
 	}
 
 	// Run the operation in a closure so we can acquire and release the
@@ -268,7 +274,7 @@ func (manager transportManager) retryOperationOnClosedSingle(
 		manager.transportLock.RLock()
 		defer manager.transportLock.RUnlock()
 
-		err = operation()
+		err = operation(opCtx)
 	}()
 	return err
 }
@@ -278,16 +284,18 @@ func (manager transportManager) retryOperationOnClosedSingle(
 // Channel.QueueBind, in which we want to retry the operation if our underlying
 // livesOnce mechanism has connection issues.
 func (manager transportManager) retryOperationOnClosed(
-	ctx context.Context,
-	operation func() error,
+	transportCtx context.Context,
+	operation func(ctx context.Context) error,
 	retry bool,
 ) error {
+	attempt := 0
 	for {
-		err := manager.retryOperationOnClosedSingle(ctx, operation)
+		opCtx := context.WithValue(transportCtx, "opAttempt", attempt)
+		err := manager.retryOperationOnClosedSingle(transportCtx, opCtx, operation)
 
 		// If there was no error, we are not trying, or this is not a repeat error,
 		// or our context has cancelled: return.
-		if err == nil || !retry || !isRepeatErr(err) || ctx.Err() != nil {
+		if err == nil || !retry || !isRepeatErr(err) || transportCtx.Err() != nil {
 			return err
 		}
 
@@ -297,6 +305,7 @@ func (manager transportManager) retryOperationOnClosed(
 				"repeating operation on error: %v", err,
 			)
 		}
+		attempt++
 	}
 }
 
@@ -314,7 +323,7 @@ func (manager transportManager) sendDialNotifications(err error) {
 
 	// Notify all our close subscribers.
 	for _, receiver := range manager.notifyDialEventHandlers {
-		receiver(event)
+		receiver(make(amqpmiddleware.EventMetadata), event)
 	}
 }
 
@@ -343,7 +352,7 @@ func (manager transportManager) sendDisconnectNotifications(
 
 	// Notify all our close subscribers.
 	for _, handler := range manager.notifyDisconnectEventHandlers {
-		handler(event)
+		handler(make(amqpmiddleware.EventMetadata), event)
 	}
 }
 
@@ -362,7 +371,7 @@ func (manager transportManager) sendCloseNotifications(err *streadway.Error) {
 		Err:           err,
 	}
 	for _, receiver := range manager.notifyCloseEventHandlers {
-		receiver(event)
+		receiver(make(amqpmiddleware.EventMetadata), event)
 	}
 
 	if manager.logger.Debug().Enabled() {
@@ -388,7 +397,7 @@ func (manager transportManager) NotifyClose(
 		Receiver:      receiver,
 		TransportType: manager.transport.transportType(),
 	}
-	return manager.handlers.notifyClose(args)
+	return manager.handlers.notifyClose(manager.ctx, args)
 }
 
 // NotifyDial is new for robust Roger transportType objects. NotifyDial will send all
@@ -401,7 +410,7 @@ func (manager transportManager) NotifyDial(
 		TransportType: manager.transport.transportType(),
 		Receiver:      receiver,
 	}
-	return manager.handlers.notifyDial(args)
+	return manager.handlers.notifyDial(manager.ctx, args)
 }
 
 // NotifyDisconnect is new for robust Roger transportType objects. NotifyDisconnect will
@@ -414,7 +423,7 @@ func (manager transportManager) NotifyDisconnect(
 		TransportType: manager.transport.transportType(),
 		Receiver:      receiver,
 	}
-	return manager.handlers.notifyDisconnect(args)
+	return manager.handlers.notifyDisconnect(manager.ctx, args)
 }
 
 // cancelCtxCloseTransport cancels the main context and closes the underlying connection
@@ -445,7 +454,7 @@ func (manager transportManager) cancelCtxCloseTransport() {
 // from reconnecting.
 func (manager transportManager) Close() error {
 	args := amqpmiddleware.ArgsClose{TransportType: manager.transport.transportType()}
-	return manager.handlers.transportClose(args)
+	return manager.handlers.transportClose(manager.ctx, args)
 }
 
 // IsClosed returns true if the connection is marked as closed, otherwise false

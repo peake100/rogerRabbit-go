@@ -1,6 +1,7 @@
 package defaultmiddlewares
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
@@ -450,10 +451,11 @@ func (middleware *RouteDeclarationMiddleware) reconnectBindExchanges(
 // reconnectHandler re-establishes queue and exchange topologies on a channel
 // reconnection event.
 func (middleware *RouteDeclarationMiddleware) reconnectHandler(
+	ctx context.Context,
 	args amqpmiddleware.ArgsChannelReconnect,
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (*streadway.Channel, error) {
-	channel, err := next(args)
+	channel, err := next(ctx, args)
 	// If there was an error, pass it up the chain.
 	if err != nil {
 		return channel, err
@@ -488,8 +490,8 @@ func (middleware *RouteDeclarationMiddleware) reconnectHandler(
 func (middleware *RouteDeclarationMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {
-	handler = func(args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
-		return middleware.reconnectHandler(args, next)
+	handler = func(ctx context.Context, args amqpmiddleware.ArgsChannelReconnect) (*streadway.Channel, error) {
+		return middleware.reconnectHandler(ctx, args, next)
 	}
 
 	return handler
@@ -500,9 +502,9 @@ func (middleware *RouteDeclarationMiddleware) ChannelReconnect(
 func (middleware *RouteDeclarationMiddleware) QueueDeclare(
 	next amqpmiddleware.HandlerQueueDeclare,
 ) (handler amqpmiddleware.HandlerQueueDeclare) {
-	handler = func(args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
+	handler = func(ctx context.Context, args amqpmiddleware.ArgsQueueDeclare) (streadway.Queue, error) {
 		// If there is any sort of error, pass it on.
-		queue, err := next(args)
+		queue, err := next(ctx, args)
 		if err != nil {
 			return queue, err
 		}
@@ -521,8 +523,8 @@ func (middleware *RouteDeclarationMiddleware) QueueDelete(
 	next amqpmiddleware.HandlerQueueDelete,
 ) (handler amqpmiddleware.HandlerQueueDelete) {
 	// If there is any sort of error, pass it on.
-	handler = func(args amqpmiddleware.ArgsQueueDelete) (count int, err error) {
-		count, err = next(args)
+	handler = func(ctx context.Context, args amqpmiddleware.ArgsQueueDelete) (count int, err error) {
+		count, err = next(ctx, args)
 		if err != nil {
 			return count, err
 		}
@@ -542,8 +544,8 @@ func (middleware *RouteDeclarationMiddleware) QueueBind(
 	next amqpmiddleware.HandlerQueueBind,
 ) (handler amqpmiddleware.HandlerQueueBind) {
 	// If there is any sort of error, pass it on.
-	handler = func(args amqpmiddleware.ArgsQueueBind) error {
-		err := next(args)
+	handler = func(ctx context.Context, args amqpmiddleware.ArgsQueueBind) error {
+		err := next(ctx, args)
 		if err != nil {
 			return err
 		}
@@ -563,9 +565,9 @@ func (middleware *RouteDeclarationMiddleware) QueueBind(
 func (middleware *RouteDeclarationMiddleware) QueueUnbind(
 	next amqpmiddleware.HandlerQueueUnbind,
 ) (handler amqpmiddleware.HandlerQueueUnbind) {
-	handler = func(args amqpmiddleware.ArgsQueueUnbind) error {
+	handler = func(ctx context.Context, args amqpmiddleware.ArgsQueueUnbind) error {
 		// If there is any sort of error, pass it on.
-		err := next(args)
+		err := next(ctx, args)
 		if err != nil {
 			return err
 		}
@@ -588,9 +590,9 @@ func (middleware *RouteDeclarationMiddleware) QueueUnbind(
 func (middleware *RouteDeclarationMiddleware) ExchangeDeclare(
 	next amqpmiddleware.HandlerExchangeDeclare,
 ) (handler amqpmiddleware.HandlerExchangeDeclare) {
-	handler = func(args amqpmiddleware.ArgsExchangeDeclare) error {
+	handler = func(ctx context.Context, args amqpmiddleware.ArgsExchangeDeclare) error {
 		// If there is any sort of error, pass it on.
-		err := next(args)
+		err := next(ctx, args)
 		if err != nil {
 			return err
 		}
@@ -607,9 +609,9 @@ func (middleware *RouteDeclarationMiddleware) ExchangeDeclare(
 func (middleware *RouteDeclarationMiddleware) ExchangeDelete(
 	next amqpmiddleware.HandlerExchangeDelete,
 ) (handler amqpmiddleware.HandlerExchangeDelete) {
-	handler = func(args amqpmiddleware.ArgsExchangeDelete) error {
+	handler = func(ctx context.Context, args amqpmiddleware.ArgsExchangeDelete) error {
 		// If there is any sort of error, pass it on.
-		err := next(args)
+		err := next(ctx, args)
 		if err != nil {
 			return err
 		}
@@ -629,8 +631,8 @@ func (middleware *RouteDeclarationMiddleware) ExchangeBind(
 	next amqpmiddleware.HandlerExchangeBind,
 ) (handler amqpmiddleware.HandlerExchangeBind) {
 	// If there is any sort of error, pass it on.
-	handler = func(args amqpmiddleware.ArgsExchangeBind) error {
-		err := next(args)
+	handler = func(ctx context.Context, args amqpmiddleware.ArgsExchangeBind) error {
+		err := next(ctx, args)
 		if err != nil {
 			return err
 		}
@@ -653,8 +655,8 @@ func (middleware *RouteDeclarationMiddleware) ExchangeUnbind(
 	next amqpmiddleware.HandlerExchangeUnbind,
 ) (handler amqpmiddleware.HandlerExchangeUnbind) {
 	// If there is any sort of error, pass it on.
-	handler = func(args amqpmiddleware.ArgsExchangeUnbind) error {
-		err := next(args)
+	handler = func(ctx context.Context, args amqpmiddleware.ArgsExchangeUnbind) error {
+		err := next(ctx, args)
 		if err != nil {
 			return err
 		}
