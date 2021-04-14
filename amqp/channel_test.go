@@ -104,10 +104,14 @@ func (suite *ChannelLifetimeSuite) Test0030_Reestablish_ConnectionClose() {
 	chanTest := suite.ChannelConsumeTester()
 
 	currentChan := chanTest.UnderlyingChannel()
+	chanReconnectSignal := chanTest.SignalOnReconnect()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	chanTest.ConnTest().ForceReconnect(ctx)
+
+	// Wait for the reconnect to flow downstream to the channel.
+	chanReconnectSignal.WaitOnReconnect(nil)
 
 	suite.False(
 		suite.ChannelConsume().IsClosed(), "connection is open",

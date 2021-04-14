@@ -7,23 +7,12 @@ import (
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/amqptest"
 	"github.com/peake100/rogerRabbit-go/roger"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
-	"os"
 	"strconv"
 	"sync"
 	"testing"
 	"time"
 )
-
-func init() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMicro
-
-	// Default level for this example is info, unless debug flag is present
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-}
 
 type ProducerSuite struct {
 	amqptest.AmqpSuite

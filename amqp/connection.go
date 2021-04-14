@@ -1,13 +1,17 @@
 package amqp
 
 import (
+	_ "code.cloudfoundry.org/go-diodes" // import for lockless writing
 	"context"
+	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/defaultmiddlewares"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog/diode"
 	streadway "github.com/streadway/amqp"
+	"os"
 	"testing"
+	"time"
 )
 
 // Connection manages the serialization and deserialization of frames from IO
@@ -210,7 +214,7 @@ func newConnection(url string, config Config) (*Connection, error) {
 		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewRouteDeclarationMiddleware)
 
 		connLoggerFactory, chanLoggerFactory := defaultmiddlewares.NewLoggerFactories(
-			log.Logger,
+			createDefaultLogger(),
 			"default",
 			zerolog.DebugLevel,
 			zerolog.DebugLevel,
@@ -261,4 +265,11 @@ func newConnection(url string, config Config) (*Connection, error) {
 	conn.handlerReconnect = reconnectHandler
 
 	return conn, nil
+}
+
+func createDefaultLogger() zerolog.Logger {
+	wr := diode.NewWriter(os.Stdout, 1000, 10*time.Millisecond, func(missed int) {
+		_, _ = fmt.Printf("Logger Dropped %d messages", missed)
+	})
+	return zerolog.New(zerolog.ConsoleWriter{Out: wr})
 }
