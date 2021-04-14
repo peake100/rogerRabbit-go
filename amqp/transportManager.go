@@ -199,7 +199,7 @@ type transportManager struct {
 	// Lock to control the transport.
 	transportLock *sync.RWMutex
 	// This value is incremented every time we re-connect to the broker.
-	reconnectCount uint64
+	reconnectCount *uint64
 	// sync.Cond that broadcasts whenever a connection is successfully re-established
 	reconnectCond *sync.Cond
 
@@ -329,7 +329,7 @@ func (manager transportManager) retryOperationOnClosed(
 
 // sendDialNotifications sends results of a dial attempt to all
 // transportManager.NotifyDial subscribers.
-func (manager transportManager) sendDialNotifications(err error) {
+func (manager *transportManager) sendDialNotifications(err error) {
 	manager.notificationSubscriberLock.Lock()
 	defer manager.notificationSubscriberLock.Unlock()
 
@@ -347,7 +347,7 @@ func (manager transportManager) sendDialNotifications(err error) {
 
 // sendDisconnectNotifications sends the error from NotifyClose of the underlying
 // connection when a disconnect occurs to all NotifyOnDisconnect subscribers.
-func (manager transportManager) sendDisconnectNotifications(
+func (manager *transportManager) sendDisconnectNotifications(
 	streadwayErr *streadway.Error,
 ) {
 	manager.notificationSubscriberLock.Lock()
@@ -375,7 +375,7 @@ func (manager transportManager) sendDisconnectNotifications(
 }
 
 // sendCloseNotifications sends notification to all NotifyOnClose subscribers.
-func (manager transportManager) sendCloseNotifications(err *streadway.Error) {
+func (manager *transportManager) sendCloseNotifications(err *streadway.Error) {
 	manager.notificationSubscriberLock.Lock()
 	defer manager.notificationSubscriberLock.Unlock()
 
@@ -400,7 +400,7 @@ func (manager transportManager) sendCloseNotifications(err *streadway.Error) {
 //
 // For finer-grained connection status, see NotifyDial and NotifyDisconnect, which
 // will both send individual events when the connection is lost or re-acquired.
-func (manager transportManager) NotifyClose(
+func (manager *transportManager) NotifyClose(
 	receiver chan *streadway.Error,
 ) chan *streadway.Error {
 	args := amqpmiddleware.ArgsNotifyClose{
@@ -413,7 +413,7 @@ func (manager transportManager) NotifyClose(
 // NotifyDial is new for robust Roger transportType objects. NotifyDial will send all
 // subscribers an event notification every time we try to re-acquire a connection. This
 // will include both failure AND successes.
-func (manager transportManager) NotifyDial(
+func (manager *transportManager) NotifyDial(
 	receiver chan error,
 ) error {
 	args := amqpmiddleware.ArgsNotifyDial{
@@ -426,7 +426,7 @@ func (manager transportManager) NotifyDial(
 // NotifyDisconnect is new for robust Roger transportType objects. NotifyDisconnect will
 // send all subscribers an event notification every time the underlying connection is
 // lost.
-func (manager transportManager) NotifyDisconnect(
+func (manager *transportManager) NotifyDisconnect(
 	receiver chan error,
 ) error {
 	args := amqpmiddleware.ArgsNotifyDisconnect{
@@ -438,7 +438,7 @@ func (manager transportManager) NotifyDisconnect(
 
 // cancelCtxCloseTransport cancels the main context and closes the underlying connection
 // during shutdown.
-func (manager transportManager) cancelCtxCloseTransport() {
+func (manager *transportManager) cancelCtxCloseTransport() {
 	// Grab the notification subscriber lock so new subscribers will not get added
 	// without seeing the context cancel.
 	manager.notificationSubscriberLock.Lock()
@@ -462,7 +462,7 @@ func (manager transportManager) cancelCtxCloseTransport() {
 
 // Close the robust connection. This both closes the current connection and keeps it
 // from reconnecting.
-func (manager transportManager) Close() error {
+func (manager *transportManager) Close() error {
 	args := amqpmiddleware.ArgsClose{TransportType: manager.transport.transportType()}
 	return manager.handlers.transportClose(manager.ctx, args)
 }
@@ -476,7 +476,7 @@ func (manager transportManager) Close() error {
 // objects, rogerRabbit makes IsClosed() available on both connections and channels.
 // IsClosed() will return false until the connection / channel is shut down, even if the
 // underlying connection is currently disconnected and waiting to reconnectMiddleware.
-func (manager transportManager) IsClosed() bool {
+func (manager *transportManager) IsClosed() bool {
 	// If the context is cancelled, the livesOnce is closed.
 	return manager.ctx.Err() != nil
 }
@@ -497,12 +497,15 @@ func (manager *transportManager) setup(
 ) {
 	ctx, cancelFunc := context.WithCancel(ctx)
 
+	reconnectCount := uint64(0)
+
 	manager.ctx = ctx
 	manager.cancelFunc = cancelFunc
 	manager.transport = transport
 	manager.transportLock = new(sync.RWMutex)
 	manager.notificationSubscriberLock = new(sync.Mutex)
 	manager.reconnectCond = sync.NewCond(manager.transportLock)
+	manager.reconnectCount = &reconnectCount
 
 	// Create the base method handlers.
 	manager.handlers = newTransportManagerHandlers(manager, middleware)

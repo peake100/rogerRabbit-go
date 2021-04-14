@@ -31,6 +31,7 @@ test:
 .PHONY: lint
 lint:
 	-revive -config revive.toml ./...
+	-go vet ./...
 
 .PHONY: format
 format:

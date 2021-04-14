@@ -180,7 +180,6 @@ func (builder transportHandlersBuilder) createClose() amqpmiddleware.HandlerClos
 	manager := builder.manager
 
 	handler := func(ctx context.Context, args amqpmiddleware.ArgsClose) error {
-
 		// If the context has already been cancelled, we can exit.
 		if manager.ctx.Err() != nil {
 			return streadway.ErrClosed

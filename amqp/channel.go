@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
+	"sync"
+	"sync/atomic"
 	"testing"
 )
 
@@ -33,6 +35,11 @@ type Channel struct {
 	// connection.
 	// The current, underlying channel object.
 	underlyingChannel *BasicChannel
+	// We have the transport channel that controls when methods can access the
+	// underlying transport, but the reconnect logic needs to know that when it is
+	// fetching the current transport, that transport is not going to switch out from
+	// under it.
+	underlyingChannelLock *sync.Mutex
 
 	// rogerConn us the roger Connection we will use to re-establish dropped channels.
 	rogerConn *Connection
@@ -58,7 +65,13 @@ func (channel *Channel) transportType() amqpmiddleware.TransportType {
 // underlyingTransport implements reconnects and returns the underlying
 // streadway.Channel as a livesOnce interface
 func (channel *Channel) underlyingTransport() livesOnce {
-	return channel.underlyingChannel
+	// Grab the lock and only release it once we have moved the pointer for the current
+	// channel into a variable. We don't want it switching out from under us as we
+	// return.
+	channel.underlyingChannelLock.Lock()
+	defer channel.underlyingChannelLock.Unlock()
+	current := channel.underlyingChannel
+	return current
 }
 
 // cleanup implements reconnects and releases a WorkGroup that allows event relays
@@ -73,23 +86,37 @@ func (channel *Channel) cleanup() error {
 // underlying channel connection.
 func (channel *Channel) tryReconnect(
 	ctx context.Context, attempt uint64,
-) error {
+) (err error) {
 	// Wait for all event processors processing events from the previous channel to be
 	// ready.
 	channel.relaySync.WaitOnLegComplete()
 
-	// Invoke all our reconnection middleware and channelReconnect the channel.
-	ags := amqpmiddleware.ArgsChannelReconnect{
-		Ctx:     ctx,
-		Attempt: attempt,
-	}
-	result, err := channel.handlers.channelReconnect(channel.ctx, ags)
+	// Set up the new channel
+	func() {
+		// Grab the channel lock so that while we are getting a new channel nothing
+		// can inspect the channel. This is important because we have context
+		// cancellation routines that might try to close the current channel and miss
+		// the new one.
+		channel.underlyingChannelLock.Lock()
+		defer channel.underlyingChannelLock.Unlock()
+
+		// Invoke all our reconnection middleware and channelReconnect the channel.
+		ags := amqpmiddleware.ArgsChannelReconnect{
+			Ctx:     ctx,
+			Attempt: attempt,
+		}
+
+		var result amqpmiddleware.ResultsChannelReconnect
+		result, err = channel.handlers.channelReconnect(channel.ctx, ags)
+		if err != nil {
+			return
+		}
+		channel.underlyingChannel = result.Channel
+	}()
+
 	if err != nil {
 		return err
 	}
-
-	// Set up the new channel
-	channel.underlyingChannel = result.Channel
 
 	// Synchronize the relays
 	channel.relaySync.AllowSetup()
@@ -1398,7 +1425,7 @@ func (tester *ChannelTesting) UnderlyingConnection() *BasicConnection {
 
 // ReconnectionCount returns the number of times this channel has been reconnected.
 func (tester *ChannelTesting) ReconnectionCount() uint64 {
-	return tester.channel.reconnectCount
+	return atomic.LoadUint64(tester.channel.reconnectCount)
 }
 
 // GetMiddlewareProvider returns a middleware provider for inspection or fails the test
