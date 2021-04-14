@@ -265,7 +265,7 @@ func isRepeatErr(err error) bool {
 
 // retryOperationOnClosedSingle attempts a Connection or Channel channel method a single
 // time.
-func (manager transportManager) retryOperationOnClosedSingle(
+func (manager *transportManager) retryOperationOnClosedSingle(
 	transportCtx context.Context,
 	opCtx context.Context,
 	operation func(ctx context.Context) error,
@@ -305,7 +305,7 @@ func (manager transportManager) retryOperationOnClosedSingle(
 // returned or ctx expires. This is a helper method for implementing methods like
 // Channel.QueueBind, in which we want to retry the operation if our underlying
 // livesOnce mechanism has connection issues.
-func (manager transportManager) retryOperationOnClosed(
+func (manager *transportManager) retryOperationOnClosed(
 	transportCtx context.Context,
 	operation func(ctx context.Context) error,
 	retry bool,

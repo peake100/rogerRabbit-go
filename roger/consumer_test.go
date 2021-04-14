@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
 	"github.com/peake100/rogerRabbit-go/amqptest"
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
 	"sync"
 	"testing"
@@ -60,7 +59,7 @@ func (consumer *BasicTestConsumer) SetupChannel(
 }
 
 func (consumer *BasicTestConsumer) HandleDelivery(
-	ctx context.Context, delivery datamodels.Delivery, logger zerolog.Logger,
+	ctx context.Context, delivery datamodels.Delivery,
 ) (err error, requeue bool) {
 
 	// Check whether all messages have been received, then signal receipt.
@@ -70,11 +69,6 @@ func (consumer *BasicTestConsumer) HandleDelivery(
 	if consumer.ReceivedMessageCount == consumer.ExpectedMessageCount {
 		close(consumer.AllReceived)
 	}
-
-	logger.Info().
-		Bytes("BODY", delivery.Body).
-		Int("RECEIVED_COUNT", consumer.ReceivedMessageCount).
-		Msg("message received")
 
 	return nil, false
 }
