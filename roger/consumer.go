@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	streadway "github.com/streadway/amqp"
 	"sync"
 )
@@ -73,7 +71,7 @@ type AmqpDeliveryProcessor interface {
 	// result in it being logged and the delivery being nacked. If requeue is true, the
 	// nacked delivery will be requeued. If err is nil, requeue is ignored.
 	HandleDelivery(
-		ctx context.Context, delivery datamodels.Delivery, logger zerolog.Logger,
+		ctx context.Context, delivery datamodels.Delivery,
 	) (err error, requeue bool)
 
 	// Cleanup is called at shutdown to allow the route handler to clean up any
@@ -85,9 +83,6 @@ type AmqpDeliveryProcessor interface {
 type ConsumerOpts struct {
 	// The maximum number of workers that can be active at one time.
 	maxWorkers int
-
-	// logger to use
-	logger zerolog.Logger
 }
 
 // WithMaxWorkers sets the maximum number of workers that can be running at the same
@@ -97,16 +92,9 @@ func (opts *ConsumerOpts) WithMaxWorkers(max int) *ConsumerOpts {
 	return opts
 }
 
-// WithLogger sets a zerolog.Logger to use for logging. Defaults to a fresh logger with
-// the global settings applied.
-func (opts *ConsumerOpts) WithLogger(logger zerolog.Logger) *ConsumerOpts {
-	opts.logger = logger
-	return opts
-}
-
 // NewConsumerOpts returns new ConsumerOpts object with default settings.
 func NewConsumerOpts() *ConsumerOpts {
-	return new(ConsumerOpts).WithLogger(log.Logger)
+	return new(ConsumerOpts)
 }
 
 // Consumer is a service helper for consuming messages from one or more queues.
@@ -131,9 +119,6 @@ type Consumer struct {
 
 	// Caller options.
 	opts ConsumerOpts
-
-	// Logger.
-	logger zerolog.Logger
 }
 
 // RegisterProcessor registers a consumer handler. Will panic if called after consumer
@@ -156,7 +141,6 @@ func (consumer *Consumer) handleDelivery(
 	handler AmqpDeliveryProcessor,
 	delivery datamodels.Delivery,
 	args *ConsumeArgs,
-	logger zerolog.Logger,
 	complete *sync.WaitGroup,
 ) {
 	defer complete.Done()
@@ -169,20 +153,10 @@ func (consumer *Consumer) handleDelivery(
 		}()
 	}
 
-	// Create a logger for this delivery.
-	logger = logger.With().
-		Uint64("DELIVERY_TAG", delivery.DeliveryTag).
-		Str("MESSAGE_ID", delivery.MessageId).
-		Logger()
-
 	// Create a context for this delivery derived from the consumer context.
 	deliveryCtx, deliveryCancel := context.WithCancel(consumer.ctx)
 	defer deliveryCancel()
-	err, requeueDelivery := handler.HandleDelivery(deliveryCtx, delivery, logger)
-	// Log any errors returned
-	if err != nil {
-		logger.Error().Err(err).Msg("error handling delivery")
-	}
+	err, requeueDelivery := handler.HandleDelivery(deliveryCtx, delivery)
 
 	// If we are auto-acking, continue.
 	if args.AutoAck {
@@ -195,15 +169,6 @@ func (consumer *Consumer) handleDelivery(
 		err = delivery.Ack(false)
 	} else {
 		err = delivery.Nack(false, requeueDelivery)
-	}
-
-	// Log any acknowledgement errors.
-	if err != nil {
-		logger.Error().
-			Bool("ACK", ack).
-			Bool("REQUEUE", requeueDelivery).
-			Err(err).
-			Msg("error acknowledging delivery")
 	}
 }
 
@@ -218,11 +183,6 @@ func (consumer *Consumer) runProcessor(
 
 	// Cache the consumer args in a var
 	args := handler.ConsumeArgs()
-
-	// Setup a logger for this consumer.
-	consumerLogger := consumer.logger.With().
-		Str("CONSUMER", args.ConsumerName).
-		Logger()
 
 	// Create the consumer channel we will pull deliveries over.
 	consumerChan, err := consumer.channel.Consume(
@@ -239,9 +199,6 @@ func (consumer *Consumer) runProcessor(
 		// a critical setup stage happening in it's own goroutine. It is better to fail
 		// fast here and nuke the consumer if something goes wrong.
 		defer consumer.StartShutdown()
-		consumerLogger.Error().
-			Err(err).
-			Msg("error creating channel consumer. triggering shutdown")
 		return
 	}
 
@@ -269,7 +226,7 @@ deliveriesLoop:
 		// Launch a delivery handler.
 		workersComplete.Add(1)
 		go consumer.handleDelivery(
-			handler, delivery, args, consumerLogger, workersComplete,
+			handler, delivery, args, workersComplete,
 		)
 	}
 
@@ -278,10 +235,6 @@ deliveriesLoop:
 
 	// Shut down the consumer
 	err = handler.Cleanup(consumer.channel)
-	if err != nil {
-		// Log any shutdown error
-		consumerLogger.Error().Err(err).Msg("error running cleanup")
-	}
 }
 
 // runHandlerSetups runs all the amqp.Channel setups from our registered processors.
@@ -375,6 +328,5 @@ func NewConsumer(
 		started:        false,
 		workerThrottle: make(chan struct{}, opts.maxWorkers),
 		opts:           *opts,
-		logger:         opts.logger,
 	}
 }
