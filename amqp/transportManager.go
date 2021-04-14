@@ -76,7 +76,6 @@ func (signaler *TestReconnectSignaler) WaitOnReconnect(ctx context.Context) {
 			signaler.t.FailNow()
 		}
 	}
-
 }
 
 // TransportTesting provides testing methods for testing Channel and Connection.
