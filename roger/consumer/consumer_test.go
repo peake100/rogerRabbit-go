@@ -105,14 +105,6 @@ func (suite *ConsumerSuite) TestConsumeBasicLifecycle() {
 
 	queueName := "test_consume_basic_lifecycle"
 
-	_, err := suite.ChannelPublish().QueueInspect(queueName)
-	suite.EqualError(
-		err,
-		"Exception (404) Reason: \"NOT_FOUND - no queue"+
-			" 'test_consume_basic_lifecycle' in vhost '/'\"",
-		"queue not created",
-	)
-
 	processor := &BasicTestConsumer{
 		QueueName:            queueName,
 		ExpectedMessageCount: 0,
@@ -125,7 +117,7 @@ func (suite *ConsumerSuite) TestConsumeBasicLifecycle() {
 	consumer := New(suite.ChannelConsume(), DefaultOpts().WithLoggingLevel(zerolog.DebugLevel))
 	suite.T().Cleanup(consumer.StartShutdown)
 
-	err = consumer.RegisterProcessor(processor)
+	err := consumer.RegisterProcessor(processor)
 	if !suite.NoError(err, "register processor") {
 		suite.T().FailNow()
 	}

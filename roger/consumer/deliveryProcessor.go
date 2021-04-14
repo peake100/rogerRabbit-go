@@ -58,6 +58,10 @@ type deliveryProcessor struct {
 	// CleanupChannel is the user-provided AmqpDeliveryProcessor.CleanupChannel wrapped
 	// in middleware.
 	CleanupChannel middleware.HandlerCleanupChannel
+
+	// consumeChan is created during the setup process so we can handle errors there
+	// and stored here.
+	consumeChan <-chan amqp.Delivery
 }
 
 // newDeliveryProcessor creates a new deliveryProcessor from a AmqpDeliveryProcessor and the middlewares in opts.

@@ -50,7 +50,7 @@ func (middleware DefaultLogging) SetupChannel(next HandlerSetupChannel) HandlerS
 		} else {
 			logger.Debug().
 				TimeDiff("DURATION", time.Now().UTC(), start).
-				Msg("AMQP Channel Cleanup complete")
+				Msg("AMQP Channel Setup complete")
 		}
 		return err
 	}

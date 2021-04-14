@@ -30,6 +30,9 @@ type Consumer struct {
 	// at a single time. Whenever a new delivery is received.
 	workerThrottle chan struct{}
 
+	// errChan is the channel we should unrecoverable process errors on.
+	processorErrs chan error
+
 	// Caller options.
 	opts Opts
 }
@@ -100,38 +103,44 @@ func (consumer *Consumer) runProcessor(
 ) {
 	// Release work complete WaitGroup on exit.
 	defer complete.Done()
+	var err error
 
-	// Create the consumer channel we will pull deliveries over.
-	consumerChan, err := consumer.channel.Consume(
-		processor.AmqpArgs.Queue,
-		processor.AmqpArgs.ConsumerName,
-		processor.AmqpArgs.AutoAck,
-		processor.AmqpArgs.Exclusive,
-		false,
-		false,
-		processor.AmqpArgs.Args,
-	)
-	if err != nil {
-		// If there is an error here, log it and bring down the whole consumer. This is
-		// a critical setup stage happening in it's own goroutine. It is better to fail
-		// fast here and nuke the consumer if something goes wrong.
-		defer consumer.StartShutdown()
-		return
+	// We need to communicate any unexpected errors to the main thread. Only th first
+	// such error will be fetched, so we can move on if there is not a listener waiting
+	// for it.
+	defer func() {
+		if err == nil {
+			return
+		}
+		select {
+		case consumer.processorErrs <- err:
+		default:
+		}
+	}()
+
+	consumer.processDeliveries(processor)
+	// If the processor exited before the main context cancellation, something went
+	// wrong.
+	if consumer.ctx.Err() == nil {
+		err = fmt.Errorf(
+			"processor '%v' exited before shutdown",
+			processor.AmqpArgs.ConsumerName,
+		)
 	}
 
-	consumer.processDeliveries(processor, consumerChan)
-
-	// Shut down the consumer
+	// Shut down the consumer with a 30 second timeout.
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	err = processor.CleanupChannel(ctx, consumer.channel)
+	if err != nil {
+		err = fmt.Errorf(
+			"error cleaning up channels for '%v': %w", processor.AmqpArgs.Args, err,
+		)
+	}
 }
 
-func (consumer *Consumer) processDeliveries(
-	processor deliveryProcessor,
-	consumerChan <-chan amqp.Delivery,
-) {
+func (consumer *Consumer) processDeliveries(processor deliveryProcessor) {
 	// WaitGroup for workers to close when done.
 	workersComplete := new(sync.WaitGroup)
 	// Wait for all outstanding workers to be complete before we exit
@@ -146,7 +155,7 @@ func (consumer *Consumer) processDeliveries(
 		select {
 		case <-consumer.ctx.Done():
 			return
-		case delivery = <-consumerChan:
+		case delivery = <-processor.consumeChan:
 		}
 
 		// If we are throttling simultaneous worker count, we need to push to the
@@ -170,20 +179,32 @@ func (consumer *Consumer) processDeliveries(
 // runHandlerSetups runs all the amqp.Channel setups from our registered processors.
 func (consumer *Consumer) runHandlerSetups() error {
 	// Let all the processors run their setup script and return an error if.
-	for _, thisHandler := range consumer.processors {
-		var err error
-		func() {
-			ctx, cancel := context.WithCancel(consumer.ctx)
-			defer cancel()
-			err = thisHandler.SetupChannel(ctx, consumer.channel)
-		}()
+	for i, thisProcessor := range consumer.processors {
+		err := thisProcessor.SetupChannel(consumer.ctx, consumer.channel)
 		if err != nil {
 			return fmt.Errorf(
 				"error setting up channel for consumer %v: %w",
-				thisHandler.AmqpArgs.ConsumerName,
+				thisProcessor.AmqpArgs.ConsumerName,
 				err,
 			)
 		}
+
+		// Create the consumer channel we will pull deliveries over.
+		thisProcessor.consumeChan, err = consumer.channel.Consume(
+			thisProcessor.AmqpArgs.Queue,
+			thisProcessor.AmqpArgs.ConsumerName,
+			thisProcessor.AmqpArgs.AutoAck,
+			thisProcessor.AmqpArgs.Exclusive,
+			false,
+			false,
+			thisProcessor.AmqpArgs.Args,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"error consuming from queue '%v': %w", thisProcessor.AmqpArgs.ConsumerName, err,
+			)
+		}
+		consumer.processors[i] = thisProcessor
 	}
 
 	return nil
@@ -194,6 +215,15 @@ func (consumer *Consumer) Run() error {
 	// Close the channel on the way out
 	defer consumer.channel.Close()
 	defer consumer.StartShutdown()
+	var processorErrs error
+
+	// Launch a routine to listen for unexpected processor errors.
+	errsCollected := make(chan struct{})
+	go func() {
+		defer close(errsCollected)
+		defer consumer.StartShutdown()
+		processorErrs = <-consumer.processorErrs
+	}()
 
 	// Mark the consumer as started so we can't register any more processors.
 	func() {
@@ -218,19 +248,23 @@ func (consumer *Consumer) Run() error {
 	}
 
 	// Create a WaitGroup to wait for all work to be complete.
-	consumersComplete := new(sync.WaitGroup)
-
-	// Wait on this before exiting
-	defer consumersComplete.Wait()
+	processorsDone := new(sync.WaitGroup)
 
 	// Launch the individual consumers.
-	for _, thisHandler := range consumer.processors {
-		consumersComplete.Add(1)
-		go consumer.runProcessor(thisHandler, consumersComplete)
+	for _, thisProcessor := range consumer.processors {
+		processorsDone.Add(1)
+		go consumer.runProcessor(thisProcessor, processorsDone)
 	}
 
-	// Return.
-	return nil
+	// Wait for the processors to all exit.
+	processorsDone.Wait()
+
+	// Wait for error collection to be done.
+	close(consumer.processorErrs)
+	<-errsCollected
+
+	// Return any unexpected errors.
+	return processorErrs
 }
 
 // StartShutdown beings shutdown of the Consumer. This method will return immediately,
@@ -251,6 +285,7 @@ func New(channel *amqp.Channel, opts Opts) *Consumer {
 		handlersLock:   sync.Mutex{},
 		started:        false,
 		workerThrottle: make(chan struct{}, opts.maxWorkers),
+		processorErrs:  make(chan error),
 		opts:           opts,
 	}
 }
