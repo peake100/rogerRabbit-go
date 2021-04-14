@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-<<<<<<< HEAD
 	"sync"
 	"sync/atomic"
-=======
->>>>>>> dev
 	"testing"
 )
 
@@ -94,7 +91,6 @@ func (channel *Channel) tryReconnect(
 	// ready.
 	channel.relaySync.WaitOnLegComplete()
 
-<<<<<<< HEAD
 	// Set up the new channel
 	func() {
 		// Grab the channel lock so that while we are getting a new channel nothing
@@ -117,25 +113,10 @@ func (channel *Channel) tryReconnect(
 		}
 		channel.underlyingChannel = result.Channel
 	}()
-
-=======
-	// Invoke all our reconnection middleware and channelReconnect the channel.
-	ags := amqpmiddleware.ArgsChannelReconnect{
-		Ctx:     ctx,
-		Attempt: attempt,
-	}
-	result, err := channel.handlers.channelReconnect(channel.ctx, ags)
->>>>>>> dev
 	if err != nil {
 		return err
 	}
 
-<<<<<<< HEAD
-=======
-	// Set up the new channel
-	channel.underlyingChannel = result.Channel
-
->>>>>>> dev
 	// Synchronize the relays
 	channel.relaySync.AllowSetup()
 	channel.relaySync.WaitOnSetup()
