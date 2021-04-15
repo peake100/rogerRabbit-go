@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	streadway "github.com/streadway/amqp"
-	"sync"
 )
 
 // createEventMetadata creates the amqpmiddleware.EventMetadata for an event
@@ -17,7 +16,7 @@ func createEventMetadata(legNum int, eventNum int64) amqpmiddleware.EventMetadat
 
 // eventRelay is a common interface for relaying events from the underlying channels to
 // the client without interruption. The boilerplate of handling all the synchronization
-// locks will be handled for any relay passed to Channel.setupAndLaunchEventRelay()
+// locks will be handled for any relay passed to Channel.eventRelaySetupAndLaunch()
 type eventRelay interface {
 	// SetupForRelayLeg runs the setup for a new relay leg.
 	SetupForRelayLeg(newChannel *streadway.Channel) error
@@ -41,6 +40,83 @@ func shutdownRelay(relay eventRelay, relaySync relaySync) {
 
 	// Invoke the shutdown method of the relay.
 	_ = relay.Shutdown()
+}
+
+// eventRelaySetupAndLaunch sets up a new relay and launches a goroutine to run it
+func (channel *Channel) eventRelaySetupAndLaunch(relay eventRelay) {
+	// Launch the runner
+	thisSync := newRelaySync(channel.ctx)
+	go channel.runEventRelay(relay, thisSync)
+}
+
+// runEventRelay should be launched as goroutine to run an event relay after it's
+// initial setup.
+func (channel *Channel) runEventRelay(relay eventRelay, relaySync relaySync) {
+	// Shutdown our relay on exit.
+	defer shutdownRelay(relay, relaySync)
+
+	firstLegComplete := make(chan struct{})
+	channel.eventRelaySetup(relay, relaySync, firstLegComplete)
+
+	// Wait for ou first leg to complete, then fall into a rhythm with the transport
+	// manager
+	<-firstLegComplete
+	relayLeg := 1
+
+	// Start running each leg.
+	for {
+		channel.runEventRelayCycle(relay, relaySync, relayLeg)
+		if relaySync.IsDone() {
+			return
+		}
+		relayLeg++
+	}
+}
+
+func (channel *Channel) eventRelaySetup(
+	relay eventRelay, relaySync relaySync, firstLegComplete chan struct{},
+) {
+	// Signal this leg in an op so we can make sure we grab the right channel.
+	_ = channel.transportManager.retryOperationOnClosed(
+		channel.ctx,
+		func(ctx context.Context) error {
+			// Register the relay with the channel.
+			channel.relaySync.AddRelay(relaySync.shared)
+
+			setupComplete := make(chan struct{})
+
+			// Run the fist leg with the current channel. We need to launch it in a
+			// routine so we can signal leg complete (the manager needs to grab a write
+			// lock to the transport before it checks the relays)
+			go func(currentChannel *streadway.Channel) {
+				defer close(firstLegComplete)
+				defer relaySync.SignalLegComplete()
+
+				// Run the relay setup then signal that initial setup is complete.
+				var err error
+				func() {
+					defer close(setupComplete)
+					err = relay.SetupForRelayLeg(currentChannel)
+				}()
+				if err != nil {
+					return
+				}
+
+				// Run the first relay leg.
+				if done := relay.RunRelayLeg(0); done {
+					relaySync.SetDone()
+				}
+			}(channel.underlyingChannel)
+
+			// Wait for the relay setup to complete before we return or release the read
+			// lock to the user. Otherwise the user may think we are receiving events
+			// and do something that creates them before we've actually set that up.
+			<-setupComplete
+
+			return nil
+		},
+		true,
+	)
 }
 
 // runEventRelayCycle runs a single, full cycle of setting up and running a relay leg.
@@ -68,63 +144,4 @@ func (channel *Channel) runEventRelayCycle(
 	if done := relay.RunRelayLeg(legNum); done {
 		relaySync.SetDone()
 	}
-}
-
-// runEventRelay should be launched as goroutine to run an event relay after it's
-// initial setup.
-func (channel *Channel) runEventRelay(relay eventRelay, relaySync relaySync) {
-	// Shutdown our relay on exit.
-	defer shutdownRelay(relay, relaySync)
-
-	firstLegComplete := new(sync.WaitGroup)
-	firstLegComplete.Add(1)
-
-	// Signal this leg in an op so we can make sure we grab the right channel.
-	_ = channel.transportManager.retryOperationOnClosed(
-		channel.ctx,
-		func(ctx context.Context) error {
-			// Register the relay with the channel.
-			channel.relaySync.AddRelay(relaySync.shared)
-
-			// Run the fist leg with the current channel. We need to launch it in a
-			// routine so we can signal leg complete (the manager needs to grab a write
-			// lock to the transport before it checks the relays)
-			go func(currentChannel *streadway.Channel) {
-				defer firstLegComplete.Done()
-				defer relaySync.SignalLegComplete()
-
-				err := relay.SetupForRelayLeg(currentChannel)
-				if err != nil {
-					return
-				}
-
-				if done := relay.RunRelayLeg(0); done {
-					relaySync.SetDone()
-				}
-			}(channel.underlyingChannel)
-			return nil
-		},
-		true,
-	)
-
-	// Wait for ou first leg to complete, then fall into a rhythm with the transport
-	// manager
-	firstLegComplete.Wait()
-	relayLeg := 1
-
-	// Start running each leg.
-	for {
-		channel.runEventRelayCycle(relay, relaySync, relayLeg)
-		if relaySync.IsDone() {
-			return
-		}
-		relayLeg++
-	}
-}
-
-// setupAndLaunchEventRelay sets up a new relay and launches a goroutine to run it
-func (channel *Channel) setupAndLaunchEventRelay(relay eventRelay) {
-	// Launch the runner
-	thisSync := newRelaySync(channel.ctx)
-	go channel.runEventRelay(relay, thisSync)
 }
