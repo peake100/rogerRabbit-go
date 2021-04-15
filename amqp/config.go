@@ -3,7 +3,6 @@ package amqp
 import (
 	"crypto/tls"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"net"
 	"time"
 )
@@ -53,9 +52,16 @@ type Config struct {
 	// used during TLS and AMQP handshaking.
 	Dial func(network, addr string) (net.Conn, error)
 
-	// If set to true, the default handlers will not be registered on channels created
-	// through the associated connection.
+	// If set to true, the default handlers will not be registered on connection or
+	// channels created as a result of passing this config.
 	NoDefaultMiddleware bool
+
+	// DefaultLoggerLevel is the logger level for the default logging middleware.
+	//
+	// If NoDefaultMiddleware is true, this setting will have no effect.
+	//
+	// Default: zerolog.InfoLevel.
+	DefaultLoggerLevel zerolog.Level
 
 	// ConnectionMiddleware holds middleware to add to connection method and event
 	// handlers.
@@ -63,18 +69,14 @@ type Config struct {
 
 	// ChannelMiddleware holds middleware to add to channel method and event handlers.
 	ChannelMiddleware ChannelMiddlewares
-
-	// The logger to use for internal logging. If none, the default zerolog logger will
-	// be used.
-	Logger zerolog.Logger
 }
 
 // DefaultConfig returns the default config for Dial() as it is in the streadway
 // application.
 func DefaultConfig() Config {
 	return Config{
-		Heartbeat: defaultHeartbeat,
-		Locale:    defaultLocale,
-		Logger:    log.Logger,
+		Heartbeat:          defaultHeartbeat,
+		Locale:             defaultLocale,
+		DefaultLoggerLevel: zerolog.InfoLevel,
 	}
 }

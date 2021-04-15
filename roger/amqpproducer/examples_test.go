@@ -1,16 +1,16 @@
-package roger_test
+package amqpproducer_test
 
 import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/amqptest"
-	"github.com/peake100/rogerRabbit-go/roger"
+	"github.com/peake100/rogerRabbit-go/roger/amqpproducer"
 	"sync"
 	"time"
 )
 
-func ExampleNewProducer() {
+func ExampleNew() {
 	// Get a new connection to our test broker.
 	connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
 	if err != nil {
@@ -39,7 +39,7 @@ func ExampleNewProducer() {
 	// default opts being used. By default, a Producer will put the passed channel in
 	// confirmation mode, and each time publish is called, will block until a
 	// confirmation from the server has been received.
-	producer := roger.NewProducer(channel, nil)
+	producer := amqpproducer.New(channel, nil)
 	producerComplete := make(chan struct{})
 
 	// Run the producer in it's own goroutine.

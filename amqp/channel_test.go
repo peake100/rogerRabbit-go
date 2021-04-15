@@ -1022,8 +1022,10 @@ func (suite *ChannelMethodsSuite) Test0170_NotifyReturn() {
 	// In order to force returns, we are going to send to a queue that does not exist.
 
 	publishCount := 10
+	publishComplete := make(chan struct{})
 
 	go func() {
+		defer close(publishComplete)
 		for i := 0; i < publishCount; i++ {
 			err := suite.ChannelPublish().Publish(
 				"",
@@ -1057,9 +1059,19 @@ func (suite *ChannelMethodsSuite) Test0170_NotifyReturn() {
 		}
 	}()
 
+	timeout := time.NewTimer(5 * time.Second)
+	defer timeout.Stop()
+
+	select {
+	case <-publishComplete:
+	case <-timeout.C:
+		suite.T().Error("publish complete timeout")
+		suite.T().FailNow()
+	}
+
 	select {
 	case <-returnsComplete:
-	case <-time.NewTimer(5 * time.Second).C:
+	case <-timeout.C:
 		suite.T().Error("returns received timeout")
 		suite.T().FailNow()
 	}

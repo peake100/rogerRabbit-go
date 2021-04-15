@@ -1,18 +1,14 @@
 package amqp
 
 import (
-	_ "code.cloudfoundry.org/go-diodes" // import for lockless writing
 	"context"
-	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/defaultmiddlewares"
+	"github.com/peake100/rogerRabbit-go/internal"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/diode"
 	streadway "github.com/streadway/amqp"
-	"os"
 	"sync"
 	"testing"
-	"time"
 )
 
 // Connection manages the serialization and deserialization of frames from IO
@@ -85,7 +81,6 @@ func (conn *Connection) tryReconnect(ctx context.Context, attempt uint64) error 
 	args := amqpmiddleware.ArgsConnectionReconnect{
 		Ctx:     ctx,
 		Attempt: attempt,
-		Logger:  conn.dialConfig.Logger,
 	}
 	results, err := conn.handlerReconnect(conn.ctx, args)
 	if err != nil {
@@ -227,7 +222,7 @@ func newConnection(url string, config Config) (*Connection, error) {
 		config.ChannelMiddleware.AddProviderFactory(defaultmiddlewares.NewRouteDeclarationMiddleware)
 
 		connLoggerFactory, chanLoggerFactory := defaultmiddlewares.NewLoggerFactories(
-			createDefaultLogger(),
+			internal.CreateDefaultLogger(config.DefaultLoggerLevel),
 			"default",
 			zerolog.DebugLevel,
 			zerolog.DebugLevel,
@@ -279,11 +274,4 @@ func newConnection(url string, config Config) (*Connection, error) {
 	conn.handlerReconnect = reconnectHandler
 
 	return conn, nil
-}
-
-func createDefaultLogger() zerolog.Logger {
-	wr := diode.NewWriter(os.Stdout, 1000, 10*time.Millisecond, func(missed int) {
-		_, _ = fmt.Printf("Logger Dropped %d messages", missed)
-	})
-	return zerolog.New(zerolog.ConsoleWriter{Out: wr})
 }

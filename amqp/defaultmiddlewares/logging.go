@@ -29,7 +29,6 @@ func (middleware loggingMiddlewareCore) createMethodLogger(
 	return middleware.Logger.
 		With().
 		Str(":METHOD_CALL", methodName).
-		Timestamp().
 		Logger()
 }
 
@@ -108,9 +107,7 @@ func (middleware loggingMiddlewareCore) logEvent(
 	event.Timestamp().Send()
 }
 
-func (loggingMiddlewareCore) addCtxLogger(
-	ctx context.Context, methodLogger zerolog.Logger,
-) context.Context {
+func (loggingMiddlewareCore) addCtxLogger(ctx context.Context, methodLogger zerolog.Logger) context.Context {
 	return context.WithValue(ctx, MetadataKey, methodLogger)
 }
 
