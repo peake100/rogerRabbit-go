@@ -131,9 +131,12 @@ func (suite *ConsumerSuite) TestConsumeBasicLifecycle() {
 		suite.NoError(err, "run consumer")
 	}()
 
+	timeout := time.NewTimer(3 * time.Second)
+	defer timeout.Stop()
+
 	select {
 	case <-processor.SetupComplete:
-	case <-time.NewTimer(3 * time.Second).C:
+	case <-timeout.C:
 		suite.T().Error("channel setup timeout")
 		suite.T().FailNow()
 	}
@@ -145,7 +148,7 @@ func (suite *ConsumerSuite) TestConsumeBasicLifecycle() {
 
 	select {
 	case <-runComplete:
-	case <-time.NewTimer(3 * time.Second).C:
+	case <-timeout.C:
 		suite.T().Error("shutdown timeout")
 		suite.T().FailNow()
 	}
@@ -197,9 +200,12 @@ func (suite *ConsumerSuite) TestConsumeBasicMessages() {
 	// Publish 10 messages
 	suite.PublishMessages(suite.T(), "", queueName, 10)
 
+	timeout := time.NewTimer(5 * time.Second)
+	defer timeout.Stop()
+
 	select {
 	case <-processor.AllReceived:
-	case <-time.NewTimer(3 * time.Second).C:
+	case <-timeout.C:
 		suite.T().Error("messages processed timeout")
 		suite.T().FailNow()
 	}
@@ -208,7 +214,7 @@ func (suite *ConsumerSuite) TestConsumeBasicMessages() {
 
 	select {
 	case <-runComplete:
-	case <-time.NewTimer(3 * time.Second).C:
+	case <-timeout.C:
 		suite.T().Error("shutdown timeout")
 		suite.T().FailNow()
 	}

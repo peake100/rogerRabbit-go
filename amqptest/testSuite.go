@@ -266,6 +266,11 @@ func (amqpSuite *AmqpSuite) createSingleTestQueue(
 		amqpSuite.T().FailNow()
 	}
 
+	_, err = channel.QueuePurge(queue.Name, false)
+	if !amqpSuite.NoError(err, "error purging queue") {
+		amqpSuite.T().FailNow()
+	}
+
 	return queue
 }
 
@@ -378,6 +383,7 @@ func (amqpSuite *AmqpSuite) publishMessagesConfirm(
 		confirmCount++
 		if confirmCount == count {
 			close(allConfirmed)
+			return
 		}
 	}
 }
