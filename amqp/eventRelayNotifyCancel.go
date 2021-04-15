@@ -2,7 +2,6 @@ package amqp
 
 import (
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
 
@@ -17,42 +16,27 @@ type notifyCancelRelay struct {
 	// handler is the base handler wrapped in all caller-supplied middleware to be
 	// evoked on each event.
 	handler amqpmiddleware.HandlerNotifyCancelEvents
-
-	// Logger
-	logger zerolog.Logger
 }
 
 func (relay *notifyCancelRelay) baseHandler() amqpmiddleware.HandlerNotifyCancelEvents {
 	return func(_ amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyCancel) {
-		if relay.logger.Debug().Enabled() {
-			relay.logger.Debug().
-				Str("CANCELLATION", event.Cancellation).
-				Msg("cancel notification sent")
-		}
-
 		relay.CallerCancellations <- event.Cancellation
 	}
 }
 
-// Logger implements eventRelay and sets up the relay logger.
-func (relay *notifyCancelRelay) Logger(parent zerolog.Logger) zerolog.Logger {
-	logger := parent.With().Str("EVENT_TYPE", "NOTIFY_CANCEL").Logger()
-	relay.logger = logger
-	return relay.logger
-}
-
 // SetupForRelayLeg implements eventRelay, and sets up a new source event channel from
 // streadway/amqp.Channel.NotifyCancel
-func (relay *notifyCancelRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
+func (relay *notifyCancelRelay) SetupForRelayLeg(newChannel *streadway.Channel) {
 	brokerChannel := make(chan string, cap(relay.CallerCancellations))
 	relay.brokerCancellations = brokerChannel
 	newChannel.NotifyCancel(brokerChannel)
-	return nil
 }
 
 // RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyCancel
 // events to the original caller.
-func (relay *notifyCancelRelay) RunRelayLeg(legNum int) (done bool, err error) {
+func (relay *notifyCancelRelay) RunRelayLeg(newChan *streadway.Channel, legNum int) (done bool) {
+	relay.SetupForRelayLeg(newChan)
+
 	eventNum := int64(0)
 	for thisCancellation := range relay.brokerCancellations {
 		relay.handler(
@@ -62,7 +46,7 @@ func (relay *notifyCancelRelay) RunRelayLeg(legNum int) (done bool, err error) {
 		eventNum++
 	}
 
-	return false, nil
+	return false
 }
 
 // Shutdown implements eventRelay, and closes the caller-facing event channel.

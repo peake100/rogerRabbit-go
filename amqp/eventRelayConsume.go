@@ -3,7 +3,6 @@ package amqp
 import (
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
 
@@ -39,14 +38,6 @@ func (relay *consumeRelay) baseHandler() amqpmiddleware.HandlerConsumeEvents {
 	}
 }
 
-// Logger sets up the logger for this relay.
-func (relay *consumeRelay) Logger(parent zerolog.Logger) zerolog.Logger {
-	return parent.With().
-		Str("EVENT_TYPE", "CONSUME").
-		Str("CONSUMER_QUEUE", relay.ConsumeArgs.queue).
-		Logger()
-}
-
 // SetupForRelayLeg implements eventRelay and sets up a new broker Consume channel to
 // relay events from.
 func (relay *consumeRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
@@ -71,7 +62,13 @@ func (relay *consumeRelay) SetupForRelayLeg(newChannel *streadway.Channel) error
 
 // RunRelayLeg implements eventRelay and relays all deliveries from the current
 // underlying streadway/amqp.Channel to the caller.
-func (relay *consumeRelay) RunRelayLeg(legNum int) (done bool, err error) {
+func (relay *consumeRelay) RunRelayLeg(newChannel *streadway.Channel, legNum int) (done bool) {
+	// setup for the leg
+	err := relay.SetupForRelayLeg(newChannel)
+	if err != nil {
+		return false
+	}
+
 	// Drain consumer events
 	eventNum := int64(0)
 	for brokerDelivery := range relay.brokerDeliveries {
@@ -85,7 +82,7 @@ func (relay *consumeRelay) RunRelayLeg(legNum int) (done bool, err error) {
 		eventNum++
 	}
 
-	return false, nil
+	return false
 }
 
 // Shutdown implements eventRelay and closes the caller channel.

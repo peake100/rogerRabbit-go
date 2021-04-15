@@ -1,8 +1,10 @@
 package amqp
 
 import (
+	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
 	streadway "github.com/streadway/amqp"
+	"sync"
 )
 
 // createEventMetadata creates the amqpmiddleware.EventMetadata for an event
@@ -17,18 +19,12 @@ func createEventMetadata(legNum int, eventNum int64) amqpmiddleware.EventMetadat
 // the client without interruption. The boilerplate of handling all the synchronization
 // locks will be handled for any relay passed to Channel.setupAndLaunchEventRelay()
 type eventRelay interface {
-	// SetupForRelayLeg is called once when the relay is first instantiated, and each
-	// time there is a reconnection of the underlying channel. The raw
-	// streadway/amqp.Channel is passed in for any alterations / inspections that need
-	// to be made for the next leg.
-	SetupForRelayLeg(newChannel *streadway.Channel) error
-
 	// RunRelayLeg runs the relay until all events from the streadway/amqp.Channel
 	// passed to SetupForRelayLeg() are exhausted,
 	//
 	// legNum is the leg number starting from 0 and incrementing each time this relay
 	// is called.
-	RunRelayLeg(legNum int) (done bool, err error)
+	RunRelayLeg(newChannel *streadway.Channel, legNum int) (done bool)
 
 	// Shutdown is called to exit the relay. This will usually involve closing the
 	// client-facing channel.
@@ -36,71 +32,71 @@ type eventRelay interface {
 }
 
 // shutdownRelay handles all the boilerplate of calling eventRelay.Shutdown.
-func shutdownRelay(relay eventRelay, relaySync *relaySync) {
+func shutdownRelay(relay eventRelay, relaySync relaySync) {
 	// Release any outstanding WaitGroups we are holding on exit
-	defer relaySync.Complete()
+	defer relaySync.SetDone()
 
 	// Invoke the shutdown method of the relay.
 	_ = relay.Shutdown()
 }
 
-// runEventRelayCycleSetup handles the boilerplate of setting up a relay for the next
-// leg.
-func (channel *Channel) runEventRelayCycleSetup(
-	relay eventRelay,
-	relaySync *relaySync,
-) (setupErr error) {
-	// Release our hold on the event relays setup complete on exit.
-	defer relaySync.SetupComplete()
-
-	// Wait for a new channel to be established.
-	relaySync.WaitToSetup()
-
-	// If the relay is done, return rather than setting up for the next leg.
+// runEventRelayCycle runs a single, full cycle of setting up and running a relay leg.
+func (channel *Channel) runEventRelayCycle(
+	relay eventRelay, relaySync relaySync, legNum int,
+) {
 	if relaySync.IsDone() {
-		return nil
+		return
 	}
 
-	// Set up our next leg.
-	setupErr = relay.SetupForRelayLeg(channel.underlyingChannel)
-
-	return setupErr
-}
-
-// runEventRelayCycleLeg handles the boilerplate of running an event relay leg (relaying
-// all events from a single underlying streadway/ampq.Channel)
-func (channel *Channel) runEventRelayCycleLeg(
-	relay eventRelay, relaySync *relaySync, legNum int,
-) {
-	done, _ := relay.RunRelayLeg(legNum)
-	relaySync.SetDone(done)
-
-	// Log any errors.
-}
-
-// runEventRelayCycle runs a single, full cycle of setting up and running a relay leg.
-func (channel *Channel) runEventRelayCycle(relay eventRelay, relaySync *relaySync, legNum int) {
-	setupErr := channel.runEventRelayCycleSetup(relay, relaySync)
-
-	if !relaySync.IsDone() {
-		relaySync.WaitToRunLeg()
+	newChan := relaySync.WaitForNextLeg()
+	if newChan == nil {
+		return
 	}
 
 	// Whether or not we run the leg, reset our sync to mark the run as complete.
-	defer relaySync.RunLegComplete()
+	defer relaySync.SignalLegComplete()
 
-	// If there was no setup error and our relay is not done, run the leg.
-	if setupErr == nil {
-		channel.runEventRelayCycleLeg(relay, relaySync, legNum)
+	if done := relay.RunRelayLeg(newChan, legNum); done {
+		relaySync.SetDone()
 	}
 }
 
 // runEventRelay should be launched as goroutine to run an event relay after it's
 // initial setup.
-func (channel *Channel) runEventRelay(relay eventRelay, relaySync *relaySync) {
-	relayLeg := 0
+func (channel *Channel) runEventRelay(relay eventRelay, relaySync relaySync) {
 	// Shutdown our relay on exit.
 	defer shutdownRelay(relay, relaySync)
+
+	firstLegComplete := new(sync.WaitGroup)
+	firstLegComplete.Add(1)
+
+	// Signal this leg in an op so we can make sure we grab the right channel.
+	_ = channel.transportManager.retryOperationOnClosed(
+		channel.ctx,
+		func(ctx context.Context) error {
+			// Register the relay with the channel.
+			channel.relaySync.AddRelay(relaySync.shared)
+
+			// Run the fist leg with the current channel. We need to launch it in a
+			// routine so we can signal leg complete (the manager needs to grab a write
+			// lock to the transport before it checks the relays)
+			go func(currentChannel *streadway.Channel) {
+				defer firstLegComplete.Done()
+				defer relaySync.SignalLegComplete()
+
+				if done := relay.RunRelayLeg(currentChannel, 0); done {
+					relaySync.SetDone()
+				}
+			}(channel.underlyingChannel)
+			return nil
+		},
+		true,
+	)
+
+	// Wait for ou first leg to complete, then fall into a rhythm with the transport
+	// manager
+	firstLegComplete.Wait()
+	relayLeg := 1
 
 	// Start running each leg.
 	for {
@@ -113,15 +109,8 @@ func (channel *Channel) runEventRelay(relay eventRelay, relaySync *relaySync) {
 }
 
 // setupAndLaunchEventRelay sets up a new relay and launches a goroutine to run it
-func (channel *Channel) setupAndLaunchEventRelay(relay eventRelay) error {
+func (channel *Channel) setupAndLaunchEventRelay(relay eventRelay) {
 	// Launch the runner
-	thisSync := newRelaySync(channel.relaySync.shared)
+	thisSync := newRelaySync(channel.ctx)
 	go channel.runEventRelay(relay, thisSync)
-	err := thisSync.WaitForInit(channel.ctx)
-	if err != nil {
-		return err
-	}
-
-	// Return
-	return nil
 }

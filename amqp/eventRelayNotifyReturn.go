@@ -2,7 +2,6 @@ package amqp
 
 import (
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
 
@@ -17,45 +16,27 @@ type notifyReturnRelay struct {
 	// handler is the base handler wrapped in all caller-supplied middleware to be
 	// evoked on each event.
 	handler amqpmiddleware.HandlerNotifyReturnEvents
-
-	// Logger
-	logger zerolog.Logger
 }
 
 func (relay *notifyReturnRelay) baseHandler() amqpmiddleware.HandlerNotifyReturnEvents {
 	return func(_ amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyReturn) {
-		if relay.logger.Debug().Enabled() {
-			relay.logger.Debug().
-				Str("EXCHANGE", event.Return.Exchange).
-				Str("ROUTING_KEY", event.Return.MessageId).
-				Str("MESSAGE_ID", event.Return.MessageId).
-				Bytes("BODY", event.Return.Body).
-				Msg("return notification sent")
-		}
-
 		relay.CallerReturns <- event.Return
 	}
 }
 
-// Logger implements eventRelay and sets up our logger.
-func (relay *notifyReturnRelay) Logger(parent zerolog.Logger) zerolog.Logger {
-	logger := parent.With().Str("EVENT_TYPE", "NOTIFY_RETURN").Logger()
-	relay.logger = logger
-	return relay.logger
-}
-
 // SetupForRelayLeg implements eventRelay, and sets up a new source event channel from
 // streadway/amqp.Channel.NotifyReturn.
-func (relay *notifyReturnRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
+func (relay *notifyReturnRelay) SetupForRelayLeg(newChannel *streadway.Channel) {
 	brokerChannel := make(chan Return, cap(relay.CallerReturns))
 	relay.brokerReturns = brokerChannel
 	newChannel.NotifyReturn(brokerChannel)
-	return nil
 }
 
 // RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyReturn
 // events to the original caller.
-func (relay *notifyReturnRelay) RunRelayLeg(legNum int) (done bool, err error) {
+func (relay *notifyReturnRelay) RunRelayLeg(newChan *streadway.Channel, legNum int) (done bool) {
+	relay.SetupForRelayLeg(newChan)
+
 	eventNum := int64(0)
 	for thisReturn := range relay.brokerReturns {
 		relay.handler(
@@ -65,7 +46,7 @@ func (relay *notifyReturnRelay) RunRelayLeg(legNum int) (done bool, err error) {
 		eventNum++
 	}
 
-	return false, nil
+	return false
 }
 
 // Shutdown implements eventRelay, and closes the caller-facing event channel.

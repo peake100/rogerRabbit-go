@@ -1809,13 +1809,16 @@ func (suite *ChannelMethodsSuite) Test0370_NotifyFlow() {
 	defer cancel()
 	suite.ChannelConsume().Test(suite.T()).ForceReconnect(ctx)
 
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+
 	// Check that we have a flow = false followed by a flow = true notification on
 	// reconnectMiddleware
 	select {
 	case flow, open := <-flowEvents:
 		suite.False(flow, "flow false notification")
 		suite.True(open, "event channel is open")
-	default:
+	case <-timer.C:
 		suite.T().Error("no flow event")
 		suite.T().FailNow()
 	}
@@ -1824,7 +1827,7 @@ func (suite *ChannelMethodsSuite) Test0370_NotifyFlow() {
 	case flow, open := <-flowEvents:
 		suite.True(flow, "flow false notification")
 		suite.True(open, "event channel is open")
-	default:
+	case <-timer.C:
 		suite.T().Error("no flow event")
 		suite.T().FailNow()
 	}
