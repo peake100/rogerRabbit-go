@@ -116,6 +116,7 @@ func (channel *Channel) tryReconnect(
 
 	// Synchronize the relays.
 	channel.relaySync.ReleaseRelaysForLeg(channel.underlyingChannel)
+	channel.relaySync.WaitOnSetupComplete()
 
 	return nil
 }

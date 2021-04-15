@@ -19,15 +19,22 @@ import (
 // 3. When a channel disconnects, the transportManager must:
 //		- Wait for all currently running relays to finish their work.
 //		- Get the new channel.
-//		- Restart the relays.
+//		- Allow the relays to setup on the channel BEFORE callers can access channel methods.
+//		- Once setup is Restart the relays.
 type sharedRelaySync struct {
 	// ctx should be cancelled by the relay on an abort, or by the channel on
 	// an unresponsive relay.
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	// runLeg signals to the eventRelay that it is okay to start the leg run.
-	runLeg chan *streadway.Channel
+	// beginLeg signals to the eventRelay that it should setup for this leg on Channel.
+	// Relays can once on to running once they are done setting up and te manager has
+	// received this signal.
+	beginLeg chan *streadway.Channel
+
+	// setup complete signals the transport manager that the relay is done setting up
+	// and ready for the channel to be released back to the method callers.
+	setupComplete chan struct{}
 
 	// legComplete signals to the transportManager that this relay has finished running.
 	legComplete chan struct{}
@@ -38,10 +45,11 @@ func newSharedSync(transportCtx context.Context) sharedRelaySync {
 	ctx, cancel := context.WithCancel(transportCtx)
 
 	return sharedRelaySync{
-		ctx:         ctx,
-		cancel:      cancel,
-		runLeg:      make(chan *streadway.Channel),
-		legComplete: make(chan struct{}),
+		ctx:           ctx,
+		cancel:        cancel,
+		beginLeg:      make(chan *streadway.Channel),
+		setupComplete: make(chan struct{}),
+		legComplete:   make(chan struct{}),
 	}
 }
 
@@ -73,7 +81,7 @@ func (managerSync *managerRelaySync) ReleaseRelaysForLeg(newChan *streadway.Chan
 	for _, thisSync := range managerSync.shared {
 		select {
 		// Signal to a relay that it can start relaying events.
-		case thisSync.runLeg <- newChan:
+		case thisSync.beginLeg <- newChan:
 		case <-thisSync.ctx.Done():
 		case <-timer.C:
 			// On a timeout, cancel the relay.
@@ -84,6 +92,35 @@ func (managerSync *managerRelaySync) ReleaseRelaysForLeg(newChan *streadway.Chan
 	}
 
 	// replace our list of shared signals with only the active relays.
+	managerSync.shared = signaled
+}
+
+// WaitOnSetupComplete will block until all relays have reported that they are done
+// setting up.
+//
+// The transportManger should block on this before reconnecting to a nwe channel.
+func (managerSync *managerRelaySync) WaitOnSetupComplete() {
+	managerSync.sharedLock.Lock()
+	defer managerSync.sharedLock.Unlock()
+
+	timer := time.NewTimer(30 * time.Second)
+	defer timer.Stop()
+
+	signaled := make([]sharedRelaySync, 0, len(managerSync.shared))
+
+	for _, thisSync := range managerSync.shared {
+		select {
+		// Wait fot the ree.
+		case <-thisSync.setupComplete:
+		case <-thisSync.ctx.Done():
+		case <-timer.C:
+			// On a timeout, cancel the relay.
+			thisSync.cancel()
+			continue
+		}
+		signaled = append(signaled, thisSync)
+	}
+
 	managerSync.shared = signaled
 }
 
@@ -137,7 +174,18 @@ func (relaySync relaySync) IsDone() bool {
 	return relaySync.shared.ctx.Err() != nil
 }
 
-// RunLegComplete should be called by the eventRelay runner after
+// SignalSetupComplete should be called by the eventRelay runner after
+// setup has been completed for the relay but before the relay moves on to processing
+// messages.
+func (relaySync relaySync) SignalSetupComplete() {
+	select {
+	// Wait fot the ree.
+	case relaySync.shared.setupComplete <- struct{}{}:
+	case <-relaySync.shared.ctx.Done():
+	}
+}
+
+// SignalLegComplete should be called by the eventRelay runner after
 // eventRelay.RunRelayLeg() returns before blocking on WaitToSetup.
 func (relaySync relaySync) SignalLegComplete() {
 	select {
@@ -147,13 +195,14 @@ func (relaySync relaySync) SignalLegComplete() {
 	}
 }
 
-// WaitToSetup blocks until the transportManager signals that relay setup should begin.
+// WaitForNextLeg blocks until the transportManager signals that relay setup should
+// begin.
 //
 // The eventRelay runner should then call eventRelay.SetupForRelayLeg().
 func (relaySync relaySync) WaitForNextLeg() *streadway.Channel {
 	select {
 	// Wait fot the manager to signal the run of the next leg or to be cancelled.
-	case newChan := <-relaySync.shared.runLeg:
+	case newChan := <-relaySync.shared.beginLeg:
 		return newChan
 	case <-relaySync.shared.ctx.Done():
 		return nil

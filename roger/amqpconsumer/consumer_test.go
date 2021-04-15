@@ -171,9 +171,11 @@ func (suite *ConsumerSuite) TestConsumeBasicMessages() {
 
 	suite.CreateTestQueue(queueName, "", "", true)
 
+	messageCount := 500
+
 	processor := &BasicTestConsumer{
 		QueueName:            queueName,
-		ExpectedMessageCount: 10,
+		ExpectedMessageCount: messageCount,
 		ReceivedMessageCount: 0,
 		ReceivedLock:         new(sync.Mutex),
 		AllReceived:          make(chan struct{}),
@@ -198,9 +200,9 @@ func (suite *ConsumerSuite) TestConsumeBasicMessages() {
 	}()
 
 	// Publish 10 messages
-	suite.PublishMessages(suite.T(), "", queueName, 10)
+	suite.PublishMessages(suite.T(), "", queueName, messageCount)
 
-	timeout := time.NewTimer(5 * time.Second)
+	timeout := time.NewTimer(15 * time.Second)
 	defer timeout.Stop()
 
 	select {

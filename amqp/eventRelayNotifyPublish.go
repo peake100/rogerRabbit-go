@@ -30,20 +30,19 @@ func (relay *notifyPublishRelay) baseHandler() (
 
 // SetupForRelayLeg implements eventRelay, and sets up a new source event channel from
 // streadway/amqp.Channel.NotifyPublish.
-func (relay *notifyPublishRelay) SetupForRelayLeg(newChannel *streadway.Channel) {
+func (relay *notifyPublishRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
 	// Get our broker channel. We will make it with the same capacity of the channel the
 	// caller sent into it.
 	brokerConfirmations := make(
 		chan streadway.Confirmation, cap(relay.CallerConfirmations),
 	)
 	relay.brokerConfirmations = newChannel.NotifyPublish(brokerConfirmations)
+	return nil
 }
 
 // RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyPublish
 // events to the original caller.
-func (relay *notifyPublishRelay) RunRelayLeg(newChan *streadway.Channel, legNum int) (done bool) {
-	relay.SetupForRelayLeg(newChan)
-
+func (relay *notifyPublishRelay) RunRelayLeg(legNum int) (done bool) {
 	eventNum := int64(0)
 	// Range over the confirmations from the broker.
 	for brokerConf := range relay.brokerConfirmations {

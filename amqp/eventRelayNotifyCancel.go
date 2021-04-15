@@ -26,17 +26,16 @@ func (relay *notifyCancelRelay) baseHandler() amqpmiddleware.HandlerNotifyCancel
 
 // SetupForRelayLeg implements eventRelay, and sets up a new source event channel from
 // streadway/amqp.Channel.NotifyCancel
-func (relay *notifyCancelRelay) SetupForRelayLeg(newChannel *streadway.Channel) {
+func (relay *notifyCancelRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
 	brokerChannel := make(chan string, cap(relay.CallerCancellations))
 	relay.brokerCancellations = brokerChannel
 	newChannel.NotifyCancel(brokerChannel)
+	return nil
 }
 
 // RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyCancel
 // events to the original caller.
-func (relay *notifyCancelRelay) RunRelayLeg(newChan *streadway.Channel, legNum int) (done bool) {
-	relay.SetupForRelayLeg(newChan)
-
+func (relay *notifyCancelRelay) RunRelayLeg(legNum int) (done bool) {
 	eventNum := int64(0)
 	for thisCancellation := range relay.brokerCancellations {
 		relay.handler(

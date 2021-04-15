@@ -71,7 +71,7 @@ func (suite *ProducerSuite) TestProducerBasicLifetime() {
 func (suite *ProducerSuite) TestProducerPublish() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
-	publishCount := 10
+	publishCount := 500
 
 	queueName := "test_queue_producer_publish"
 	suite.CreateTestQueue(queueName, "", "", true)
@@ -112,14 +112,17 @@ func (suite *ProducerSuite) TestProducerPublish() {
 		}(i)
 	}
 
+	timer := time.NewTimer(15 * time.Second)
+	defer timer.Stop()
+
 	select {
 	case <-publishComplete:
-	case <-time.NewTimer(3 * time.Second).C:
+	case <-timer.C:
 		suite.T().Error("publish timeout")
 		suite.T().FailNow()
 	}
 
-	messages := [10]bool{}
+	messages := make([]bool, publishCount)
 	for i := 0; i < publishCount; i++ {
 		msg, ok, err := suite.ChannelPublish().Get(queueName, true)
 		suite.NoError(err, "get message")
@@ -139,7 +142,7 @@ func (suite *ProducerSuite) TestProducerPublish() {
 func (suite *ProducerSuite) TestProducerQueuePublication() {
 	suite.T().Cleanup(suite.ReplaceChannels)
 
-	publishCount := 10
+	publishCount := 500
 
 	queueName := "test_queue_producer_queue_publication"
 	suite.CreateTestQueue(queueName, "", "", true)
@@ -184,10 +187,22 @@ func (suite *ProducerSuite) TestProducerQueuePublication() {
 	}()
 
 	for i, thisPublication := range publications {
-		err := thisPublication.WaitOnConfirmation()
-		if !suite.NoError(err, "wait on publication %v", i) {
-			suite.T().FailNow()
-		}
+		func() {
+			defer publishWork.Done()
+			err := thisPublication.WaitOnConfirmation()
+			if !suite.NoError(err, "wait on publication %v", i) {
+				suite.T().FailNow()
+			}
+		}()
+	}
+
+	timer := time.NewTimer(15 * time.Second)
+	defer timer.Stop()
+	select {
+	case <-publishComplete:
+	case <-timer.C:
+		suite.T().Error("message publication timeout")
+		suite.T().FailNow()
 	}
 
 	for i := 0; i < publishCount; i++ {
