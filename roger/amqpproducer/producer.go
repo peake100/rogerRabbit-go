@@ -1,4 +1,4 @@
-package roger
+package amqpproducer
 
 import (
 	"context"
@@ -7,109 +7,6 @@ import (
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
 	"sync"
 )
-
-// ErrProducerPublish is the error returned when trying to publish through the broker
-// channel results in an error.
-type ErrProducerPublish struct {
-	AmqpErr error
-}
-
-// Unwrap implements xerrors.Wrapper and returns the original Amqp error.
-func (err ErrProducerPublish) Unwrap() error {
-	return err.AmqpErr
-}
-
-// Error implements builtins.error.
-func (err ErrProducerPublish) Error() string {
-	return fmt.Sprintf(
-		"error publishing message through broker channel: %v", err.AmqpErr,
-	)
-}
-
-// ErrProducerNack is the error returned when trying to publish through the broker
-// channel results in an error.
-type ErrProducerNack struct {
-	// Orphan is whether this nack was a result of being an orphaned message. Orphaned
-	// messages MAY have been successfully published, but there is no way to know for
-	// sure that the broker received it.
-	Orphan bool
-}
-
-// Error implements builtins.error.
-func (err ErrProducerNack) Error() string {
-	return fmt.Sprintf(
-		"message was nacked by server. orphan status: %v", err.Orphan,
-	)
-}
-
-// publishArgs are the args we are going to call channel.Publish with. See that methods
-// documentation for details on each args meaning.
-type publishArgs struct {
-	Exchange  string
-	Key       string
-	Mandatory bool
-	Immediate bool
-	Msg       amqp.Publishing
-}
-
-// Publication is t he order for a publications.
-type Publication struct {
-	// ctx is a context for this order from the original caller.
-	ctx context.Context
-
-	// publishArgs are the embedded publication args.
-	args publishArgs
-
-	// publicationTag is set by the publishing routine after a successful publication.
-	publicationTag uint64
-	tagSet         bool
-
-	// result us a channel we will send publishing results back to the original caller
-	// with.
-	result chan error
-}
-
-// WaitOnConfirmation blocks until the message is confirmed / nacked by the broker
-// or the context of the publication cancels.
-func (order *Publication) WaitOnConfirmation() error {
-	// Block until we have a final result, then return it.
-	select {
-	case result := <-order.result:
-		return result
-	case <-order.ctx.Done():
-		return fmt.Errorf("message cancelled: %w", order.ctx.Err())
-	}
-}
-
-// ProducerOpts holds options for Producer.
-type ProducerOpts struct {
-	// Whether to confirm publications with the broker.
-	confirmPublish bool
-	// The buffer size of our internal publication queues.
-	internalQueueCapacity int
-}
-
-// WithConfirmPublish sets whether to confirm publications with the broker before
-// returning on a "Publish" call When true, all called to Producer.Publish() will block
-// until a publish confirmation is received from the broker.
-//
-// Default: true.
-func (opts *ProducerOpts) WithConfirmPublish(confirm bool) *ProducerOpts {
-	opts.confirmPublish = confirm
-	return opts
-}
-
-// WithInternalQueueCapacity sets the internal queue size.
-//
-// Internally, the producer stores incoming publication requests and published requests
-// waiting for a broker acknowledgement in go channels. This options sets the size
-// for those internal queues.
-//
-// Default: 64
-func (opts *ProducerOpts) WithInternalQueueCapacity(size int) *ProducerOpts {
-	opts.internalQueueCapacity = size
-	return opts
-}
 
 // Producer is a wrapper for an amqp channel that handles the boilerplate of confirming
 // publishings, retrying nacked messages, and other useful quality of life features.
@@ -133,7 +30,7 @@ type Producer struct {
 	confirmQueue chan *Publication
 
 	// Caller options for producer behavior
-	opts ProducerOpts
+	opts Opts
 }
 
 // runPublisher runs the main loop of the publisher.
@@ -161,7 +58,7 @@ func (producer *Producer) runPublisher() {
 		)
 		if err != nil {
 			// Return the error
-			thisOrder.result <- ErrProducerPublish{AmqpErr: err}
+			thisOrder.result <- ErrPublish{AmqpErr: err}
 			continue
 		}
 
@@ -213,7 +110,7 @@ func (producer *Producer) runConfirmations() {
 			thisOrder.result <- nil
 		} else {
 			// Otherwise return a nack error with orphan information
-			thisOrder.result <- ErrProducerNack{Orphan: confirmation.DisconnectOrphan}
+			thisOrder.result <- ErrNack{Orphan: confirmation.DisconnectOrphan}
 		}
 	}
 }
@@ -417,14 +314,7 @@ func (producer *Producer) StartShutdown() {
 	defer producer.ctxCancel()
 }
 
-// NewProducerOpts returns a new ProducerOpts with default options.
-func NewProducerOpts() *ProducerOpts {
-	return new(ProducerOpts).
-		WithConfirmPublish(true).
-		WithInternalQueueCapacity(64)
-}
-
-// NewProducer creates a new producer using the given amqp.Channel and opts.
+// New creates a new producer using the given amqp.Channel and opts.
 //
 // amqpChannel should be a fresh channel that has been configured with the correct
 // queues for the producer. It should have no messages published through it before it
@@ -439,11 +329,11 @@ func NewProducerOpts() *ProducerOpts {
 // by the producer. There is no need to do so before passing it to this method.
 //
 // If opts is nil, default options will be used.
-func NewProducer(amqpChannel *amqp.Channel, opts *ProducerOpts) *Producer {
+func New(amqpChannel *amqp.Channel, opts *Opts) *Producer {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	if opts == nil {
-		opts = NewProducerOpts()
+		opts = NewOpts()
 	}
 
 	return &Producer{

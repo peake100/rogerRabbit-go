@@ -1,4 +1,4 @@
-package consumer
+package amqpconsumer
 
 import (
 	"context"

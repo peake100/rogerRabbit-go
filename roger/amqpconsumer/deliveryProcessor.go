@@ -1,11 +1,11 @@
-package consumer
+package amqpconsumer
 
 import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
-	"github.com/peake100/rogerRabbit-go/roger/consumer/middleware"
+	"github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware"
 )
 
 // AmqpArgs are the args the consumer will be created with by calling amqp.Channel.Args.

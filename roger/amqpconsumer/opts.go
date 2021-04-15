@@ -1,10 +1,10 @@
-package consumer
+package amqpconsumer
 
 import (
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/internal"
-	"github.com/peake100/rogerRabbit-go/roger/consumer/middleware"
+	"github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware"
 	"github.com/rs/zerolog"
 )
 

@@ -1,12 +1,12 @@
 //revive:disable
-package roger_test
+package amqpproducer_test
 
 import (
 	"context"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/amqptest"
-	"github.com/peake100/rogerRabbit-go/roger"
+	"github.com/peake100/rogerRabbit-go/roger/amqpproducer"
 	"github.com/stretchr/testify/suite"
 	"strconv"
 	"sync"
@@ -24,7 +24,7 @@ func (suite *ProducerSuite) TestProducerBasicLifetime() {
 	queueName := "test_queue_producer_lifetime"
 	suite.CreateTestQueue(queueName, "", "", true)
 
-	producer := roger.NewProducer(suite.ChannelPublish(), nil)
+	producer := amqpproducer.New(suite.ChannelPublish(), nil)
 	complete := make(chan struct{})
 
 	go func() {
@@ -76,7 +76,7 @@ func (suite *ProducerSuite) TestProducerPublish() {
 	queueName := "test_queue_producer_publish"
 	suite.CreateTestQueue(queueName, "", "", true)
 
-	producer := roger.NewProducer(suite.ChannelPublish(), nil)
+	producer := amqpproducer.New(suite.ChannelPublish(), nil)
 
 	go func() {
 		err := producer.Run()
@@ -144,7 +144,7 @@ func (suite *ProducerSuite) TestProducerQueuePublication() {
 	queueName := "test_queue_producer_queue_publication"
 	suite.CreateTestQueue(queueName, "", "", true)
 
-	producer := roger.NewProducer(suite.ChannelPublish(), nil)
+	producer := amqpproducer.New(suite.ChannelPublish(), nil)
 
 	go func() {
 		err := producer.Run()
@@ -153,7 +153,7 @@ func (suite *ProducerSuite) TestProducerQueuePublication() {
 
 	suite.T().Cleanup(producer.StartShutdown)
 
-	publications := make([]*roger.Publication, publishCount)
+	publications := make([]*amqpproducer.Publication, publishCount)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
