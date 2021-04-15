@@ -26,17 +26,16 @@ func (relay *notifyReturnRelay) baseHandler() amqpmiddleware.HandlerNotifyReturn
 
 // SetupForRelayLeg implements eventRelay, and sets up a new source event channel from
 // streadway/amqp.Channel.NotifyReturn.
-func (relay *notifyReturnRelay) SetupForRelayLeg(newChannel *streadway.Channel) {
+func (relay *notifyReturnRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
 	brokerChannel := make(chan Return, cap(relay.CallerReturns))
 	relay.brokerReturns = brokerChannel
 	newChannel.NotifyReturn(brokerChannel)
+	return nil
 }
 
 // RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyReturn
 // events to the original caller.
-func (relay *notifyReturnRelay) RunRelayLeg(newChan *streadway.Channel, legNum int) (done bool) {
-	relay.SetupForRelayLeg(newChan)
-
+func (relay *notifyReturnRelay) RunRelayLeg(legNum int) (done bool) {
 	eventNum := int64(0)
 	for thisReturn := range relay.brokerReturns {
 		relay.handler(

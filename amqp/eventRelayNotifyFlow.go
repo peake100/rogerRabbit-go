@@ -36,7 +36,7 @@ func (relay *notifyFlowRelay) baseHandler() amqpmiddleware.HandlerNotifyFlowEven
 
 // SetupForRelayLeg implements eventRelay, and sets up a new source event channel from
 // streadway/amqp.Channel.NotifyFlow.
-func (relay *notifyFlowRelay) SetupForRelayLeg(newChannel *streadway.Channel) {
+func (relay *notifyFlowRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
 	// Check if this is our initial setup
 	if relay.setup {
 		// If we have already setup the relay once, that means we are opening a new
@@ -56,13 +56,12 @@ func (relay *notifyFlowRelay) SetupForRelayLeg(newChannel *streadway.Channel) {
 	brokerChannel := make(chan bool, cap(relay.CallerFlow))
 	relay.brokerFlow = brokerChannel
 	newChannel.NotifyFlow(brokerChannel)
+	return nil
 }
 
 // RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyFlow
 // events to the original caller.
-func (relay *notifyFlowRelay) RunRelayLeg(newChan *streadway.Channel, legNum int) (done bool) {
-	relay.SetupForRelayLeg(newChan)
-
+func (relay *notifyFlowRelay) RunRelayLeg(legNum int) (done bool) {
 	eventNum := int64(0)
 	for thisFlow := range relay.brokerFlow {
 		relay.handler(

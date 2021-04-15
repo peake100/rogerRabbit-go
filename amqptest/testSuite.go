@@ -369,7 +369,7 @@ func (amqpSuite *AmqpSuite) publishMessagesSend(
 			false,
 			amqp.Publishing{
 				MessageId: msg,
-				Body: []byte(msg),
+				Body:      []byte(msg),
 			},
 		)
 		if !assert.NoErrorf(err, "publish %v", i) {

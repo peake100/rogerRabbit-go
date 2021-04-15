@@ -62,13 +62,7 @@ func (relay *consumeRelay) SetupForRelayLeg(newChannel *streadway.Channel) error
 
 // RunRelayLeg implements eventRelay and relays all deliveries from the current
 // underlying streadway/amqp.Channel to the caller.
-func (relay *consumeRelay) RunRelayLeg(newChannel *streadway.Channel, legNum int) (done bool) {
-	// setup for the leg
-	err := relay.SetupForRelayLeg(newChannel)
-	if err != nil {
-		return false
-	}
-
+func (relay *consumeRelay) RunRelayLeg(legNum int) (done bool) {
 	// Drain consumer events
 	eventNum := int64(0)
 	for brokerDelivery := range relay.brokerDeliveries {

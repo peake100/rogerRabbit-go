@@ -19,12 +19,15 @@ func createEventMetadata(legNum int, eventNum int64) amqpmiddleware.EventMetadat
 // the client without interruption. The boilerplate of handling all the synchronization
 // locks will be handled for any relay passed to Channel.setupAndLaunchEventRelay()
 type eventRelay interface {
+	// SetupForRelayLeg runs the setup for a new relay leg.
+	SetupForRelayLeg(newChannel *streadway.Channel) error
+
 	// RunRelayLeg runs the relay until all events from the streadway/amqp.Channel
 	// passed to SetupForRelayLeg() are exhausted,
 	//
 	// legNum is the leg number starting from 0 and incrementing each time this relay
 	// is called.
-	RunRelayLeg(newChannel *streadway.Channel, legNum int) (done bool)
+	RunRelayLeg(legNum int) (done bool)
 
 	// Shutdown is called to exit the relay. This will usually involve closing the
 	// client-facing channel.
@@ -56,7 +59,13 @@ func (channel *Channel) runEventRelayCycle(
 	// Whether or not we run the leg, reset our sync to mark the run as complete.
 	defer relaySync.SignalLegComplete()
 
-	if done := relay.RunRelayLeg(newChan, legNum); done {
+	err := relay.SetupForRelayLeg(newChan)
+	relaySync.SignalSetupComplete()
+	if err != nil {
+		return
+	}
+
+	if done := relay.RunRelayLeg(legNum); done {
 		relaySync.SetDone()
 	}
 }
@@ -84,7 +93,12 @@ func (channel *Channel) runEventRelay(relay eventRelay, relaySync relaySync) {
 				defer firstLegComplete.Done()
 				defer relaySync.SignalLegComplete()
 
-				if done := relay.RunRelayLeg(currentChannel, 0); done {
+				err := relay.SetupForRelayLeg(currentChannel)
+				if err != nil {
+					return
+				}
+
+				if done := relay.RunRelayLeg(0); done {
 					relaySync.SetDone()
 				}
 			}(channel.underlyingChannel)
