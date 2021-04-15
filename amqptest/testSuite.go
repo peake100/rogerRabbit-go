@@ -377,20 +377,24 @@ func (amqpSuite *AmqpSuite) publishMessagesSend(
 
 func (amqpSuite *AmqpSuite) publishMessagesConfirm(
 	t *testing.T,
+	ctx context.Context,
 	count int,
 	confirmationEvents <-chan datamodels.Confirmation,
 	allConfirmed chan struct{},
 ) {
 	assert := assert.New(t)
+	defer close(allConfirmed)
 
 	confirmCount := 0
-	for confirmation := range confirmationEvents {
-		if !assert.Truef(confirmation.Ack, "message %v acked", confirmCount) {
-			t.FailNow()
+	for {
+		select {
+		case confirmation := <- confirmationEvents:
+			assert.Truef(confirmation.Ack, "message %v acked", confirmCount)
+		case <-ctx.Done():
+			return
 		}
 		confirmCount++
 		if confirmCount == count {
-			close(allConfirmed)
 			return
 		}
 	}
@@ -417,11 +421,13 @@ func (amqpSuite *AmqpSuite) PublishMessages(
 	go amqpSuite.publishMessagesSend(t, exchange, key, count)
 
 	allConfirmed := make(chan struct{})
-	go amqpSuite.publishMessagesConfirm(t, count, confirmationEvents, allConfirmed)
+	ctx, cancel := context.WithTimeout(context.Background(), 100 * time.Millisecond * time.Duration(count))
+	defer cancel()
+	go amqpSuite.publishMessagesConfirm(t, ctx, count, confirmationEvents, allConfirmed)
 
 	select {
 	case <-allConfirmed:
-	case <-time.NewTimer(100 * time.Millisecond * time.Duration(count)).C:
+	case <-ctx.Done():
 		t.Error("publish confirmations timed out")
 		t.FailNow()
 	}
