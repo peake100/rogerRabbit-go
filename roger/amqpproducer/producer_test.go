@@ -187,7 +187,7 @@ func (suite *ProducerSuite) TestProducerQueuePublication() {
 	}()
 
 	for i, thisPublication := range publications {
-		func(){
+		func() {
 			defer publishWork.Done()
 			err := thisPublication.WaitOnConfirmation()
 			if !suite.NoError(err, "wait on publication %v", i) {
@@ -199,8 +199,8 @@ func (suite *ProducerSuite) TestProducerQueuePublication() {
 	timer := time.NewTimer(15 * time.Second)
 	defer timer.Stop()
 	select {
-	case <- publishComplete:
-	case <- timer.C:
+	case <-publishComplete:
+	case <-timer.C:
 		suite.T().Error("message publication timeout")
 		suite.T().FailNow()
 	}

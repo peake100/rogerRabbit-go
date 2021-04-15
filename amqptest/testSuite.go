@@ -376,11 +376,11 @@ func (amqpSuite *AmqpSuite) publishMessagesSend(
 }
 
 func (amqpSuite *AmqpSuite) publishMessagesConfirm(
-	t *testing.T,
 	ctx context.Context,
+	t *testing.T,
 	count int,
 	confirmationEvents <-chan datamodels.Confirmation,
-	allConfirmed chan struct{},
+	allConfirmed chan error,
 ) {
 	assert := assert.New(t)
 	defer close(allConfirmed)
@@ -388,8 +388,11 @@ func (amqpSuite *AmqpSuite) publishMessagesConfirm(
 	confirmCount := 0
 	for {
 		select {
-		case confirmation := <- confirmationEvents:
-			assert.Truef(confirmation.Ack, "message %v acked", confirmCount)
+		case confirmation := <-confirmationEvents:
+			if !assert.Truef(confirmation.Ack, "message %v acked", confirmCount) {
+				allConfirmed <- fmt.Errorf("message %v nacked", confirmCount)
+				return
+			}
 		case <-ctx.Done():
 			return
 		}
@@ -418,17 +421,22 @@ func (amqpSuite *AmqpSuite) PublishMessages(
 	confirmationEvents := make(chan datamodels.Confirmation, count)
 	amqpSuite.ChannelPublish().NotifyPublish(confirmationEvents)
 
-	go amqpSuite.publishMessagesSend(t, exchange, key, count)
-
-	allConfirmed := make(chan struct{})
-	ctx, cancel := context.WithTimeout(context.Background(), 100 * time.Millisecond * time.Duration(count))
+	// Listen for confirmations in a routine.
+	allConfirmed := make(chan error)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond*time.Duration(count))
 	defer cancel()
-	go amqpSuite.publishMessagesConfirm(t, ctx, count, confirmationEvents, allConfirmed)
+	go amqpSuite.publishMessagesConfirm(ctx, t, count, confirmationEvents, allConfirmed)
+
+	amqpSuite.publishMessagesSend(t, exchange, key, count)
 
 	select {
-	case <-allConfirmed:
+	case err = <-allConfirmed:
 	case <-ctx.Done():
 		t.Error("publish confirmations timed out")
+		t.FailNow()
+	}
+
+	if !assert.NoError(err, "all messages confirmed") {
 		t.FailNow()
 	}
 }
