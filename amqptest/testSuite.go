@@ -4,6 +4,7 @@ package amqptest
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/amqp"
 	"github.com/peake100/rogerRabbit-go/amqp/datamodels"
@@ -11,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -359,16 +361,17 @@ func (amqpSuite *AmqpSuite) publishMessagesSend(
 	assert := assert.New(t)
 
 	for i := 0; i < count; i++ {
+		msg := strconv.Itoa(i)
 		err := amqpSuite.ChannelPublish().Publish(
 			exchange,
 			key,
 			true,
 			false,
 			amqp.Publishing{
-				Body: []byte(fmt.Sprintf("%v", i)),
+				MessageId: msg,
+				Body: []byte(msg),
 			},
 		)
-
 		if !assert.NoErrorf(err, "publish %v", i) {
 			t.FailNow()
 		}
@@ -379,7 +382,8 @@ func (amqpSuite *AmqpSuite) publishMessagesConfirm(
 	ctx context.Context,
 	t *testing.T,
 	count int,
-	confirmationEvents <-chan datamodels.Confirmation,
+	confirmations <-chan amqp.Confirmation,
+	returns <-chan amqp.Return,
 	allConfirmed chan error,
 ) {
 	assert := assert.New(t)
@@ -388,11 +392,15 @@ func (amqpSuite *AmqpSuite) publishMessagesConfirm(
 	confirmCount := 0
 	for {
 		select {
-		case confirmation := <-confirmationEvents:
+		case confirmation := <-confirmations:
 			if !assert.Truef(confirmation.Ack, "message %v acked", confirmCount) {
 				allConfirmed <- fmt.Errorf("message %v nacked", confirmCount)
 				return
 			}
+		case <-returns:
+			t.Error("message returned by broker")
+			allConfirmed <- errors.New("message returned by broker")
+			return
 		case <-ctx.Done():
 			return
 		}
@@ -418,14 +426,16 @@ func (amqpSuite *AmqpSuite) PublishMessages(
 		t.FailNow()
 	}
 
-	confirmationEvents := make(chan datamodels.Confirmation, count)
-	amqpSuite.ChannelPublish().NotifyPublish(confirmationEvents)
+	confirmations := make(chan datamodels.Confirmation, count)
+	amqpSuite.ChannelPublish().NotifyPublish(confirmations)
+	returns := make(chan amqp.Return)
+	amqpSuite.ChannelPublish().NotifyReturn(returns)
 
 	// Listen for confirmations in a routine.
 	allConfirmed := make(chan error)
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond*time.Duration(count))
 	defer cancel()
-	go amqpSuite.publishMessagesConfirm(ctx, t, count, confirmationEvents, allConfirmed)
+	go amqpSuite.publishMessagesConfirm(ctx, t, count, confirmations, returns, allConfirmed)
 
 	amqpSuite.publishMessagesSend(t, exchange, key, count)
 
