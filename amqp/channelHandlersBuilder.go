@@ -458,10 +458,7 @@ func (builder channelHandlerBuilder) createConsume() amqpmiddleware.HandlerConsu
 		relay := newConsumeRelay(callArgs, channel, eventMiddleware)
 
 		// Pass it to our relay handler.
-		err = channel.setupAndLaunchEventRelay(relay)
-		if err != nil {
-			return results, err
-		}
+		channel.setupAndLaunchEventRelay(relay)
 
 		results.DeliveryChan = callArgs.callerDeliveryChan
 		// If no error, pass the channel back to the caller
@@ -540,11 +537,8 @@ func (builder channelHandlerBuilder) createNotifyPublish() amqpmiddleware.Handle
 	) amqpmiddleware.ResultsNotifyPublish {
 		relay := newNotifyPublishRelay(args.Confirm, eventMiddleware)
 
-		err := channel.setupAndLaunchEventRelay(relay)
-		// On an error, close the channel.
-		if err != nil {
-			close(args.Confirm)
-		}
+		channel.setupAndLaunchEventRelay(relay)
+
 		return amqpmiddleware.ResultsNotifyPublish{Confirm: args.Confirm}
 	}
 
@@ -673,10 +667,7 @@ func (builder channelHandlerBuilder) createNotifyReturn() amqpmiddleware.Handler
 	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyReturn) amqpmiddleware.ResultsNotifyReturn {
 		relay := newNotifyReturnRelay(args.Returns, eventMiddlewares)
 
-		err := channel.setupAndLaunchEventRelay(relay)
-		if err != nil {
-			close(args.Returns)
-		}
+		channel.setupAndLaunchEventRelay(relay)
 		return amqpmiddleware.ResultsNotifyReturn{Returns: args.Returns}
 	}
 
@@ -692,11 +683,7 @@ func (builder channelHandlerBuilder) createNotifyCancel() amqpmiddleware.Handler
 	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyCancel) amqpmiddleware.ResultsNotifyCancel {
 		relay := newNotifyCancelRelay(args.Cancellations, eventMiddlewares)
 
-		err := channel.setupAndLaunchEventRelay(relay)
-		if err != nil {
-			close(args.Cancellations)
-		}
-
+		channel.setupAndLaunchEventRelay(relay)
 		return amqpmiddleware.ResultsNotifyCancel{Cancellations: args.Cancellations}
 	}
 
@@ -718,11 +705,7 @@ func (builder channelHandlerBuilder) createNotifyFlow() amqpmiddleware.HandlerNo
 		)
 
 		// Setup and launch the relay.
-		err := channel.setupAndLaunchEventRelay(relay)
-		if err != nil {
-			close(args.FlowNotifications)
-		}
-
+		channel.setupAndLaunchEventRelay(relay)
 		return amqpmiddleware.ResultsNotifyFlow{FlowNotifications: args.FlowNotifications}
 	}
 

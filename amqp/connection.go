@@ -137,8 +137,11 @@ func (conn *Connection) Channel() (*Channel, error) {
 		underlyingChannelLock: new(sync.Mutex),
 		rogerConn:             conn,
 		handlers:              channelHandlers{},
-		relaySync:             channelRelaySync{},
-		transportManager:      transportManager{},
+		relaySync: managerRelaySync{
+			shared:     make([]sharedRelaySync, 0),
+			sharedLock: new(sync.Mutex),
+		},
+		transportManager: transportManager{},
 	}
 
 	chanMiddleware := conn.dialConfig.ChannelMiddleware
@@ -161,10 +164,6 @@ func (conn *Connection) Channel() (*Channel, error) {
 
 	// Setup the transport manager.
 	rogerChannel.transportManager.setup(conn.ctx, rogerChannel, transportMiddleware)
-
-	rogerChannel.relaySync = channelRelaySync{
-		shared: newSharedSync(rogerChannel),
-	}
 
 	rogerChannel.handlers = newChannelHandlers(
 		rogerChannel.rogerConn,

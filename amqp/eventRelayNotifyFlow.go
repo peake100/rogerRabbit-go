@@ -3,7 +3,6 @@ package amqp
 import (
 	"context"
 	"github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware"
-	"github.com/rs/zerolog"
 	streadway "github.com/streadway/amqp"
 )
 
@@ -26,34 +25,18 @@ type notifyFlowRelay struct {
 
 	// handler is the event handler for the relay wrapped in all middleware.
 	handler amqpmiddleware.HandlerNotifyFlowEvents
-
-	// logger is the Logger for this relay.
-	logger zerolog.Logger
 }
 
 func (relay *notifyFlowRelay) baseHandler() amqpmiddleware.HandlerNotifyFlowEvents {
 	return func(_ amqpmiddleware.EventMetadata, event amqpmiddleware.EventNotifyFlow) {
-		if relay.logger.Debug().Enabled() {
-			relay.logger.Debug().
-				Bool("FLOW", event.FlowNotification).
-				Msg("cancel notification sent")
-		}
-
 		relay.CallerFlow <- event.FlowNotification
 		relay.lastEvent = event.FlowNotification
 	}
 }
 
-// Logger implements eventRelay and sets up our logger.
-func (relay *notifyFlowRelay) Logger(parent zerolog.Logger) zerolog.Logger {
-	logger := parent.With().Str("EVENT_TYPE", "NOTIFY_CANCEL").Logger()
-	relay.logger = logger
-	return relay.logger
-}
-
 // SetupForRelayLeg implements eventRelay, and sets up a new source event channel from
 // streadway/amqp.Channel.NotifyFlow.
-func (relay *notifyFlowRelay) SetupForRelayLeg(newChannel *streadway.Channel) error {
+func (relay *notifyFlowRelay) SetupForRelayLeg(newChannel *streadway.Channel) {
 	// Check if this is our initial setup
 	if relay.setup {
 		// If we have already setup the relay once, that means we are opening a new
@@ -73,13 +56,13 @@ func (relay *notifyFlowRelay) SetupForRelayLeg(newChannel *streadway.Channel) er
 	brokerChannel := make(chan bool, cap(relay.CallerFlow))
 	relay.brokerFlow = brokerChannel
 	newChannel.NotifyFlow(brokerChannel)
-
-	return nil
 }
 
 // RunRelayLeg implements eventRelay, and relays streadway/amqp.Channel.NotifyFlow
 // events to the original caller.
-func (relay *notifyFlowRelay) RunRelayLeg(legNum int) (done bool, err error) {
+func (relay *notifyFlowRelay) RunRelayLeg(newChan *streadway.Channel, legNum int) (done bool) {
+	relay.SetupForRelayLeg(newChan)
+
 	eventNum := int64(0)
 	for thisFlow := range relay.brokerFlow {
 		relay.handler(
@@ -99,7 +82,7 @@ func (relay *notifyFlowRelay) RunRelayLeg(legNum int) (done bool, err error) {
 		)
 	}
 
-	return false, nil
+	return false
 }
 
 // Shutdown implements eventRelay, and closes the caller-facing event channel.
