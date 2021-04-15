@@ -56,7 +56,7 @@ func (channel *Channel) runEventRelay(relay eventRelay, relaySync relaySync) {
 	defer shutdownRelay(relay, relaySync)
 
 	firstLegComplete := make(chan struct{})
-	channel.eventRelaySetup(relay, relaySync, firstLegComplete)
+	channel.eventRelayInitialSetup(relay, relaySync, firstLegComplete)
 
 	// Wait for ou first leg to complete, then fall into a rhythm with the transport
 	// manager
@@ -73,7 +73,11 @@ func (channel *Channel) runEventRelay(relay eventRelay, relaySync relaySync) {
 	}
 }
 
-func (channel *Channel) eventRelaySetup(
+// eventRelayInitialSetup does the initial setup of an event relay. We need to make sure
+// that setup is complete before we return to the user, otherwise they may start taking
+// actions that SHOULD trigger events before the event listener has been registered with
+// the underlying streadway/amqp.Channel.
+func (channel *Channel) eventRelayInitialSetup(
 	relay eventRelay, relaySync relaySync, firstLegComplete chan struct{},
 ) {
 	// Signal this leg in an op so we can make sure we grab the right channel.
