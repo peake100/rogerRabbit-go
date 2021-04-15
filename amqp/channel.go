@@ -49,7 +49,7 @@ type Channel struct {
 
 	// relaySync has all necessary sync objects for controlling the advancement of
 	// all registered eventRelays.
-	relaySync channelRelaySync
+	relaySync managerRelaySync
 
 	// transportManager embedded object. Manages the lifetime of the connection: such as
 	// automatic reconnects, connection status events, and closing.
@@ -76,8 +76,6 @@ func (channel *Channel) underlyingTransport() livesOnce {
 // cleanup implements reconnects and releases a WorkGroup that allows event relays
 // to fully close
 func (channel *Channel) cleanup() error {
-	// Release this lock so event processors can close.
-	defer channel.relaySync.shared.runSetup.Done()
 	return nil
 }
 
@@ -116,10 +114,8 @@ func (channel *Channel) tryReconnect(
 		return err
 	}
 
-	// Synchronize the relays
-	channel.relaySync.AllowSetup()
-	channel.relaySync.WaitOnSetup()
-	channel.relaySync.AllowRelayLegRun()
+	// Synchronize the relays.
+	channel.relaySync.ReleaseRelaysForLeg(channel.underlyingChannel)
 
 	return nil
 }

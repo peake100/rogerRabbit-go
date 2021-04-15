@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"os"
 	"testing"
 	"time"
 )
@@ -72,6 +73,13 @@ type AmqpSuite struct {
 	connPublish *amqp.Connection
 	// channelPublish holds a channel to be used for publication tests.
 	channelPublish *amqp.Channel
+}
+
+func (amqpSuite *AmqpSuite) SetupTest() {
+	amqpSuite.T().Cleanup(func() {
+		// Flushing Stdout may help with race conditions at the end of a test.
+		os.Stdout.Sync()
+	})
 }
 
 // SetupSuite implements, suite.SetupAllSuite, and sets suite.Opts to
