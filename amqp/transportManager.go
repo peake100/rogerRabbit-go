@@ -299,6 +299,8 @@ func (manager *transportManager) retryOperationOnClosedSingle(
 	return err
 }
 
+// maxWait is the max amount of time a method should wait before trying again after
+// multiple failures in a row.
 const maxWait = time.Second * 5
 
 // revive:enable:context-as-argument
