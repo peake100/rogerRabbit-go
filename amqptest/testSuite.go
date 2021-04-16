@@ -360,9 +360,10 @@ func (amqpSuite *AmqpSuite) publishMessagesSend(
 ) {
 	assert := assert.New(t)
 
+	channel := amqpSuite.ChannelPublish()
 	for i := 0; i < count; i++ {
 		msg := strconv.Itoa(i)
-		err := amqpSuite.ChannelPublish().Publish(
+		err := channel.Publish(
 			exchange,
 			key,
 			true,
@@ -397,6 +398,7 @@ func (amqpSuite *AmqpSuite) publishMessagesConfirm(
 				allConfirmed <- fmt.Errorf("message %v nacked", confirmCount)
 				return
 			}
+			confirmCount++
 		case <-returns:
 			t.Error("message returned by broker")
 			allConfirmed <- errors.New("message returned by broker")
@@ -404,7 +406,6 @@ func (amqpSuite *AmqpSuite) publishMessagesConfirm(
 		case <-ctx.Done():
 			return
 		}
-		confirmCount++
 		if confirmCount == count {
 			return
 		}

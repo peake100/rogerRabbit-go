@@ -299,6 +299,8 @@ func (manager *transportManager) retryOperationOnClosedSingle(
 	return err
 }
 
+const maxWait = time.Second * 10
+
 // revive:enable:context-as-argument
 
 // retryOperationOnClosed repeats operation / method call until a non-closed error is
@@ -323,6 +325,17 @@ func (manager *transportManager) retryOperationOnClosed(
 
 		// Otherwise retry the operation once the connection has been established.
 		attempt++
+
+		// We don't want to saturate the connection with retries if we are having
+		// a hard time reconnecting.
+		//
+		// We'll give one immediate retry, but after that start increasing how long
+		// we need to wait before re-attempting.
+		waitDur := 5 * time.Millisecond * time.Duration(attempt - 1)
+		if waitDur > time.Second * 30 {
+			waitDur = maxWait
+		}
+		time.Sleep(waitDur)
 	}
 }
 
