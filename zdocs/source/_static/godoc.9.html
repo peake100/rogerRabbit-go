@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#375EAB">
+
+  <title>middleware - Go Documentation Server</title>
+
+<link type="text/css" rel="stylesheet" href="style.css">
+
+<script>window.initFuncs = [];</script>
+<script src="jquery.js" defer></script>
+
+
+
+<script>var goVersion = "go1.13.5";</script>
+<script src="godocs.js" defer></script>
+</head>
+<body>
+
+<div id='lowframe' style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="http://localhost:6161/pkg/">Go Documentation Server</a></div>
+<div class="top-heading" id="heading-narrow"><a href="http://localhost:6161/pkg/">GoDoc</a></div>
+<a href="godoc.9.html#" id="menu-button"><span id="menu-button-arrow">&#9661;</span></a>
+<form method="GET" action="http://localhost:6161/search">
+<div id="menu">
+
+<span class="search-box"><input type="search" id="search" name="q" placeholder="Search" aria-label="Search" required><button type="submit"><span><!-- magnifying glass: --><svg width="24" height="24" viewBox="0 0 24 24"><title>submit search</title><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/><path d="M0 0h24v24H0z" fill="none"/></svg></span></button></span>
+</div>
+</form>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Package middleware
+    <span class="text-muted"></span>
+  </h1>
+
+
+
+
+
+
+
+<div id="nav"></div>
+
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<!--
+	Note: Static (i.e., not template-generated) href and id
+	attributes start with "pkg-" to make it impossible for
+	them to conflict with generated attributes (some of which
+	correspond to Go identifiers).
+-->
+
+	<script>
+	document.ANALYSIS_DATA = null;
+	document.CALLGRAPH = null;
+	</script>
+
+	
+		
+		<div id="short-nav">
+			<dl>
+			<dd><code>import "github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware"</code></dd>
+			</dl>
+			<dl>
+			<dd><a href="godoc.9.html#pkg-overview" class="overviewLink">Overview</a></dd>
+			<dd><a href="godoc.9.html#pkg-index" class="indexLink">Index</a></dd>
+			
+			
+			</dl>
+		</div>
+		<!-- The package's Name is printed as title by the top-level template -->
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ▹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
+				
+				
+			</div>
+		</div>
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ▹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ▾</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+				<dd><a href="godoc.9.html#pkg-constants">Constants</a></dd>
+			
+			
+			
+				
+				<dd><a href="godoc.9.html#GetDefaultLogger">func GetDefaultLogger(ctx context.Context) (logger zerolog.Logger, ok bool)</a></dd>
+			
+			
+				
+				<dd><a href="godoc.9.html#AmqpRouteManager">type AmqpRouteManager</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.9.html#CleanupChannel">type CleanupChannel</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.9.html#DefaultLogging">type DefaultLogging</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.9.html#DefaultLogging.CleanupChannel">func (middleware DefaultLogging) CleanupChannel(next HandlerCleanupChannel) HandlerCleanupChannel</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.9.html#DefaultLogging.Delivery">func (middleware DefaultLogging) Delivery(next HandlerDelivery) HandlerDelivery</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.9.html#DefaultLogging.SetupChannel">func (middleware DefaultLogging) SetupChannel(next HandlerSetupChannel) HandlerSetupChannel</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.9.html#DefaultLogging.TypeID">func (middleware DefaultLogging) TypeID() ProviderTypeId</a></dd>
+				
+			
+				
+				<dd><a href="godoc.9.html#Delivery">type Delivery</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.9.html#HandlerCleanupChannel">type HandlerCleanupChannel</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.9.html#HandlerDelivery">type HandlerDelivery</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.9.html#HandlerSetupChannel">type HandlerSetupChannel</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.9.html#ProviderTypeId">type ProviderTypeId</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.9.html#ProvidesAll">type ProvidesAll</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.9.html#ProvidesCleanupChannel">type ProvidesCleanupChannel</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.9.html#ProvidesDelivery">type ProvidesDelivery</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.9.html#ProvidesMiddleware">type ProvidesMiddleware</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.9.html#NewDefaultLogger">func NewDefaultLogger(logger zerolog.Logger, logDeliveryLevel zerolog.Level, successLogLevel zerolog.Level) ProvidesMiddleware</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.9.html#ProvidesSetupChannel">type ProvidesSetupChannel</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.9.html#SetupChannel">type SetupChannel</a></dd>
+				
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h3>Package files</h3>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/defaultmiddlewares.go">defaultmiddlewares.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/handlers.go">handlers.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/middleware.go">middleware.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/providers.go">providers.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+
+		
+			<h2 id="pkg-constants">Constants</h2>
+			
+				<p>
+DefaultLoggerKey is the context value key for fetching the logger provided by the
+DefaultLogging middleware.
+</p>
+
+				<pre>const <span id="DefaultLoggerKey">DefaultLoggerKey</span> = &#34;ConsumerDefaultLogger&#34;</pre>
+			
+		
+		
+		
+			
+			
+			<h2 id="GetDefaultLogger">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/defaultmiddlewares.go?s=625:700#L12">GetDefaultLogger</a>
+				<a class="permalink" href="godoc.9.html#GetDefaultLogger">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func GetDefaultLogger(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>) (logger <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Logger">Logger</a>, ok <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>)</pre>
+			<p>
+GetDefaultLogger fetched the default logger from ctx.
+</p>
+
+			
+			
+
+		
+		
+			
+			
+			<h2 id="AmqpRouteManager">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/handlers.go?s=349:1342#L2">AmqpRouteManager</a>
+				<a class="permalink" href="godoc.9.html#AmqpRouteManager">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+AmqpRouteManager is an interface that only exposes the Queue and exchange methods for
+a channel. These are the only methods we want SetupChannel to have access to.
+</p>
+
+			<pre>type AmqpRouteManager interface {
+    QueueDeclare(
+        name <a href="http://localhost:6161/pkg/builtin/#string">string</a>,
+        durable <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
+        autoDelete <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
+        exclusive <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
+        noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
+        args <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Table">Table</a>,
+    ) (queue <a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Queue">Queue</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
+    QueueDeclarePassive(
+        name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, durable, autoDelete, exclusive, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Table">Table</a>,
+    ) (queue <a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Queue">Queue</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
+    QueueInspect(name <a href="http://localhost:6161/pkg/builtin/#string">string</a>) (queue <a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Queue">Queue</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
+    QueueBind(name, key, exchange <a href="http://localhost:6161/pkg/builtin/#string">string</a>, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Table">Table</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a>
+    QueuePurge(name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>) (count <a href="http://localhost:6161/pkg/builtin/#int">int</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
+    QueueDelete(name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, ifUnused, ifEmpty, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>) (count <a href="http://localhost:6161/pkg/builtin/#int">int</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
+
+    ExchangeDeclare(
+        name, kind <a href="http://localhost:6161/pkg/builtin/#string">string</a>, durable, autoDelete, internal, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Table">Table</a>,
+    ) (err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
+    ExchangeDeclarePassive(
+        name, kind <a href="http://localhost:6161/pkg/builtin/#string">string</a>, durable, autoDelete, internal, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Table">Table</a>,
+    ) (err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
+    ExchangeBind(
+        destination, key, source <a href="http://localhost:6161/pkg/builtin/#string">string</a>, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, args <a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Table">Table</a>,
+    ) (err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
+    ExchangeDelete(name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, ifUnused, noWait <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>) (err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="CleanupChannel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/middleware.go?s=405:481#L1">CleanupChannel</a>
+				<a class="permalink" href="godoc.9.html#CleanupChannel">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+CleanupChannel is a middleware signature for wrapping roger.Consumer.CleanupChannel.
+</p>
+
+			<pre>type CleanupChannel = func(next <a href="godoc.9.html#HandlerCleanupChannel">HandlerCleanupChannel</a>) <a href="godoc.9.html#HandlerCleanupChannel">HandlerCleanupChannel</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="DefaultLogging">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/defaultmiddlewares.go?s=850:977#L18">DefaultLogging</a>
+				<a class="permalink" href="godoc.9.html#DefaultLogging">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+DefaultLogging provides logging middleware for roger.Consumer.
+</p>
+
+			<pre>type DefaultLogging struct {
+<span id="DefaultLogging.Logger"></span>    Logger           <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Logger">Logger</a>
+<span id="DefaultLogging.LogDeliveryLevel"></span>    LogDeliveryLevel <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Level">Level</a>
+<span id="DefaultLogging.SuccessLogLevel"></span>    SuccessLogLevel  <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Level">Level</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+				
+				<h3 id="DefaultLogging.CleanupChannel">func (DefaultLogging) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/defaultmiddlewares.go?s=2725:2822#L89">CleanupChannel</a>
+					<a class="permalink" href="godoc.9.html#DefaultLogging.CleanupChannel">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware <a href="godoc.9.html#DefaultLogging">DefaultLogging</a>) CleanupChannel(next <a href="godoc.9.html#HandlerCleanupChannel">HandlerCleanupChannel</a>) <a href="godoc.9.html#HandlerCleanupChannel">HandlerCleanupChannel</a></pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="DefaultLogging.Delivery">func (DefaultLogging) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/defaultmiddlewares.go?s=1727:1806#L49">Delivery</a>
+					<a class="permalink" href="godoc.9.html#DefaultLogging.Delivery">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware <a href="godoc.9.html#DefaultLogging">DefaultLogging</a>) Delivery(next <a href="godoc.9.html#HandlerDelivery">HandlerDelivery</a>) <a href="godoc.9.html#HandlerDelivery">HandlerDelivery</a></pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="DefaultLogging.SetupChannel">func (DefaultLogging) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/defaultmiddlewares.go?s=1109:1200#L29">SetupChannel</a>
+					<a class="permalink" href="godoc.9.html#DefaultLogging.SetupChannel">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware <a href="godoc.9.html#DefaultLogging">DefaultLogging</a>) SetupChannel(next <a href="godoc.9.html#HandlerSetupChannel">HandlerSetupChannel</a>) <a href="godoc.9.html#HandlerSetupChannel">HandlerSetupChannel</a></pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="DefaultLogging.TypeID">func (DefaultLogging) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/defaultmiddlewares.go?s=1019:1075#L25">TypeID</a>
+					<a class="permalink" href="godoc.9.html#DefaultLogging.TypeID">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (middleware <a href="godoc.9.html#DefaultLogging">DefaultLogging</a>) TypeID() <a href="godoc.9.html#ProviderTypeId">ProviderTypeId</a></pre>
+				<p>
+TypeID implement ProvidesMiddleware.
+</p>
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="Delivery">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/middleware.go?s=257:315#L1">Delivery</a>
+				<a class="permalink" href="godoc.9.html#Delivery">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+Delivery is a middleware signature for wrapping roger.Consumer.HandleDelivery.
+</p>
+
+			<pre>type Delivery = func(next <a href="godoc.9.html#HandlerDelivery">HandlerDelivery</a>) <a href="godoc.9.html#HandlerDelivery">HandlerDelivery</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerCleanupChannel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/handlers.go?s=1844:1934#L41">HandlerCleanupChannel</a>
+				<a class="permalink" href="godoc.9.html#HandlerCleanupChannel">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+HandlerDelivery defines the handler type for middleware wrapping
+roger.Consumer.CleanupChannel
+</p>
+
+			<pre>type HandlerCleanupChannel = func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, amqpChannel <a href="godoc.9.html#AmqpRouteManager">AmqpRouteManager</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerDelivery">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/handlers.go?s=1637:1741#L37">HandlerDelivery</a>
+				<a class="permalink" href="godoc.9.html#HandlerDelivery">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+HandlerDelivery defines the handler type for middleware wrapping
+roger.Consumer.HandleDelivery.
+</p>
+
+			<pre>type HandlerDelivery = func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, delivery <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Delivery">Delivery</a>) (err <a href="http://localhost:6161/pkg/builtin/#error">error</a>, requeue <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>)</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="HandlerSetupChannel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/handlers.go?s=1445:1533#L33">HandlerSetupChannel</a>
+				<a class="permalink" href="godoc.9.html#HandlerSetupChannel">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+HandlerSetupChannel defines a handler type for middleware wrapping
+roger.Consumer.SetupChannel
+</p>
+
+			<pre>type HandlerSetupChannel = func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, amqpChannel <a href="godoc.9.html#AmqpRouteManager">AmqpRouteManager</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ProviderTypeId">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/providers.go?s=20:46#L1">ProviderTypeId</a>
+				<a class="permalink" href="godoc.9.html#ProviderTypeId">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type ProviderTypeId <a href="http://localhost:6161/pkg/builtin/#string">string</a></pre>
+
+			
+				
+				<pre>const <span id="DefaultLoggerTypeID">DefaultLoggerTypeID</span> <a href="godoc.9.html#ProviderTypeId">ProviderTypeId</a> = &#34;DefaultLogger&#34;</pre>
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ProvidesAll">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/providers.go?s=928:1022#L22">ProvidesAll</a>
+				<a class="permalink" href="godoc.9.html#ProvidesAll">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ProvidesAll provides all consumer middlewares.
+</p>
+
+			<pre>type ProvidesAll interface {
+    <a href="godoc.9.html#ProvidesSetupChannel">ProvidesSetupChannel</a>
+    <a href="godoc.9.html#ProvidesDelivery">ProvidesDelivery</a>
+    <a href="godoc.9.html#ProvidesCleanupChannel">ProvidesCleanupChannel</a>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ProvidesCleanupChannel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/providers.go?s=749:876#L16">ProvidesCleanupChannel</a>
+				<a class="permalink" href="godoc.9.html#ProvidesCleanupChannel">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ProvidesCleanupChannel provides CleanupChannel middleware as a method.
+</p>
+
+			<pre>type ProvidesCleanupChannel interface {
+    <a href="godoc.9.html#ProvidesMiddleware">ProvidesMiddleware</a>
+    CleanupChannel(next <a href="godoc.9.html#HandlerCleanupChannel">HandlerCleanupChannel</a>) <a href="godoc.9.html#HandlerCleanupChannel">HandlerCleanupChannel</a>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ProvidesDelivery">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/providers.go?s=570:673#L10">ProvidesDelivery</a>
+				<a class="permalink" href="godoc.9.html#ProvidesDelivery">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ProvidesDelivery provides Delivery middleware as a method.
+</p>
+
+			<pre>type ProvidesDelivery interface {
+    <a href="godoc.9.html#ProvidesMiddleware">ProvidesMiddleware</a>
+    Delivery(next <a href="godoc.9.html#HandlerDelivery">HandlerDelivery</a>) <a href="godoc.9.html#HandlerDelivery">HandlerDelivery</a>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ProvidesMiddleware">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/providers.go?s=148:315#L1">ProvidesMiddleware</a>
+				<a class="permalink" href="godoc.9.html#ProvidesMiddleware">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ProvidesMiddleware is the base interface that must be implemented by any middleware
+provider.
+</p>
+
+			<pre>type ProvidesMiddleware interface {
+    <span class="comment">// TypeID returns a unique ID for verifying that a provider has not been registered</span>
+    <span class="comment">// more than once.</span>
+    TypeID() <a href="godoc.9.html#ProviderTypeId">ProviderTypeId</a>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewDefaultLogger">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/defaultmiddlewares.go?s=3440:3572#L111">NewDefaultLogger</a>
+					<a class="permalink" href="godoc.9.html#NewDefaultLogger">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewDefaultLogger(
+    logger <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Logger">Logger</a>,
+    logDeliveryLevel <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Level">Level</a>,
+    successLogLevel <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Level">Level</a>,
+) <a href="godoc.9.html#ProvidesMiddleware">ProvidesMiddleware</a></pre>
+				<p>
+NewDefaultLogging returns a new DefaultLogging as a ProvidesMiddleware interface.
+</p>
+
+				
+				
+			
+
+			
+		
+			
+			
+			<h2 id="ProvidesSetupChannel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/providers.go?s=387:506#L4">ProvidesSetupChannel</a>
+				<a class="permalink" href="godoc.9.html#ProvidesSetupChannel">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ProvidesSetupChannel provides SetupChannel middleware as a method.
+</p>
+
+			<pre>type ProvidesSetupChannel interface {
+    <a href="godoc.9.html#ProvidesMiddleware">ProvidesMiddleware</a>
+    SetupChannel(next <a href="godoc.9.html#HandlerSetupChannel">HandlerSetupChannel</a>) <a href="godoc.9.html#HandlerSetupChannel">HandlerSetupChannel</a>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="SetupChannel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/roger/amqpconsumer/middleware/middleware.go?s=103:173#L1">SetupChannel</a>
+				<a class="permalink" href="godoc.9.html#SetupChannel">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+SetupChannel is a middleware signature for wrapping roger.Consumer.SetupChannel
+</p>
+
+			<pre>type SetupChannel = func(next <a href="godoc.9.html#HandlerSetupChannel">HandlerSetupChannel</a>) <a href="godoc.9.html#HandlerSetupChannel">HandlerSetupChannel</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+	
+
+	
+
+
+
+
+
+
+
+<div id="footer">
+Build version go1.13.5.<br>
+Except as <a href="https://developers.google.com/site-policies#restrictions">noted</a>,
+the content of this page is licensed under the
+Creative Commons Attribution 3.0 License,
+and code is licensed under a <a href="http://localhost:6161/LICENSE">BSD license</a>.<br>
+<a href="http://localhost:6161/doc/tos.html">Terms of Service</a> |
+<a href="http://www.google.com/intl/en/policies/privacy/">Privacy Policy</a>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+</body>
+</html>

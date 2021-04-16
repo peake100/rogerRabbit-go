@@ -327,6 +327,22 @@ an added bonus.
 				
 			
 				
+				<dd><a href="godoc.3.html#EventInfo">type EventInfo</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.3.html#GetEventInfo">func GetEventInfo(metadata EventMetadata) (info EventInfo)</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#EventMetadata">type EventMetadata</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.3.html#EventMetadata.GetKey">func (metadata EventMetadata) GetKey(key string) interface{}</a></dd>
+				
+			
+				
 				<dd><a href="godoc.3.html#EventNotifyCancel">type EventNotifyCancel</a></dd>
 				
 				
@@ -607,6 +623,14 @@ an added bonus.
 				
 			
 				
+				<dd><a href="godoc.3.html#MethodInfo">type MethodInfo</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="godoc.3.html#GetMethodInfo">func GetMethodInfo(ctx context.Context) (info MethodInfo)</a></dd>
+				
+				
+			
+				
 				<dd><a href="godoc.3.html#Nack">type Nack</a></dd>
 				
 				
@@ -702,6 +726,11 @@ an added bonus.
 				
 			
 				
+				<dd><a href="godoc.3.html#ProviderFactory">type ProviderFactory</a></dd>
+				
+				
+			
+				
 				<dd><a href="godoc.3.html#ProviderTypeID">type ProviderTypeID</a></dd>
 				
 				
@@ -723,6 +752,11 @@ an added bonus.
 			
 				
 				<dd><a href="godoc.3.html#ProvidesAllMiddleware">type ProvidesAllMiddleware</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ProvidesAllShared">type ProvidesAllShared</a></dd>
 				
 				
 			
@@ -987,6 +1021,81 @@ an added bonus.
 				
 			
 				
+				<dd><a href="godoc.3.html#ResultsChannelReconnect">type ResultsChannelReconnect</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsConnectionReconnect">type ResultsConnectionReconnect</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsConsume">type ResultsConsume</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsGet">type ResultsGet</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsNotifyCancel">type ResultsNotifyCancel</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsNotifyClose">type ResultsNotifyClose</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsNotifyConfirm">type ResultsNotifyConfirm</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsNotifyConfirmOrOrphaned">type ResultsNotifyConfirmOrOrphaned</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsNotifyFlow">type ResultsNotifyFlow</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsNotifyPublish">type ResultsNotifyPublish</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsNotifyReturn">type ResultsNotifyReturn</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsQueueDeclare">type ResultsQueueDeclare</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsQueueDelete">type ResultsQueueDelete</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsQueueInspect">type ResultsQueueInspect</a></dd>
+				
+				
+			
+				
+				<dd><a href="godoc.3.html#ResultsQueuePurge">type ResultsQueuePurge</a></dd>
+				
+				
+			
+				
 				<dd><a href="godoc.3.html#TransportType">type TransportType</a></dd>
 				
 				
@@ -1006,7 +1115,11 @@ an added bonus.
 			
 				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go">handlerDefs.go</a>
 			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/metadata.go">metadata.go</a>
+			
 				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go">methodArgs.go</a>
+			
+				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go">methodResults.go</a>
 			
 				<a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/middlewareDefs.go">middlewareDefs.go</a>
 			
@@ -1066,7 +1179,7 @@ Ack defines signature for middleware invoked on *amqp.Channel.Ack() call.
 		
 			
 			
-			<h2 id="ArgsAck">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=6008:6063#L221">ArgsAck</a>
+			<h2 id="ArgsAck">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=5866:5921#L216">ArgsAck</a>
 				<a class="permalink" href="godoc.3.html#ArgsAck">&#xb6;</a>
 				
 				
@@ -1095,7 +1208,7 @@ ArgsAck stores args to amqp.Channel.Ack() for middleware to inspect.
 		
 			
 			
-			<h2 id="ArgsChannelReconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=2554:2917#L74">ArgsChannelReconnect</a>
+			<h2 id="ArgsChannelReconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=2469:2775#L71">ArgsChannelReconnect</a>
 				<a class="permalink" href="godoc.3.html#ArgsChannelReconnect">&#xb6;</a>
 				
 				
@@ -1112,8 +1225,6 @@ the reconnection event.
     <span class="comment">// made and increments by 1 each time a reconnect is attempted. It does not reset</span>
     <span class="comment">// on successful reconnections.</span>
     Attempt <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
-<span id="ArgsChannelReconnect.Logger"></span>    <span class="comment">// Logger is the channel logger.</span>
-    Logger <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Logger">Logger</a>
 }
 </pre>
 
@@ -1131,7 +1242,7 @@ the reconnection event.
 		
 			
 			
-			<h2 id="ArgsClose">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=363:417#L4">ArgsClose</a>
+			<h2 id="ArgsClose">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=338:392#L3">ArgsClose</a>
 				<a class="permalink" href="godoc.3.html#ArgsClose">&#xb6;</a>
 				
 				
@@ -1159,7 +1270,7 @@ ArgsClose stores args for the Close method on amqp.Connection and amqp.Channel.
 		
 			
 			
-			<h2 id="ArgsConfirms">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=5321:5362#L190">ArgsConfirms</a>
+			<h2 id="ArgsConfirms">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=5179:5220#L185">ArgsConfirms</a>
 				<a class="permalink" href="godoc.3.html#ArgsConfirms">&#xb6;</a>
 				
 				
@@ -1187,7 +1298,7 @@ ArgsConfirms stores args to amqp.Channel.Confirms() for middleware to inspect.
 		
 			
 			
-			<h2 id="ArgsConnectionReconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=1956:2328#L58">ArgsConnectionReconnect</a>
+			<h2 id="ArgsConnectionReconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=1931:2243#L57">ArgsConnectionReconnect</a>
 				<a class="permalink" href="godoc.3.html#ArgsConnectionReconnect">&#xb6;</a>
 				
 				
@@ -1204,8 +1315,6 @@ the reconnection event.
     <span class="comment">// made and increments by 1 each time a reconnect is attempted. It does not reset</span>
     <span class="comment">// on successful reconnections.</span>
     Attempt <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
-<span id="ArgsConnectionReconnect.Logger"></span>    <span class="comment">// Logger is the connection logger.</span>
-    Logger <a href="http://localhost:6161/pkg/github.com/rs/zerolog/">zerolog</a>.<a href="http://localhost:6161/pkg/github.com/rs/zerolog/#Logger">Logger</a>
 }
 </pre>
 
@@ -1223,7 +1332,7 @@ the reconnection event.
 		
 			
 			
-			<h2 id="ArgsConsume">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=5780:5934#L210">ArgsConsume</a>
+			<h2 id="ArgsConsume">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=5638:5792#L205">ArgsConsume</a>
 				<a class="permalink" href="godoc.3.html#ArgsConsume">&#xb6;</a>
 				
 				
@@ -1257,7 +1366,7 @@ ArgsConsume stores args to amqp.Channel.Consume() for middleware to inspect.
 		
 			
 			
-			<h2 id="ArgsExchangeBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=4590:4729#L159">ArgsExchangeBind</a>
+			<h2 id="ArgsExchangeBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=4448:4587#L154">ArgsExchangeBind</a>
 				<a class="permalink" href="godoc.3.html#ArgsExchangeBind">&#xb6;</a>
 				
 				
@@ -1290,7 +1399,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsExchangeDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=4146:4315#L139">ArgsExchangeDeclare</a>
+			<h2 id="ArgsExchangeDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=4004:4173#L134">ArgsExchangeDeclare</a>
 				<a class="permalink" href="godoc.3.html#ArgsExchangeDeclare">&#xb6;</a>
 				
 				
@@ -1325,7 +1434,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsExchangeDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=4414:4495#L151">ArgsExchangeDelete</a>
+			<h2 id="ArgsExchangeDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=4272:4353#L146">ArgsExchangeDelete</a>
 				<a class="permalink" href="godoc.3.html#ArgsExchangeDelete">&#xb6;</a>
 				
 				
@@ -1356,7 +1465,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsExchangeUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=4828:4969#L169">ArgsExchangeUnbind</a>
+			<h2 id="ArgsExchangeUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=4686:4827#L164">ArgsExchangeUnbind</a>
 				<a class="permalink" href="godoc.3.html#ArgsExchangeUnbind">&#xb6;</a>
 				
 				
@@ -1389,7 +1498,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=5200:5237#L185">ArgsFlow</a>
+			<h2 id="ArgsFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=5058:5095#L180">ArgsFlow</a>
 				<a class="permalink" href="godoc.3.html#ArgsFlow">&#xb6;</a>
 				
 				
@@ -1417,7 +1526,7 @@ ArgsFlow stores args to amqp.Channel.Flow() for middleware to inspect.
 		
 			
 			
-			<h2 id="ArgsGet">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=5645:5698#L204">ArgsGet</a>
+			<h2 id="ArgsGet">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=5503:5556#L199">ArgsGet</a>
 				<a class="permalink" href="godoc.3.html#ArgsGet">&#xb6;</a>
 				
 				
@@ -1446,7 +1555,7 @@ ArgsGet stores args to amqp.Channel.Get() for middleware to inspect.
 		
 			
 			
-			<h2 id="ArgsNack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=6139:6210#L227">ArgsNack</a>
+			<h2 id="ArgsNack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=5997:6068#L222">ArgsNack</a>
 				<a class="permalink" href="godoc.3.html#ArgsNack">&#xb6;</a>
 				
 				
@@ -1476,7 +1585,7 @@ ArgsNack stores args to amqp.Channel.Nack() for middleware to inspect.
 		
 			
 			
-			<h2 id="ArgsNotifyCancel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=7163:7222#L268">ArgsNotifyCancel</a>
+			<h2 id="ArgsNotifyCancel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=7021:7080#L263">ArgsNotifyCancel</a>
 				<a class="permalink" href="godoc.3.html#ArgsNotifyCancel">&#xb6;</a>
 				
 				
@@ -1505,7 +1614,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsNotifyClose">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=517:614#L10">ArgsNotifyClose</a>
+			<h2 id="ArgsNotifyClose">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=492:589#L9">ArgsNotifyClose</a>
 				<a class="permalink" href="godoc.3.html#ArgsNotifyClose">&#xb6;</a>
 				
 				
@@ -1535,7 +1644,7 @@ amqp.Channel.
 		
 			
 			
-			<h2 id="ArgsNotifyConfirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=6611:6680#L247">ArgsNotifyConfirm</a>
+			<h2 id="ArgsNotifyConfirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=6469:6538#L242">ArgsNotifyConfirm</a>
 				<a class="permalink" href="godoc.3.html#ArgsNotifyConfirm">&#xb6;</a>
 				
 				
@@ -1565,7 +1674,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsNotifyConfirmOrOrphaned">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=6797:6906#L254">ArgsNotifyConfirmOrOrphaned</a>
+			<h2 id="ArgsNotifyConfirmOrOrphaned">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=6655:6764#L249">ArgsNotifyConfirmOrOrphaned</a>
 				<a class="permalink" href="godoc.3.html#ArgsNotifyConfirmOrOrphaned">&#xb6;</a>
 				
 				
@@ -1596,7 +1705,7 @@ middleware to inspect.
 		
 			
 			
-			<h2 id="ArgsNotifyDial">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=712:797#L17">ArgsNotifyDial</a>
+			<h2 id="ArgsNotifyDial">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=687:772#L16">ArgsNotifyDial</a>
 				<a class="permalink" href="godoc.3.html#ArgsNotifyDial">&#xb6;</a>
 				
 				
@@ -1626,7 +1735,7 @@ amqp.Channel.
 		
 			
 			
-			<h2 id="ArgsNotifyDisconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=907:998#L24">ArgsNotifyDisconnect</a>
+			<h2 id="ArgsNotifyDisconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=882:973#L23">ArgsNotifyDisconnect</a>
 				<a class="permalink" href="godoc.3.html#ArgsNotifyDisconnect">&#xb6;</a>
 				
 				
@@ -1656,7 +1765,7 @@ and amqp.Channel.
 		
 			
 			
-			<h2 id="ArgsNotifyFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=7312:7371#L273">ArgsNotifyFlow</a>
+			<h2 id="ArgsNotifyFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=7170:7229#L268">ArgsNotifyFlow</a>
 				<a class="permalink" href="godoc.3.html#ArgsNotifyFlow">&#xb6;</a>
 				
 				
@@ -1684,7 +1793,7 @@ ArgsNotifyFlow stores the args to amqp.Channel.NotifyFlow for middleware to insp
 		
 			
 			
-			<h2 id="ArgsNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=6443:6514#L241">ArgsNotifyPublish</a>
+			<h2 id="ArgsNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=6301:6372#L236">ArgsNotifyPublish</a>
 				<a class="permalink" href="godoc.3.html#ArgsNotifyPublish">&#xb6;</a>
 				
 				
@@ -1713,7 +1822,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsNotifyReturn">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=7003:7066#L262">ArgsNotifyReturn</a>
+			<h2 id="ArgsNotifyReturn">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=6861:6924#L257">ArgsNotifyReturn</a>
 				<a class="permalink" href="godoc.3.html#ArgsNotifyReturn">&#xb6;</a>
 				
 				
@@ -1742,7 +1851,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=5444:5571#L195">ArgsPublish</a>
+			<h2 id="ArgsPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=5302:5429#L190">ArgsPublish</a>
 				<a class="permalink" href="godoc.3.html#ArgsPublish">&#xb6;</a>
 				
 				
@@ -1774,7 +1883,7 @@ ArgsPublish stores args to amqp.Channel.Publish() for middleware to inspect.
 		
 			
 			
-			<h2 id="ArgsQoS">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=5043:5124#L178">ArgsQoS</a>
+			<h2 id="ArgsQoS">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=4901:4982#L173">ArgsQoS</a>
 				<a class="permalink" href="godoc.3.html#ArgsQoS">&#xb6;</a>
 				
 				
@@ -1804,7 +1913,7 @@ ArgsQoS stores args to amqp.Channel.QoS() for middleware to inspect.
 		
 			
 			
-			<h2 id="ArgsQueueBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=3574:3695#L113">ArgsQueueBind</a>
+			<h2 id="ArgsQueueBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=3432:3553#L108">ArgsQueueBind</a>
 				<a class="permalink" href="godoc.3.html#ArgsQueueBind">&#xb6;</a>
 				
 				
@@ -1837,7 +1946,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsQueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=3012:3159#L87">ArgsQueueDeclare</a>
+			<h2 id="ArgsQueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=2870:3017#L82">ArgsQueueDeclare</a>
 				<a class="permalink" href="godoc.3.html#ArgsQueueDeclare">&#xb6;</a>
 				
 				
@@ -1871,7 +1980,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsQueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=3392:3485#L104">ArgsQueueDelete</a>
+			<h2 id="ArgsQueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=3250:3343#L99">ArgsQueueDelete</a>
 				<a class="permalink" href="godoc.3.html#ArgsQueueDelete">&#xb6;</a>
 				
 				
@@ -1903,7 +2012,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsQueueInspect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=3254:3299#L98">ArgsQueueInspect</a>
+			<h2 id="ArgsQueueInspect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=3112:3157#L93">ArgsQueueInspect</a>
 				<a class="permalink" href="godoc.3.html#ArgsQueueInspect">&#xb6;</a>
 				
 				
@@ -1932,7 +2041,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsQueuePurge">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=3987:4045#L132">ArgsQueuePurge</a>
+			<h2 id="ArgsQueuePurge">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=3845:3903#L127">ArgsQueuePurge</a>
 				<a class="permalink" href="godoc.3.html#ArgsQueuePurge">&#xb6;</a>
 				
 				
@@ -1962,7 +2071,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsQueueUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=3788:3896#L123">ArgsQueueUnbind</a>
+			<h2 id="ArgsQueueUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=3646:3754#L118">ArgsQueueUnbind</a>
 				<a class="permalink" href="godoc.3.html#ArgsQueueUnbind">&#xb6;</a>
 				
 				
@@ -1994,7 +2103,7 @@ inspect.
 		
 			
 			
-			<h2 id="ArgsReject">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=6290:6346#L234">ArgsReject</a>
+			<h2 id="ArgsReject">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=6148:6204#L229">ArgsReject</a>
 				<a class="permalink" href="godoc.3.html#ArgsReject">&#xb6;</a>
 				
 				
@@ -2177,7 +2286,7 @@ during relay of *amqp.Channel.Consume() events.
 		
 			
 			
-			<h2 id="EventConsume">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=7890:7948#L288">EventConsume</a>
+			<h2 id="EventConsume">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=7748:7806#L283">EventConsume</a>
 				<a class="permalink" href="godoc.3.html#EventConsume">&#xb6;</a>
 				
 				
@@ -2206,7 +2315,100 @@ event for middleware to inspect / modify before the event is passed to the calle
 		
 			
 			
-			<h2 id="EventNotifyCancel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=9065:9119#L317">EventNotifyCancel</a>
+			<h2 id="EventInfo">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/metadata.go?s=961:1371#L21">EventInfo</a>
+				<a class="permalink" href="godoc.3.html#EventInfo">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+EventInfo is information provided from the base library  that can be extracted from
+EventMetadata.
+</p>
+
+			<pre>type EventInfo struct {
+<span id="EventInfo.EventNum"></span>    <span class="comment">// EventNum is the event number starting at 0. For Relays, this value will reset</span>
+    <span class="comment">// each leg. -1 if unknown.</span>
+    EventNum <a href="http://localhost:6161/pkg/builtin/#int64">int64</a>
+<span id="EventInfo.RelayLeg"></span>    <span class="comment">// RelayLeg is the leg of the relay we are on. Each time a connection is</span>
+    <span class="comment">// re-established, we hit a new relay &#34;leg&#34;.</span>
+    <span class="comment">//</span>
+    <span class="comment">// -1 if this event feed does not pull directly from an underlying connection, and</span>
+    <span class="comment">// therefore does not have a &#34;LEG&#34;</span>
+    RelayLeg <a href="http://localhost:6161/pkg/builtin/#int">int</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="GetEventInfo">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/metadata.go?s=1607:1665#L40">GetEventInfo</a>
+					<a class="permalink" href="godoc.3.html#GetEventInfo">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func GetEventInfo(metadata <a href="godoc.3.html#EventMetadata">EventMetadata</a>) (info <a href="godoc.3.html#EventInfo">EventInfo</a>)</pre>
+				<p>
+GetEventInfo extracts EventInfo from EventMetadata.
+</p>
+
+				
+				
+			
+
+			
+		
+			
+			
+			<h2 id="EventMetadata">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/metadata.go?s=813:854#L17">EventMetadata</a>
+				<a class="permalink" href="godoc.3.html#EventMetadata">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+EventMetadata is metadata passed into an event handler. Events cannot be cancelled,
+and therefore do not have contexts, so middleware-centric metadata should be added to
+and fetched from this argument.
+</p>
+
+			<pre>type EventMetadata map[<a href="http://localhost:6161/pkg/builtin/#string">string</a>]interface{}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+				
+				<h3 id="EventMetadata.GetKey">func (EventMetadata) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/metadata.go?s=1445:1505#L34">GetKey</a>
+					<a class="permalink" href="godoc.3.html#EventMetadata.GetKey">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (metadata <a href="godoc.3.html#EventMetadata">EventMetadata</a>) GetKey(key <a href="http://localhost:6161/pkg/builtin/#string">string</a>) interface{}</pre>
+				<p>
+GetKey gets key from metadata. Returns nil if key could not be found
+</p>
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="EventNotifyCancel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=8923:8977#L312">EventNotifyCancel</a>
 				<a class="permalink" href="godoc.3.html#EventNotifyCancel">&#xb6;</a>
 				
 				
@@ -2235,7 +2437,7 @@ for middleware to inspect / modify before the event is passed to the caller.
 		
 			
 			
-			<h2 id="EventNotifyClose">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=1631:1724#L48">EventNotifyClose</a>
+			<h2 id="EventNotifyClose">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=1606:1699#L47">EventNotifyClose</a>
 				<a class="permalink" href="godoc.3.html#EventNotifyClose">&#xb6;</a>
 				
 				
@@ -2265,7 +2467,7 @@ amqp.Connection or amqp.Channel.
 		
 			
 			
-			<h2 id="EventNotifyConfirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=8120:8291#L294">EventNotifyConfirm</a>
+			<h2 id="EventNotifyConfirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=7978:8149#L289">EventNotifyConfirm</a>
 				<a class="permalink" href="godoc.3.html#EventNotifyConfirm">&#xb6;</a>
 				
 				
@@ -2296,7 +2498,7 @@ event for middleware to inspect / modify before the event is passed to the calle
 		
 			
 			
-			<h2 id="EventNotifyConfirmOrOrphaned">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=8486:8667#L303">EventNotifyConfirmOrOrphaned</a>
+			<h2 id="EventNotifyConfirmOrOrphaned">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=8344:8525#L298">EventNotifyConfirmOrOrphaned</a>
 				<a class="permalink" href="godoc.3.html#EventNotifyConfirmOrOrphaned">&#xb6;</a>
 				
 				
@@ -2328,7 +2530,7 @@ before the event is passed to the caller.
 		
 			
 			
-			<h2 id="EventNotifyDial">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=1225:1306#L34">EventNotifyDial</a>
+			<h2 id="EventNotifyDial">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=1200:1281#L33">EventNotifyDial</a>
 				<a class="permalink" href="godoc.3.html#EventNotifyDial">&#xb6;</a>
 				
 				
@@ -2358,7 +2560,7 @@ amqp.Connection or amqp.Channel.
 		
 			
 			
-			<h2 id="EventNotifyDisconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=1430:1517#L41">EventNotifyDisconnect</a>
+			<h2 id="EventNotifyDisconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=1405:1492#L40">EventNotifyDisconnect</a>
 				<a class="permalink" href="godoc.3.html#EventNotifyDisconnect">&#xb6;</a>
 				
 				
@@ -2388,7 +2590,7 @@ amqp.Connection or amqp.Channel.
 		
 			
 			
-			<h2 id="EventNotifyFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=9285:9339#L323">EventNotifyFlow</a>
+			<h2 id="EventNotifyFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=9143:9197#L318">EventNotifyFlow</a>
 				<a class="permalink" href="godoc.3.html#EventNotifyFlow">&#xb6;</a>
 				
 				
@@ -2417,7 +2619,7 @@ for middleware to inspect / modify before the event is passed to the caller.
 		
 			
 			
-			<h2 id="EventNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=7658:7730#L282">EventNotifyPublish</a>
+			<h2 id="EventNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=7516:7588#L277">EventNotifyPublish</a>
 				<a class="permalink" href="godoc.3.html#EventNotifyPublish">&#xb6;</a>
 				
 				
@@ -2446,7 +2648,7 @@ event for middleware to inspect / modify before the event is passed to the calle
 		
 			
 			
-			<h2 id="EventNotifyReturn">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=8837:8895#L311">EventNotifyReturn</a>
+			<h2 id="EventNotifyReturn">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodArgs.go?s=8695:8753#L306">EventNotifyReturn</a>
 				<a class="permalink" href="godoc.3.html#EventNotifyReturn">&#xb6;</a>
 				
 				
@@ -2629,7 +2831,7 @@ Get defines signature for middleware invoked on *amqp.Channel.Get() call.
 		
 			
 			
-			<h2 id="HandlerAck">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=3893:3933#L84">HandlerAck</a>
+			<h2 id="HandlerAck">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=6336:6397#L126">HandlerAck</a>
 				<a class="permalink" href="godoc.3.html#HandlerAck">&#xb6;</a>
 				
 				
@@ -2638,7 +2840,7 @@ Get defines signature for middleware invoked on *amqp.Channel.Get() call.
 HandlerAck: signature for handlers invoked when amqp.Channel.Ack() is called.
 </p>
 
-			<pre>type HandlerAck func(args <a href="godoc.3.html#ArgsAck">ArgsAck</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerAck func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsAck">ArgsAck</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -2654,7 +2856,7 @@ HandlerAck: signature for handlers invoked when amqp.Channel.Ack() is called.
 		
 			
 			
-			<h2 id="HandlerChannelReconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=1017:1107#L20">HandlerChannelReconnect</a>
+			<h2 id="HandlerChannelReconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=3102:3218#L62">HandlerChannelReconnect</a>
 				<a class="permalink" href="godoc.3.html#HandlerChannelReconnect">&#xb6;</a>
 				
 				
@@ -2667,7 +2869,7 @@ re-established.
 Attempt is the attempt number, including all previous failures and successes.
 </p>
 
-			<pre>type HandlerChannelReconnect = func(args <a href="godoc.3.html#ArgsChannelReconnect">ArgsChannelReconnect</a>) (*<a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Channel">Channel</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+			<pre>type HandlerChannelReconnect = func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsChannelReconnect">ArgsChannelReconnect</a>) (<a href="godoc.3.html#ResultsChannelReconnect">ResultsChannelReconnect</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 
 			
 
@@ -2683,7 +2885,7 @@ Attempt is the attempt number, including all previous failures and successes.
 		
 			
 			
-			<h2 id="HandlerClose">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=4927:4971#L106">HandlerClose</a>
+			<h2 id="HandlerClose">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=674:739#L12">HandlerClose</a>
 				<a class="permalink" href="godoc.3.html#HandlerClose">&#xb6;</a>
 				
 				
@@ -2693,7 +2895,7 @@ HandlerClose: signature for handlers invoked when the Close method is called on 
 amqp.Connection or amqp.Channel.
 </p>
 
-			<pre>type HandlerClose func(args <a href="godoc.3.html#ArgsClose">ArgsClose</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerClose func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsClose">ArgsClose</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -2709,7 +2911,7 @@ amqp.Connection or amqp.Channel.
 		
 			
 			
-			<h2 id="HandlerConfirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=3144:3193#L69">HandlerConfirm</a>
+			<h2 id="HandlerConfirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=5534:5604#L111">HandlerConfirm</a>
 				<a class="permalink" href="godoc.3.html#HandlerConfirm">&#xb6;</a>
 				
 				
@@ -2718,7 +2920,7 @@ amqp.Connection or amqp.Channel.
 HandlerConfirm: signature for handlers invoked when amqp.Channel.Confirm() is called.
 </p>
 
-			<pre>type HandlerConfirm func(args <a href="godoc.3.html#ArgsConfirms">ArgsConfirms</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerConfirm func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsConfirms">ArgsConfirms</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -2734,7 +2936,7 @@ HandlerConfirm: signature for handlers invoked when amqp.Channel.Confirm() is ca
 		
 			
 			
-			<h2 id="HandlerConnectionReconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=728:827#L14">HandlerConnectionReconnect</a>
+			<h2 id="HandlerConnectionReconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=2668:2797#L51">HandlerConnectionReconnect</a>
 				<a class="permalink" href="godoc.3.html#HandlerConnectionReconnect">&#xb6;</a>
 				
 				
@@ -2747,7 +2949,9 @@ re-established.
 Attempt is the attempt number, including all previous failures and successes.
 </p>
 
-			<pre>type HandlerConnectionReconnect = func(args <a href="godoc.3.html#ArgsConnectionReconnect">ArgsConnectionReconnect</a>) (*<a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Connection">Connection</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+			<pre>type HandlerConnectionReconnect = func(
+    ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsConnectionReconnect">ArgsConnectionReconnect</a>,
+) (<a href="godoc.3.html#ResultsConnectionReconnect">ResultsConnectionReconnect</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 
 			
 
@@ -2763,7 +2967,7 @@ Attempt is the attempt number, including all previous failures and successes.
 		
 			
 			
-			<h2 id="HandlerConsume">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=3715:3810#L81">HandlerConsume</a>
+			<h2 id="HandlerConsume">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=6154:6253#L123">HandlerConsume</a>
 				<a class="permalink" href="godoc.3.html#HandlerConsume">&#xb6;</a>
 				
 				
@@ -2776,7 +2980,7 @@ NOTE: this is separate from HandlerConsumeEvents, which handles each event. This
 handler only fires on the initial call
 </p>
 
-			<pre>type HandlerConsume func(args <a href="godoc.3.html#ArgsConsume">ArgsConsume</a>) (deliveryChan &lt;-chan <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Delivery">Delivery</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+			<pre>type HandlerConsume func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsConsume">ArgsConsume</a>) (results <a href="godoc.3.html#ResultsConsume">ResultsConsume</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 
 			
 
@@ -2792,7 +2996,7 @@ handler only fires on the initial call
 		
 			
 			
-			<h2 id="HandlerConsumeEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=7360:7410#L156">HandlerConsumeEvents</a>
+			<h2 id="HandlerConsumeEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=8468:8542#L169">HandlerConsumeEvents</a>
 				<a class="permalink" href="godoc.3.html#HandlerConsumeEvents">&#xb6;</a>
 				
 				
@@ -2802,7 +3006,7 @@ HandlerConsumeEvents: signature for handlers invoked when an event from an
 amqp.Channel.Consume() is being processed before being sent to the caller.
 </p>
 
-			<pre>type HandlerConsumeEvents func(event <a href="godoc.3.html#EventConsume">EventConsume</a>)</pre>
+			<pre>type HandlerConsumeEvents func(metadata <a href="godoc.3.html#EventMetadata">EventMetadata</a>, event <a href="godoc.3.html#EventConsume">EventConsume</a>)</pre>
 
 			
 
@@ -2818,7 +3022,7 @@ amqp.Channel.Consume() is being processed before being sent to the caller.
 		
 			
 			
-			<h2 id="HandlerExchangeBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=2575:2633#L56">HandlerExchangeBind</a>
+			<h2 id="HandlerExchangeBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=4881:4960#L98">HandlerExchangeBind</a>
 				<a class="permalink" href="godoc.3.html#HandlerExchangeBind">&#xb6;</a>
 				
 				
@@ -2828,7 +3032,7 @@ HandlerExchangeBind: signature for handlers invoked when
 amqp.Channel.ExchangeBind() is called.
 </p>
 
-			<pre>type HandlerExchangeBind func(args <a href="godoc.3.html#ArgsExchangeBind">ArgsExchangeBind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerExchangeBind func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsExchangeBind">ArgsExchangeBind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -2844,7 +3048,7 @@ amqp.Channel.ExchangeBind() is called.
 		
 			
 			
-			<h2 id="HandlerExchangeDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=2235:2301#L48">HandlerExchangeDeclare</a>
+			<h2 id="HandlerExchangeDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=4499:4586#L90">HandlerExchangeDeclare</a>
 				<a class="permalink" href="godoc.3.html#HandlerExchangeDeclare">&#xb6;</a>
 				
 				
@@ -2854,7 +3058,7 @@ HandlerExchangeDeclare: signature for handlers invoked when
 amqp.Channel.ExchangeDeclare() is called.
 </p>
 
-			<pre>type HandlerExchangeDeclare = func(args <a href="godoc.3.html#ArgsExchangeDeclare">ArgsExchangeDeclare</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerExchangeDeclare = func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsExchangeDeclare">ArgsExchangeDeclare</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -2870,7 +3074,7 @@ amqp.Channel.ExchangeDeclare() is called.
 		
 			
 			
-			<h2 id="HandlerExchangeDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=2409:2471#L52">HandlerExchangeDelete</a>
+			<h2 id="HandlerExchangeDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=4694:4777#L94">HandlerExchangeDelete</a>
 				<a class="permalink" href="godoc.3.html#HandlerExchangeDelete">&#xb6;</a>
 				
 				
@@ -2880,7 +3084,7 @@ HandlerExchangeDelete: signature for handlers invoked when
 amqp.Channel.ExchangeDelete() is called.
 </p>
 
-			<pre>type HandlerExchangeDelete func(args <a href="godoc.3.html#ArgsExchangeDelete">ArgsExchangeDelete</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerExchangeDelete func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsExchangeDelete">ArgsExchangeDelete</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -2896,7 +3100,7 @@ amqp.Channel.ExchangeDelete() is called.
 		
 			
 			
-			<h2 id="HandlerExchangeUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=2741:2803#L60">HandlerExchangeUnbind</a>
+			<h2 id="HandlerExchangeUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=5068:5151#L102">HandlerExchangeUnbind</a>
 				<a class="permalink" href="godoc.3.html#HandlerExchangeUnbind">&#xb6;</a>
 				
 				
@@ -2906,7 +3110,7 @@ HandlerExchangeUnbind: signature for handlers invoked when
 amqp.Channel.ExchangeUnbind() is called.
 </p>
 
-			<pre>type HandlerExchangeUnbind func(args <a href="godoc.3.html#ArgsExchangeUnbind">ArgsExchangeUnbind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerExchangeUnbind func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsExchangeUnbind">ArgsExchangeUnbind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -2922,7 +3126,7 @@ amqp.Channel.ExchangeUnbind() is called.
 		
 			
 			
-			<h2 id="HandlerFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=3011:3053#L66">HandlerFlow</a>
+			<h2 id="HandlerFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=5380:5443#L108">HandlerFlow</a>
 				<a class="permalink" href="godoc.3.html#HandlerFlow">&#xb6;</a>
 				
 				
@@ -2931,7 +3135,7 @@ amqp.Channel.ExchangeUnbind() is called.
 HandlerFlow: signature for handlers invoked when amqp.Channel.Flow() is called.
 </p>
 
-			<pre>type HandlerFlow func(args <a href="godoc.3.html#ArgsFlow">ArgsFlow</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerFlow func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsFlow">ArgsFlow</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -2947,7 +3151,7 @@ HandlerFlow: signature for handlers invoked when amqp.Channel.Flow() is called.
 		
 			
 			
-			<h2 id="HandlerGet">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=3415:3495#L75">HandlerGet</a>
+			<h2 id="HandlerGet">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=5847:5934#L117">HandlerGet</a>
 				<a class="permalink" href="godoc.3.html#HandlerGet">&#xb6;</a>
 				
 				
@@ -2956,7 +3160,7 @@ HandlerFlow: signature for handlers invoked when amqp.Channel.Flow() is called.
 HandlerGet: signature for handlers invoked when amqp.Channel.Get() is called.
 </p>
 
-			<pre>type HandlerGet func(args <a href="godoc.3.html#ArgsGet">ArgsGet</a>) (msg <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Delivery">Delivery</a>, ok <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+			<pre>type HandlerGet func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsGet">ArgsGet</a>) (results <a href="godoc.3.html#ResultsGet">ResultsGet</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 
 			
 
@@ -2972,7 +3176,7 @@ HandlerGet: signature for handlers invoked when amqp.Channel.Get() is called.
 		
 			
 			
-			<h2 id="HandlerNack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=4018:4060#L87">HandlerNack</a>
+			<h2 id="HandlerNack">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=6482:6545#L129">HandlerNack</a>
 				<a class="permalink" href="godoc.3.html#HandlerNack">&#xb6;</a>
 				
 				
@@ -2981,7 +3185,7 @@ HandlerGet: signature for handlers invoked when amqp.Channel.Get() is called.
 HandlerNack: signature for handlers invoked when amqp.Channel.Nack() is called.
 </p>
 
-			<pre>type HandlerNack func(args <a href="godoc.3.html#ArgsNack">ArgsNack</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerNack func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsNack">ArgsNack</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -2997,7 +3201,7 @@ HandlerNack: signature for handlers invoked when amqp.Channel.Nack() is called.
 		
 			
 			
-			<h2 id="HandlerNotifyCancel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=5678:5742#L122">HandlerNotifyCancel</a>
+			<h2 id="HandlerNotifyCancel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=7458:7551#L150">HandlerNotifyCancel</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyCancel">&#xb6;</a>
 				
 				
@@ -3007,7 +3211,7 @@ HandlerNotifyCancel signature for handlers invoked when amqp.Channel.NotifyRetur
 is called.
 </p>
 
-			<pre>type HandlerNotifyCancel func(args <a href="godoc.3.html#ArgsNotifyCancel">ArgsNotifyCancel</a>) chan <a href="http://localhost:6161/pkg/builtin/#string">string</a></pre>
+			<pre>type HandlerNotifyCancel func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsNotifyCancel">ArgsNotifyCancel</a>) <a href="godoc.3.html#ResultsNotifyCancel">ResultsNotifyCancel</a></pre>
 
 			
 
@@ -3023,7 +3227,7 @@ is called.
 		
 			
 			
-			<h2 id="HandlerNotifyCancelEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=8313:8373#L173">HandlerNotifyCancelEvents</a>
+			<h2 id="HandlerNotifyCancelEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=9517:9601#L186">HandlerNotifyCancelEvents</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyCancelEvents">&#xb6;</a>
 				
 				
@@ -3033,7 +3237,7 @@ HandlerNotifyCancelEvents: signature for handlers invoked when an event from an
 amqp.Channel.NotifyReturn() is being processed before being sent to the caller.
 </p>
 
-			<pre>type HandlerNotifyCancelEvents func(event <a href="godoc.3.html#EventNotifyCancel">EventNotifyCancel</a>)</pre>
+			<pre>type HandlerNotifyCancelEvents func(metadata <a href="godoc.3.html#EventMetadata">EventMetadata</a>, event <a href="godoc.3.html#EventNotifyCancel">EventNotifyCancel</a>)</pre>
 
 			
 
@@ -3049,7 +3253,7 @@ amqp.Channel.NotifyReturn() is being processed before being sent to the caller.
 		
 			
 			
-			<h2 id="HandlerNotifyClose">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=4331:4403#L94">HandlerNotifyClose</a>
+			<h2 id="HandlerNotifyClose">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=875:965#L16">HandlerNotifyClose</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyClose">&#xb6;</a>
 				
 				
@@ -3059,7 +3263,7 @@ HandlerNotifyClose: signature for handlers invoked when the NotifyClose method
 is called on an amqp.Connection or amqp.Channel.
 </p>
 
-			<pre>type HandlerNotifyClose func(args <a href="godoc.3.html#ArgsNotifyClose">ArgsNotifyClose</a>) chan *<a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Error">Error</a></pre>
+			<pre>type HandlerNotifyClose func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsNotifyClose">ArgsNotifyClose</a>) <a href="godoc.3.html#ResultsNotifyClose">ResultsNotifyClose</a></pre>
 
 			
 
@@ -3075,7 +3279,7 @@ is called on an amqp.Connection or amqp.Channel.
 		
 			
 			
-			<h2 id="HandlerNotifyCloseEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=6912:6970#L148">HandlerNotifyCloseEvents</a>
+			<h2 id="HandlerNotifyCloseEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=2281:2363#L42">HandlerNotifyCloseEvents</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyCloseEvents">&#xb6;</a>
 				
 				
@@ -3086,7 +3290,7 @@ NotifyClose() of an amqp.Connection or amqp.Channel is being processed before
 being sent to the caller.
 </p>
 
-			<pre>type HandlerNotifyCloseEvents func(event <a href="godoc.3.html#EventNotifyClose">EventNotifyClose</a>)</pre>
+			<pre>type HandlerNotifyCloseEvents func(metadata <a href="godoc.3.html#EventMetadata">EventMetadata</a>, event <a href="godoc.3.html#EventNotifyClose">EventNotifyClose</a>)</pre>
 
 			
 
@@ -3102,7 +3306,7 @@ being sent to the caller.
 		
 			
 			
-			<h2 id="HandlerNotifyConfirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=5077:5158#L110">HandlerNotifyConfirm</a>
+			<h2 id="HandlerNotifyConfirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=6807:6903#L136">HandlerNotifyConfirm</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyConfirm">&#xb6;</a>
 				
 				
@@ -3112,7 +3316,7 @@ HandlerNotifyConfirm: signature for handlers invoked when
 amqp.Channel.NotifyConfirm() is called.
 </p>
 
-			<pre>type HandlerNotifyConfirm func(args <a href="godoc.3.html#ArgsNotifyConfirm">ArgsNotifyConfirm</a>) (chan <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>, chan <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>)</pre>
+			<pre>type HandlerNotifyConfirm func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsNotifyConfirm">ArgsNotifyConfirm</a>) <a href="godoc.3.html#ResultsNotifyConfirm">ResultsNotifyConfirm</a></pre>
 
 			
 
@@ -3128,7 +3332,7 @@ amqp.Channel.NotifyConfirm() is called.
 		
 			
 			
-			<h2 id="HandlerNotifyConfirmEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=7580:7642#L160">HandlerNotifyConfirmEvents</a>
+			<h2 id="HandlerNotifyConfirmEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=8712:8798#L173">HandlerNotifyConfirmEvents</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyConfirmEvents">&#xb6;</a>
 				
 				
@@ -3138,7 +3342,7 @@ HandlerNotifyConfirmEvents: signature for handlers invoked when an event from an
 amqp.Channel.NotifyConfirm() is being processed before being sent to the caller.
 </p>
 
-			<pre>type HandlerNotifyConfirmEvents func(event <a href="godoc.3.html#EventNotifyConfirm">EventNotifyConfirm</a>)</pre>
+			<pre>type HandlerNotifyConfirmEvents func(metadata <a href="godoc.3.html#EventMetadata">EventMetadata</a>, event <a href="godoc.3.html#EventNotifyConfirm">EventNotifyConfirm</a>)</pre>
 
 			
 
@@ -3154,7 +3358,7 @@ amqp.Channel.NotifyConfirm() is being processed before being sent to the caller.
 		
 			
 			
-			<h2 id="HandlerNotifyConfirmOrOrphaned">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=5284:5398#L114">HandlerNotifyConfirmOrOrphaned</a>
+			<h2 id="HandlerNotifyConfirmOrOrphaned">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=7029:7159#L140">HandlerNotifyConfirmOrOrphaned</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyConfirmOrOrphaned">&#xb6;</a>
 				
 				
@@ -3164,7 +3368,9 @@ HandlerNotifyConfirmOrOrphaned: signature for handlers invoked when
 amqp.Channel.NotifyConfirmOrOrphaned() is called.
 </p>
 
-			<pre>type HandlerNotifyConfirmOrOrphaned func(args <a href="godoc.3.html#ArgsNotifyConfirmOrOrphaned">ArgsNotifyConfirmOrOrphaned</a>) (chan <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>, chan <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>, chan <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>)</pre>
+			<pre>type HandlerNotifyConfirmOrOrphaned func(
+    ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsNotifyConfirmOrOrphaned">ArgsNotifyConfirmOrOrphaned</a>,
+) <a href="godoc.3.html#ResultsNotifyConfirmOrOrphaned">ResultsNotifyConfirmOrOrphaned</a></pre>
 
 			
 
@@ -3180,7 +3386,7 @@ amqp.Channel.NotifyConfirmOrOrphaned() is called.
 		
 			
 			
-			<h2 id="HandlerNotifyConfirmOrOrphanedEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=7835:7917#L165">HandlerNotifyConfirmOrOrphanedEvents</a>
+			<h2 id="HandlerNotifyConfirmOrOrphanedEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=8991:9097#L178">HandlerNotifyConfirmOrOrphanedEvents</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyConfirmOrOrphanedEvents">&#xb6;</a>
 				
 				
@@ -3191,7 +3397,7 @@ from ab amqp.Channel.NotifyConfirmOrOrphaned() is being processed before being s
 to the caller.
 </p>
 
-			<pre>type HandlerNotifyConfirmOrOrphanedEvents func(event <a href="godoc.3.html#EventNotifyConfirmOrOrphaned">EventNotifyConfirmOrOrphaned</a>)</pre>
+			<pre>type HandlerNotifyConfirmOrOrphanedEvents func(metadata <a href="godoc.3.html#EventMetadata">EventMetadata</a>, event <a href="godoc.3.html#EventNotifyConfirmOrOrphaned">EventNotifyConfirmOrOrphaned</a>)</pre>
 
 			
 
@@ -3207,7 +3413,7 @@ to the caller.
 		
 			
 			
-			<h2 id="HandlerNotifyDial">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=4537:4591#L98">HandlerNotifyDial</a>
+			<h2 id="HandlerNotifyDial">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=1099:1174#L20">HandlerNotifyDial</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyDial">&#xb6;</a>
 				
 				
@@ -3217,7 +3423,7 @@ HandlerNotifyDial: signature for handlers invoked when the NotifyDial method
 is called on an amqp.Connection or amqp.Channel.
 </p>
 
-			<pre>type HandlerNotifyDial func(args <a href="godoc.3.html#ArgsNotifyDial">ArgsNotifyDial</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerNotifyDial func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsNotifyDial">ArgsNotifyDial</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -3233,7 +3439,7 @@ is called on an amqp.Connection or amqp.Channel.
 		
 			
 			
-			<h2 id="HandlerNotifyDialEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=6392:6448#L138">HandlerNotifyDialEvents</a>
+			<h2 id="HandlerNotifyDialEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=1713:1793#L32">HandlerNotifyDialEvents</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyDialEvents">&#xb6;</a>
 				
 				
@@ -3244,7 +3450,7 @@ NotifyDial() of an amqp.Connection or amqp.Channel is being processed before
 being sent to the caller.
 </p>
 
-			<pre>type HandlerNotifyDialEvents func(event <a href="godoc.3.html#EventNotifyDial">EventNotifyDial</a>)</pre>
+			<pre>type HandlerNotifyDialEvents func(metadata <a href="godoc.3.html#EventMetadata">EventMetadata</a>, event <a href="godoc.3.html#EventNotifyDial">EventNotifyDial</a>)</pre>
 
 			
 
@@ -3260,7 +3466,7 @@ being sent to the caller.
 		
 			
 			
-			<h2 id="HandlerNotifyDisconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=4737:4803#L102">HandlerNotifyDisconnect</a>
+			<h2 id="HandlerNotifyDisconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=1320:1407#L24">HandlerNotifyDisconnect</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyDisconnect">&#xb6;</a>
 				
 				
@@ -3270,7 +3476,7 @@ HandlerNotifyDisconnect: signature for handlers invoked when the NotifyDisconnec
 method is called on an amqp.Connection or amqp.Channel.
 </p>
 
-			<pre>type HandlerNotifyDisconnect func(args <a href="godoc.3.html#ArgsNotifyDisconnect">ArgsNotifyDisconnect</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerNotifyDisconnect func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsNotifyDisconnect">ArgsNotifyDisconnect</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -3286,7 +3492,7 @@ method is called on an amqp.Connection or amqp.Channel.
 		
 			
 			
-			<h2 id="HandlerNotifyDisconnectEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=6651:6719#L143">HandlerNotifyDisconnectEvents</a>
+			<h2 id="HandlerNotifyDisconnectEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=1996:2088#L37">HandlerNotifyDisconnectEvents</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyDisconnectEvents">&#xb6;</a>
 				
 				
@@ -3297,7 +3503,7 @@ NotifyDisconnect() of an amqp.Connection or amqp.Channel is being processed befo
 being sent to the caller.
 </p>
 
-			<pre>type HandlerNotifyDisconnectEvents func(event <a href="godoc.3.html#EventNotifyDisconnect">EventNotifyDisconnect</a>)</pre>
+			<pre>type HandlerNotifyDisconnectEvents func(metadata <a href="godoc.3.html#EventMetadata">EventMetadata</a>, event <a href="godoc.3.html#EventNotifyDisconnect">EventNotifyDisconnect</a>)</pre>
 
 			
 
@@ -3313,7 +3519,7 @@ being sent to the caller.
 		
 			
 			
-			<h2 id="HandlerNotifyFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=5841:5899#L126">HandlerNotifyFlow</a>
+			<h2 id="HandlerNotifyFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=7650:7737#L154">HandlerNotifyFlow</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyFlow">&#xb6;</a>
 				
 				
@@ -3323,7 +3529,7 @@ HandlerNotifyFlow signature for handlers invoked when amqp.Channel.NotifyFlow() 
 called.
 </p>
 
-			<pre>type HandlerNotifyFlow func(args <a href="godoc.3.html#ArgsNotifyFlow">ArgsNotifyFlow</a>) chan <a href="http://localhost:6161/pkg/builtin/#bool">bool</a></pre>
+			<pre>type HandlerNotifyFlow func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsNotifyFlow">ArgsNotifyFlow</a>) <a href="godoc.3.html#ResultsNotifyFlow">ResultsNotifyFlow</a></pre>
 
 			
 
@@ -3339,7 +3545,7 @@ called.
 		
 			
 			
-			<h2 id="HandlerNotifyFlowEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=8537:8593#L177">HandlerNotifyFlowEvents</a>
+			<h2 id="HandlerNotifyFlowEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=9765:9845#L190">HandlerNotifyFlowEvents</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyFlowEvents">&#xb6;</a>
 				
 				
@@ -3349,7 +3555,7 @@ HandlerNotifyFlowEvents: signature for handlers invoked when an event from an
 amqp.Channel.NotifyFlow() is being processed before being sent to the caller.
 </p>
 
-			<pre>type HandlerNotifyFlowEvents func(event <a href="godoc.3.html#EventNotifyFlow">EventNotifyFlow</a>)</pre>
+			<pre>type HandlerNotifyFlowEvents func(metadata <a href="godoc.3.html#EventMetadata">EventMetadata</a>, event <a href="godoc.3.html#EventNotifyFlow">EventNotifyFlow</a>)</pre>
 
 			
 
@@ -3365,7 +3571,7 @@ amqp.Channel.NotifyFlow() is being processed before being sent to the caller.
 		
 			
 			
-			<h2 id="HandlerNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=6005:6088#L130">HandlerNotifyPublish</a>
+			<h2 id="HandlerNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=7843:7939#L158">HandlerNotifyPublish</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyPublish">&#xb6;</a>
 				
 				
@@ -3375,7 +3581,7 @@ HandlerNotifyPublish: signature for handlers invoked when
 amqp.Channel.NotifyPublish() is called.
 </p>
 
-			<pre>type HandlerNotifyPublish func(args <a href="godoc.3.html#ArgsNotifyPublish">ArgsNotifyPublish</a>) chan <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Confirmation">Confirmation</a></pre>
+			<pre>type HandlerNotifyPublish func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsNotifyPublish">ArgsNotifyPublish</a>) <a href="godoc.3.html#ResultsNotifyPublish">ResultsNotifyPublish</a></pre>
 
 			
 
@@ -3391,7 +3597,7 @@ amqp.Channel.NotifyPublish() is called.
 		
 			
 			
-			<h2 id="HandlerNotifyPublishEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=7140:7202#L152">HandlerNotifyPublishEvents</a>
+			<h2 id="HandlerNotifyPublishEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=8224:8310#L165">HandlerNotifyPublishEvents</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyPublishEvents">&#xb6;</a>
 				
 				
@@ -3401,7 +3607,7 @@ HandlerNotifyPublishEvents: signature for handlers invoked when an event from an
 amqp.Channel.NotifyPublish() is being processed before being sent to the caller.
 </p>
 
-			<pre>type HandlerNotifyPublishEvents func(event <a href="godoc.3.html#EventNotifyPublish">EventNotifyPublish</a>)</pre>
+			<pre>type HandlerNotifyPublishEvents func(metadata <a href="godoc.3.html#EventMetadata">EventMetadata</a>, event <a href="godoc.3.html#EventNotifyPublish">EventNotifyPublish</a>)</pre>
 
 			
 
@@ -3417,7 +3623,7 @@ amqp.Channel.NotifyPublish() is being processed before being sent to the caller.
 		
 			
 			
-			<h2 id="HandlerNotifyReturn">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=5501:5575#L118">HandlerNotifyReturn</a>
+			<h2 id="HandlerNotifyReturn">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=7262:7355#L146">HandlerNotifyReturn</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyReturn">&#xb6;</a>
 				
 				
@@ -3427,7 +3633,7 @@ HandlerNotifyReturn signature for handlers invoked when amqp.Channel.NotifyRetur
 is called.
 </p>
 
-			<pre>type HandlerNotifyReturn func(args <a href="godoc.3.html#ArgsNotifyReturn">ArgsNotifyReturn</a>) chan <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Return">Return</a></pre>
+			<pre>type HandlerNotifyReturn func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsNotifyReturn">ArgsNotifyReturn</a>) <a href="godoc.3.html#ResultsNotifyReturn">ResultsNotifyReturn</a></pre>
 
 			
 
@@ -3443,7 +3649,7 @@ is called.
 		
 			
 			
-			<h2 id="HandlerNotifyReturnEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=8085:8145#L169">HandlerNotifyReturnEvents</a>
+			<h2 id="HandlerNotifyReturnEvents">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=9265:9349#L182">HandlerNotifyReturnEvents</a>
 				<a class="permalink" href="godoc.3.html#HandlerNotifyReturnEvents">&#xb6;</a>
 				
 				
@@ -3453,7 +3659,7 @@ HandlerNotifyReturnEvents: signature for handlers invoked when an event from an
 amqp.Channel.NotifyReturn() is being processed before being sent to the caller.
 </p>
 
-			<pre>type HandlerNotifyReturnEvents func(event <a href="godoc.3.html#EventNotifyReturn">EventNotifyReturn</a>)</pre>
+			<pre>type HandlerNotifyReturnEvents func(metadata <a href="godoc.3.html#EventMetadata">EventMetadata</a>, event <a href="godoc.3.html#EventNotifyReturn">EventNotifyReturn</a>)</pre>
 
 			
 
@@ -3469,7 +3675,7 @@ amqp.Channel.NotifyReturn() is being processed before being sent to the caller.
 		
 			
 			
-			<h2 id="HandlerPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=3284:3332#L72">HandlerPublish</a>
+			<h2 id="HandlerPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=5695:5764#L114">HandlerPublish</a>
 				<a class="permalink" href="godoc.3.html#HandlerPublish">&#xb6;</a>
 				
 				
@@ -3478,7 +3684,7 @@ amqp.Channel.NotifyReturn() is being processed before being sent to the caller.
 HandlerPublish: signature for handlers invoked when amqp.Channel.Publish() is called.
 </p>
 
-			<pre>type HandlerPublish func(args <a href="godoc.3.html#ArgsPublish">ArgsPublish</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerPublish func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsPublish">ArgsPublish</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -3494,7 +3700,7 @@ HandlerPublish: signature for handlers invoked when amqp.Channel.Publish() is ca
 		
 			
 			
-			<h2 id="HandlerQoS">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=2886:2926#L63">HandlerQoS</a>
+			<h2 id="HandlerQoS">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=5234:5295#L105">HandlerQoS</a>
 				<a class="permalink" href="godoc.3.html#HandlerQoS">&#xb6;</a>
 				
 				
@@ -3503,7 +3709,7 @@ HandlerPublish: signature for handlers invoked when amqp.Channel.Publish() is ca
 HandlerQoS: signature for handlers invoked when amqp.Channel.QoS() is called.
 </p>
 
-			<pre>type HandlerQoS func(args <a href="godoc.3.html#ArgsQoS">ArgsQoS</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerQoS func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsQoS">ArgsQoS</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -3519,7 +3725,7 @@ HandlerQoS: signature for handlers invoked when amqp.Channel.QoS() is called.
 		
 			
 			
-			<h2 id="HandlerQueueBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=1748:1802#L36">HandlerQueueBind</a>
+			<h2 id="HandlerQueueBind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=3935:4010#L78">HandlerQueueBind</a>
 				<a class="permalink" href="godoc.3.html#HandlerQueueBind">&#xb6;</a>
 				
 				
@@ -3529,7 +3735,7 @@ HandlerQueueBind: signature for handlers invoked when amqp.Channel.QueueBind()
 is called.
 </p>
 
-			<pre>type HandlerQueueBind = func(args <a href="godoc.3.html#ArgsQueueBind">ArgsQueueBind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerQueueBind = func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsQueueBind">ArgsQueueBind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -3545,7 +3751,7 @@ is called.
 		
 			
 			
-			<h2 id="HandlerQueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=1211:1290#L24">HandlerQueueDeclare</a>
+			<h2 id="HandlerQueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=3322:3426#L66">HandlerQueueDeclare</a>
 				<a class="permalink" href="godoc.3.html#HandlerQueueDeclare">&#xb6;</a>
 				
 				
@@ -3555,7 +3761,7 @@ HandlerQueueDeclare: signature for handlers invoked when amqp.Channel.QueueDecla
 is called.
 </p>
 
-			<pre>type HandlerQueueDeclare = func(args <a href="godoc.3.html#ArgsQueueDeclare">ArgsQueueDeclare</a>) (<a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Queue">Queue</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+			<pre>type HandlerQueueDeclare = func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsQueueDeclare">ArgsQueueDeclare</a>) (<a href="godoc.3.html#ResultsQueueDeclare">ResultsQueueDeclare</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 
 			
 
@@ -3571,7 +3777,7 @@ is called.
 		
 			
 			
-			<h2 id="HandlerQueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=1575:1650#L32">HandlerQueueDelete</a>
+			<h2 id="HandlerQueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=3736:3837#L74">HandlerQueueDelete</a>
 				<a class="permalink" href="godoc.3.html#HandlerQueueDelete">&#xb6;</a>
 				
 				
@@ -3581,7 +3787,7 @@ HandlerQueueDelete: signature for handlers invoked when amqp.Channel.QueueDelete
 is called.
 </p>
 
-			<pre>type HandlerQueueDelete = func(args <a href="godoc.3.html#ArgsQueueDelete">ArgsQueueDelete</a>) (count <a href="http://localhost:6161/pkg/builtin/#int">int</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+			<pre>type HandlerQueueDelete = func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsQueueDelete">ArgsQueueDelete</a>) (<a href="godoc.3.html#ResultsQueueDelete">ResultsQueueDelete</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 
 			
 
@@ -3597,7 +3803,7 @@ is called.
 		
 			
 			
-			<h2 id="HandlerQueueInspect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=1394:1473#L28">HandlerQueueInspect</a>
+			<h2 id="HandlerQueueInspect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=3530:3634#L70">HandlerQueueInspect</a>
 				<a class="permalink" href="godoc.3.html#HandlerQueueInspect">&#xb6;</a>
 				
 				
@@ -3607,7 +3813,7 @@ HandlerQueueInspect: signature for handlers invoked when amqp.Channel.QueueDecla
 is called.
 </p>
 
-			<pre>type HandlerQueueInspect = func(args <a href="godoc.3.html#ArgsQueueInspect">ArgsQueueInspect</a>) (<a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Queue">Queue</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+			<pre>type HandlerQueueInspect = func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsQueueInspect">ArgsQueueInspect</a>) (<a href="godoc.3.html#ResultsQueueInspect">ResultsQueueInspect</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 
 			
 
@@ -3623,7 +3829,7 @@ is called.
 		
 			
 			
-			<h2 id="HandlerQueuePurge">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=2062:2125#L44">HandlerQueuePurge</a>
+			<h2 id="HandlerQueuePurge">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=4291:4389#L86">HandlerQueuePurge</a>
 				<a class="permalink" href="godoc.3.html#HandlerQueuePurge">&#xb6;</a>
 				
 				
@@ -3633,7 +3839,7 @@ HandlerQueuePurge: signature for handlers invoked when amqp.Channel.QueuePurge()
 is called.
 </p>
 
-			<pre>type HandlerQueuePurge = func(args <a href="godoc.3.html#ArgsQueuePurge">ArgsQueuePurge</a>) (<a href="http://localhost:6161/pkg/builtin/#int">int</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
+			<pre>type HandlerQueuePurge = func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsQueuePurge">ArgsQueuePurge</a>) (<a href="godoc.3.html#ResultsQueuePurge">ResultsQueuePurge</a>, <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 
 			
 
@@ -3649,7 +3855,7 @@ is called.
 		
 			
 			
-			<h2 id="HandlerQueueUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=1904:1962#L40">HandlerQueueUnbind</a>
+			<h2 id="HandlerQueueUnbind">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=4112:4191#L82">HandlerQueueUnbind</a>
 				<a class="permalink" href="godoc.3.html#HandlerQueueUnbind">&#xb6;</a>
 				
 				
@@ -3659,7 +3865,7 @@ HandlerQueueUnbind: signature for handlers invoked when amqp.Channel.QueueUnbind
 is called.
 </p>
 
-			<pre>type HandlerQueueUnbind = func(args <a href="godoc.3.html#ArgsQueueUnbind">ArgsQueueUnbind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerQueueUnbind = func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsQueueUnbind">ArgsQueueUnbind</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -3675,7 +3881,7 @@ is called.
 		
 			
 			
-			<h2 id="HandlerReject">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=4149:4195#L90">HandlerReject</a>
+			<h2 id="HandlerReject">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=6634:6701#L132">HandlerReject</a>
 				<a class="permalink" href="godoc.3.html#HandlerReject">&#xb6;</a>
 				
 				
@@ -3684,7 +3890,7 @@ is called.
 HandlerReject: signature for handlers invoked when amqp.Channel.Reject() is called.
 </p>
 
-			<pre>type HandlerReject func(args <a href="godoc.3.html#ArgsReject">ArgsReject</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
+			<pre>type HandlerReject func(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>, args <a href="godoc.3.html#ArgsReject">ArgsReject</a>) <a href="http://localhost:6161/pkg/builtin/#error">error</a></pre>
 
 			
 
@@ -3694,6 +3900,51 @@ HandlerReject: signature for handlers invoked when amqp.Channel.Reject() is call
 			
 			
 
+			
+
+			
+		
+			
+			
+			<h2 id="MethodInfo">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/metadata.go?s=134:337#L1">MethodInfo</a>
+				<a class="permalink" href="godoc.3.html#MethodInfo">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+MethodInfo holds extracted information from the context passed into a method
+handler.
+</p>
+
+			<pre>type MethodInfo struct {
+<span id="MethodInfo.OpAttempt"></span>    <span class="comment">// OpAttempt: Some operations retry over disconnections. This is the attempt number,</span>
+    <span class="comment">// starting at 0. Will be -1 if this is not an operation that is re-tried.</span>
+    OpAttempt <a href="http://localhost:6161/pkg/builtin/#int">int</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="GetMethodInfo">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/metadata.go?s=405:462#L4">GetMethodInfo</a>
+					<a class="permalink" href="godoc.3.html#GetMethodInfo">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func GetMethodInfo(ctx <a href="http://localhost:6161/pkg/context/">context</a>.<a href="http://localhost:6161/pkg/context/#Context">Context</a>) (info <a href="godoc.3.html#MethodInfo">MethodInfo</a>)</pre>
+				<p>
+GetMethodInfo extracts context info from a middleware context.
+</p>
+
+				
+				
 			
 
 			
@@ -4194,6 +4445,31 @@ during relay of *amqp.Channel.NotifyReturn() events.
 		
 			
 			
+			<h2 id="ProviderFactory">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/providers.go?s=11244:11292#L356">ProviderFactory</a>
+				<a class="permalink" href="godoc.3.html#ProviderFactory">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ProviderFactory is a function that creates a fresh instance of a middleware provider.
+</p>
+
+			<pre>type ProviderFactory = func() <a href="godoc.3.html#ProvidesMiddleware">ProvidesMiddleware</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
 			<h2 id="ProviderTypeID">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/providers.go?s=24:50#L1">ProviderTypeID</a>
 				<a class="permalink" href="godoc.3.html#ProviderTypeID">&#xb6;</a>
 				
@@ -4244,7 +4520,7 @@ ProvidesAck provides Ack as a method.
 		
 			
 			
-			<h2 id="ProvidesAllChannel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/providers.go?s=9843:10807#L301">ProvidesAllChannel</a>
+			<h2 id="ProvidesAllChannel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/providers.go?s=10087:10903#L308">ProvidesAllChannel</a>
 				<a class="permalink" href="godoc.3.html#ProvidesAllChannel">&#xb6;</a>
 				
 				
@@ -4255,13 +4531,7 @@ that implement all Channel middleware provider interfaces.
 </p>
 
 			<pre>type ProvidesAllChannel interface {
-    <a href="godoc.3.html#ProvidesClose">ProvidesClose</a>
-    <a href="godoc.3.html#ProvidesNotifyClose">ProvidesNotifyClose</a>
-    <a href="godoc.3.html#ProvidesNotifyDial">ProvidesNotifyDial</a>
-    <a href="godoc.3.html#ProvidesNotifyDisconnect">ProvidesNotifyDisconnect</a>
-    <a href="godoc.3.html#ProvidesNotifyCloseEvents">ProvidesNotifyCloseEvents</a>
-    <a href="godoc.3.html#ProvidesNotifyDialEvents">ProvidesNotifyDialEvents</a>
-    <a href="godoc.3.html#ProvidesNotifyDisconnectEvents">ProvidesNotifyDisconnectEvents</a>
+    <a href="godoc.3.html#ProvidesAllShared">ProvidesAllShared</a>
 
     <a href="godoc.3.html#ProvidesChannelReconnect">ProvidesChannelReconnect</a>
     <a href="godoc.3.html#ProvidesQueueDeclare">ProvidesQueueDeclare</a>
@@ -4314,7 +4584,7 @@ that implement all Channel middleware provider interfaces.
 		
 			
 			
-			<h2 id="ProvidesAllConnection">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/providers.go?s=9458:9694#L288">ProvidesAllConnection</a>
+			<h2 id="ProvidesAllConnection">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/providers.go?s=9850:9938#L301">ProvidesAllConnection</a>
 				<a class="permalink" href="godoc.3.html#ProvidesAllConnection">&#xb6;</a>
 				
 				
@@ -4325,13 +4595,7 @@ that implement all Connection middleware providers interfaces.
 </p>
 
 			<pre>type ProvidesAllConnection interface {
-    <a href="godoc.3.html#ProvidesClose">ProvidesClose</a>
-    <a href="godoc.3.html#ProvidesNotifyClose">ProvidesNotifyClose</a>
-    <a href="godoc.3.html#ProvidesNotifyDial">ProvidesNotifyDial</a>
-    <a href="godoc.3.html#ProvidesNotifyDisconnect">ProvidesNotifyDisconnect</a>
-    <a href="godoc.3.html#ProvidesNotifyDialEvents">ProvidesNotifyDialEvents</a>
-    <a href="godoc.3.html#ProvidesNotifyDisconnectEvents">ProvidesNotifyDisconnectEvents</a>
-    <a href="godoc.3.html#ProvidesNotifyCloseEvents">ProvidesNotifyCloseEvents</a>
+    <a href="godoc.3.html#ProvidesAllShared">ProvidesAllShared</a>
     <a href="godoc.3.html#ProvidesConnectionReconnect">ProvidesConnectionReconnect</a>
 }</pre>
 
@@ -4349,7 +4613,7 @@ that implement all Connection middleware providers interfaces.
 		
 			
 			
-			<h2 id="ProvidesAllMiddleware">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/providers.go?s=10974:11057#L349">ProvidesAllMiddleware</a>
+			<h2 id="ProvidesAllMiddleware">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/providers.go?s=11070:11153#L350">ProvidesAllMiddleware</a>
 				<a class="permalink" href="godoc.3.html#ProvidesAllMiddleware">&#xb6;</a>
 				
 				
@@ -4362,6 +4626,41 @@ that implement all Connection and Channel middleware provider interfaces.
 			<pre>type ProvidesAllMiddleware interface {
     <a href="godoc.3.html#ProvidesAllConnection">ProvidesAllConnection</a>
     <a href="godoc.3.html#ProvidesAllChannel">ProvidesAllChannel</a>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ProvidesAllShared">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/providers.go?s=9491:9694#L289">ProvidesAllShared</a>
+				<a class="permalink" href="godoc.3.html#ProvidesAllShared">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ProvidesAllShared is a convenience interface for generating middleware providers
+that implement all shared methods between Connection and Channel middleware provider
+interfaces.
+</p>
+
+			<pre>type ProvidesAllShared interface {
+    <a href="godoc.3.html#ProvidesClose">ProvidesClose</a>
+    <a href="godoc.3.html#ProvidesNotifyClose">ProvidesNotifyClose</a>
+    <a href="godoc.3.html#ProvidesNotifyDial">ProvidesNotifyDial</a>
+    <a href="godoc.3.html#ProvidesNotifyDisconnect">ProvidesNotifyDisconnect</a>
+    <a href="godoc.3.html#ProvidesNotifyDialEvents">ProvidesNotifyDialEvents</a>
+    <a href="godoc.3.html#ProvidesNotifyDisconnectEvents">ProvidesNotifyDisconnectEvents</a>
+    <a href="godoc.3.html#ProvidesNotifyCloseEvents">ProvidesNotifyCloseEvents</a>
 }</pre>
 
 			
@@ -5823,7 +6122,445 @@ Reject defines signature for middleware invoked on *amqp.Channel.Reject() call.
 		
 			
 			
-			<h2 id="TransportType">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=256:281#L1">TransportType</a>
+			<h2 id="ResultsChannelReconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=619:686#L12">ResultsChannelReconnect</a>
+				<a class="permalink" href="godoc.3.html#ResultsChannelReconnect">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsChannelReconnect are the result values from a Channel reconnection event for
+middleware to inspect.
+</p>
+
+			<pre>type ResultsChannelReconnect struct {
+<span id="ResultsChannelReconnect.Channel"></span>    Channel *<a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Channel">Channel</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsConnectionReconnect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=428:504#L6">ResultsConnectionReconnect</a>
+				<a class="permalink" href="godoc.3.html#ResultsConnectionReconnect">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsChannelReconnect are the result values from a Connection reconnection event
+for middleware to inspect.
+</p>
+
+			<pre>type ResultsConnectionReconnect struct {
+<span id="ResultsConnectionReconnect.Connection"></span>    Connection *<a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Connection">Connection</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsConsume">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=1573:1644#L48">ResultsConsume</a>
+				<a class="permalink" href="godoc.3.html#ResultsConsume">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsConsume are the result values from a Channel.Consume call for middleware to
+inspect.
+</p>
+
+			<pre>type ResultsConsume struct {
+<span id="ResultsConsume.DeliveryChan"></span>    DeliveryChan &lt;-chan <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Delivery">Delivery</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsGet">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=1412:1473#L41">ResultsGet</a>
+				<a class="permalink" href="godoc.3.html#ResultsGet">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsGet are the result values from a Channel.Get call for middleware to inspect.
+</p>
+
+			<pre>type ResultsGet struct {
+<span id="ResultsGet.Msg"></span>    Msg <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Delivery">Delivery</a>
+<span id="ResultsGet.Ok"></span>    Ok  <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsNotifyCancel">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=2348:2410#L75">ResultsNotifyCancel</a>
+				<a class="permalink" href="godoc.3.html#ResultsNotifyCancel">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsNotifyCancel stores the results from amqp.Channel.NotifyCancel for middleware
+to inspect.
+</p>
+
+			<pre>type ResultsNotifyCancel struct {
+<span id="ResultsNotifyCancel.Cancellations"></span>    Cancellations chan <a href="http://localhost:6161/pkg/builtin/#string">string</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsNotifyClose">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=242:310#L1">ResultsNotifyClose</a>
+				<a class="permalink" href="godoc.3.html#ResultsNotifyClose">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsNotifyClose are the result values from a call to the NotifyClose method on
+a Connection or Channel.
+</p>
+
+			<pre>type ResultsNotifyClose struct {
+<span id="ResultsNotifyClose.CallerChan"></span>    CallerChan chan *<a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Error">Error</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsNotifyConfirm">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=1756:1828#L54">ResultsNotifyConfirm</a>
+				<a class="permalink" href="godoc.3.html#ResultsNotifyConfirm">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsNotifyConfirm are the result values from a Channel.NotifyConfirm call for
+middleware to inspect.
+</p>
+
+			<pre>type ResultsNotifyConfirm struct {
+<span id="ResultsNotifyConfirm.Ack"></span>    Ack  chan <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
+<span id="ResultsNotifyConfirm.Nack"></span>    Nack chan <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsNotifyConfirmOrOrphaned">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=1960:2072#L61">ResultsNotifyConfirmOrOrphaned</a>
+				<a class="permalink" href="godoc.3.html#ResultsNotifyConfirmOrOrphaned">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsNotifyConfirmOrOrphaned are the result values from a
+Channel.NotifyConfirmOrOrphaned call for middleware to inspect.
+</p>
+
+			<pre>type ResultsNotifyConfirmOrOrphaned struct {
+<span id="ResultsNotifyConfirmOrOrphaned.Ack"></span>    Ack      chan <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
+<span id="ResultsNotifyConfirmOrOrphaned.Nack"></span>    Nack     chan <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
+<span id="ResultsNotifyConfirmOrOrphaned.Orphaned"></span>    Orphaned chan <a href="http://localhost:6161/pkg/builtin/#uint64">uint64</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsNotifyFlow">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=2511:2573#L81">ResultsNotifyFlow</a>
+				<a class="permalink" href="godoc.3.html#ResultsNotifyFlow">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsNotifyFlow stores the results from amqp.Channel.NotifyFlow for middleware to
+inspect.
+</p>
+
+			<pre>type ResultsNotifyFlow struct {
+<span id="ResultsNotifyFlow.FlowNotifications"></span>    FlowNotifications chan <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsNotifyPublish">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=2682:2756#L87">ResultsNotifyPublish</a>
+				<a class="permalink" href="godoc.3.html#ResultsNotifyPublish">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsNotifyPublish stores the results from amqp.Channel.NotifyPublish() for
+middleware to inspect.
+</p>
+
+			<pre>type ResultsNotifyPublish struct {
+<span id="ResultsNotifyPublish.Confirm"></span>    Confirm chan <a href="godoc.4.html">datamodels</a>.<a href="godoc.4.html#Confirmation">Confirmation</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsNotifyReturn">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=2177:2243#L69">ResultsNotifyReturn</a>
+				<a class="permalink" href="godoc.3.html#ResultsNotifyReturn">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsNotifyReturn stores the results from amqp.Channel.NotifyReturn for middleware
+to inspect.
+</p>
+
+			<pre>type ResultsNotifyReturn struct {
+<span id="ResultsNotifyReturn.Returns"></span>    Returns chan <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Return">Return</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsQueueDeclare">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=794:852#L18">ResultsQueueDeclare</a>
+				<a class="permalink" href="godoc.3.html#ResultsQueueDeclare">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsQueueDeclare are the result values from a Channel.QueuePurge call for
+middleware to inspect.
+</p>
+
+			<pre>type ResultsQueueDeclare struct {
+<span id="ResultsQueueDeclare.Queue"></span>    Queue <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Queue">Queue</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsQueueDelete">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=1278:1323#L36">ResultsQueueDelete</a>
+				<a class="permalink" href="godoc.3.html#ResultsQueueDelete">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsQueueDelete are the result values from a Channel.QueueDelete call for
+middleware to inspect.
+</p>
+
+			<pre>type ResultsQueueDelete struct {
+<span id="ResultsQueueDelete.Count"></span>    Count <a href="http://localhost:6161/pkg/builtin/#int">int</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsQueueInspect">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=962:1020#L24">ResultsQueueInspect</a>
+				<a class="permalink" href="godoc.3.html#ResultsQueueInspect">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsQueueInspect are the result values from a Channel.QueueInspect call for
+middleware to inspect.
+</p>
+
+			<pre>type ResultsQueueInspect struct {
+<span id="ResultsQueueInspect.Queue"></span>    Queue <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Queue">Queue</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResultsQueuePurge">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/methodResults.go?s=1126:1170#L30">ResultsQueuePurge</a>
+				<a class="permalink" href="godoc.3.html#ResultsQueuePurge">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+ResultsQueuePurge are the result values from a Channel.QueuePurge call for middleware
+to inspect.
+</p>
+
+			<pre>type ResultsQueuePurge struct {
+<span id="ResultsQueuePurge.Count"></span>    Count <a href="http://localhost:6161/pkg/builtin/#int">int</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="TransportType">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/amqpmiddleware/handlerDefs.go?s=174:199#L1">TransportType</a>
 				<a class="permalink" href="godoc.3.html#TransportType">&#xb6;</a>
 				
 				

@@ -18,8 +18,8 @@ func ExampleNew() {
 	}
 	defer connection.Close()
 
-	// Get a new channel from our robust connection for publishing. The channel is
-	// created with our default middleware.
+	// Get a new channel from our robust connection for publishing. This channel will
+	// be put into confirmation mode by the producer.
 	channel, err := connection.Channel()
 	if err != nil {
 		panic(err)
@@ -58,7 +58,8 @@ func ExampleNew() {
 
 		messagesPublished.Add(1)
 
-		// Publish each message in it's own goroutine.
+		// Publish each message in it's own goroutine The producer handles the
+		// boilerplate of tracking publication tags and receiving broker confirmations.
 		go func() {
 			// Release our WaitGroup on exit.
 			defer messagesPublished.Done()
@@ -70,16 +71,16 @@ func ExampleNew() {
 			// confirmation from the broker OR ctx expires.
 			err = producer.Publish(
 				ctx,
-				"",
-				queue.Name,
-				false,
-				false,
+				"", // exchange
+				queue.Name, // queue
+				true, // mandatory
+				false, // immediate
 				amqp.Publishing{
 					Body: []byte("test message"),
 				},
 			)
 
-			fmt.Println("Message Published!")
+			fmt.Println("Message Published and Confirmed!")
 
 			if err != nil {
 				panic(err)
@@ -98,14 +99,14 @@ func ExampleNew() {
 
 	// exit.
 
-	// Message Published!
-	// Message Published!
-	// Message Published!
-	// Message Published!
-	// Message Published!
-	// Message Published!
-	// Message Published!
-	// Message Published!
-	// Message Published!
-	// Message Published!
+	// Message Published and Confirmed!
+	// Message Published and Confirmed!
+	// Message Published and Confirmed!
+	// Message Published and Confirmed!
+	// Message Published and Confirmed!
+	// Message Published and Confirmed!
+	// Message Published and Confirmed!
+	// Message Published and Confirmed!
+	// Message Published and Confirmed!
+	// Message Published and Confirmed!
 }
