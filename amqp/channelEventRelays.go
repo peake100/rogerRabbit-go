@@ -46,17 +46,26 @@ func shutdownRelay(relay eventRelay, relaySync relaySync) {
 func (channel *Channel) eventRelaySetupAndLaunch(relay eventRelay) {
 	// Launch the runner
 	thisSync := newRelaySync(channel.ctx)
-	go channel.runEventRelay(relay, thisSync)
+
+	setupComplete := make(chan struct{})
+	// Launch the relay.
+	go channel.runEventRelay(relay, thisSync, setupComplete)
+	// Wait for the signal that our setup is complete.
+	<-setupComplete
 }
 
 // runEventRelay should be launched as goroutine to run an event relay after it's
 // initial setup.
-func (channel *Channel) runEventRelay(relay eventRelay, relaySync relaySync) {
+func (channel *Channel) runEventRelay(relay eventRelay, relaySync relaySync, setupComplete chan struct{}) {
 	// Shutdown our relay on exit.
 	defer shutdownRelay(relay, relaySync)
 
 	firstLegComplete := make(chan struct{})
-	channel.eventRelayInitialSetup(relay, relaySync, firstLegComplete)
+	func() {
+		// Close the setupComplete so we can return to the caller.
+		defer close(setupComplete)
+		channel.eventRelayInitialSetup(relay, relaySync, firstLegComplete)
+	}()
 
 	// Wait for ou first leg to complete, then fall into a rhythm with the transport
 	// manager

@@ -666,7 +666,6 @@ func (builder channelHandlerBuilder) createNotifyReturn() amqpmiddleware.Handler
 
 	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyReturn) amqpmiddleware.ResultsNotifyReturn {
 		relay := newNotifyReturnRelay(args.Returns, eventMiddlewares)
-
 		channel.eventRelaySetupAndLaunch(relay)
 		return amqpmiddleware.ResultsNotifyReturn{Returns: args.Returns}
 	}
