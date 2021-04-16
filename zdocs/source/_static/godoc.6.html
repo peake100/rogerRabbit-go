@@ -164,6 +164,9 @@ package amqptest contains testing utilities for amqp types.
 					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.SetupSuite">func (amqpSuite *AmqpSuite) SetupSuite()</a></dd>
 				
 					
+					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.SetupTest">func (amqpSuite *AmqpSuite) SetupTest()</a></dd>
+				
+					
 					<dd>&nbsp; &nbsp; <a href="godoc.6.html#AmqpSuite.TearDownSuite">func (amqpSuite *AmqpSuite) TearDownSuite()</a></dd>
 				
 			
@@ -249,7 +252,7 @@ package amqptest contains testing utilities for amqp types.
 				
 				
 			</h2>
-			<pre>func GetTestConnection(t *<a href="http://localhost:6161/pkg/testing/">testing</a>.<a href="http://localhost:6161/pkg/testing/#T">T</a>) *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Connection">Connection</a></pre>
+			<pre>func GetTestConnection(t *<a href="http://localhost:6161/pkg/testing/">testing</a>.<a href="http://localhost:6161/pkg/testing/#T">T</a>) *<a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Connection">Connection</a></pre>
 			<p>
 GetTestConnection creates a new connection to amqp://localhost:57018, where our
 test broker will be listening.
@@ -265,7 +268,7 @@ t.FailNot() is called on any errors.
 		
 			
 			
-			<h2 id="AmqpSuite">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=1604:2184#L45">AmqpSuite</a>
+			<h2 id="AmqpSuite">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=1754:2334#L52">AmqpSuite</a>
 				<a class="permalink" href="godoc.6.html#AmqpSuite">&#xb6;</a>
 				
 				
@@ -297,7 +300,7 @@ handling test setup / teardown.
 
 			
 				
-				<h3 id="NewAmqpSuite">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=11792:11866#L419">NewAmqpSuite</a>
+				<h3 id="NewAmqpSuite">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=12851:12925#L462">NewAmqpSuite</a>
 					<a class="permalink" href="godoc.6.html#NewAmqpSuite">&#xb6;</a>
 					
 					
@@ -310,12 +313,12 @@ handling test setup / teardown.
 
 			
 				
-				<h3 id="AmqpSuite.ChannelConsume">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=4571:4629#L146">ChannelConsume</a>
+				<h3 id="AmqpSuite.ChannelConsume">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=4894:4952#L160">ChannelConsume</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ChannelConsume">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelConsume() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Channel">Channel</a></pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelConsume() *<a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Channel">Channel</a></pre>
 				<p>
 ChannelConsume returns an *amqp.Channel to be used for consuming methods. The
 returned channel object will be the same each time this methods is called, until
@@ -327,12 +330,12 @@ ReplaceChannels is called.
 				
 			
 				
-				<h3 id="AmqpSuite.ChannelConsumeTester">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=4927:4998#L156">ChannelConsumeTester</a>
+				<h3 id="AmqpSuite.ChannelConsumeTester">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=5250:5321#L170">ChannelConsumeTester</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ChannelConsumeTester">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelConsumeTester() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#ChannelTesting">ChannelTesting</a></pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelConsumeTester() *<a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#ChannelTesting">ChannelTesting</a></pre>
 				<p>
 ChannelConsumeTester returns *amqp.ChannelTesting object for ChannelConsume with the
 current suite.T().
@@ -343,12 +346,12 @@ current suite.T().
 				
 			
 				
-				<h3 id="AmqpSuite.ChannelPublish">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=5632:5690#L173">ChannelPublish</a>
+				<h3 id="AmqpSuite.ChannelPublish">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=5955:6013#L187">ChannelPublish</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ChannelPublish">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelPublish() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Channel">Channel</a></pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelPublish() *<a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Channel">Channel</a></pre>
 				<p>
 ChannelPublish returns an *amqp.Channel to be used for consuming methods. The
 returned channel object will be the same each time this methods is called, until
@@ -360,12 +363,12 @@ ReplaceChannels is called.
 				
 			
 				
-				<h3 id="AmqpSuite.ChannelPublishTester">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=5988:6059#L183">ChannelPublishTester</a>
+				<h3 id="AmqpSuite.ChannelPublishTester">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=6311:6382#L197">ChannelPublishTester</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ChannelPublishTester">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelPublishTester() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#ChannelTesting">ChannelTesting</a></pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ChannelPublishTester() *<a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#ChannelTesting">ChannelTesting</a></pre>
 				<p>
 ChannelConsumeTester returns *amqp.ChannelTesting object for ChannelConsume with the
 current suite.T().
@@ -376,12 +379,12 @@ current suite.T().
 				
 			
 				
-				<h3 id="AmqpSuite.ConnConsume">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=4161:4219#L135">ConnConsume</a>
+				<h3 id="AmqpSuite.ConnConsume">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=4484:4542#L149">ConnConsume</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ConnConsume">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ConnConsume() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Connection">Connection</a></pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ConnConsume() *<a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Connection">Connection</a></pre>
 				<p>
 ConnConsume returns an *amqp.Connection to be used for consuming methods. The
 returned connection object will be the same each time this methods is called.
@@ -392,12 +395,12 @@ returned connection object will be the same each time this methods is called.
 				
 			
 				
-				<h3 id="AmqpSuite.ConnPublish">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=5222:5280#L162">ConnPublish</a>
+				<h3 id="AmqpSuite.ConnPublish">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=5545:5603#L176">ConnPublish</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ConnPublish">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ConnPublish() *<a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Connection">Connection</a></pre>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) ConnPublish() *<a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Connection">Connection</a></pre>
 				<p>
 ConnPublish returns an *amqp.Connection to be used for publishing methods. The
 returned connection object will be the same each time this methods is called.
@@ -408,7 +411,7 @@ returned connection object will be the same each time this methods is called.
 				
 			
 				
-				<h3 id="AmqpSuite.CreateTestExchange">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=8682:8772#L281">CreateTestExchange</a>
+				<h3 id="AmqpSuite.CreateTestExchange">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=9136:9226#L300">CreateTestExchange</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.CreateTestExchange">&#xb6;</a>
 					
 					
@@ -429,14 +432,14 @@ suite.T() that will delete the exchange at the end of the test.
 				
 			
 				
-				<h3 id="AmqpSuite.CreateTestQueue">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=8086:8208#L264">CreateTestQueue</a>
+				<h3 id="AmqpSuite.CreateTestQueue">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=8540:8662#L283">CreateTestQueue</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.CreateTestQueue">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) CreateTestQueue(
     name <a href="http://localhost:6161/pkg/builtin/#string">string</a>, exchange <a href="http://localhost:6161/pkg/builtin/#string">string</a>, exchangeKey <a href="http://localhost:6161/pkg/builtin/#string">string</a>, cleanup <a href="http://localhost:6161/pkg/builtin/#bool">bool</a>,
-) <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Queue">Queue</a></pre>
+) <a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Queue">Queue</a></pre>
 				<p>
 CreateTestQueue creates a basic test queue on both ChannelConsume and ChannelPublish.
 The created queue can be optionally bound to an exchange (which should have been
@@ -452,7 +455,7 @@ suite.T() to delete the queues at the end of the test.
 				
 			
 				
-				<h3 id="AmqpSuite.GetMessage">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=11448:11542#L404">GetMessage</a>
+				<h3 id="AmqpSuite.GetMessage">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=12507:12601#L447">GetMessage</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.GetMessage">&#xb6;</a>
 					
 					
@@ -470,7 +473,7 @@ message waiting or the get message fails.
 				
 			
 				
-				<h3 id="AmqpSuite.PublishMessages">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=10577:10678#L376">PublishMessages</a>
+				<h3 id="AmqpSuite.PublishMessages">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=11373:11474#L410">PublishMessages</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.PublishMessages">&#xb6;</a>
 					
 					
@@ -492,7 +495,7 @@ Messages bodies are simply the index of the message starting at 0, so publishing
 				
 			
 				
-				<h3 id="AmqpSuite.ReplaceChannels">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=6344:6389#L190">ReplaceChannels</a>
+				<h3 id="AmqpSuite.ReplaceChannels">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=6667:6712#L204">ReplaceChannels</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.ReplaceChannels">&#xb6;</a>
 					
 					
@@ -509,7 +512,7 @@ channels to the next test method is not desirable.
 				
 			
 				
-				<h3 id="AmqpSuite.SetupSuite">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=2315:2355#L65">SetupSuite</a>
+				<h3 id="AmqpSuite.SetupSuite">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=2638:2678#L79">SetupSuite</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.SetupSuite">&#xb6;</a>
 					
 					
@@ -525,7 +528,19 @@ NewChannelSuiteOpts if no other opts has been provided.
 				
 			
 				
-				<h3 id="AmqpSuite.TearDownSuite">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=2681:2724#L77">TearDownSuite</a>
+				<h3 id="AmqpSuite.SetupTest">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=2336:2375#L70">SetupTest</a>
+					<a class="permalink" href="godoc.6.html#AmqpSuite.SetupTest">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (amqpSuite *<a href="godoc.6.html#AmqpSuite">AmqpSuite</a>) SetupTest()</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="AmqpSuite.TearDownSuite">func (*AmqpSuite) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=3004:3047#L91">TearDownSuite</a>
 					<a class="permalink" href="godoc.6.html#AmqpSuite.TearDownSuite">&#xb6;</a>
 					
 					
@@ -705,7 +720,7 @@ Assertions is an extracted interface for testify assertions object.
 		
 			
 			
-			<h2 id="ChannelSuiteOpts">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=485:586#L13">ChannelSuiteOpts</a>
+			<h2 id="ChannelSuiteOpts">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=537:638#L17">ChannelSuiteOpts</a>
 				<a class="permalink" href="godoc.6.html#ChannelSuiteOpts">&#xb6;</a>
 				
 				
@@ -730,14 +745,15 @@ into a testify suite.Suite to gain a number of useful testing methods.
 
 			
 				
-				<h3 id="NewChannelSuiteOpts">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=1170:1214#L35">NewChannelSuiteOpts</a>
+				<h3 id="NewChannelSuiteOpts">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=1254:1298#L40">NewChannelSuiteOpts</a>
 					<a class="permalink" href="godoc.6.html#NewChannelSuiteOpts">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func NewChannelSuiteOpts() *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a></pre>
 				<p>
-NewChannelSuiteOpts returns a new ChannelSuiteOpts with default values
+NewChannelSuiteOpts returns a new ChannelSuiteOpts with default values and the logger
+set to debug.
 </p>
 
 				
@@ -746,7 +762,7 @@ NewChannelSuiteOpts returns a new ChannelSuiteOpts with default values
 
 			
 				
-				<h3 id="ChannelSuiteOpts.WithDialAddress">func (*ChannelSuiteOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=699:778#L21">WithDialAddress</a>
+				<h3 id="ChannelSuiteOpts.WithDialAddress">func (*ChannelSuiteOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=751:830#L25">WithDialAddress</a>
 					<a class="permalink" href="godoc.6.html#ChannelSuiteOpts.WithDialAddress">&#xb6;</a>
 					
 					
@@ -762,12 +778,12 @@ Default: amqp://localhost:57018
 				
 			
 				
-				<h3 id="ChannelSuiteOpts.WithDialConfig">func (*ChannelSuiteOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=942:1024#L28">WithDialConfig</a>
+				<h3 id="ChannelSuiteOpts.WithDialConfig">func (*ChannelSuiteOpts) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=994:1076#L32">WithDialConfig</a>
 					<a class="permalink" href="godoc.6.html#ChannelSuiteOpts.WithDialConfig">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (opts *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a>) WithDialConfig(config <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#Config">Config</a>) *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a></pre>
+				<pre>func (opts *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a>) WithDialConfig(config <a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Config">Config</a>) *<a href="godoc.6.html#ChannelSuiteOpts">ChannelSuiteOpts</a></pre>
 				<p>
 WithDialConfig sets the amqp.Config object to use when dialing the test brocker.
 Default: amqp.DefaultConfig()
@@ -789,7 +805,7 @@ Default: amqp.DefaultConfig()
 ChannelTesting exposes some internals of the Channel type for testing.
 </p>
 
-			<pre>type ChannelTesting = <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#ChannelTesting">ChannelTesting</a></pre>
+			<pre>type ChannelTesting = <a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#ChannelTesting">ChannelTesting</a></pre>
 
 			
 
@@ -814,7 +830,7 @@ ChannelTesting exposes some internals of the Channel type for testing.
 ConnectionTesting exposes some internals of the Connection type for testing.
 </p>
 
-			<pre>type ConnectionTesting = <a href="godoc.8.html">amqp</a>.<a href="godoc.8.html#ConnectionTesting">ConnectionTesting</a></pre>
+			<pre>type ConnectionTesting = <a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#ConnectionTesting">ConnectionTesting</a></pre>
 
 			
 
@@ -830,7 +846,7 @@ ConnectionTesting exposes some internals of the Connection type for testing.
 		
 			
 			
-			<h2 id="InnerSuite">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=274:335#L6">InnerSuite</a>
+			<h2 id="InnerSuite">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testSuite.go?s=326:387#L10">InnerSuite</a>
 				<a class="permalink" href="godoc.6.html#InnerSuite">&#xb6;</a>
 				
 				
