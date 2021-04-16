@@ -44,12 +44,17 @@ func shutdownRelay(relay eventRelay, relaySync relaySync) {
 
 // eventRelaySetupAndLaunch sets up a new relay and launches a goroutine to run it
 func (channel *Channel) eventRelaySetupAndLaunch(relay eventRelay) {
-	// Launch the runner
-	thisSync := newRelaySync(channel.ctx)
-
+	// Create a signal chan to tell us when the initial setup has been completed. This
+	// means it is safe to return to the user as our listener channel has been
+	// registered with the underlying channel. If we were to return immediately, the
+	// user might start taking actions that SHOULD generate events before the even
+	// channel is correctly registered, causing those events to go "missing".
 	setupComplete := make(chan struct{})
+
 	// Launch the relay.
+	thisSync := newRelaySync(channel.ctx)
 	go channel.runEventRelay(relay, thisSync, setupComplete)
+
 	// Wait for the signal that our setup is complete.
 	<-setupComplete
 }
@@ -61,11 +66,7 @@ func (channel *Channel) runEventRelay(relay eventRelay, relaySync relaySync, set
 	defer shutdownRelay(relay, relaySync)
 
 	firstLegComplete := make(chan struct{})
-	func() {
-		// Close the setupComplete so we can return to the caller.
-		defer close(setupComplete)
-		channel.eventRelayInitialSetup(relay, relaySync, firstLegComplete)
-	}()
+	channel.eventRelayInitialSetup(relay, relaySync, setupComplete, firstLegComplete)
 
 	// Wait for ou first leg to complete, then fall into a rhythm with the transport
 	// manager
@@ -87,7 +88,10 @@ func (channel *Channel) runEventRelay(relay eventRelay, relaySync relaySync, set
 // actions that SHOULD trigger events before the event listener has been registered with
 // the underlying streadway/amqp.Channel.
 func (channel *Channel) eventRelayInitialSetup(
-	relay eventRelay, relaySync relaySync, firstLegComplete chan struct{},
+	relay eventRelay,
+	relaySync relaySync,
+	setupComplete chan struct{},
+	firstLegComplete chan struct{},
 ) {
 	// Signal this leg in an op so we can make sure we grab the right channel.
 	_ = channel.transportManager.retryOperationOnClosed(
@@ -95,8 +99,6 @@ func (channel *Channel) eventRelayInitialSetup(
 		func(ctx context.Context) error {
 			// Register the relay with the channel.
 			channel.relaySync.AddRelay(relaySync.shared)
-
-			setupComplete := make(chan struct{})
 
 			// Run the fist leg with the current channel. We need to launch it in a
 			// routine so we can signal leg complete (the manager needs to grab a write
