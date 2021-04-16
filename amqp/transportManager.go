@@ -299,6 +299,10 @@ func (manager *transportManager) retryOperationOnClosedSingle(
 	return err
 }
 
+// maxWait is the max amount of time a method should wait before trying again after
+// multiple failures in a row.
+const maxWait = time.Second * 5
+
 // revive:enable:context-as-argument
 
 // retryOperationOnClosed repeats operation / method call until a non-closed error is
@@ -323,6 +327,17 @@ func (manager *transportManager) retryOperationOnClosed(
 
 		// Otherwise retry the operation once the connection has been established.
 		attempt++
+
+		// We don't want to saturate the connection with retries if we are having
+		// a hard time reconnecting.
+		//
+		// We'll give one immediate retry, but after that start increasing how long
+		// we need to wait before re-attempting.
+		waitDur := 5 * time.Millisecond * time.Duration(attempt-1)
+		if waitDur > maxWait {
+			waitDur = maxWait
+		}
+		time.Sleep(waitDur)
 	}
 }
 
@@ -494,11 +509,11 @@ func (manager *transportManager) setup(
 	transport reconnects,
 	middleware transportManagerMiddleware,
 ) {
-	ctx, cancelFunc := context.WithCancel(ctx)
+	newCtx, cancelFunc := context.WithCancel(ctx)
 
 	reconnectCount := uint64(0)
 
-	manager.ctx = ctx
+	manager.ctx = newCtx
 	manager.cancelFunc = cancelFunc
 	manager.transport = transport
 	manager.transportLock = new(sync.RWMutex)

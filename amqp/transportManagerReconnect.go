@@ -48,11 +48,14 @@ func (manager *transportManager) reconnectRedial(
 
 // reconnectListenForClose listens for a close event from the underlying livesOnce, and
 // starts the reconnection process.
-func (manager *transportManager) reconnectListenForClose(
-	closeChan <-chan *streadway.Error,
-) {
+func (manager *transportManager) reconnectListenForClose(closeChan <-chan *streadway.Error) {
 	// Wait for the current connection to close
 	disconnectEvent := <-closeChan
+
+	// Lock access to the connection and don't unlock until we have reconnected.
+	manager.transportLock.Lock()
+	defer manager.transportLock.Unlock()
+
 	// Send a disconnect event to all interested subscribers.
 	manager.sendDisconnectNotifications(disconnectEvent)
 
@@ -69,9 +72,12 @@ func (manager *transportManager) reconnectListenForClose(
 // reconnect establishes a new underlying connection and sets up a listener for it's
 // closure.
 func (manager *transportManager) reconnect(ctx context.Context, retry bool) error {
-	// Lock access to the connection and don't unlock until we have reconnected.
-	manager.transportLock.Lock()
-	defer manager.transportLock.Unlock()
+	// This may be called directly by Dial methods. It's okay NOT to use the lock here
+	// since the caller won't be handed back the Connection or Channel until the initial
+	// one is established.
+	//
+	// Once the first connection is established, reconnectListenForClose will grab
+	// the lock immediately on a disconnect.
 
 	// Redial the broker until we reconnectMiddleware
 	err := manager.reconnectRedial(ctx, retry)
@@ -79,12 +85,12 @@ func (manager *transportManager) reconnect(ctx context.Context, retry bool) erro
 		return err
 	}
 
-	// Broadcast that we have made a successful reconnection to any one-time listeners.
-	manager.reconnectCond.Broadcast()
-
 	// Register a notification channelConsume for the new connection's closure.
 	closeChan := make(chan *streadway.Error, 1)
 	manager.transport.underlyingTransport().NotifyClose(closeChan)
+
+	// Broadcast that we have made a successful reconnection to any one-time listeners.
+	manager.reconnectCond.Broadcast()
 
 	// Launch a goroutine to reconnectMiddleware on connection closure.
 	go manager.reconnectListenForClose(closeChan)

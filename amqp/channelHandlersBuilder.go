@@ -458,7 +458,7 @@ func (builder channelHandlerBuilder) createConsume() amqpmiddleware.HandlerConsu
 		relay := newConsumeRelay(callArgs, channel, eventMiddleware)
 
 		// Pass it to our relay handler.
-		channel.setupAndLaunchEventRelay(relay)
+		channel.eventRelaySetupAndLaunch(relay)
 
 		results.DeliveryChan = callArgs.callerDeliveryChan
 		// If no error, pass the channel back to the caller
@@ -537,7 +537,7 @@ func (builder channelHandlerBuilder) createNotifyPublish() amqpmiddleware.Handle
 	) amqpmiddleware.ResultsNotifyPublish {
 		relay := newNotifyPublishRelay(args.Confirm, eventMiddleware)
 
-		channel.setupAndLaunchEventRelay(relay)
+		channel.eventRelaySetupAndLaunch(relay)
 
 		return amqpmiddleware.ResultsNotifyPublish{Confirm: args.Confirm}
 	}
@@ -666,8 +666,7 @@ func (builder channelHandlerBuilder) createNotifyReturn() amqpmiddleware.Handler
 
 	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyReturn) amqpmiddleware.ResultsNotifyReturn {
 		relay := newNotifyReturnRelay(args.Returns, eventMiddlewares)
-
-		channel.setupAndLaunchEventRelay(relay)
+		channel.eventRelaySetupAndLaunch(relay)
 		return amqpmiddleware.ResultsNotifyReturn{Returns: args.Returns}
 	}
 
@@ -683,7 +682,7 @@ func (builder channelHandlerBuilder) createNotifyCancel() amqpmiddleware.Handler
 	handler := func(ctx context.Context, args amqpmiddleware.ArgsNotifyCancel) amqpmiddleware.ResultsNotifyCancel {
 		relay := newNotifyCancelRelay(args.Cancellations, eventMiddlewares)
 
-		channel.setupAndLaunchEventRelay(relay)
+		channel.eventRelaySetupAndLaunch(relay)
 		return amqpmiddleware.ResultsNotifyCancel{Cancellations: args.Cancellations}
 	}
 
@@ -705,7 +704,7 @@ func (builder channelHandlerBuilder) createNotifyFlow() amqpmiddleware.HandlerNo
 		)
 
 		// Setup and launch the relay.
-		channel.setupAndLaunchEventRelay(relay)
+		channel.eventRelaySetupAndLaunch(relay)
 		return amqpmiddleware.ResultsNotifyFlow{FlowNotifications: args.FlowNotifications}
 	}
 
