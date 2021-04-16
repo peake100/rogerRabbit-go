@@ -934,8 +934,6 @@ func (suite *ChannelMethodsSuite) Test0160_NotifyConfirm() {
 
 	suite.ChannelPublish().NotifyConfirm(ackEvents, nackEvents)
 
-	confirmations := new(sync.WaitGroup)
-
 	go func() {
 		for i := 0; i < publishCount; i++ {
 			err := suite.ChannelPublish().Publish(
@@ -950,8 +948,6 @@ func (suite *ChannelMethodsSuite) Test0160_NotifyConfirm() {
 			if !suite.NoErrorf(err, "publish %v", i) {
 				suite.T().FailNow()
 			}
-			// Add 1 to the confirmation WaitGroup
-			confirmations.Add(1)
 		}
 	}()
 
@@ -983,7 +979,7 @@ func (suite *ChannelMethodsSuite) Test0160_NotifyConfirm() {
 			suite.T().FailNow()
 		}
 
-		if receivedCount >= 10 {
+		if receivedCount >= publishCount {
 			break
 		}
 	}
