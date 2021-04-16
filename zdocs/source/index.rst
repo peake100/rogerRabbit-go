@@ -37,9 +37,9 @@ Demo
         panic(err)
     }
 
-    // We can use the test method to return an testing object with some additional
-    // methods. ForceReconnect force-closes the underlying livesOnce, causing the
-    // robust connection to channelReconnect.
+    // We can use the Test method to return a testing harness with some additional
+    // methods. ForceReconnect force-closes the underlying streadway Channel, causing
+    // the robust Channel to reconnect.
     //
     // We'll use a dummy *testing.T object here. These methods are designed for tests
     // only and should not be used in production code.
@@ -213,17 +213,21 @@ Without a supplied way to handle reconnections, `bespoke <https://ninefinity.org
 `solutions <https://medium.com/@dhanushgopinath/automatically-recovering-rabbitmq-connections-in-go-applications-7795a605ca59>`_
 `abound <https://www.ribice.ba/golang-rabbitmq-client/>`_.
 
-Most of these solutions are overly-fitted to a specific problem (consumer vs producer),
-that is prone to data races (can you spot them in the first link?), cumbersome to inject
-into a production code (do we abort the business logic on an error? or try to recover
-in-place?), and bugs (each solution has it's own redial bugs rather than finding them in
-a single lib where fixes can benefit everyone and community code coverage is high).
+Most of these solutions are overly-fitted to a specific problem (consumer vs producer or
+involve domain-specific logic), that is prone to data races (can you spot them in the
+first link?), cumbersome to inject into a production code (do we abort the business
+logic on an error or try to recover in-place?), and bugs (each solution has its own
+redial bugs rather than finding them in a single lib where fixes can benefit everyone
+and community code coverage is high).
 
-Often the resulting solution is ill-suited to stateless handlers OR requires you to
-handle retries every place you must interact with the broker. This kind of
-implementation detail can be annoying when writing higher-level business logic and can
-lead to either unnecessary error returns, bespoke solutions in every project, or messy
-calling code at sites which need to interact with an amqp broker.
+Nome of this is meant to disparage the above solutions, they likely work great in the
+code they were created for, but they point to a need that is not being filled by the
+official driver. The nature of the default `*Channel` API encourages solutions that
+are ill-suited to stateless handlers OR require you to handle retries every place you
+must interact with the broker. Such implementation details can be annoying when writing
+higher-level business logic and can lead to either unnecessary error returns, bespoke
+solutions in every project, or messy calling code at sites which need to interact with
+an AMQP broker.
 
 Roger, Rabbit is inspired by `aio-pika's <https://aio-pika.readthedocs.io/en/latest/index.html>`_
 `robust connections and channels <https://aio-pika.readthedocs.io/en/latest/apidoc.html#aio_pika.connect_robust>`_,
@@ -239,7 +243,7 @@ connection and channel API's.
 Goals
 -----
 
-The goals of the Roger, Rabbit package are as follows.
+The goals of the Roger, Rabbit package are as follows:
 
 - **Offer a drop-in replacement for rogerRabbit/amqp**: APIs may be extended (adding
   fields to `amqp.Config` or additional methods to `*amqp.Channel`, for instance) but
@@ -247,7 +251,7 @@ The goals of the Roger, Rabbit package are as follows.
 
 - **Add as few additional error paths as possible**: Errors may be *extended* with
   additional information concerning disconnect scenarios, but new error type returns
-  from *Connection or *Channel should be an absolute last resort.
+  from `*Connection` or `*amqp.Channel` should be an absolute last resort.
 
 - **Be Highly Extensible**: Roger, Rabbit seeks to offer a high degree of extensibility
   via features like middleware, in an effort to reduce the balkanization of amqp client
@@ -257,7 +261,7 @@ Current Limitations & Warnings
 ------------------------------
 
 - **Performance**: Roger, Rabbit's implementation is handled primarily through
-  middleware and a *sync.RWMutex on transports that handles blocking methods on
+  middleware and a `*sync.RWMutex` on transports that handles blocking methods on
   reconnection events. This increases the overhead allows for an enormous amount of
   extensibility and robustness, but may be a limiting factor for applications that need
   the absolute maximum throughput possible.

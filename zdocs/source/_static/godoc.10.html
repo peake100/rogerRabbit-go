@@ -486,8 +486,8 @@ if err != nil {
 }
 defer connection.Close()
 
-<span class="comment">// Get a new channel from our robust connection for publishing. The channel is</span>
-<span class="comment">// created with our default middleware.</span>
+<span class="comment">// Get a new channel from our robust connection for publishing. This channel will</span>
+<span class="comment">// be put into confirmation mode by the producer.</span>
 channel, err := connection.Channel()
 if err != nil {
     panic(err)
@@ -526,7 +526,8 @@ for i := 0; i &lt; 10; i++ {
 
     messagesPublished.Add(1)
 
-    <span class="comment">// Publish each message in it&#39;s own goroutine.</span>
+    <span class="comment">// Publish each message in it&#39;s own goroutine The producer handles the</span>
+    <span class="comment">// boilerplate of tracking publication tags and receiving broker confirmations.</span>
     go func() {
         <span class="comment">// Release our WaitGroup on exit.</span>
         defer messagesPublished.Done()
@@ -538,16 +539,16 @@ for i := 0; i &lt; 10; i++ {
         <span class="comment">// confirmation from the broker OR ctx expires.</span>
         err = producer.Publish(
             ctx,
-            &#34;&#34;,
-            queue.Name,
-            false,
-            false,
+            &#34;&#34;,         <span class="comment">// exchange</span>
+            queue.Name, <span class="comment">// queue</span>
+            true,       <span class="comment">// mandatory</span>
+            false,      <span class="comment">// immediate</span>
             amqp.Publishing{
                 Body: []byte(&#34;test message&#34;),
             },
         )
 
-        fmt.Println(&#34;Message Published!&#34;)
+        fmt.Println(&#34;Message Published and Confirmed!&#34;)
 
         if err != nil {
             panic(err)
@@ -566,16 +567,16 @@ producer.StartShutdown()
 
 <span class="comment">// exit.</span>
 
-<span class="comment">// Message Published!</span>
-<span class="comment">// Message Published!</span>
-<span class="comment">// Message Published!</span>
-<span class="comment">// Message Published!</span>
-<span class="comment">// Message Published!</span>
-<span class="comment">// Message Published!</span>
-<span class="comment">// Message Published!</span>
-<span class="comment">// Message Published!</span>
-<span class="comment">// Message Published!</span>
-<span class="comment">// Message Published!</span>
+<span class="comment">// Message Published and Confirmed!</span>
+<span class="comment">// Message Published and Confirmed!</span>
+<span class="comment">// Message Published and Confirmed!</span>
+<span class="comment">// Message Published and Confirmed!</span>
+<span class="comment">// Message Published and Confirmed!</span>
+<span class="comment">// Message Published and Confirmed!</span>
+<span class="comment">// Message Published and Confirmed!</span>
+<span class="comment">// Message Published and Confirmed!</span>
+<span class="comment">// Message Published and Confirmed!</span>
+<span class="comment">// Message Published and Confirmed!</span>
 </pre>
 			
 		

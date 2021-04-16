@@ -71,10 +71,10 @@ func ExampleNew() {
 			// confirmation from the broker OR ctx expires.
 			err = producer.Publish(
 				ctx,
-				"", // exchange
+				"",         // exchange
 				queue.Name, // queue
-				true, // mandatory
-				false, // immediate
+				true,       // mandatory
+				false,      // immediate
 				amqp.Publishing{
 					Body: []byte("test message"),
 				},

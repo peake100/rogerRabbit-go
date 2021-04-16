@@ -97,7 +97,7 @@ func (channel *Channel) tryReconnect(
 		channel.underlyingChannelLock.Lock()
 		defer channel.underlyingChannelLock.Unlock()
 
-		// Invoke all our reconnection middleware and channelReconnect the channel.
+		// Invoke all our reconnection middleware and reconnect the channel.
 		ags := amqpmiddleware.ArgsChannelReconnect{
 			Ctx:     ctx,
 			Attempt: attempt,
@@ -798,7 +798,7 @@ identify the binding.
 ---
 
 ROGER NOTE: All relevant bindings will be removed from the list of bindings to declare
-on channelReconnect.
+on reconnect.
 */
 func (channel *Channel) ExchangeUnbind(
 	destination, key, source string, noWait bool, args Table,
