@@ -122,6 +122,15 @@ func (suite *ProducerSuite) TestProducerPublish() {
 		suite.T().FailNow()
 	}
 
+	queueInfo, err := suite.ChannelPublish().QueueInspect(queueName)
+	if !suite.NoError(err, "inspect queue") {
+		suite.T().FailNow()
+	}
+
+	if !suite.Equal(publishCount, queueInfo.Messages, "queued message count") {
+		suite.T().FailNow()
+	}
+
 	messages := make([]bool, publishCount)
 	for i := 0; i < publishCount; i++ {
 		msg, ok, err := suite.ChannelPublish().Get(queueName, true)
@@ -187,13 +196,11 @@ func (suite *ProducerSuite) TestProducerQueuePublication() {
 	}()
 
 	for i, thisPublication := range publications {
-		func() {
+		go func(index int, p *amqpproducer.Publication) {
 			defer publishWork.Done()
-			err := thisPublication.WaitOnConfirmation()
-			if !suite.NoError(err, "wait on publication %v", i) {
-				suite.T().FailNow()
-			}
-		}()
+			err := p.WaitOnConfirmation()
+			suite.NoError(err, "wait on publication %v", index)
+		}(i, thisPublication)
 	}
 
 	timer := time.NewTimer(15 * time.Second)
@@ -202,6 +209,15 @@ func (suite *ProducerSuite) TestProducerQueuePublication() {
 	case <-publishComplete:
 	case <-timer.C:
 		suite.T().Error("message publication timeout")
+		suite.T().FailNow()
+	}
+
+	queueInfo, err := suite.ChannelPublish().QueueInspect(queueName)
+	if !suite.NoError(err, "inspect queue") {
+		suite.T().FailNow()
+	}
+
+	if !suite.Equal(publishCount, queueInfo.Messages, "queued message count") {
 		suite.T().FailNow()
 	}
 

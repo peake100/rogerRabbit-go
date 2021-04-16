@@ -333,7 +333,7 @@ func (manager *transportManager) retryOperationOnClosed(
 		//
 		// We'll give one immediate retry, but after that start increasing how long
 		// we need to wait before re-attempting.
-		waitDur := 5 * time.Millisecond * time.Duration(attempt - 1)
+		waitDur := 5 * time.Millisecond * time.Duration(attempt-1)
 		if waitDur > maxWait {
 			waitDur = maxWait
 		}
@@ -509,11 +509,11 @@ func (manager *transportManager) setup(
 	transport reconnects,
 	middleware transportManagerMiddleware,
 ) {
-	ctx, cancelFunc := context.WithCancel(ctx)
+	newCtx, cancelFunc := context.WithCancel(ctx)
 
 	reconnectCount := uint64(0)
 
-	manager.ctx = ctx
+	manager.ctx = newCtx
 	manager.cancelFunc = cancelFunc
 	manager.transport = transport
 	manager.transportLock = new(sync.RWMutex)
