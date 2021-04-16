@@ -299,7 +299,7 @@ func (manager *transportManager) retryOperationOnClosedSingle(
 	return err
 }
 
-const maxWait = time.Second * 10
+const maxWait = time.Second * 5
 
 // revive:enable:context-as-argument
 
@@ -332,7 +332,7 @@ func (manager *transportManager) retryOperationOnClosed(
 		// We'll give one immediate retry, but after that start increasing how long
 		// we need to wait before re-attempting.
 		waitDur := 5 * time.Millisecond * time.Duration(attempt - 1)
-		if waitDur > time.Second * 30 {
+		if waitDur > maxWait {
 			waitDur = maxWait
 		}
 		time.Sleep(waitDur)
