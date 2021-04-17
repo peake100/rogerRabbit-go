@@ -1,6 +1,18 @@
-# Roger, Rabbit
+
 <p align="center">
-<img src="https://goreportcard.com/badge/github.com/peake100/rogerRabbit-go" /></a>
+    <img align="center" src="zdocs/source/_static/logo-hatrick.svg"/>
+</p>
+<h1 align="center">Roger, Rabbit</h1>
+<p align="center">amqp with automatic redials</p>
+<p align="center">
+    <img src="https://dev.azure.com/peake100/Peake100/_apis/build/status/rogerRabbit-go?repoName=peake100%2FrogerRabbit-go&branchName=dev"/></a>
+    <img src="https://img.shields.io/azure-devops/tests/peake100/peake100/8?compact_message"/></a>
+    <img src="https://img.shields.io/azure-devops/coverage/peake100/peake100/8?compact_message"/></a>
+    <img src="https://goreportcard.com/badge/github.com/peake100/rogerRabbit-go" /></a
+</p>
+<p align="center">
+    <img src="https://img.shields.io/github/go-mod/go-version/peake100/rogerRabbit-go"></img>
+    <a href="https://pkg.go.dev/github.com/peake100/rogerRabbit-go?readme=expanded#section-documentation"><img src="https://pkg.go.dev/badge/github.com/peake100/rogerRabbit-go?readme=expanded#section-documentation.svg" alt="Go Reference"></a>
 </p>
 
 Roger, Rabbit is a drop-in replacement for 
@@ -325,3 +337,8 @@ Prerequisites
 -------------
 
 Golang 1.6+, Python 3.6+
+
+Attributions
+------------
+
+<div>Icons made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
