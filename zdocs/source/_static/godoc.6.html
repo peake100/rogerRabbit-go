@@ -117,7 +117,7 @@ package amqptest contains testing utilities for amqp types.
 			
 			
 				
-				<dd><a href="godoc.6.html#GetTestConnection">func GetTestConnection(t *testing.T) *amqp.Connection</a></dd>
+				<dd><a href="godoc.6.html#GetTestConnection">func GetTestConnection(tb testing.TB) *amqp.Connection</a></dd>
 			
 			
 				
@@ -247,18 +247,18 @@ package amqptest contains testing utilities for amqp types.
 		
 			
 			
-			<h2 id="GetTestConnection">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testUtils.go?s=445:498#L11">GetTestConnection</a>
+			<h2 id="GetTestConnection">func <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqptest/testUtils.go?s=407:461#L10">GetTestConnection</a>
 				<a class="permalink" href="godoc.6.html#GetTestConnection">&#xb6;</a>
 				
 				
 			</h2>
-			<pre>func GetTestConnection(t *<a href="http://localhost:6161/pkg/testing/">testing</a>.<a href="http://localhost:6161/pkg/testing/#T">T</a>) *<a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Connection">Connection</a></pre>
+			<pre>func GetTestConnection(tb <a href="http://localhost:6161/pkg/testing/">testing</a>.<a href="http://localhost:6161/pkg/testing/#TB">TB</a>) *<a href="godoc.11.html">amqp</a>.<a href="godoc.11.html#Connection">Connection</a></pre>
 			<p>
 GetTestConnection creates a new connection to amqp://localhost:57018, where our
 test broker will be listening.
 </p>
 <p>
-t.FailNot() is called on any errors.
+t.FailNow() is called on any errors.
 </p>
 
 			

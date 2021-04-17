@@ -145,6 +145,11 @@ with automatic redials, method middleware, and more.
 				
 			
 				
+				<dd><a href="godoc.11.html#BasicConfirmation">type BasicConfirmation</a></dd>
+				
+				
+			
+				
 				<dd><a href="godoc.11.html#BasicConnection">type BasicConnection</a></dd>
 				
 				
@@ -255,7 +260,7 @@ with automatic redials, method middleware, and more.
 					<dd>&nbsp; &nbsp; <a href="godoc.11.html#Channel.Reject">func (channel *Channel) Reject(tag uint64, requeue bool) error</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.11.html#Channel.Test">func (channel *Channel) Test(t *testing.T) *ChannelTesting</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.11.html#Channel.Test">func (channel *Channel) Test(tb testing.TB) *ChannelTesting</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="godoc.11.html#Channel.Tx">func (channel *Channel) Tx() error</a></dd>
@@ -478,7 +483,7 @@ with automatic redials, method middleware, and more.
 					<dd>&nbsp; &nbsp; <a href="godoc.11.html#Connection.NotifyDisconnect">func (manager *Connection) NotifyDisconnect(receiver chan error) error</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="godoc.11.html#Connection.Test">func (conn *Connection) Test(t *testing.T) *ConnectionTesting</a></dd>
+					<dd>&nbsp; &nbsp; <a href="godoc.11.html#Connection.Test">func (conn *Connection) Test(tb testing.TB) *ConnectionTesting</a></dd>
 				
 			
 				
@@ -888,6 +893,33 @@ is desired
 		
 			
 			
+			<h2 id="BasicConfirmation">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=3451:3493#L84">BasicConfirmation</a>
+				<a class="permalink" href="godoc.11.html#BasicConfirmation">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+BasicConfirmation is an alias to streadway/amqp.Confirmation, and is made
+available to avoid having to import both amqp packages if access to the base
+Confirmation type is desired
+</p>
+
+			<pre>type BasicConfirmation = <a href="http://localhost:6161/pkg/github.com/streadway/amqp/">streadway</a>.<a href="http://localhost:6161/pkg/github.com/streadway/amqp/#Confirmation">Confirmation</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
 			<h2 id="BasicConnection">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=3218:3256#L79">BasicConnection</a>
 				<a class="permalink" href="godoc.11.html#BasicConnection">&#xb6;</a>
 				
@@ -915,7 +947,7 @@ type is desired
 		
 			
 			
-			<h2 id="Blocking">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=3510:3539#L85">Blocking</a>
+			<h2 id="Blocking">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=3747:3776#L90">Blocking</a>
 				<a class="permalink" href="godoc.11.html#Blocking">&#xb6;</a>
 				
 				
@@ -1118,7 +1150,7 @@ if err != nil {
 	</div>
 	<div class="expanded">
 		<p class="exampleHeading toggleButton">▾ <span class="text">Example (Reconnect)</span></p>
-		<p>Channel channelReconnect examples.
+		<p>Channel reconnect examples.
 </p>
 		
 		
@@ -1139,9 +1171,9 @@ if err != nil {
     panic(err)
 }
 
-<span class="comment">// We can use the test method to return an testing object with some additional</span>
-<span class="comment">// methods. ForceReconnect force-closes the underlying livesOnce, causing the</span>
-<span class="comment">// robust connection to channelReconnect.</span>
+<span class="comment">// We can use the Test method to return a testing harness with some additional</span>
+<span class="comment">// methods. ForceReconnect force-closes the underlying streadway Channel, causing</span>
+<span class="comment">// the robust Channel to reconnect.</span>
 <span class="comment">//</span>
 <span class="comment">// We&#39;ll use a dummy *testing.T object here. These methods are designed for tests</span>
 <span class="comment">// only and should not be used in production code.</span>
@@ -1191,7 +1223,7 @@ fmt.Println(&#34;IS CLOSED:&#34;, channel.IsClosed())
 
 			
 				
-				<h3 id="Channel.Ack">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=38716:38776#L1022">Ack</a>
+				<h3 id="Channel.Ack">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=38697:38757#L1022">Ack</a>
 					<a class="permalink" href="godoc.11.html#Channel.Ack">&#xb6;</a>
 					
 					
@@ -1226,7 +1258,7 @@ still be returned, and can be checked for which tag ranges could not be acked.
 				
 			
 				
-				<h3 id="Channel.Close">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=16928:16974#L469">Close</a>
+				<h3 id="Channel.Close">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=16907:16953#L468">Close</a>
 					<a class="permalink" href="godoc.11.html#Channel.Close">&#xb6;</a>
 					
 					
@@ -1242,7 +1274,7 @@ from reconnecting.
 				
 			
 				
-				<h3 id="Channel.Confirm">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=5529:5579#L144">Confirm</a>
+				<h3 id="Channel.Confirm">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=5515:5565#L144">Confirm</a>
 					<a class="permalink" href="godoc.11.html#Channel.Confirm">&#xb6;</a>
 					
 					
@@ -1291,7 +1323,7 @@ underlying tag.
 				
 			
 				
-				<h3 id="Channel.Consume">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=37453:37619#L986">Consume</a>
+				<h3 id="Channel.Consume">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=37434:37600#L986">Consume</a>
 					<a class="permalink" href="godoc.11.html#Channel.Consume">&#xb6;</a>
 					
 					
@@ -1459,7 +1491,7 @@ go func() {
 
     <span class="comment">// Range over the consume channel</span>
     for delivery := range consume {
-        <span class="comment">// Force-channelReconnect the channel after each delivery.</span>
+        <span class="comment">// Force-reconnect the channel after each delivery.</span>
         consumeChannel.Test(new(testing.T)).ForceReconnect(context.Background())
 
         <span class="comment">// Tick down the consumeComplete WaitGroup</span>
@@ -1633,7 +1665,7 @@ fmt.Println(&#34;LAST ORPHAN TAG :&#34;, orphanErr.OrphanTagLast)
 				
 			
 				
-				<h3 id="Channel.ExchangeBind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=28779:28889#L755">ExchangeBind</a>
+				<h3 id="Channel.ExchangeBind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=28766:28876#L755">ExchangeBind</a>
 					<a class="permalink" href="godoc.11.html#Channel.ExchangeBind">&#xb6;</a>
 					
 					
@@ -1689,7 +1721,7 @@ ROGER NOTE: All bindings will be remembered and re-declared on reconnection even
 				
 			
 				
-				<h3 id="Channel.ExchangeDeclare">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=24156:24286#L626">ExchangeDeclare</a>
+				<h3 id="Channel.ExchangeDeclare">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=24143:24273#L626">ExchangeDeclare</a>
 					<a class="permalink" href="godoc.11.html#Channel.ExchangeDeclare">&#xb6;</a>
 					
 					
@@ -1779,7 +1811,7 @@ how exchanges are re-declared on reconnection.
 				
 			
 				
-				<h3 id="Channel.ExchangeDeclarePassive">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=25280:25417#L658">ExchangeDeclarePassive</a>
+				<h3 id="Channel.ExchangeDeclarePassive">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=25267:25404#L658">ExchangeDeclarePassive</a>
 					<a class="permalink" href="godoc.11.html#Channel.ExchangeDeclarePassive">&#xb6;</a>
 					
 					
@@ -1800,7 +1832,7 @@ can be used to detect the existence of an exchange.
 				
 			
 				
-				<h3 id="Channel.ExchangeDelete">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=26962:27052#L703">ExchangeDelete</a>
+				<h3 id="Channel.ExchangeDelete">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=26949:27039#L703">ExchangeDelete</a>
 					<a class="permalink" href="godoc.11.html#Channel.ExchangeDelete">&#xb6;</a>
 					
 					
@@ -1839,7 +1871,7 @@ or relevant bindings to be re-declared on reconnections of the underlying
 				
 			
 				
-				<h3 id="Channel.ExchangeUnbind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=29985:30097#L793">ExchangeUnbind</a>
+				<h3 id="Channel.ExchangeUnbind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=29965:30077#L793">ExchangeUnbind</a>
 					<a class="permalink" href="godoc.11.html#Channel.ExchangeUnbind">&#xb6;</a>
 					
 					
@@ -1868,7 +1900,7 @@ identify the binding.
 </p>
 <p>
 ROGER NOTE: All relevant bindings will be removed from the list of bindings to declare
-on channelReconnect.
+on reconnect.
 </p>
 
 				
@@ -1876,7 +1908,7 @@ on channelReconnect.
 				
 			
 				
-				<h3 id="Channel.Flow">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=9000:9047#L225">Flow</a>
+				<h3 id="Channel.Flow">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=8986:9033#L225">Flow</a>
 					<a class="permalink" href="godoc.11.html#Channel.Flow">&#xb6;</a>
 					
 					
@@ -1915,7 +1947,7 @@ Connections for publishings and deliveries.
 				
 			
 				
-				<h3 id="Channel.Get">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=34016:34122#L898">Get</a>
+				<h3 id="Channel.Get">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=33997:34103#L898">Get</a>
 					<a class="permalink" href="godoc.11.html#Channel.Get">&#xb6;</a>
 					
 					
@@ -1941,7 +1973,7 @@ delivery.
 </p>
 <p>
 When autoAck is true, the server will automatically acknowledge this message so
-you don&#39;t have to.  But if you are unable to fully process this message before
+you don&#39;tb have to.  But if you are unable to fully process this message before
 the channel or connection is closed, the message will not get requeued.
 </p>
 <p>
@@ -1959,7 +1991,7 @@ you.
 				
 			
 				
-				<h3 id="Channel.IsClosed">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=17577:17625#L483">IsClosed</a>
+				<h3 id="Channel.IsClosed">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=17556:17604#L482">IsClosed</a>
 					<a class="permalink" href="godoc.11.html#Channel.IsClosed">&#xb6;</a>
 					
 					
@@ -1984,7 +2016,7 @@ underlying connection is currently disconnected and waiting to reconnectMiddlewa
 				
 			
 				
-				<h3 id="Channel.Nack">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=39801:39876#L1054">Nack</a>
+				<h3 id="Channel.Nack">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=39782:39857#L1054">Nack</a>
 					<a class="permalink" href="godoc.11.html#Channel.Nack">&#xb6;</a>
 					
 					
@@ -2016,7 +2048,7 @@ still be returned, and can be checked for which tag ranges could not be nacked.
 				
 			
 				
-				<h3 id="Channel.NotifyCancel">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=47289:47364#L1256">NotifyCancel</a>
+				<h3 id="Channel.NotifyCancel">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=47271:47346#L1256">NotifyCancel</a>
 					<a class="permalink" href="godoc.11.html#Channel.NotifyCancel">&#xb6;</a>
 					
 					
@@ -2036,7 +2068,7 @@ The subscription tag is returned to the listener.
 				
 			
 				
-				<h3 id="Channel.NotifyClose">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=14641:14743#L407">NotifyClose</a>
+				<h3 id="Channel.NotifyClose">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=14620:14722#L406">NotifyClose</a>
 					<a class="permalink" href="godoc.11.html#Channel.NotifyClose">&#xb6;</a>
 					
 					
@@ -2061,7 +2093,7 @@ will both send individual events when the connection is lost or re-acquired.
 				
 			
 				
-				<h3 id="Channel.NotifyConfirm">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=44764:44855#L1186">NotifyConfirm</a>
+				<h3 id="Channel.NotifyConfirm">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=44746:44837#L1186">NotifyConfirm</a>
 					<a class="permalink" href="godoc.11.html#Channel.NotifyConfirm">&#xb6;</a>
 					
 					
@@ -2090,7 +2122,7 @@ Orphaned tags separately, use the new method NotifyConfirmOrOrphaned.
 				
 			
 				
-				<h3 id="Channel.NotifyConfirmOrOrphaned">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=45201:45325#L1201">NotifyConfirmOrOrphaned</a>
+				<h3 id="Channel.NotifyConfirmOrOrphaned">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=45183:45307#L1201">NotifyConfirmOrOrphaned</a>
 					<a class="permalink" href="godoc.11.html#Channel.NotifyConfirmOrOrphaned">&#xb6;</a>
 					
 					
@@ -2108,7 +2140,7 @@ a disconnect, these tags are routed to the nack channel in NotifyConfirm.
 				
 			
 				
-				<h3 id="Channel.NotifyDial">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=15157:15231#L420">NotifyDial</a>
+				<h3 id="Channel.NotifyDial">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=15136:15210#L419">NotifyDial</a>
 					<a class="permalink" href="godoc.11.html#Channel.NotifyDial">&#xb6;</a>
 					
 					
@@ -2127,7 +2159,7 @@ will include both failure AND successes.
 				
 			
 				
-				<h3 id="Channel.NotifyDisconnect">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=15598:15678#L433">NotifyDisconnect</a>
+				<h3 id="Channel.NotifyDisconnect">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=15577:15657#L432">NotifyDisconnect</a>
 					<a class="permalink" href="godoc.11.html#Channel.NotifyDisconnect">&#xb6;</a>
 					
 					
@@ -2146,7 +2178,7 @@ lost.
 				
 			
 				
-				<h3 id="Channel.NotifyFlow">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=49568:49641#L1302">NotifyFlow</a>
+				<h3 id="Channel.NotifyFlow">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=49550:49623#L1302">NotifyFlow</a>
 					<a class="permalink" href="godoc.11.html#Channel.NotifyFlow">&#xb6;</a>
 					
 					
@@ -2207,7 +2239,7 @@ even when using RabbitMQ.
 				
 			
 				
-				<h3 id="Channel.NotifyPublish">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=43018:43126#L1136">NotifyPublish</a>
+				<h3 id="Channel.NotifyPublish">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=42999:43107#L1136">NotifyPublish</a>
 					<a class="permalink" href="godoc.11.html#Channel.NotifyPublish">&#xb6;</a>
 					
 					
@@ -2266,7 +2298,7 @@ receiving.
 				
 			
 				
-				<h3 id="Channel.NotifyReturn">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=46808:46877#L1244">NotifyReturn</a>
+				<h3 id="Channel.NotifyReturn">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=46790:46859#L1244">NotifyReturn</a>
 					<a class="permalink" href="godoc.11.html#Channel.NotifyReturn">&#xb6;</a>
 					
 					
@@ -2295,7 +2327,7 @@ therefore will be missed. You can subscribe to disconnection events through.
 				
 			
 				
-				<h3 id="Channel.Publish">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=32461:32589#L851">Publish</a>
+				<h3 id="Channel.Publish">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=32441:32569#L851">Publish</a>
 					<a class="permalink" href="godoc.11.html#Channel.Publish">&#xb6;</a>
 					
 					
@@ -2488,7 +2520,7 @@ if err != nil {
 				
 			
 				
-				<h3 id="Channel.Qos">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=7658:7737#L189">Qos</a>
+				<h3 id="Channel.Qos">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=7644:7723#L189">Qos</a>
 					<a class="permalink" href="godoc.11.html#Channel.Qos">&#xb6;</a>
 					
 					
@@ -2542,7 +2574,7 @@ greater as described by benchmarks on RabbitMQ.
 				
 			
 				
-				<h3 id="Channel.QueueBind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=17636:17732#L447">QueueBind</a>
+				<h3 id="Channel.QueueBind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=17623:17719#L447">QueueBind</a>
 					<a class="permalink" href="godoc.11.html#Channel.QueueBind">&#xb6;</a>
 					
 					
@@ -2604,7 +2636,7 @@ closed with an error.
 				
 			
 				
-				<h3 id="Channel.QueueDeclare">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=12311:12446#L299">QueueDeclare</a>
+				<h3 id="Channel.QueueDeclare">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=12298:12433#L299">QueueDeclare</a>
 					<a class="permalink" href="godoc.11.html#Channel.QueueDeclare">&#xb6;</a>
 					
 					
@@ -2614,7 +2646,7 @@ closed with an error.
 ) (queue <a href="godoc.11.html#Queue">Queue</a>, err <a href="http://localhost:6161/pkg/builtin/#error">error</a>)</pre>
 				<p>
 QueueDeclare declares a queue to hold messages and deliver to consumers.
-Declaring creates a queue if it doesn&#39;t already exist, or ensures that an
+Declaring creates a queue if it doesn&#39;tb already exist, or ensures that an
 existing queue matches the same parameters.
 </p>
 <p>
@@ -2772,7 +2804,7 @@ if err != nil {
 				
 			
 				
-				<h3 id="Channel.QueueDeclarePassive">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=13715:13857#L339">QueueDeclarePassive</a>
+				<h3 id="Channel.QueueDeclarePassive">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=13702:13844#L339">QueueDeclarePassive</a>
 					<a class="permalink" href="godoc.11.html#Channel.QueueDeclarePassive">&#xb6;</a>
 					
 					
@@ -2793,7 +2825,7 @@ can be used to test for the existence of a queue.
 				
 			
 				
-				<h3 id="Channel.QueueDelete">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=20561:20668#L544">QueueDelete</a>
+				<h3 id="Channel.QueueDelete">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=20548:20655#L544">QueueDelete</a>
 					<a class="permalink" href="godoc.11.html#Channel.QueueDelete">&#xb6;</a>
 					
 					
@@ -2835,7 +2867,7 @@ re-declared on reconnections of the underlying streadway/amqp.Channel object.
 				
 			
 				
-				<h3 id="Channel.QueueInspect">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=15270:15344#L384">QueueInspect</a>
+				<h3 id="Channel.QueueInspect">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=15257:15331#L384">QueueInspect</a>
 					<a class="permalink" href="godoc.11.html#Channel.QueueInspect">&#xb6;</a>
 					
 					
@@ -2864,7 +2896,7 @@ channel will be closed.
 				
 			
 				
-				<h3 id="Channel.QueuePurge">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=19185:19272#L503">QueuePurge</a>
+				<h3 id="Channel.QueuePurge">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=19172:19259#L503">QueuePurge</a>
 					<a class="permalink" href="godoc.11.html#Channel.QueuePurge">&#xb6;</a>
 					
 					
@@ -2890,7 +2922,7 @@ messages purged will not be meaningful.
 				
 			
 				
-				<h3 id="Channel.QueueUnbind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=18410:18491#L477">QueueUnbind</a>
+				<h3 id="Channel.QueueUnbind">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=18397:18478#L477">QueueUnbind</a>
 					<a class="permalink" href="godoc.11.html#Channel.QueueUnbind">&#xb6;</a>
 					
 					
@@ -2910,7 +2942,7 @@ unbind the queue from the default exchange.
 				
 			
 				
-				<h3 id="Channel.Reject">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=40964:41026#L1086">Reject</a>
+				<h3 id="Channel.Reject">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=40945:41007#L1086">Reject</a>
 					<a class="permalink" href="godoc.11.html#Channel.Reject">&#xb6;</a>
 					
 					
@@ -2942,12 +2974,12 @@ still be returned, and can be checked for which tag ranges could not be rejected
 				
 			
 				
-				<h3 id="Channel.Test">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=54080:54138#L1430">Test</a>
+				<h3 id="Channel.Test">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=54065:54124#L1430">Test</a>
 					<a class="permalink" href="godoc.11.html#Channel.Test">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (channel *<a href="godoc.11.html#Channel">Channel</a>) Test(t *<a href="http://localhost:6161/pkg/testing/">testing</a>.<a href="http://localhost:6161/pkg/testing/#T">T</a>) *<a href="godoc.11.html#ChannelTesting">ChannelTesting</a></pre>
+				<pre>func (channel *<a href="godoc.11.html#Channel">Channel</a>) Test(tb <a href="http://localhost:6161/pkg/testing/">testing</a>.<a href="http://localhost:6161/pkg/testing/#TB">TB</a>) *<a href="godoc.11.html#ChannelTesting">ChannelTesting</a></pre>
 				<p>
 Test returns an object with methods for testing the Channel.
 </p>
@@ -2982,7 +3014,7 @@ if err != nil {
 <span class="comment">// test&#39;s *testing.T value. Here, we will just pass a dummy one.</span>
 testHarness := channel.Test(new(testing.T))
 
-<span class="comment">// We can use the test harness to force the channel to channelReconnect. If a reconnection</span>
+<span class="comment">// We can use the test harness to force the channel to reconnect. If a reconnection</span>
 <span class="comment">// does not occur before the passed context expires, the test will be failed.</span>
 ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 defer cancel()
@@ -3004,7 +3036,7 @@ fmt.Println(&#34;RECONNECTION COUNT:&#34;, testHarness.ReconnectionCount())
 				
 			
 				
-				<h3 id="Channel.Tx">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=51124:51158#L1340">Tx</a>
+				<h3 id="Channel.Tx">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=51106:51140#L1340">Tx</a>
 					<a class="permalink" href="godoc.11.html#Channel.Tx">&#xb6;</a>
 					
 					
@@ -3046,7 +3078,7 @@ PRs to add this functionality are welcome.
 				
 			
 				
-				<h3 id="Channel.TxCommit">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=51723:51763#L1359">TxCommit</a>
+				<h3 id="Channel.TxCommit">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=51705:51745#L1359">TxCommit</a>
 					<a class="permalink" href="godoc.11.html#Channel.TxCommit">&#xb6;</a>
 					
 					
@@ -3077,7 +3109,7 @@ PRs to add this functionality are welcome.
 				
 			
 				
-				<h3 id="Channel.TxRollback">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=52334:52376#L1376">TxRollback</a>
+				<h3 id="Channel.TxRollback">func (*Channel) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=52316:52358#L1376">TxRollback</a>
 					<a class="permalink" href="godoc.11.html#Channel.TxRollback">&#xb6;</a>
 					
 					
@@ -3847,7 +3879,7 @@ AddReject adds a new middleware to be invoked on Channel.Reject method calls.
 		
 			
 			
-			<h2 id="ChannelTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=52496:52690#L1381">ChannelTesting</a>
+			<h2 id="ChannelTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=52478:52672#L1381">ChannelTesting</a>
 				<a class="permalink" href="godoc.11.html#ChannelTesting">&#xb6;</a>
 				
 				
@@ -3875,7 +3907,7 @@ ChannelTesting exposes a number of methods designed for testing.
 
 			
 				
-				<h3 id="ChannelTesting.ConnTest">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=52767:52825#L1390">ConnTest</a>
+				<h3 id="ChannelTesting.ConnTest">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=52749:52807#L1390">ConnTest</a>
 					<a class="permalink" href="godoc.11.html#ChannelTesting.ConnTest">&#xb6;</a>
 					
 					
@@ -3890,7 +3922,7 @@ ConnTest returns a tester for the RogerConnection feeding this channel.
 				
 			
 				
-				<h3 id="ChannelTesting.GetMiddlewareProvider">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=53722:53845#L1418">GetMiddlewareProvider</a>
+				<h3 id="ChannelTesting.GetMiddlewareProvider">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=53705:53828#L1418">GetMiddlewareProvider</a>
 					<a class="permalink" href="godoc.11.html#ChannelTesting.GetMiddlewareProvider">&#xb6;</a>
 					
 					
@@ -3908,7 +3940,7 @@ immediately.
 				
 			
 				
-				<h3 id="ChannelTesting.ReconnectionCount">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=53499:53555#L1412">ReconnectionCount</a>
+				<h3 id="ChannelTesting.ReconnectionCount">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=53482:53538#L1412">ReconnectionCount</a>
 					<a class="permalink" href="godoc.11.html#ChannelTesting.ReconnectionCount">&#xb6;</a>
 					
 					
@@ -3923,7 +3955,7 @@ ReconnectionCount returns the number of times this channel has been reconnected.
 				
 			
 				
-				<h3 id="ChannelTesting.UnderlyingChannel">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=53065:53128#L1401">UnderlyingChannel</a>
+				<h3 id="ChannelTesting.UnderlyingChannel">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=53048:53111#L1401">UnderlyingChannel</a>
 					<a class="permalink" href="godoc.11.html#ChannelTesting.UnderlyingChannel">&#xb6;</a>
 					
 					
@@ -3938,7 +3970,7 @@ UnderlyingChannel returns the current underlying streadway/amqp.Channel being us
 				
 			
 				
-				<h3 id="ChannelTesting.UnderlyingConnection">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=53292:53361#L1407">UnderlyingConnection</a>
+				<h3 id="ChannelTesting.UnderlyingConnection">func (*ChannelTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/channel.go?s=53275:53344#L1407">UnderlyingConnection</a>
 					<a class="permalink" href="godoc.11.html#ChannelTesting.UnderlyingConnection">&#xb6;</a>
 					
 					
@@ -4237,7 +4269,7 @@ returned, cancelling ctx does not affect the connection.
 
 			
 				
-				<h3 id="Connection.Channel">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connection.go?s=4605:4656#L124">Channel</a>
+				<h3 id="Connection.Channel">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connection.go?s=4606:4657#L124">Channel</a>
 					<a class="permalink" href="godoc.11.html#Connection.Channel">&#xb6;</a>
 					
 					
@@ -4261,7 +4293,7 @@ all errors until Channel.Close() is called.
 				
 			
 				
-				<h3 id="Connection.Close">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=16928:16974#L469">Close</a>
+				<h3 id="Connection.Close">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=16907:16953#L468">Close</a>
 					<a class="permalink" href="godoc.11.html#Connection.Close">&#xb6;</a>
 					
 					
@@ -4277,7 +4309,7 @@ from reconnecting.
 				
 			
 				
-				<h3 id="Connection.IsClosed">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=17577:17625#L483">IsClosed</a>
+				<h3 id="Connection.IsClosed">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=17556:17604#L482">IsClosed</a>
 					<a class="permalink" href="godoc.11.html#Connection.IsClosed">&#xb6;</a>
 					
 					
@@ -4302,7 +4334,7 @@ underlying connection is currently disconnected and waiting to reconnectMiddlewa
 				
 			
 				
-				<h3 id="Connection.NotifyClose">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=14641:14743#L407">NotifyClose</a>
+				<h3 id="Connection.NotifyClose">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=14620:14722#L406">NotifyClose</a>
 					<a class="permalink" href="godoc.11.html#Connection.NotifyClose">&#xb6;</a>
 					
 					
@@ -4327,7 +4359,7 @@ will both send individual events when the connection is lost or re-acquired.
 				
 			
 				
-				<h3 id="Connection.NotifyDial">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=15157:15231#L420">NotifyDial</a>
+				<h3 id="Connection.NotifyDial">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=15136:15210#L419">NotifyDial</a>
 					<a class="permalink" href="godoc.11.html#Connection.NotifyDial">&#xb6;</a>
 					
 					
@@ -4346,7 +4378,7 @@ will include both failure AND successes.
 				
 			
 				
-				<h3 id="Connection.NotifyDisconnect">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=15598:15678#L433">NotifyDisconnect</a>
+				<h3 id="Connection.NotifyDisconnect">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=15577:15657#L432">NotifyDisconnect</a>
 					<a class="permalink" href="godoc.11.html#Connection.NotifyDisconnect">&#xb6;</a>
 					
 					
@@ -4365,12 +4397,12 @@ lost.
 				
 			
 				
-				<h3 id="Connection.Test">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connection.go?s=6218:6279#L176">Test</a>
+				<h3 id="Connection.Test">func (*Connection) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/connection.go?s=6219:6281#L176">Test</a>
 					<a class="permalink" href="godoc.11.html#Connection.Test">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (conn *<a href="godoc.11.html#Connection">Connection</a>) Test(t *<a href="http://localhost:6161/pkg/testing/">testing</a>.<a href="http://localhost:6161/pkg/testing/#T">T</a>) *<a href="godoc.11.html#ConnectionTesting">ConnectionTesting</a></pre>
+				<pre>func (conn *<a href="godoc.11.html#Connection">Connection</a>) Test(tb <a href="http://localhost:6161/pkg/testing/">testing</a>.<a href="http://localhost:6161/pkg/testing/#TB">TB</a>) *<a href="godoc.11.html#ConnectionTesting">ConnectionTesting</a></pre>
 				<p>
 Test returns a ConnectionTesting object with a number of helper methods for testing
 Connection objects.
@@ -4627,7 +4659,7 @@ UnderlyingConn returns the current underlying streadway/amqp.Connection.
 		
 			
 			
-			<h2 id="Decimal">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=3674:3701#L89">Decimal</a>
+			<h2 id="Decimal">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=3911:3938#L94">Decimal</a>
 				<a class="permalink" href="godoc.11.html#Decimal">&#xb6;</a>
 				
 				
@@ -4707,7 +4739,7 @@ detailed information on both groups
 		
 			
 			
-			<h2 id="Error">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=3809:3832#L93">Error</a>
+			<h2 id="Error">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=4046:4069#L98">Error</a>
 				<a class="permalink" href="godoc.11.html#Error">&#xb6;</a>
 				
 				
@@ -4733,7 +4765,7 @@ by the server.
 		
 			
 			
-			<h2 id="Publishing">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=4081:4114#L99">Publishing</a>
+			<h2 id="Publishing">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=4318:4351#L104">Publishing</a>
 				<a class="permalink" href="godoc.11.html#Publishing">&#xb6;</a>
 				
 				
@@ -4761,7 +4793,7 @@ efficiency.
 		
 			
 			
-			<h2 id="Queue">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=4252:4275#L103">Queue</a>
+			<h2 id="Queue">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=4489:4512#L108">Queue</a>
 				<a class="permalink" href="godoc.11.html#Queue">&#xb6;</a>
 				
 				
@@ -4787,7 +4819,7 @@ from Channel.QueueDeclare or Channel.QueueInspect.
 		
 			
 			
-			<h2 id="Return">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=4507:4532#L108">Return</a>
+			<h2 id="Return">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=4744:4769#L113">Return</a>
 				<a class="permalink" href="godoc.11.html#Return">&#xb6;</a>
 				
 				
@@ -4814,7 +4846,7 @@ and no route found, or `immediate` flag set and no free consumer.
 		
 			
 			
-			<h2 id="Table">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=5174:5197#L138">Table</a>
+			<h2 id="Table">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/streadwayAliases.go?s=5411:5434#L143">Table</a>
 				<a class="permalink" href="godoc.11.html#Table">&#xb6;</a>
 				
 				
@@ -4869,7 +4901,7 @@ RabbitMQ expects int32 for integer values.
 		
 			
 			
-			<h2 id="TestReconnectSignaler">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=1523:1741#L36">TestReconnectSignaler</a>
+			<h2 id="TestReconnectSignaler">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=1523:1742#L36">TestReconnectSignaler</a>
 				<a class="permalink" href="godoc.11.html#TestReconnectSignaler">&#xb6;</a>
 				
 				
@@ -4895,7 +4927,7 @@ TestReconnectSignaler allows us to block until a reconnection occurs during a te
 
 			
 				
-				<h3 id="TestReconnectSignaler.WaitOnReconnect">func (*TestReconnectSignaler) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=2054:2129#L52">WaitOnReconnect</a>
+				<h3 id="TestReconnectSignaler.WaitOnReconnect">func (*TestReconnectSignaler) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=2055:2130#L52">WaitOnReconnect</a>
 					<a class="permalink" href="godoc.11.html#TestReconnectSignaler.WaitOnReconnect">&#xb6;</a>
 					
 					
@@ -4917,7 +4949,7 @@ If no context is passed a context with 3-second timeout will be used.
 		
 			
 			
-			<h2 id="TransportTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=2629:2798#L72">TransportTesting</a>
+			<h2 id="TransportTesting">type <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=2608:2777#L71">TransportTesting</a>
 				<a class="permalink" href="godoc.11.html#TransportTesting">&#xb6;</a>
 				
 				
@@ -4943,7 +4975,7 @@ TransportTesting provides testing methods for testing Channel and Connection.
 
 			
 				
-				<h3 id="TransportTesting.BlockReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=3245:3293#L88">BlockReconnect</a>
+				<h3 id="TransportTesting.BlockReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=3224:3272#L87">BlockReconnect</a>
 					<a class="permalink" href="godoc.11.html#TransportTesting.BlockReconnect">&#xb6;</a>
 					
 					
@@ -4959,7 +4991,7 @@ UnblockReconnect() are made, the block will be removed at the end of the test.
 				
 			
 				
-				<h3 id="TransportTesting.DisconnectTransport">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=4731:4784#L136">DisconnectTransport</a>
+				<h3 id="TransportTesting.DisconnectTransport">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=4711:4764#L135">DisconnectTransport</a>
 					<a class="permalink" href="godoc.11.html#TransportTesting.DisconnectTransport">&#xb6;</a>
 					
 					
@@ -4974,7 +5006,7 @@ DisconnectTransport closes the underlying livesOnce to force a reconnection.
 				
 			
 				
-				<h3 id="TransportTesting.ForceReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=5157:5224#L146">ForceReconnect</a>
+				<h3 id="TransportTesting.ForceReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=5139:5206#L145">ForceReconnect</a>
 					<a class="permalink" href="godoc.11.html#TransportTesting.ForceReconnect">&#xb6;</a>
 					
 					
@@ -4991,7 +5023,7 @@ a 3-second timeout will be used instead.
 				
 			
 				
-				<h3 id="TransportTesting.SignalOnReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=4005:4079#L111">SignalOnReconnect</a>
+				<h3 id="TransportTesting.SignalOnReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=3984:4058#L110">SignalOnReconnect</a>
 					<a class="permalink" href="godoc.11.html#TransportTesting.SignalOnReconnect">&#xb6;</a>
 					
 					
@@ -5007,7 +5039,7 @@ reconnection event of the livesOnce.
 				
 			
 				
-				<h3 id="TransportTesting.TransportLock">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=2983:3044#L82">TransportLock</a>
+				<h3 id="TransportTesting.TransportLock">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=2962:3023#L81">TransportLock</a>
 					<a class="permalink" href="godoc.11.html#TransportTesting.TransportLock">&#xb6;</a>
 					
 					
@@ -5024,7 +5056,7 @@ cannot occur.
 				
 			
 				
-				<h3 id="TransportTesting.UnblockReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=3467:3517#L95">UnblockReconnect</a>
+				<h3 id="TransportTesting.UnblockReconnect">func (*TransportTesting) <a href="http://localhost:6161/src/github.com/peake100/rogerRabbit-go/amqp/transportManager.go?s=3446:3496#L94">UnblockReconnect</a>
 					<a class="permalink" href="godoc.11.html#TransportTesting.UnblockReconnect">&#xb6;</a>
 					
 					

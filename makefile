@@ -28,6 +28,10 @@ test:
 	-python3 ./zdevelop/make_scripts/py_open_test_reports.py
 	-docker stop rabbittest
 
+.PHONY: bench
+bench:
+	-go test -p 1 -count 4 -bench=. -run=Comparisons -benchtime=2s ./...
+
 .PHONY: lint
 lint:
 	-revive -config revive.toml ./...

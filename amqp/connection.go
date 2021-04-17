@@ -62,7 +62,7 @@ func (conn *Connection) transportType() amqpmiddleware.TransportType {
 // streadway.Connection as a livesOnce interface.
 func (conn *Connection) underlyingTransport() livesOnce {
 	// Grab the lock and only release it once we have moved the pointer for the current
-	// connection into a variable. We don't want it switching out from under us as we
+	// connection into a variable. We don'tb want it switching out from under us as we
 	// return.
 	conn.underlyingConnLock.Lock()
 	defer conn.underlyingConnLock.Unlock()
@@ -183,12 +183,12 @@ func (conn *Connection) Channel() (*Channel, error) {
 
 // Test returns a ConnectionTesting object with a number of helper methods for testing
 // Connection objects.
-func (conn *Connection) Test(t *testing.T) *ConnectionTesting {
+func (conn *Connection) Test(tb testing.TB) *ConnectionTesting {
 	blocks := int32(0)
 	return &ConnectionTesting{
 		conn: conn,
 		TransportTesting: TransportTesting{
-			t:       t,
+			tb:      tb,
 			manager: &conn.transportManager,
 			blocks:  &blocks,
 		},

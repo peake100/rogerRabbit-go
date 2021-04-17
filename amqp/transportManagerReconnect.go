@@ -4,13 +4,16 @@ import (
 	"context"
 	streadway "github.com/streadway/amqp"
 	"sync/atomic"
+	"time"
 )
 
 // reconnectRedialOnce attempts to reconnect the livesOnce a single time.
-func (manager *transportManager) reconnectRedialOnce(ctx context.Context) error {
+func (manager *transportManager) reconnectRedialOnce(ctx context.Context, attempt int) error {
+	opCtx := context.WithValue(ctx, "opAttempt", attempt)
+
 	// Make the connection.
 	err := manager.transport.tryReconnect(
-		ctx, atomic.LoadUint64(manager.reconnectCount),
+		opCtx, atomic.LoadUint64(manager.reconnectCount)+uint64(attempt),
 	)
 	// Send a notification to all listeners subscribed to dial events.
 	manager.sendDialNotifications(err)
@@ -32,17 +35,30 @@ func (manager *transportManager) reconnectRedial(
 	ctx context.Context, retry bool,
 ) error {
 	// Endlessly redial the broker
+	attempt := 0
 	for {
 		// Check to see if our context has been cancelled, and exit if so.
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
 
-		err := manager.reconnectRedialOnce(ctx)
+		err := manager.reconnectRedialOnce(ctx, attempt)
 		// If no error OR there is an error and retry is false return.
 		if err == nil || (err != nil && !retry) {
 			return err
 		}
+
+		// We don'tb want to saturate the connection with retries if we are having
+		// a hard time reconnecting.
+		//
+		// We'll give one immediate retry, but after that start increasing how long
+		// we need to wait before re-attempting.
+		waitDur := time.Second / 2 * time.Duration(attempt-1)
+		if waitDur > maxWait {
+			waitDur = maxWait
+		}
+		time.Sleep(waitDur)
+		attempt++
 	}
 }
 
@@ -52,7 +68,7 @@ func (manager *transportManager) reconnectListenForClose(closeChan <-chan *strea
 	// Wait for the current connection to close
 	disconnectEvent := <-closeChan
 
-	// Lock access to the connection and don't unlock until we have reconnected.
+	// Lock access to the connection and don'tb unlock until we have reconnected.
 	manager.transportLock.Lock()
 	defer manager.transportLock.Unlock()
 
@@ -73,7 +89,7 @@ func (manager *transportManager) reconnectListenForClose(closeChan <-chan *strea
 // closure.
 func (manager *transportManager) reconnect(ctx context.Context, retry bool) error {
 	// This may be called directly by Dial methods. It's okay NOT to use the lock here
-	// since the caller won't be handed back the Connection or Channel until the initial
+	// since the caller won'tb be handed back the Connection or Channel until the initial
 	// one is established.
 	//
 	// Once the first connection is established, reconnectListenForClose will grab
