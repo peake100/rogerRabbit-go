@@ -1,8 +1,8 @@
 
-<p align="center">
-    <img align="center" src="zdocs/source/_static/images/logo-hatrick.svg"/>
-</p>
 <h1 align="center">Roger, Rabbit</h1>
+<p align="center">
+    <img height=200 align="center" src="https://raw.githubusercontent.com/peake100/rogerRabbit-go/master/zdocs/source/_static/logo-tophat-tall.svg"/>
+</p>
 <p align="center">amqp with automatic redials</p>
 <p align="center">
     <img src="https://dev.azure.com/peake100/Peake100/_apis/build/status/rogerRabbit-go?repoName=peake100%2FrogerRabbit-go&branchName=dev"/></a>

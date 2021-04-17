@@ -1,12 +1,10 @@
+=============
 Roger, Rabbit
 =============
 
-Roger, Rabbit is broken into two packages:
-
-- *rogerRabbit/amqp*: A drop-in replacement for streadway/amqp with automatic re-dials,
-  method middleware, and more.
-
-- *rogerRabbit/roger*: Higher level abstractions for publishing and consuming messages.
+.. image:: _static/logo-tophat-tall.svg
+    :width: 40%
+    :align: center
 
 .. toctree::
    :maxdepth: 2
@@ -19,9 +17,11 @@ Roger, Rabbit is broken into two packages:
 Demo
 ----
 
+Examples:
+
 **Survive a Disconnection Event Using the amqp Package:**
 
-.. code-block::
+.. code-block:: go
 
     // Get a new connection to our test broker.
     //
@@ -80,7 +80,7 @@ Demo
 
 **Effortless Publishing with Confirmations using the roger Package:**
 
-.. code-block::
+.. code-block:: go
 
     // Get a new connection to our test broker.
     connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
