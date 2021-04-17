@@ -66,11 +66,11 @@ Goals
 
 The goals of the Roger, Rabbit package are as follows:
 
-- **Offer a drop-in replacement for rogerRabbit/amqp**: APIs may be extended (adding
+- **Offer a Drop-in Replacement for streadway/amqp**: APIs may be extended (adding
   fields to `amqp.Config` or additional methods to `*amqp.Channel`, for instance) but
   must not break existing code unless absolutely necessary.
 
-- **Add as few additional error paths as possible**: Errors may be *extended* with
+- **Add as few Additional Error Paths as Possible**: Errors may be *extended* with
   additional information concerning disconnect scenarios, but new error type returns
   from `*Connection` or `*amqp.Channel` should be an absolute last resort.
 
