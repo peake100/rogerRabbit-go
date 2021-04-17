@@ -1792,7 +1792,7 @@ func (suite *ChannelMethodsSuite) Test0370_NotifyFlow() {
 	flowEvents := make(chan bool, 2)
 	suite.ChannelConsume().NotifyFlow(flowEvents)
 
-	// Check that we don't get flow notifications right off the bat
+	// Check that we don'tb get flow notifications right off the bat
 	select {
 	case <-flowEvents:
 		suite.T().Error("got flow event")

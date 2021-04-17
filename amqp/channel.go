@@ -65,7 +65,7 @@ func (channel *Channel) transportType() amqpmiddleware.TransportType {
 // streadway.Channel as a livesOnce interface
 func (channel *Channel) underlyingTransport() livesOnce {
 	// Grab the lock and only release it once we have moved the pointer for the current
-	// channel into a variable. We don't want it switching out from under us as we
+	// channel into a variable. We don'tb want it switching out from under us as we
 	// return.
 	channel.underlyingChannelLock.Lock()
 	defer channel.underlyingChannelLock.Unlock()
@@ -104,7 +104,7 @@ func (channel *Channel) tryReconnect(
 		}
 
 		var result amqpmiddleware.ResultsChannelReconnect
-		result, err = channel.handlers.channelReconnect(channel.ctx, ags)
+		result, err = channel.handlers.channelReconnect(ctx, ags)
 		if err != nil {
 			return
 		}
@@ -246,7 +246,7 @@ func (channel *Channel) Flow(active bool) error {
 
 /*
 QueueDeclare declares a queue to hold messages and deliver to consumers.
-Declaring creates a queue if it doesn't already exist, or ensures that an
+Declaring creates a queue if it doesn'tb already exist, or ensures that an
 existing queue matches the same parameters.
 
 Every queue declared gets a default binding to the empty exchange "" which has
@@ -895,7 +895,7 @@ Delivery.Ack on the returned delivery when you have fully processed this
 delivery.
 
 When autoAck is true, the server will automatically acknowledge this message so
-you don't have to.  But if you are unable to fully process this message before
+you don'tb have to.  But if you are unable to fully process this message before
 the channel or connection is closed, the message will not get requeued.
 
 ---
@@ -1156,7 +1156,7 @@ func (channel *Channel) NotifyPublish(
 // and NotifyConfirmOrOrphaned.
 func notifyConfirmCloseConfirmChannels(tagChannels ...chan uint64) {
 mainLoop:
-	// Iterate over the channels and close them. We'll need to make sure we don't close
+	// Iterate over the channels and close them. We'll need to make sure we don'tb close
 	// the same channel twice.
 	for i, thisChannel := range tagChannels {
 		// Whenever we get a new channel, compare it against all previously closed
@@ -1401,7 +1401,7 @@ func (tester *ChannelTesting) ConnTest() *TransportTesting {
 	blocks := int32(0)
 
 	return &TransportTesting{
-		t:       tester.t,
+		tb:      tester.tb,
 		manager: &tester.channel.rogerConn.transportManager,
 		blocks:  &blocks,
 	}
@@ -1430,25 +1430,25 @@ func (tester *ChannelTesting) GetMiddlewareProvider(
 ) amqpmiddleware.ProvidesMiddleware {
 	provider, ok := tester.channel.handlers.providers[id]
 	if !ok {
-		tester.t.Errorf("no channel middleware provider %v", id)
-		tester.t.FailNow()
+		tester.tb.Errorf("no channel middleware provider %v", id)
+		tester.tb.FailNow()
 	}
 	return provider
 }
 
 // Test returns an object with methods for testing the Channel.
-func (channel *Channel) Test(t *testing.T) *ChannelTesting {
+func (channel *Channel) Test(tb testing.TB) *ChannelTesting {
 	blocks := int32(0)
 
 	chanTester := &ChannelTesting{
 		TransportTesting: &TransportTesting{
-			t:       t,
+			tb:      tb,
 			manager: &channel.transportManager,
 			blocks:  &blocks,
 		},
 		channel: channel,
 	}
 
-	t.Cleanup(chanTester.cleanup)
+	tb.Cleanup(chanTester.cleanup)
 	return chanTester
 }

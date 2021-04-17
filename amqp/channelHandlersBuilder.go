@@ -449,7 +449,7 @@ func (builder channelHandlerBuilder) createConsume() amqpmiddleware.HandlerConsu
 			noLocal:   args.NoLocal,
 			noWait:    args.NoWait,
 			args:      args.Args,
-			// Make a buffered channel so we don't cause latency from waiting for queues
+			// Make a buffered channel so we don'tb cause latency from waiting for queues
 			// to be ready
 			callerDeliveryChan: make(chan datamodels.Delivery, 16),
 		}

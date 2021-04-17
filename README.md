@@ -256,13 +256,13 @@ Goals
 
 The goals of the Roger, Rabbit package are as follows:
 
-- **Offer a drop-in replacement for streadway/amqp**: APIs may be extended (adding
+- **Offer a Drop-in Replacement for streadway/amqp**: APIs may be extended (adding
   fields to `amqp.Config` or additional methods to `*amqp.Channel`, for instance) but
   must not break existing code unless absolutely necessary.
 
-- **Add as few additional error paths as possible**: Errors may be *extended* with
+- **Add as few Additional Error Paths as Possible**: Errors may be *extended* with
   additional information concerning disconnect scenarios, but new error type returns
-  from *Connection or *Channel should be an absolute last resort.
+  from `*Connection` or `*amqp.Channel` should be an absolute last resort.
 
 - **Be Highly Extensible**: Roger, Rabbit seeks to offer a high degree of extensibility
   via features like middleware, in an effort to reduce the balkanization of amqp client
@@ -271,18 +271,46 @@ The goals of the Roger, Rabbit package are as follows:
 Current Limitations & Warnings
 ------------------------------
 
-- **Performance**: Roger, Rabbit's implementation is handled primarily through
-  middlewares, and a *sync.RWMutex on transports that handles blocking methods on
-  reconnection events. This increases the overhead on each call, but allows for an 
-  enormous amount of extensibility and robustness, but may be a limiting factor for 
-  applications that need the absolute maximum throughput possible.
+- **Performance**: Roger, Rabbit has not been extensively benchmarked against
+  `streadway/amqp`. To see preliminary benchmarks, take a look at the next section.
 
-- **Transaction Support**: Roger, Rabbit does not currently support AMQP Transactions,
+- **Transaction Support**: Roger, Rabbit does not currently support amqp Transactions,
   as the author does not use them. Draft PR's with possible implementations are welcome!
 
 - **Reliability**: While the author uses this library in production, it is still early
   days, and more battle-testing will be needed before this library is promoted to
   version 1.0. PR's are welcome for Bug Fixes, code coverage, or new features.
+
+Benchmarks
+----------
+
+Because of Roger, Rabbit's middleware-driven design, some overhead is expected vs
+streadway proper. However, initial benchmarks are promising, and show only minimal
+impact. For most applications, the overhead cost is likely worth the cost for ease of
+development and flexibility.
+
+Still, if absolute peak throughput is critical to an application, a less general and
+more tailored approach may be warranted.
+
+Benchmarks can be found in `./amqp/benchmark_test.go`.
+
+Machine: Intel(R) Core(TM) i9-8950HK CPU @ 2.90GHz
+
+
+| OPERATION          | LIB  | EXECUTIONS  |     NS/OP  |  COMPARISON
+| -------------------|------|-------------|------------|------------
+| QueueInspect       | sw   |     2,838   |  812,594   |         --
+|                    | rr   |     2,470   |  813,269   |      +0.1%
+| Publish            | sw   |    7,4559   |   28,882   |         --
+|                    | rr   |    7,0665   |   30,031   |      +4.0%
+| Publish & Confirm  | sw   |    3,4528   |   59,703   |         --
+|                    | rr   |    3,5481   |   62,198   |      +4.2%
+
+
+The above numbers were calculated by running each benchmark 4 times, then taking the
+fastest result for each library.
+
+The benchmarks were run with the following command:
 
 Acknowledgements
 ----------------
