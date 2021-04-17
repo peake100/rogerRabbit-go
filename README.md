@@ -6,8 +6,8 @@
 <p align="center">amqp with automatic redials</p>
 <p align="center">
     <img src="https://dev.azure.com/peake100/Peake100/_apis/build/status/rogerRabbit-go?repoName=peake100%2FrogerRabbit-go&branchName=dev"/></a>
-    <img src="https://goreportcard.com/badge/github.com/peake100/rogerRabbit-go" /></a
     <img src="https://img.shields.io/azure-devops/tests/peake100/peake100/8?compact_message"/></a>
+    <img src="https://img.shields.io/azure-devops/coverage/peake100/peake100/8?compact_message"/></a>
 </p>
 <p align="center">
     <img src="https://goreportcard.com/badge/github.com/peake100/rogerRabbit-go" /></a
