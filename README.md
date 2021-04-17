@@ -1,4 +1,7 @@
 # Roger, Rabbit
+<p align="center">
+<img src="https://goreportcard.com/badge/github.com/peake100/rogerRabbit-go" /></a>
+</p>
 
 Roger, Rabbit is a drop-in replacement for 
 [streadway/amqp](https://github.com/streadway/amqp) that offers the following
