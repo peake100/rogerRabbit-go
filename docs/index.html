@@ -1,0 +1,409 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Roger, Rabbit &mdash; rogerRabbit 0.3.7 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Project" href="overview.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="#" class="icon icon-home"> rogerRabbit
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.7
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="amqp.html">AMQP Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roger.html">Roger Package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">rogerRabbit</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Roger, Rabbit</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="roger-rabbit">
+<h1>Roger, Rabbit<a class="headerlink" href="#roger-rabbit" title="Permalink to this headline">¶</a></h1>
+<p>Roger, Rabbit is broken into two packages:</p>
+<ul class="simple">
+<li><p><em>rogerRabbit/amqp</em>: A drop-in replacement for streadway/amqp with automatic re-dials,
+method middleware, and more.</p></li>
+<li><p><em>rogerRabbit/roger</em>: Higher level abstractions for publishing and consuming messages.</p></li>
+</ul>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Project</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#motivations">Motivations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#goals">Goals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#current-limitations-warnings">Current Limitations &amp; Warnings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#benchmarks">Benchmarks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="amqp.html">AMQP Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="amqp.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="amqp.html#robust-features">Robust Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="amqp.html#channel-middleware">Channel Middleware</a></li>
+<li class="toctree-l2"><a class="reference internal" href="amqp.html#testing">Testing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="roger.html">Roger Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="roger.html#producer">Producer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="roger.html#consumer">Consumer</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="demo">
+<h2>Demo<a class="headerlink" href="#demo" title="Permalink to this headline">¶</a></h2>
+<p><strong>Survive a Disconnection Event Using the amqp Package:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Get</span> <span class="n">a</span> <span class="n">new</span> <span class="n">connection</span> <span class="n">to</span> <span class="n">our</span> <span class="n">test</span> <span class="n">broker</span><span class="o">.</span>
+<span class="o">//</span>
+<span class="o">//</span> <span class="n">DialCtx</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">new</span> <span class="n">function</span> <span class="n">that</span> <span class="n">allows</span> <span class="n">the</span> <span class="n">Dial</span> <span class="n">function</span> <span class="n">to</span> <span class="n">keep</span> <span class="n">attempting</span>
+<span class="o">//</span> <span class="n">re</span><span class="o">-</span><span class="n">dials</span> <span class="n">to</span> <span class="n">the</span> <span class="n">broker</span> <span class="n">until</span> <span class="n">the</span> <span class="n">passed</span> <span class="n">context</span> <span class="n">expires</span><span class="o">.</span>
+<span class="n">connection</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">amqp</span><span class="o">.</span><span class="n">DialCtx</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">Background</span><span class="p">(),</span> <span class="n">amqptest</span><span class="o">.</span><span class="n">TestDialAddress</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+    <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">Get</span> <span class="n">a</span> <span class="n">new</span> <span class="n">channel</span> <span class="kn">from</span> <span class="nn">our</span> <span class="n">robust</span> <span class="n">connection</span><span class="o">.</span>
+<span class="n">channel</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">connection</span><span class="o">.</span><span class="n">Channel</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+    <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">We</span> <span class="n">can</span> <span class="n">use</span> <span class="n">the</span> <span class="n">Test</span> <span class="n">method</span> <span class="n">to</span> <span class="k">return</span> <span class="n">a</span> <span class="n">testing</span> <span class="n">harness</span> <span class="k">with</span> <span class="n">some</span> <span class="n">additional</span>
+<span class="o">//</span> <span class="n">methods</span><span class="o">.</span> <span class="n">ForceReconnect</span> <span class="n">force</span><span class="o">-</span><span class="n">closes</span> <span class="n">the</span> <span class="n">underlying</span> <span class="n">streadway</span> <span class="n">Channel</span><span class="p">,</span> <span class="n">causing</span>
+<span class="o">//</span> <span class="n">the</span> <span class="n">robust</span> <span class="n">Channel</span> <span class="n">to</span> <span class="n">reconnect</span><span class="o">.</span>
+<span class="o">//</span>
+<span class="o">//</span> <span class="n">We</span><span class="s1">&#39;ll use a dummy *testing.T object here. These methods are designed for tests</span>
+<span class="o">//</span> <span class="n">only</span> <span class="ow">and</span> <span class="n">should</span> <span class="ow">not</span> <span class="n">be</span> <span class="n">used</span> <span class="ow">in</span> <span class="n">production</span> <span class="n">code</span><span class="o">.</span>
+<span class="n">channel</span><span class="o">.</span><span class="n">Test</span><span class="p">(</span><span class="n">new</span><span class="p">(</span><span class="n">testing</span><span class="o">.</span><span class="n">T</span><span class="p">))</span><span class="o">.</span><span class="n">ForceReconnect</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">Background</span><span class="p">())</span>
+
+<span class="o">//</span> <span class="n">We</span> <span class="n">can</span> <span class="n">see</span> <span class="n">here</span> <span class="n">our</span> <span class="n">channel</span> <span class="ow">is</span> <span class="n">still</span> <span class="nb">open</span><span class="o">.</span>
+<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="s2">&quot;IS CLOSED:&quot;</span><span class="p">,</span> <span class="n">channel</span><span class="o">.</span><span class="n">IsClosed</span><span class="p">())</span>
+
+<span class="o">//</span> <span class="n">We</span> <span class="n">can</span> <span class="n">even</span> <span class="n">declare</span> <span class="n">a</span> <span class="n">queue</span> <span class="n">on</span> <span class="n">it</span>
+<span class="n">queue</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">channel</span><span class="o">.</span><span class="n">QueueDeclare</span><span class="p">(</span>
+    <span class="s2">&quot;example_channel_reconnect&quot;</span><span class="p">,</span> <span class="o">//</span> <span class="n">name</span>
+    <span class="n">false</span><span class="p">,</span>                       <span class="o">//</span> <span class="n">durable</span>
+    <span class="n">true</span><span class="p">,</span>                        <span class="o">//</span> <span class="n">autoDelete</span>
+    <span class="n">false</span><span class="p">,</span>                       <span class="o">//</span> <span class="n">exclusive</span>
+    <span class="n">false</span><span class="p">,</span>                       <span class="o">//</span> <span class="n">noWait</span>
+    <span class="n">nil</span><span class="p">,</span>                         <span class="o">//</span> <span class="n">args</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+    <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">Here</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">result</span>
+<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s2">&quot;QUEUE    : %+v</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">queue</span><span class="p">)</span>
+
+<span class="o">//</span> <span class="n">Explicitly</span> <span class="n">close</span> <span class="n">the</span> <span class="n">connection</span><span class="o">.</span> <span class="n">This</span> <span class="n">will</span> <span class="n">also</span> <span class="n">close</span> <span class="nb">all</span> <span class="n">child</span> <span class="n">channels</span><span class="o">.</span>
+<span class="n">err</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">Close</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+    <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">Now</span> <span class="n">that</span> <span class="n">we</span> <span class="n">have</span> <span class="n">explicitly</span> <span class="n">closed</span> <span class="n">the</span> <span class="n">connection</span><span class="p">,</span> <span class="n">the</span> <span class="n">channel</span> <span class="n">will</span> <span class="n">be</span> <span class="n">closed</span><span class="o">.</span>
+<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="s2">&quot;IS CLOSED:&quot;</span><span class="p">,</span> <span class="n">channel</span><span class="o">.</span><span class="n">IsClosed</span><span class="p">())</span>
+
+<span class="o">//</span> <span class="n">IS</span> <span class="n">CLOSED</span><span class="p">:</span> <span class="n">false</span>
+<span class="o">//</span> <span class="n">QUEUE</span>    <span class="p">:</span> <span class="p">{</span><span class="n">Name</span><span class="p">:</span><span class="n">example_channel_reconnect</span> <span class="n">Messages</span><span class="p">:</span><span class="mi">0</span> <span class="n">Consumers</span><span class="p">:</span><span class="mi">0</span><span class="p">}</span>
+<span class="o">//</span> <span class="n">IS</span> <span class="n">CLOSED</span><span class="p">:</span> <span class="n">true</span>
+</pre></div>
+</div>
+<p><strong>Effortless Publishing with Confirmations using the roger Package:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// Get a new connection to our test broker.
+connection, err := amqp.DialCtx(context.Background(), amqptest.TestDialAddress)
+if err != nil {
+    panic(err)
+}
+defer connection.Close()
+
+// Get a new channel from our robust connection for publishing. This channel will
+// be put into confirmation mode by the producer.
+channel, err := connection.Channel()
+if err != nil {
+    panic(err)
+}
+
+// Declare a queue to produce to
+queue, err := channel.QueueDeclare(
+    &quot;example_confirmation_producer&quot;, // name
+    false,                           // durable
+    true,                            // autoDelete
+    false,                           // exclusive
+    false,                           // noWait
+    nil,                             // args
+)
+
+// Create a new producer using our channel. Passing nil to opts will result in
+// default opts being used. By default, a Producer will put the passed channel in
+// confirmation mode, and each time publish is called, will block until a
+// confirmation from the server has been received.
+producer := amqpproducer.New(channel, nil)
+producerComplete := make(chan struct{})
+
+// Run the producer in it&#39;s own goroutine.
+go func() {
+    // Signal this routine has exited on exit.
+    defer close(producerComplete)
+
+    err = producer.Run()
+    if err != nil {
+        panic(err)
+    }
+}()
+
+messagesPublished := new(sync.WaitGroup)
+for i := 0; i &lt; 10; i++ {
+
+    messagesPublished.Add(1)
+
+    // Publish each message in it&#39;s own goroutine The producer handles the
+    // boilerplate of tracking publication tags and receiving broker confirmations.
+    go func() {
+        // Release our WaitGroup on exit.
+        defer messagesPublished.Done()
+
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        defer cancel()
+
+        // Publish a message, this method will block until we get a publication
+        // confirmation from the broker OR ctx expires.
+                    err = producer.Publish(
+                            ctx,
+                            &quot;&quot;, // exchange
+                            queue.Name, // queue
+                            true, // mandatory
+                            false, // immediate
+                            amqp.Publishing{
+                                    Body: []byte(&quot;test message&quot;),
+                            },
+                    )
+
+        fmt.Println(&quot;Message Published and Confirmed!&quot;)
+
+        if err != nil {
+            panic(err)
+        }
+    }()
+}
+
+// Wait for all our messages to be published
+messagesPublished.Wait()
+
+// Start the shutdown of the producer
+producer.StartShutdown()
+
+// Wait for the producer to exit.
+&lt;-producerComplete
+
+// exit.
+
+// Message Published and Confirmed!
+// Message Published and Confirmed!
+// Message Published and Confirmed!
+// Message Published and Confirmed!
+// Message Published and Confirmed!
+// Message Published and Confirmed!
+// Message Published and Confirmed!
+// Message Published and Confirmed!
+// Message Published and Confirmed!
+// Message Published and Confirmed!
+</pre></div>
+</div>
+</div>
+<div class="section" id="api-documentation">
+<h2>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h2>
+<p>API Documentation is hosted on pkg.go.dev and can be
+<a class="reference external" href="https://pkg.go.dev/github.com/peake100/rogerRabbit-go?readme=expanded#section-documentation">found here</a>.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="overview.html" class="btn btn-neutral float-right" title="Project" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright &#39;2020, Billy Peake&#39;.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
