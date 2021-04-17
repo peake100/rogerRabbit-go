@@ -284,6 +284,37 @@ Current Limitations & Warnings
   days, and more battle-testing will be needed before this library is promoted to
   version 1.0. PR's are welcome for Bug Fixes, code coverage, or new features.
 
+Benchmarks
+----------
+
+Because of Roger, Rabbit's middleware-driven design, some overhead is expected vs
+streadway proper. However, initial benchmarks are promising, and show only minimal
+impact. For most applications, the overhead cost is likely worth the cost for ease of
+development and flexibility.
+
+Still, if absolute peak throughput is critical to an application, a less general and
+more tailored approach may be warranted.
+
+Benchmarks can be found in `./amqp/benchmark_test.go`.
+
+Machine: Intel(R) Core(TM) i9-8950HK CPU @ 2.90GHz
+
+
+| OPERATION          | LIB  | EXECUTIONS  |     NS/OP  |  COMPARISON
+| -------------------|------|-------------|------------|------------
+| QueueInspect       | sw   |     2,838   |  812,594   |         --
+|                    | rr   |     2,470   |  813,269   |      +0.1%
+| Publish            | sw   |    7,4559   |   28,882   |         --
+|                    | rr   |    7,0665   |   30,031   |      +4.0%
+| Publish & Confirm  | sw   |    3,4528   |   59,703   |         --
+|                    | rr   |    3,5481   |   62,198   |      +4.2%
+
+
+The above numbers were calculated by running each benchmark 4 times, then taking the
+fastest result for each library.
+
+The benchmarks were run with the following command:
+
 Acknowledgements
 ----------------
 

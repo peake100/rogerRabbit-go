@@ -77,6 +77,6 @@ func DefaultConfig() Config {
 	return Config{
 		Heartbeat:          defaultHeartbeat,
 		Locale:             defaultLocale,
-		DefaultLoggerLevel: zerolog.InfoLevel,
+		DefaultLoggerLevel: zerolog.ErrorLevel,
 	}
 }

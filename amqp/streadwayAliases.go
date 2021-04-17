@@ -88,6 +88,11 @@ type (
 	// type is desired
 	BasicConnection = streadway.Connection
 
+	// BasicConfirmation is an alias to streadway/amqp.Confirmation, and is made
+	// available to avoid having to import both amqp packages if access to the base
+	// Confirmation type is desired
+	BasicConfirmation = streadway.Confirmation
+
 	// Blocking notifies the server's TCP flow control of the Connection.  When a
 	// server hits a memory or disk alarm it will block all connections until the
 	// resources are reclaimed.  Use NotifyBlock on the Connection to receive these

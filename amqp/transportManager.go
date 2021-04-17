@@ -45,7 +45,7 @@ type reconnects interface {
 // TestReconnectSignaler allows us to block until a reconnection occurs during a test.
 type TestReconnectSignaler struct {
 	// The test we are using.
-	t *testing.T
+	tb testing.TB
 
 	// reconnectSignal will close when a reconnection occurs.
 	reconnectSignal chan struct{}
@@ -70,17 +70,16 @@ func (signaler *TestReconnectSignaler) WaitOnReconnect(ctx context.Context) {
 		select {
 		case <-signaler.reconnectSignal:
 		case <-ctx.Done():
-			signaler.t.Error(
-				"context cancelled before reconnection occurred: %w", ctx.Err(),
+			signaler.tb.Fatalf(
+				"context cancelled before reconnection occurred: %v", ctx.Err(),
 			)
-			signaler.t.FailNow()
 		}
 	}
 }
 
 // TransportTesting provides testing methods for testing Channel and Connection.
 type TransportTesting struct {
-	t       *testing.T
+	tb      testing.TB
 	manager *transportManager
 	// The number of times a connection has been blocked from being acquired.
 	blocks *int32
@@ -133,7 +132,7 @@ func (tester *TransportTesting) SignalOnReconnect() *TestReconnectSignaler {
 	}()
 
 	signaler := &TestReconnectSignaler{
-		t:               tester.t,
+		tb:              tester.tb,
 		reconnectSignal: reconnected,
 		original:        tester.manager.transport.underlyingTransport(),
 		manager:         tester.manager,
@@ -145,8 +144,8 @@ func (tester *TransportTesting) SignalOnReconnect() *TestReconnectSignaler {
 // DisconnectTransport closes the underlying livesOnce to force a reconnection.
 func (tester *TransportTesting) DisconnectTransport() {
 	err := tester.manager.transport.underlyingTransport().Close()
-	if !assert.NoError(tester.t, err, "close underlying livesOnce") {
-		tester.t.FailNow()
+	if !assert.NoError(tester.tb, err, "close underlying livesOnce") {
+		tester.tb.FailNow()
 	}
 }
 
@@ -261,7 +260,7 @@ func isRepeatErr(err error) bool {
 	return false
 }
 
-// revive:disable:context-as-argument - we have two contexts here, they can't both be first.
+// revive:disable:context-as-argument - we have two contexts here, they can'tb both be first.
 
 // retryOperationOnClosedSingle attempts a Connection or Channel channel method a single
 // time.
@@ -288,7 +287,7 @@ func (manager *transportManager) retryOperationOnClosedSingle(
 		// occur at the same time, but blocks the connection from being switched
 		// out until the operations resolve.
 		//
-		// We don't need to worry about lock contention, as once the livesOnce
+		// We don'tb need to worry about lock contention, as once the livesOnce
 		// reconnection routine requests the lock, and new read acquisitions will
 		// be blocked until the lock is acquired and released for write.
 		manager.transportLock.RLock()
@@ -333,7 +332,7 @@ func (manager *transportManager) retryOperationOnClosed(
 		//
 		// We'll give one immediate retry, but after that start increasing how long
 		// we need to wait before re-attempting.
-		waitDur := 5 * time.Millisecond * time.Duration(attempt-1)
+		waitDur := time.Second / 2 * time.Duration(attempt-1)
 		if waitDur > maxWait {
 			waitDur = maxWait
 		}
@@ -498,7 +497,7 @@ func (manager *transportManager) IsClosed() bool {
 // Test methods for the livesOnce
 func (manager *transportManager) Test(t *testing.T) *TransportTesting {
 	return &TransportTesting{
-		t:       t,
+		tb:      t,
 		manager: manager,
 	}
 }

@@ -192,7 +192,7 @@ func (builder transportHandlersBuilder) createClose() amqpmiddleware.HandlerClos
 			manager.notificationSubscriberLock.Lock()
 			defer manager.notificationSubscriberLock.Unlock()
 
-			// Close all disconnect and connect subscribers, then clear them. We don't
+			// Close all disconnect and connect subscribers, then clear them. We don'tb
 			// need to grab the lock for this since the cancelled context will keep any new
 			// subscribers from being added.
 			for _, subscriber := range manager.notificationSubscribersDial {

@@ -72,7 +72,7 @@ func (relay *notifyFlowRelay) RunRelayLeg(legNum int) (done bool) {
 	}
 
 	// Turn flow to false on broker disconnection if the roger channel has not been
-	// closed and the last notification sent was a ``true`` (we don't want to send two
+	// closed and the last notification sent was a ``true`` (we don'tb want to send two
 	// false values in a row).
 	if relay.ChannelCtx.Err() == nil && relay.lastEvent {
 		relay.handler(
