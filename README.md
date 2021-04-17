@@ -19,6 +19,9 @@
     <a href="https://pkg.go.dev/github.com/peake100/rogerRabbit-go?readme=expanded#section-documentation"><img src="https://pkg.go.dev/badge/github.com/peake100/rogerRabbit-go?readme=expanded#section-documentation.svg" alt="Go Reference"></a>
 </p>
 
+Basic Overview
+--------------
+
 Roger, Rabbit is a drop-in replacement for 
 [streadway/amqp](https://github.com/streadway/amqp) that offers the following
 enhancements:
