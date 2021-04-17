@@ -3,7 +3,7 @@
 <p align="center">
     <img height=200 align="center" src="https://raw.githubusercontent.com/peake100/rogerRabbit-go/master/zdocs/source/_static/logo-tophat-tall.svg"/>
 </p>
-<p align="center">amqp with automatic redials</p>
+<p align="center">amqp with automagic redials</p>
 <p align="center">
     <a href="https://dev.azure.com/peake100/Peake100/_build?definitionId=8"><img src="https://dev.azure.com/peake100/Peake100/_apis/build/status/rogerRabbit-go?repoName=peake100%2FrogerRabbit-go&branchName=dev" alt="click to see build pipeline"></a>
     <a href="https://dev.azure.com/peake100/Peake100/_build?definitionId=8"><img src="https://img.shields.io/azure-devops/tests/peake100/peake100/8?compact_message" alt="click to see build pipeline"></a>
