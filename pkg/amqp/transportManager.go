@@ -42,146 +42,6 @@ type reconnects interface {
 	cleanup() error
 }
 
-// TestReconnectSignaler allows us to block until a reconnection occurs during a test.
-type TestReconnectSignaler struct {
-	// The test we are using.
-	tb testing.TB
-
-	// reconnectSignal will close when a reconnection occurs.
-	reconnectSignal chan struct{}
-
-	original livesOnce
-	manager  *transportManager
-}
-
-// WaitOnReconnect blocks until a reconnection of the underlying livesOnce occurs. Once
-// the first reconnection event occurs, this object will no longer block and a new
-// signaler will need to be created for the next re-connection.
-//
-// If no context is passed a context with 3-second timeout will be used.
-func (signaler *TestReconnectSignaler) WaitOnReconnect(ctx context.Context) {
-	if ctx == nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-	}
-
-	for signaler.original == signaler.manager.transport.underlyingTransport() {
-		select {
-		case <-signaler.reconnectSignal:
-		case <-ctx.Done():
-			signaler.tb.Fatalf(
-				"context cancelled before reconnection occurred: %v", ctx.Err(),
-			)
-		}
-	}
-}
-
-// TransportTesting provides testing methods for testing Channel and Connection.
-type TransportTesting struct {
-	tb      testing.TB
-	manager *transportManager
-	// The number of times a connection has been blocked from being acquired.
-	blocks *int32
-}
-
-// TransportLock is the underlying lock which controls access to the channel /
-// connection. When held for read or write, a reconnection of the underlying livesOnce
-// cannot occur.
-func (tester *TransportTesting) TransportLock() *sync.RWMutex {
-	return tester.manager.transportLock
-}
-
-// BlockReconnect blocks a livesOnce from reconnecting. If too few calls to
-// UnblockReconnect() are made, the block will be removed at the end of the test.
-func (tester *TransportTesting) BlockReconnect() {
-	atomic.AddInt32(tester.blocks, 1)
-	tester.manager.transportLock.RLock()
-}
-
-// UnblockReconnect unblocks the livesOnce from reconnecting after calling
-// BlockReconnect()
-func (tester *TransportTesting) UnblockReconnect() {
-	defer tester.manager.transportLock.RUnlock()
-	atomic.AddInt32(tester.blocks, -1)
-}
-
-// cleanup calls UnblockReconnect the required number of times to unblock the channel
-// from reconnecting during test cleanup.
-func (tester *TransportTesting) cleanup() {
-	blocks := *tester.blocks
-	for i := int32(0); i < blocks; i++ {
-		tester.manager.transportLock.RUnlock()
-	}
-}
-
-// SignalOnReconnect returns a signaler that can be used to wait on the next
-// reconnection event of the livesOnce.
-func (tester *TransportTesting) SignalOnReconnect() *TestReconnectSignaler {
-	// Signal that the connection has been re-established
-	reconnected := make(chan struct{})
-
-	// Grab the cond lock
-	tester.manager.reconnectCond.L.Lock()
-
-	// Launch a routine to close the channel after the wait.
-	go func() {
-		defer tester.manager.reconnectCond.L.Unlock()
-		defer close(reconnected)
-		tester.manager.reconnectCond.Wait()
-	}()
-
-	signaler := &TestReconnectSignaler{
-		tb:              tester.tb,
-		reconnectSignal: reconnected,
-		original:        tester.manager.transport.underlyingTransport(),
-		manager:         tester.manager,
-	}
-
-	return signaler
-}
-
-// DisconnectTransport closes the underlying livesOnce to force a reconnection.
-func (tester *TransportTesting) DisconnectTransport() {
-	err := tester.manager.transport.underlyingTransport().Close()
-	if !assert.NoError(tester.tb, err, "close underlying livesOnce") {
-		tester.tb.FailNow()
-	}
-}
-
-// ForceReconnect forces a disconnect of the channel or connection and waits for a
-// reconnection to occur or ctx to cancel. If a nil context is passed, a context with
-// a 3-second timeout will be used instead.
-func (tester *TransportTesting) ForceReconnect(ctx context.Context) {
-	if ctx == nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-	}
-
-	// Get the current transport
-	tester.TransportLock().RLock()
-	current := tester.manager.transport.underlyingTransport()
-	// Wait until the underlying transport pointer has changed. The first time we signal
-	// might be from the previous reconnect.
-	tester.TransportLock().RUnlock()
-
-	for current == tester.manager.transport.underlyingTransport() {
-		// Register a channel to be closed when a reconnection occurs
-		reconnected := tester.SignalOnReconnect()
-
-		// Disconnect the livesOnce
-		tester.DisconnectTransport()
-
-		// Wait for the connection to be re-connected.
-		reconnected.WaitOnReconnect(ctx)
-		// If the context has cancelled, return.
-		if ctx.Err() != nil {
-			return
-		}
-	}
-}
-
 // transportManager handles lifetime of underlying livesOnce method, such as
 // reconnections, closures, and connection status subscribers. To be embedded into the
 // Connection and Channel types for free implementation of common methods.
@@ -260,21 +120,15 @@ func isRepeatErr(err error) bool {
 	return false
 }
 
-// revive:disable:context-as-argument - we have two contexts here, they can'tb both be first.
+// revive:disable:context-as-argument - we have two contexts here, they can't both be
+// first.
 
 // retryOperationOnClosedSingle attempts a Connection or Channel channel method a single
 // time.
 func (manager *transportManager) retryOperationOnClosedSingle(
-	transportCtx context.Context,
 	opCtx context.Context,
 	operation func(ctx context.Context) error,
 ) error {
-	// If the context of our robust livesOnce mechanism is closed, return an
-	// ErrClosed.
-	if transportCtx.Err() != nil {
-		return streadway.ErrClosed
-	}
-
 	if opCtx.Err() != nil {
 		return fmt.Errorf("operation context closed: %w", opCtx.Err())
 	}
@@ -315,8 +169,10 @@ func (manager *transportManager) retryOperationOnClosed(
 ) error {
 	attempt := 0
 	for {
-		opCtx := context.WithValue(transportCtx, "opAttempt", attempt)
-		err := manager.retryOperationOnClosedSingle(transportCtx, opCtx, operation)
+		opCtx := context.WithValue(
+			transportCtx, amqpmiddleware.MetadataKey("opAttempt"), attempt,
+		)
+		err := manager.retryOperationOnClosedSingle(opCtx, operation)
 
 		// If there was no error, we are not trying, or this is not a repeat error,
 		// or our context has cancelled: return.
@@ -522,4 +378,144 @@ func (manager *transportManager) setup(
 
 	// Create the base method handlers.
 	manager.handlers = newTransportManagerHandlers(manager, middleware)
+}
+
+// TestReconnectSignaler allows us to block until a reconnection occurs during a test.
+type TestReconnectSignaler struct {
+	// The test we are using.
+	tb testing.TB
+
+	// reconnectSignal will close when a reconnection occurs.
+	reconnectSignal chan struct{}
+
+	original livesOnce
+	manager  *transportManager
+}
+
+// WaitOnReconnect blocks until a reconnection of the underlying livesOnce occurs. Once
+// the first reconnection event occurs, this object will no longer block and a new
+// signaler will need to be created for the next re-connection.
+//
+// If no context is passed a context with 3-second timeout will be used.
+func (signaler *TestReconnectSignaler) WaitOnReconnect(ctx context.Context) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+	}
+
+	for signaler.original == signaler.manager.transport.underlyingTransport() {
+		select {
+		case <-signaler.reconnectSignal:
+		case <-ctx.Done():
+			signaler.tb.Fatalf(
+				"context cancelled before reconnection occurred: %v", ctx.Err(),
+			)
+		}
+	}
+}
+
+// TransportTesting provides testing methods for testing Channel and Connection.
+type TransportTesting struct {
+	tb      testing.TB
+	manager *transportManager
+	// The number of times a connection has been blocked from being acquired.
+	blocks *int32
+}
+
+// TransportLock is the underlying lock which controls access to the channel /
+// connection. When held for read or write, a reconnection of the underlying livesOnce
+// cannot occur.
+func (tester *TransportTesting) TransportLock() *sync.RWMutex {
+	return tester.manager.transportLock
+}
+
+// BlockReconnect blocks a livesOnce from reconnecting. If too few calls to
+// UnblockReconnect() are made, the block will be removed at the end of the test.
+func (tester *TransportTesting) BlockReconnect() {
+	atomic.AddInt32(tester.blocks, 1)
+	tester.manager.transportLock.RLock()
+}
+
+// UnblockReconnect unblocks the livesOnce from reconnecting after calling
+// BlockReconnect()
+func (tester *TransportTesting) UnblockReconnect() {
+	defer tester.manager.transportLock.RUnlock()
+	atomic.AddInt32(tester.blocks, -1)
+}
+
+// cleanup calls UnblockReconnect the required number of times to unblock the channel
+// from reconnecting during test cleanup.
+func (tester *TransportTesting) cleanup() {
+	blocks := *tester.blocks
+	for i := int32(0); i < blocks; i++ {
+		tester.manager.transportLock.RUnlock()
+	}
+}
+
+// SignalOnReconnect returns a signaler that can be used to wait on the next
+// reconnection event of the livesOnce.
+func (tester *TransportTesting) SignalOnReconnect() *TestReconnectSignaler {
+	// Signal that the connection has been re-established
+	reconnected := make(chan struct{})
+
+	// Grab the cond lock
+	tester.manager.reconnectCond.L.Lock()
+
+	// Launch a routine to close the channel after the wait.
+	go func() {
+		defer tester.manager.reconnectCond.L.Unlock()
+		defer close(reconnected)
+		tester.manager.reconnectCond.Wait()
+	}()
+
+	signaler := &TestReconnectSignaler{
+		tb:              tester.tb,
+		reconnectSignal: reconnected,
+		original:        tester.manager.transport.underlyingTransport(),
+		manager:         tester.manager,
+	}
+
+	return signaler
+}
+
+// DisconnectTransport closes the underlying livesOnce to force a reconnection.
+func (tester *TransportTesting) DisconnectTransport() {
+	err := tester.manager.transport.underlyingTransport().Close()
+	if !assert.NoError(tester.tb, err, "close underlying livesOnce") {
+		tester.tb.FailNow()
+	}
+}
+
+// ForceReconnect forces a disconnect of the channel or connection and waits for a
+// reconnection to occur or ctx to cancel. If a nil context is passed, a context with
+// a 3-second timeout will be used instead.
+func (tester *TransportTesting) ForceReconnect(ctx context.Context) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+	}
+
+	// Get the current transport
+	tester.TransportLock().RLock()
+	current := tester.manager.transport.underlyingTransport()
+	// Wait until the underlying transport pointer has changed. The first time we signal
+	// might be from the previous reconnect.
+	tester.TransportLock().RUnlock()
+
+	for current == tester.manager.transport.underlyingTransport() {
+		// Register a channel to be closed when a reconnection occurs
+		reconnected := tester.SignalOnReconnect()
+
+		// Disconnect the livesOnce
+		tester.DisconnectTransport()
+
+		// Wait for the connection to be re-connected.
+		reconnected.WaitOnReconnect(ctx)
+		// If the context has cancelled, return.
+		if ctx.Err() != nil {
+			return
+		}
+	}
 }

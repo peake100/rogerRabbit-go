@@ -36,7 +36,7 @@ type AmqpDeliveryProcessor interface {
 	// HandleDelivery will be called once per delivery. Returning a non-nil err will
 	// result in it being logged and the delivery being nacked. If requeue is true, the
 	// nacked delivery will be requeued. If err is nil, requeue is ignored.
-	HandleDelivery(ctx context.Context, delivery amqp.Delivery) (err error, requeue bool)
+	HandleDelivery(ctx context.Context, delivery amqp.Delivery) (requeue bool, err error)
 
 	// CleanupChannel is called at shutdown to allow the route handler to clean up any
 	// necessary resources.
@@ -70,7 +70,7 @@ func newDeliveryProcessor(coreProcessor AmqpDeliveryProcessor, opts Opts) (deliv
 
 	if !opts.noLoggingMiddleware {
 		logger := opts.logger.With().Str(":CONSUMER", processor.AmqpArgs.ConsumerName).Logger()
-		loggingMiddleware := middleware.NewDefaultLogger(logger, opts.logDeliveryLevel, opts.logSuccessLevel)
+		loggingMiddleware := middleware.NewDefaultLogging(logger, opts.logDeliveryLevel, opts.logSuccessLevel)
 
 		if err := opts.middleware.AddProvider(loggingMiddleware); err != nil {
 			return processor, fmt.Errorf("error rergistering default logging middleware: %w", err)

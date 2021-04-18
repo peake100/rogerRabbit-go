@@ -1507,7 +1507,7 @@ func (suite *ChannelMethodsSuite) Test0270_AckMessage() {
 		suite.T().FailNow()
 	}
 
-	// If the message was acked then the queue should be emtpy
+	// If the message was acked then the queue should be empty.
 	_, ok, err := suite.ChannelConsume().Get(queueName, false)
 	if !suite.NoError(err, "get empty queue") {
 		suite.T().FailNow()
@@ -1534,7 +1534,7 @@ func (suite *ChannelMethodsSuite) Test0280_NackMessage() {
 		suite.T().FailNow()
 	}
 
-	// If the message was nacked then the queue should be emtpy
+	// If the message was nacked then the queue should be empty.
 	_, ok, err := suite.ChannelConsume().Get(queueName, false)
 	if !suite.NoError(err, "get empty queue") {
 		suite.T().FailNow()
@@ -1590,7 +1590,7 @@ func (suite *ChannelMethodsSuite) Test0300_RejectMessage() {
 		suite.T().FailNow()
 	}
 
-	// If the message was acked then the queue should be emtpy
+	// If the message was acked then the queue should be empty.
 	_, ok, err := suite.ChannelConsume().Get(queueName, false)
 	if !suite.NoError(err, "get empty queue") {
 		suite.T().FailNow()

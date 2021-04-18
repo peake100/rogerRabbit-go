@@ -2,6 +2,10 @@ package amqpmiddleware
 
 import "context"
 
+// MetadataKey is used to store and fetch values on a context.Context
+// amqpmiddleware.EventMetadata.
+type MetadataKey string
+
 // MethodInfo holds extracted information from the context passed into a method
 // handler.
 type MethodInfo struct {
@@ -12,7 +16,7 @@ type MethodInfo struct {
 
 // GetMethodInfo extracts context info from a middleware context.
 func GetMethodInfo(ctx context.Context) (info MethodInfo) {
-	if opAttempt, ok := ctx.Value("opAttempt").(int); ok {
+	if opAttempt, ok := ctx.Value(MetadataKey("opAttempt")).(int); ok {
 		info.OpAttempt = opAttempt
 	} else {
 		info.OpAttempt = -1
@@ -24,7 +28,7 @@ func GetMethodInfo(ctx context.Context) (info MethodInfo) {
 // EventMetadata is metadata passed into an event handler. Events cannot be cancelled,
 // and therefore do not have contexts, so middleware-centric metadata should be added to
 // and fetched from this argument.
-type EventMetadata map[string]interface{}
+type EventMetadata map[MetadataKey]interface{}
 
 // EventInfo is information provided from the base library  that can be extracted from
 // EventMetadata.
@@ -41,7 +45,7 @@ type EventInfo struct {
 }
 
 // GetKey gets key from metadata. Returns nil if key could not be found
-func (metadata EventMetadata) GetKey(key string) interface{} {
+func (metadata EventMetadata) GetKey(key MetadataKey) interface{} {
 	value, _ := metadata[key]
 	return value
 }

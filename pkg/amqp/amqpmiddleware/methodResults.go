@@ -11,7 +11,7 @@ type ResultsNotifyClose struct {
 	CallerChan chan *streadway.Error
 }
 
-// ResultsChannelReconnect are the result values from a Connection reconnection event
+// ResultsConnectionReconnect are the result values from a Connection reconnection event
 // for middleware to inspect.
 type ResultsConnectionReconnect struct {
 	Connection *streadway.Connection

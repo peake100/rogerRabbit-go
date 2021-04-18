@@ -31,8 +31,8 @@ func (middleware *FlowMiddleware) Active() bool {
 	return middleware.active
 }
 
-// Reconnect sets amqp.Channel.Flow(flow=false) on the underlying channel as soon as a
-// reconnection occurs if the user has paused the flow on the channel.
+// ChannelReconnect sets amqp.Channel.Flow(flow=false) on the underlying channel as soon
+// as a reconnection occurs if the user has paused the flow on the channel.
 func (middleware *FlowMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) amqpmiddleware.HandlerChannelReconnect {

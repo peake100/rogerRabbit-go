@@ -1,5 +1,7 @@
 package amqpmiddleware
 
+// ProviderTypeID identifies a provider type to avoid double registration and support
+// fetching middleware providers during tests.
 type ProviderTypeID string
 
 // ProvidesMiddleware must be implemented by any middleware provider type. Provider
@@ -130,7 +132,7 @@ type ProvidesExchangeDeclare interface {
 	ExchangeDeclare(next HandlerExchangeDeclare) HandlerExchangeDeclare
 }
 
-// ProvidesExchangeDeclare provides ExchangeDeclare as a method.
+// ProvidesExchangeDeclarePassive provides ExchangeDeclarePassive as a method.
 type ProvidesExchangeDeclarePassive interface {
 	ProvidesMiddleware
 	ExchangeDeclarePassive(next HandlerExchangeDeclare) HandlerExchangeDeclare

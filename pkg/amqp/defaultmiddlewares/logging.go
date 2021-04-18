@@ -7,7 +7,10 @@ import (
 	"sync"
 )
 
-const MetadataKey = "DefaultLogger"
+// MetadataKey can be used to fetch the logger provided by LoggingMiddlewareChannel and
+// LoggingMiddlewareConnection from middleware contexts and
+// amqpmiddleware.EventMetadata -- allowing other middlewares to access to logging.
+const MetadataKey = amqpmiddleware.MetadataKey("DefaultLogger")
 
 // LoggingMiddlewareID can be used to retrieve the running instance of
 // LoggingMiddlewareConnection or LoggingMiddlewareChannel during testing.
@@ -23,6 +26,7 @@ type loggingMiddlewareCore struct {
 	LogArgsResultsLevel zerolog.Level
 }
 
+// createMethodLogger creates a logger for an amqp.Channel or amqp.Connection method.
 func (middleware loggingMiddlewareCore) createMethodLogger(
 	methodName string,
 ) zerolog.Logger {
@@ -32,6 +36,7 @@ func (middleware loggingMiddlewareCore) createMethodLogger(
 		Logger()
 }
 
+// createEventLogger creates a logger for an amqp.Channel or amqp.Connection event.
 func (middleware loggingMiddlewareCore) createEventLogger(
 	eventType string,
 ) zerolog.Logger {
@@ -41,6 +46,7 @@ func (middleware loggingMiddlewareCore) createEventLogger(
 		Logger()
 }
 
+// logMethod logs a method.
 func (middleware loggingMiddlewareCore) logMethod(
 	ctx context.Context,
 	methodLogger zerolog.Logger,
@@ -78,6 +84,7 @@ func (middleware loggingMiddlewareCore) logMethod(
 	event.Timestamp().Send()
 }
 
+// logEvent logs and event.
 func (middleware loggingMiddlewareCore) logEvent(
 	meta amqpmiddleware.EventMetadata,
 	eventLogger zerolog.Logger,
@@ -107,10 +114,12 @@ func (middleware loggingMiddlewareCore) logEvent(
 	event.Timestamp().Send()
 }
 
+// addCtxLogger adds a logger to a method ctx.
 func (loggingMiddlewareCore) addCtxLogger(ctx context.Context, methodLogger zerolog.Logger) context.Context {
 	return context.WithValue(ctx, MetadataKey, methodLogger)
 }
 
+// addMetadataLogger adds a logger to an event amqpmiddleware.EventMetadata.
 func (loggingMiddlewareCore) addMetadataLogger(
 	meta amqpmiddleware.EventMetadata, methodLogger zerolog.Logger,
 ) amqpmiddleware.EventMetadata {
@@ -118,10 +127,12 @@ func (loggingMiddlewareCore) addMetadataLogger(
 	return meta
 }
 
+// TypeID implements amqpmiddleware.ProvidesMiddleware and returns "DefaultLogging".
 func (middleware loggingMiddlewareCore) TypeID() amqpmiddleware.ProviderTypeID {
 	return LoggingMiddlewareID
 }
 
+// Close implements amqpmiddleware.ProvidesClose for logging.
 func (middleware loggingMiddlewareCore) Close(next amqpmiddleware.HandlerClose) amqpmiddleware.HandlerClose {
 	logger := middleware.createMethodLogger("Close")
 	return func(ctx context.Context, args amqpmiddleware.ArgsClose) error {
@@ -132,6 +143,7 @@ func (middleware loggingMiddlewareCore) Close(next amqpmiddleware.HandlerClose) 
 	}
 }
 
+// NotifyClose implements amqpmiddleware.ProvidesNotifyClose for logging.
 func (middleware loggingMiddlewareCore) NotifyClose(
 	next amqpmiddleware.HandlerNotifyClose,
 ) amqpmiddleware.HandlerNotifyClose {
@@ -144,6 +156,7 @@ func (middleware loggingMiddlewareCore) NotifyClose(
 	}
 }
 
+// NotifyDial implements amqpmiddleware.ProvidesNotifyDial for logging.
 func (middleware loggingMiddlewareCore) NotifyDial(
 	next amqpmiddleware.HandlerNotifyDial,
 ) amqpmiddleware.HandlerNotifyDial {
@@ -156,6 +169,7 @@ func (middleware loggingMiddlewareCore) NotifyDial(
 	}
 }
 
+// NotifyDisconnect implements amqpmiddleware.ProvidesNotifyDisconnect for logging.
 func (middleware loggingMiddlewareCore) NotifyDisconnect(
 	next amqpmiddleware.HandlerNotifyDisconnect,
 ) amqpmiddleware.HandlerNotifyDisconnect {
@@ -168,6 +182,7 @@ func (middleware loggingMiddlewareCore) NotifyDisconnect(
 	}
 }
 
+// NotifyDialEvents implements amqpmiddleware.ProvidesNotifyDialEvents for logging.
 func (middleware loggingMiddlewareCore) NotifyDialEvents(
 	next amqpmiddleware.HandlerNotifyDialEvents,
 ) amqpmiddleware.HandlerNotifyDialEvents {
@@ -179,6 +194,8 @@ func (middleware loggingMiddlewareCore) NotifyDialEvents(
 	}
 }
 
+// NotifyDisconnectEvents implements amqpmiddleware.ProvidesNotifyDisconnectEvents for
+// logging.
 func (middleware loggingMiddlewareCore) NotifyDisconnectEvents(
 	next amqpmiddleware.HandlerNotifyDisconnectEvents,
 ) amqpmiddleware.HandlerNotifyDisconnectEvents {
@@ -190,6 +207,7 @@ func (middleware loggingMiddlewareCore) NotifyDisconnectEvents(
 	}
 }
 
+// NotifyCloseEvents implements amqpmiddleware.ProvidesNotifyCloseEvents for logging.
 func (middleware loggingMiddlewareCore) NotifyCloseEvents(
 	next amqpmiddleware.HandlerNotifyCloseEvents,
 ) amqpmiddleware.HandlerNotifyCloseEvents {
@@ -201,10 +219,13 @@ func (middleware loggingMiddlewareCore) NotifyCloseEvents(
 	}
 }
 
+// LoggingMiddlewareConnection provides logging middleware for amqp.Connection.
 type LoggingMiddlewareConnection struct {
 	loggingMiddlewareCore
 }
 
+// ConnectionReconnect implements amqpmiddleware.ProvidesConnectionReconnect for
+// logging.
 func (middleware LoggingMiddlewareConnection) ConnectionReconnect(
 	next amqpmiddleware.HandlerConnectionReconnect,
 ) amqpmiddleware.HandlerConnectionReconnect {
@@ -219,10 +240,12 @@ func (middleware LoggingMiddlewareConnection) ConnectionReconnect(
 	}
 }
 
+// LoggingMiddlewareChannel provides logging middleware for amqp.Channel.
 type LoggingMiddlewareChannel struct {
 	loggingMiddlewareCore
 }
 
+// ChannelReconnect implements amqpmiddleware.ProvidesChannelReconnect for logging.
 func (middleware LoggingMiddlewareChannel) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) amqpmiddleware.HandlerChannelReconnect {
@@ -237,6 +260,7 @@ func (middleware LoggingMiddlewareChannel) ChannelReconnect(
 	}
 }
 
+// QueueDeclare implements amqpmiddleware.ProvidesQueueDeclare for logging.
 func (middleware LoggingMiddlewareChannel) QueueDeclare(
 	next amqpmiddleware.HandlerQueueDeclare,
 ) amqpmiddleware.HandlerQueueDeclare {
@@ -251,6 +275,8 @@ func (middleware LoggingMiddlewareChannel) QueueDeclare(
 	}
 }
 
+// QueueDeclarePassive implements amqpmiddleware.ProvidesQueueDeclarePassive for
+// logging.
 func (middleware LoggingMiddlewareChannel) QueueDeclarePassive(
 	next amqpmiddleware.HandlerQueueDeclare,
 ) amqpmiddleware.HandlerQueueDeclare {
@@ -265,6 +291,7 @@ func (middleware LoggingMiddlewareChannel) QueueDeclarePassive(
 	}
 }
 
+// QueueInspect implements amqpmiddleware.ProvidesQueueInspect for logging.
 func (middleware LoggingMiddlewareChannel) QueueInspect(
 	next amqpmiddleware.HandlerQueueInspect,
 ) amqpmiddleware.HandlerQueueInspect {
@@ -279,6 +306,7 @@ func (middleware LoggingMiddlewareChannel) QueueInspect(
 	}
 }
 
+// QueueDelete implements amqpmiddleware.ProvidesQueueDelete for logging.
 func (middleware LoggingMiddlewareChannel) QueueDelete(
 	next amqpmiddleware.HandlerQueueDelete,
 ) amqpmiddleware.HandlerQueueDelete {
@@ -293,6 +321,7 @@ func (middleware LoggingMiddlewareChannel) QueueDelete(
 	}
 }
 
+// QueueBind implements amqpmiddleware.ProvidesQueueBind for logging.
 func (middleware LoggingMiddlewareChannel) QueueBind(
 	next amqpmiddleware.HandlerQueueBind,
 ) amqpmiddleware.HandlerQueueBind {
@@ -305,6 +334,7 @@ func (middleware LoggingMiddlewareChannel) QueueBind(
 	}
 }
 
+// QueueUnbind implements amqpmiddleware.ProvidesQueueUnbind for logging.
 func (middleware LoggingMiddlewareChannel) QueueUnbind(
 	next amqpmiddleware.HandlerQueueUnbind,
 ) amqpmiddleware.HandlerQueueUnbind {
@@ -317,6 +347,7 @@ func (middleware LoggingMiddlewareChannel) QueueUnbind(
 	}
 }
 
+// QueuePurge implements amqpmiddleware.ProvidesQueuePurge for logging.
 func (middleware LoggingMiddlewareChannel) QueuePurge(
 	next amqpmiddleware.HandlerQueuePurge,
 ) amqpmiddleware.HandlerQueuePurge {
@@ -329,6 +360,7 @@ func (middleware LoggingMiddlewareChannel) QueuePurge(
 	}
 }
 
+// ExchangeDeclare implements amqpmiddleware.ProvidesExchangeDeclare for logging.
 func (middleware LoggingMiddlewareChannel) ExchangeDeclare(
 	next amqpmiddleware.HandlerExchangeDeclare,
 ) amqpmiddleware.HandlerExchangeDeclare {
@@ -341,6 +373,8 @@ func (middleware LoggingMiddlewareChannel) ExchangeDeclare(
 	}
 }
 
+// ExchangeDeclarePassive implements amqpmiddleware.ProvidesExchangeDeclarePassive for
+// logging.
 func (middleware LoggingMiddlewareChannel) ExchangeDeclarePassive(
 	next amqpmiddleware.HandlerExchangeDeclare,
 ) amqpmiddleware.HandlerExchangeDeclare {
@@ -353,6 +387,7 @@ func (middleware LoggingMiddlewareChannel) ExchangeDeclarePassive(
 	}
 }
 
+// ExchangeDelete implements amqpmiddleware.ProvidesExchangeDelete for logging.
 func (middleware LoggingMiddlewareChannel) ExchangeDelete(
 	next amqpmiddleware.HandlerExchangeDelete,
 ) amqpmiddleware.HandlerExchangeDelete {
@@ -365,6 +400,7 @@ func (middleware LoggingMiddlewareChannel) ExchangeDelete(
 	}
 }
 
+// ExchangeBind implements amqpmiddleware.ProvidesExchangeBind for logging.
 func (middleware LoggingMiddlewareChannel) ExchangeBind(
 	next amqpmiddleware.HandlerExchangeBind,
 ) amqpmiddleware.HandlerExchangeBind {
@@ -377,6 +413,7 @@ func (middleware LoggingMiddlewareChannel) ExchangeBind(
 	}
 }
 
+// ExchangeUnbind implements amqpmiddleware.ProvidesExchangeUnbind for logging.
 func (middleware LoggingMiddlewareChannel) ExchangeUnbind(
 	next amqpmiddleware.HandlerExchangeUnbind,
 ) amqpmiddleware.HandlerExchangeUnbind {
@@ -389,6 +426,7 @@ func (middleware LoggingMiddlewareChannel) ExchangeUnbind(
 	}
 }
 
+// QoS implements amqpmiddleware.ProvidesQoS for logging.
 func (middleware LoggingMiddlewareChannel) QoS(next amqpmiddleware.HandlerQoS) amqpmiddleware.HandlerQoS {
 	logger := middleware.createMethodLogger("QoS")
 	return func(ctx context.Context, args amqpmiddleware.ArgsQoS) error {
@@ -399,6 +437,7 @@ func (middleware LoggingMiddlewareChannel) QoS(next amqpmiddleware.HandlerQoS) a
 	}
 }
 
+// Flow implements amqpmiddleware.ProvidesFlow for logging.
 func (middleware LoggingMiddlewareChannel) Flow(next amqpmiddleware.HandlerFlow) amqpmiddleware.HandlerFlow {
 	logger := middleware.createMethodLogger("Flow")
 	return func(ctx context.Context, args amqpmiddleware.ArgsFlow) error {
@@ -409,6 +448,7 @@ func (middleware LoggingMiddlewareChannel) Flow(next amqpmiddleware.HandlerFlow)
 	}
 }
 
+// Confirm implements amqpmiddleware.ProvidesConfirm for logging.
 func (middleware LoggingMiddlewareChannel) Confirm(
 	next amqpmiddleware.HandlerConfirm,
 ) amqpmiddleware.HandlerConfirm {
@@ -421,6 +461,7 @@ func (middleware LoggingMiddlewareChannel) Confirm(
 	}
 }
 
+// Publish implements amqpmiddleware.ProvidesPublish for logging.
 func (middleware LoggingMiddlewareChannel) Publish(
 	next amqpmiddleware.HandlerPublish,
 ) amqpmiddleware.HandlerPublish {
@@ -433,6 +474,7 @@ func (middleware LoggingMiddlewareChannel) Publish(
 	}
 }
 
+// Get implements amqpmiddleware.ProvidesGet for logging.
 func (middleware LoggingMiddlewareChannel) Get(next amqpmiddleware.HandlerGet) amqpmiddleware.HandlerGet {
 	logger := middleware.createMethodLogger("Get")
 	return func(ctx context.Context, args amqpmiddleware.ArgsGet) (results amqpmiddleware.ResultsGet, err error) {
@@ -443,6 +485,7 @@ func (middleware LoggingMiddlewareChannel) Get(next amqpmiddleware.HandlerGet) a
 	}
 }
 
+// Consume implements amqpmiddleware.ProvidesConsume for logging.
 func (middleware LoggingMiddlewareChannel) Consume(
 	next amqpmiddleware.HandlerConsume,
 ) amqpmiddleware.HandlerConsume {
@@ -457,6 +500,7 @@ func (middleware LoggingMiddlewareChannel) Consume(
 	}
 }
 
+// Ack implements amqpmiddleware.ProvidesAck for logging.
 func (middleware LoggingMiddlewareChannel) Ack(next amqpmiddleware.HandlerAck) amqpmiddleware.HandlerAck {
 	logger := middleware.createMethodLogger("Ack")
 	return func(ctx context.Context, args amqpmiddleware.ArgsAck) error {
@@ -467,6 +511,7 @@ func (middleware LoggingMiddlewareChannel) Ack(next amqpmiddleware.HandlerAck) a
 	}
 }
 
+// Nack implements amqpmiddleware.ProvidesNack for logging.
 func (middleware LoggingMiddlewareChannel) Nack(next amqpmiddleware.HandlerNack) amqpmiddleware.HandlerNack {
 	logger := middleware.createMethodLogger("Nack")
 	return func(ctx context.Context, args amqpmiddleware.ArgsNack) error {
@@ -477,6 +522,7 @@ func (middleware LoggingMiddlewareChannel) Nack(next amqpmiddleware.HandlerNack)
 	}
 }
 
+// Reject implements amqpmiddleware.ProvidesReject for logging.
 func (middleware LoggingMiddlewareChannel) Reject(next amqpmiddleware.HandlerReject) amqpmiddleware.HandlerReject {
 	logger := middleware.createMethodLogger("Reject")
 	return func(ctx context.Context, args amqpmiddleware.ArgsReject) error {
@@ -487,6 +533,7 @@ func (middleware LoggingMiddlewareChannel) Reject(next amqpmiddleware.HandlerRej
 	}
 }
 
+// NotifyPublish implements amqpmiddleware.ProvidesNotifyPublish for logging.
 func (middleware LoggingMiddlewareChannel) NotifyPublish(
 	next amqpmiddleware.HandlerNotifyPublish,
 ) amqpmiddleware.HandlerNotifyPublish {
@@ -501,6 +548,7 @@ func (middleware LoggingMiddlewareChannel) NotifyPublish(
 	}
 }
 
+// NotifyConfirm implements amqpmiddleware.ProvidesNotifyConfirm for logging.
 func (middleware LoggingMiddlewareChannel) NotifyConfirm(
 	next amqpmiddleware.HandlerNotifyConfirm,
 ) amqpmiddleware.HandlerNotifyConfirm {
@@ -512,6 +560,8 @@ func (middleware LoggingMiddlewareChannel) NotifyConfirm(
 	}
 }
 
+// NotifyConfirmOrOrphaned implements amqpmiddleware.ProvidesNotifyConfirmOrOrphaned for
+// logging.
 func (middleware LoggingMiddlewareChannel) NotifyConfirmOrOrphaned(
 	next amqpmiddleware.HandlerNotifyConfirmOrOrphaned,
 ) amqpmiddleware.HandlerNotifyConfirmOrOrphaned {
@@ -525,6 +575,7 @@ func (middleware LoggingMiddlewareChannel) NotifyConfirmOrOrphaned(
 	}
 }
 
+// NotifyReturn implements amqpmiddleware.ProvidesNotifyReturn for logging.
 func (middleware LoggingMiddlewareChannel) NotifyReturn(
 	next amqpmiddleware.HandlerNotifyReturn,
 ) amqpmiddleware.HandlerNotifyReturn {
@@ -536,6 +587,7 @@ func (middleware LoggingMiddlewareChannel) NotifyReturn(
 	}
 }
 
+// NotifyCancel implements amqpmiddleware.ProvidesNotifyCancel for logging.
 func (middleware LoggingMiddlewareChannel) NotifyCancel(
 	next amqpmiddleware.HandlerNotifyCancel,
 ) amqpmiddleware.HandlerNotifyCancel {
@@ -547,6 +599,7 @@ func (middleware LoggingMiddlewareChannel) NotifyCancel(
 	}
 }
 
+// NotifyFlow implements amqpmiddleware.ProvidesNotifyFlow for logging.
 func (middleware LoggingMiddlewareChannel) NotifyFlow(
 	next amqpmiddleware.HandlerNotifyFlow,
 ) amqpmiddleware.HandlerNotifyFlow {
@@ -558,6 +611,8 @@ func (middleware LoggingMiddlewareChannel) NotifyFlow(
 	}
 }
 
+// NotifyPublishEvents implements amqpmiddleware.ProvidesNotifyPublishEvents for
+// logging.
 func (middleware LoggingMiddlewareChannel) NotifyPublishEvents(
 	next amqpmiddleware.HandlerNotifyPublishEvents,
 ) amqpmiddleware.HandlerNotifyPublishEvents {
@@ -569,6 +624,7 @@ func (middleware LoggingMiddlewareChannel) NotifyPublishEvents(
 	}
 }
 
+// ConsumeEvents implements amqpmiddleware.ProvidesConsumeEvents for logging.
 func (middleware LoggingMiddlewareChannel) ConsumeEvents(
 	next amqpmiddleware.HandlerConsumeEvents,
 ) amqpmiddleware.HandlerConsumeEvents {
@@ -580,6 +636,8 @@ func (middleware LoggingMiddlewareChannel) ConsumeEvents(
 	}
 }
 
+// NotifyConfirmEvents implements amqpmiddleware.ProvidesNotifyConfirmEvents for
+// logging.
 func (middleware LoggingMiddlewareChannel) NotifyConfirmEvents(
 	next amqpmiddleware.HandlerNotifyConfirmEvents,
 ) amqpmiddleware.HandlerNotifyConfirmEvents {
@@ -591,6 +649,8 @@ func (middleware LoggingMiddlewareChannel) NotifyConfirmEvents(
 	}
 }
 
+// NotifyConfirmOrOrphanedEvents implements
+// amqpmiddleware.ProvidesNotifyConfirmOrOrphanedEvents for logging.
 func (middleware LoggingMiddlewareChannel) NotifyConfirmOrOrphanedEvents(
 	next amqpmiddleware.HandlerNotifyConfirmOrOrphanedEvents,
 ) amqpmiddleware.HandlerNotifyConfirmOrOrphanedEvents {
@@ -602,6 +662,7 @@ func (middleware LoggingMiddlewareChannel) NotifyConfirmOrOrphanedEvents(
 	}
 }
 
+// NotifyReturnEvents implements amqpmiddleware.ProvidesNotifyReturnEvents for logging.
 func (middleware LoggingMiddlewareChannel) NotifyReturnEvents(
 	next amqpmiddleware.HandlerNotifyReturnEvents,
 ) amqpmiddleware.HandlerNotifyReturnEvents {
@@ -613,6 +674,7 @@ func (middleware LoggingMiddlewareChannel) NotifyReturnEvents(
 	}
 }
 
+// NotifyFlowEvents implements amqpmiddleware.ProvidesNotifyFlowEvents for logging.
 func (middleware LoggingMiddlewareChannel) NotifyFlowEvents(
 	next amqpmiddleware.HandlerNotifyFlowEvents,
 ) amqpmiddleware.HandlerNotifyFlowEvents {
@@ -624,8 +686,8 @@ func (middleware LoggingMiddlewareChannel) NotifyFlowEvents(
 	}
 }
 
-// NewChannelLoggerFactory creates a new factory for making connection and channel
-// logger middleware.
+// NewLoggerFactories creates a new factory for making connection and channel logger
+// middleware.
 func NewLoggerFactories(
 	logger zerolog.Logger,
 	id string,

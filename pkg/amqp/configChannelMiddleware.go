@@ -6,16 +6,23 @@ import (
 	"github.com/peake100/rogerRabbit-go/pkg/amqp/amqpmiddleware"
 )
 
+// ErrDuplicateProvider is a sentinel error returned when am
+// amqpmiddleware.ProvidesMiddleware is registered twice.
 var ErrDuplicateProvider = errors.New(
 	"amqp middleware provider already registered. providers must only be registered once",
 )
 
+// ErrNoMiddlewareMethods is a sentinel error returned when am
+// amqpmiddleware.ProvidesMiddleware is registered but has no .
 var ErrNoMiddlewareMethods = errors.New(
 	"amqp middleware provider does not implement any middleware methods",
 )
 
+// providersStorage provides
 type providersStorage map[amqpmiddleware.ProviderTypeID]amqpmiddleware.ProvidesMiddleware
 
+// checkContains returns a ErrDuplicateProvider if a provider type identified by id has
+// already been registered.
 func (storage providersStorage) checkContains(id amqpmiddleware.ProviderTypeID) error {
 	if _, ok := storage[id]; ok {
 		return ErrDuplicateProvider
@@ -23,6 +30,8 @@ func (storage providersStorage) checkContains(id amqpmiddleware.ProviderTypeID) 
 	return nil
 }
 
+// ChannelMiddlewares holds all middlewares to be registered on transports created with
+// a Config.
 type ChannelMiddlewares struct {
 	// TRANSPORT METHOD HANDLERS
 	// -------------------------
@@ -39,8 +48,11 @@ type ChannelMiddlewares struct {
 
 	// TRANSPORT EVENT MIDDLEWARE
 	// --------------------------
-	notifyCloseEvents      []amqpmiddleware.NotifyCloseEvents
-	notifyDialEvents       []amqpmiddleware.NotifyDialEvents
+	// notifyCloseEvents are the middlewares to be used on a close event.
+	notifyCloseEvents []amqpmiddleware.NotifyCloseEvents
+	// notifyDialEvents are the middlewares to be used on a dial event.
+	notifyDialEvents []amqpmiddleware.NotifyDialEvents
+	// notifyDisconnectEvents are the middlewares to be used on a disconnect event.
 	notifyDisconnectEvents []amqpmiddleware.NotifyDisconnectEvents
 
 	// CHANNEL MIDDLEWARE

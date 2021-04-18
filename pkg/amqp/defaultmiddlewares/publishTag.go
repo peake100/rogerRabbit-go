@@ -78,8 +78,8 @@ func (middleware *PublishTagsMiddleware) reconnectSendOrphans() {
 	sendsDone.Wait()
 }
 
-// Reconnect is called during a channel reconnection events. We update the current
-// offset based on the current publish count, and send orphan events to all
+// ChannelReconnect is called during a channel reconnection events. We update the
+// current offset based on the current publish count, and send orphan events to all
 // amqp.Channel.NotifyPublish() listeners.
 func (middleware *PublishTagsMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
