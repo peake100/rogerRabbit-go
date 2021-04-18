@@ -28,13 +28,17 @@ been copy-pasted from the streadway library for convenience.
 Unlike streadway/amqp.Channel, this channel will remain open when an error is
 returned. Under the hood, the old, closed, channel will be replaced with a new,
 fresh, one -- so operation will continue as normal.
+
+Method docstrings are copied from streadway amqp with notes where behavior diverges from
+the streadway/amqp package.
 */
 type Channel struct {
-	// transportChannel is the the transport object that contains our current underlying
+	// underlyingChannel is the the transport object that contains our current underlying
 	// connection.
 	// The current, underlying channel object.
 	underlyingChannel *BasicChannel
-	// We have the transport channel that controls when methods can access the
+	// underlyingChannelLock limits access to underlyingChannel. We already have have t
+	// he transportManager RWMutex that controls when methods can access the
 	// underlying transport, but the reconnect logic needs to know that when it is
 	// fetching the current transport, that transport is not going to switch out from
 	// under it.
@@ -136,7 +140,7 @@ The order of acknowledgments is not bound to the order of deliveries.
 
 Ack and Nack confirmations will arrive at some point in the future.
 
-Unroutable mandatory or immediate messages are acknowledged immediately after
+Uncountable mandatory or immediate messages are acknowledged immediately after
 any Channel.NotifyReturn listeners have been notified.  Other messages are
 acknowledged when all queues that should have the message routed to them have
 either received acknowledgment of delivery or have enqueued the message,
@@ -147,7 +151,7 @@ exception could occur if the server does not support this method.
 
 ---
 
-ROGER NOTE: Tags will bew continuous, even in the event of a re-connect. The channel
+ROGER NOTE: Tags will be continuous, even in the event of a re-connect. The Channel
 will take care of matching up caller-facing delivery tags to the current channel's
 underlying tag.
 */
@@ -298,9 +302,9 @@ declared with these parameters, and the channel will be closed.
 
 ---
 
-ROGER NOTE: Queues declared with a roger channel will be automatically re-declared
-upon channel disconnect recovery. Calling channel.QueueDelete() will remove the queue
-from the list of queues to be re-declared in case of a disconnect.
+ROGER NOTE: Queues declared with a Roger, Rabbit Channel will be automatically
+re-declared upon channel disconnect recovery. Calling channel.QueueDelete() will remove
+the queue from the list of queues to be re-declared in case of a disconnect.
 
 This may cases where queues deleted by other producers / consumers are
 automatically re-declared. Future updates will introduce more control over when and
@@ -338,13 +342,11 @@ func (channel *Channel) QueueDeclare(
 }
 
 /*
-
 QueueDeclarePassive is functionally and parametrically equivalent to
 QueueDeclare, except that it sets the "passive" attribute to true. A passive
 queue is assumed by RabbitMQ to already exist, and attempting to connect to a
 non-existent queue will cause RabbitMQ to throw an exception. This function
 can be used to test for the existence of a queue.
-
 */
 func (channel *Channel) QueueDeclarePassive(
 	name string, durable, autoDelete, exclusive, noWait bool, args Table,
@@ -389,7 +391,6 @@ declared with specific parameters.
 
 If a queue by this Name does not exist, an error will be returned and the
 channel will be closed.
-
 */
 func (channel *Channel) QueueInspect(name string) (queue Queue, err error) {
 	// Run an an operation to get automatic retries on channel dis-connections.
@@ -452,7 +453,6 @@ will be closed.
 
 When NoWait is false and the queue could not be bound, the channel will be
 closed with an error.
-
 */
 func (channel *Channel) QueueBind(
 	name, key, exchange string, noWait bool, args Table,
@@ -482,7 +482,6 @@ arguments.
 
 It is possible to send and empty string for the exchange Name which means to
 unbind the queue from the default exchange.
-
 */
 func (channel *Channel) QueueUnbind(name, key, exchange string, args Table) error {
 	unbindArgs := amqpmiddleware.ArgsQueueUnbind{
@@ -631,8 +630,8 @@ the exchange can be sent for exchange types that require extra parameters.
 ---
 
 ROGER NOTE: Exchanges declared with a roger channel will be automatically re-declared
-upon channel disconnect recovery. Calling channel.ExchangeDelete() will remove the
-exchange from the list of exchanges to be re-declared in case of a disconnect.
+upon channel disconnect recovery. Calling ExchangeDelete will remove the exchange from
+the list of exchanges to be re-declared in case of a disconnect.
 
 This may cases where exchanges deleted by other producers / consumers are
 automatically re-declared. Future updates may introduce more control over when and
@@ -715,7 +714,7 @@ NotifyClose listener to respond to these channel exceptions.
 
 ROGER NOTE: Calling ExchangeDelete will remove am exchange from the list of exchanges
 or relevant bindings to be re-declared on reconnections of the underlying
- streadway/amqp.Channel object.
+streadway/amqp.Channel object.
 */
 func (channel *Channel) ExchangeDelete(
 	name string, ifUnused, noWait bool,
@@ -860,10 +859,10 @@ internal counter for DeliveryTags with the first confirmation starts at 1.
 
 ---
 
-ROGER NOTE: Roger Channel objects will expose a continuous set of confirmation and
-delivery tags to the user, even over disconnects, adjusting a messages confirmation tag
-to match it's actual underlying tag relative to the current channel is all handled for
-you.
+ROGER NOTE: Roger, Rabbit Channel objects will expose a continuous set of confirmation
+and delivery tags to the user, even over disconnects, adjusting a message's confirmation
+tag to match it's actual underlying tag relative to the current channel is all handled
+for you.
 */
 func (channel *Channel) Publish(
 	exchange string,
@@ -907,10 +906,9 @@ the channel or connection is closed, the message will not get requeued.
 
 ---
 
-ROGER NOTE: Roger Channel objects will expose a continuous set of confirmation and
-delivery tags to the user, even over disconnects, adjusting a messages confirmation tag
-to match it's actual underlying tag relative to the current channel is all handled for
-you.
+ROGER NOTE: Roger, Rabbit Channel objects will expose a continuous set of delivery tags
+to the user, even over disconnects, adjusting a message's delivery tags to match its
+actual underlying tag relative to the current channel is all handled for you.
 */
 func (channel *Channel) Get(
 	queue string,
@@ -995,10 +993,10 @@ the returned chan is closed.
 
 ---
 
-ROGER NOTE: Unlike the normal consume method, re-connections are handled automatically
+ROGER NOTE: Unlike the normal consume method, reconnections are handled automatically
 on channel errors. Delivery tags will appear un-interrupted to the consumer, and the
-roger channel will track the lineup of caller-facing delivery tags to the delivery
-tags of the current underlying channel.
+Roger. Rabbit channel will track the lineup of caller-facing delivery tags to the
+delivery tags of the current underlying channel.
 */
 func (channel *Channel) Consume(
 	queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args Table,
@@ -1137,10 +1135,10 @@ Channel.Close() or Connection.Close().
 
 ---
 
-ROGER NOTE: It is possible that if a channel is disconnected unexpectedly, there may
-have been confirmations in flight that did not reach the client. In cases where a
-channel connection is re-established, ant missing delivery tags will be reported nacked,
-but an additional DisconnectOrphan field will be set to `true`. It is possible that
+ROGER NOTE:If a channel is disconnected unexpectedly, there may be confirmations in
+flight that did not reach the client. In cases where a channel connection is
+re-established missing delivery tags will be reported qs nacked, but an additional
+Confirmation.DisconnectOrphan field will be set to `true`. It is possible that
 such messages DID reach the broker, but the Ack messages were lost in the disconnect
 event.
 
@@ -1196,7 +1194,7 @@ For strict ordering, use NotifyPublish instead.
 
 ---
 
-ROGER NOTE: the nack channel will receive both tags that were explicitly nacked by the
+ROGER NOTE: The nack channel will receive both tags that were explicitly nacked by the
 server AND tags that were orphaned due to a connection loss. If you wish to handle
 Orphaned tags separately, use the new method NotifyConfirmOrOrphaned.
 */
@@ -1255,9 +1253,9 @@ information about why the publishing failed.
 
 ---
 
-ROGER NOTE: Because this channel survives over unexpected server disconnects, it is
+ROGER NOTE: Because Channel survives over unexpected broker disconnects, it is
 possible that returns in-flight to the client from the broker will be dropped, and
-therefore will be missed. You can subscribe to disconnection events through.
+therefore will be missed.
 */
 func (channel *Channel) NotifyReturn(returns chan Return) chan Return {
 	args := amqpmiddleware.ArgsNotifyReturn{Returns: returns}

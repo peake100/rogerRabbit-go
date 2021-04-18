@@ -165,7 +165,7 @@ A Route handler might looks something like this:
 	// HandleDelivery is the business logic invoked for each delivery.
 	func (processor *BasicProcessor) HandleDelivery(
 		ctx context.Context, delivery amqp.Delivery,
-	) (err error, requeue bool) {
+	) (requeue bool, err error) {
 		// Print the message
 		fmt.Println("BODY:", delivery.Body)
 
@@ -205,7 +205,7 @@ Registering our handler and running our consumer might look something like this:
 	}
 
 	// Create a new consumer that uses our robust channel.
-	consumer := amqpconsumer.New(channel, amqpconsumer.DefaultOpts())
+	consumer := rconsumer.New(channel, rconsumer.DefaultOpts())
 	defer consumer.StartShutdown()
 
 	// Create a new delivery processor and register it.
