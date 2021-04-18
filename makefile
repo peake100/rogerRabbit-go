@@ -30,7 +30,7 @@ test:
 
 .PHONY: bench
 bench:
-	-go test -p 1 -count 4 -bench=. -run=Comparisons -benchtime=2s ./...
+	-go test -p 1 -count 4 -bench=Comparison -run=NoTests -benchtime=2s ./...
 
 .PHONY: lint
 lint:

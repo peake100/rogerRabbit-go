@@ -215,6 +215,108 @@ func BenchmarkComparison_QueuePublishConfirm_Roger(b *testing.B) {
 	done.Wait()
 }
 
+func BenchmarkComparison_Consume_Streadway(b *testing.B) {
+	channel := dialStreadway(b)
+	queue := setupQueue(b, channel)
+
+	for i := 0; i < b.N; i++ {
+		err := channel.Publish(
+			"",
+			queue.Name,
+			true,
+			false,
+			amqp.Publishing{
+				Body: msgBody,
+			},
+		)
+		if err != nil {
+			b.Fatalf("error publishing message: %v", err)
+		}
+	}
+
+	deliveries, err := channel.Consume(
+		queue.Name,
+		"BenchConsumeRoger",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		b.Fatalf("error getting consume channel: %v", err)
+	}
+
+	err = channel.Qos(100, 0, false)
+	if err != nil {
+		b.Fatalf("error setting QoS: %v", err)
+	}
+
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		select {
+		case <-deliveries:
+			timer.Reset(5 * time.Second)
+		case <-timer.C:
+			b.Fatalf("timeout getting delivery")
+		}
+	}
+}
+
+func BenchmarkComparison_Consume_Roger(b *testing.B) {
+	channel := dialRoger(b)
+	queue := setupQueue(b, channel)
+
+	for i := 0; i < b.N; i++ {
+		err := channel.Publish(
+			"",
+			queue.Name,
+			true,
+			false,
+			amqp.Publishing{
+				Body: msgBody,
+			},
+		)
+		if err != nil {
+			b.Fatalf("error publishing message: %v", err)
+		}
+	}
+
+	deliveries, err := channel.Consume(
+		queue.Name,
+		"BenchConsumeRoger",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		b.Fatalf("error getting consume channel: %v", err)
+	}
+
+	err = channel.Qos(100, 0, false)
+	if err != nil {
+		b.Fatalf("error setting QoS: %v", err)
+	}
+
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		select {
+		case <-deliveries:
+			timer.Reset(5 * time.Second)
+		case <-timer.C:
+			b.Fatalf("timeout getting delivery")
+		}
+	}
+}
+
 // dialStreadway gets a streadway Connection
 func dialStreadway(b *testing.B) *amqp.BasicChannel {
 	conn, err := streadway.Dial(amqptest.TestDialAddress)

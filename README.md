@@ -323,19 +323,25 @@ Machine: Intel(R) Core(TM) i9-8950HK CPU @ 2.90GHz
 
 
 | OPERATION          | LIB  | EXECUTIONS  |     NS/OP  |  COMPARISON
-| -------------------|------|-------------|------------|------------
-| QueueInspect       | sw   |     2,838   |  812,594   |         --
-|                    | rr   |     2,470   |  813,269   |      +0.1%
-| Publish            | sw   |    7,4559   |   28,882   |         --
-|                    | rr   |    7,0665   |   30,031   |      +4.0%
-| Publish & Confirm  | sw   |    3,4528   |   59,703   |         --
-|                    | rr   |    3,5481   |   62,198   |      +4.2%
+| -------------------|------|-------------|---------- -|------------
+| QueueInspect       | sw   |     2,838   |   812,594  |         --
+|                    | rr   |     2,470   |   813,269  |      +0.1%
+| Publish            | sw   |    74,559   |    28,882  |         --
+|                    | rr   |    70,665   |    30,031  |      +4.0%
+| Publish & Confirm  | sw   |    34,528   |    59,703  |         --
+|                    | rr   |    35,481   |    62,198  |      +4.2%
+| Consume (QoS 100)  | sw   |    75,433   |    27,206  |         --
+|                    | rr   |    73,957   |    29,846  |      +9.7%
 
 
 The above numbers were calculated by running each benchmark 4 times, then taking the
 fastest result for each library.
 
 The benchmarks were run with the following command:
+
+```shell
+go test -p 1 -count 4 -bench=Comparison -run=NoTests -benchtime=2s ./...
+```
 
 Acknowledgements
 ----------------

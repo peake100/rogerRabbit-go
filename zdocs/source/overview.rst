@@ -115,12 +115,14 @@ Benchmarks can be found in `./amqp/benchmark_test.go`.
                    --   rr       7,0665      30,031         +4.0%
     Publish & Confirm   sw       3,4528      59,703            --
                    --   rr       3,5481      62,198         +4.2%
+    Consume (QoS 100)   sw       75,433      27,206            --
+                   --   rr       73,957      29,846         +9.7%
     =================  ====  =========== ==========   ===========
 
 Run with the following command:
 
 .. code-block:: shell
 
-    go test -p 1 -count 4 -bench=. -run=Comparisons -benchtime=2s ./...
+    go test -p 1 -count 4 -bench=Comparison -run=NoTests -benchtime=2s ./...
 
 .. _streadway/amqp: https://github.com/streadway/amqp
