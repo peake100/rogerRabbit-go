@@ -110,7 +110,7 @@ Examples:
     // default opts being used. By default, a Producer will put the passed channel in
     // confirmation mode, and each time publish is called, will block until a
     // confirmation from the server has been received.
-    producer := amqpproducer.New(channel, nil)
+    producer := rproducer.New(channel, nil)
     producerComplete := make(chan struct{})
 
     // Run the producer in it's own goroutine.
