@@ -87,7 +87,7 @@ func BenchmarkComparison_QueuePublishConfirm_Streadway(b *testing.B) {
 
 	err := channel.Confirm(false)
 	if err != nil {
-		b.Fatalf("error putting channel into confrimation mode")
+		b.Fatalf("error putting channel into confirmation mode")
 	}
 
 	confirmations := make(chan amqp.BasicConfirmation, 100)
@@ -154,7 +154,7 @@ func BenchmarkComparison_QueuePublishConfirm_Roger(b *testing.B) {
 
 	err := channel.Confirm(false)
 	if err != nil {
-		b.Fatalf("error putting channel into confrimation mode")
+		b.Fatalf("error putting channel into confirmation mode")
 	}
 
 	confirmations := make(chan amqp.Confirmation, 100)

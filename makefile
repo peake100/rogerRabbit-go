@@ -37,6 +37,7 @@ lint:
 	-revive -config revive.toml ./...
 	-go vet ./...
 	-golint ./...
+	-find . -type f | grep -v zdevelop/ | grep -v zdocs/build/ | xargs misspell -error
 
 .PHONY: format
 format:
@@ -64,7 +65,7 @@ install-dev:
 
 # Installs command line tools for development
 .PHONY: install-tools
-install-globals:
+install-tools:
 	# Creates html report of tests.
 	-go install github.com/ains/go-test-html
 	# Creates API doc server.
@@ -75,6 +76,8 @@ install-globals:
 	-go install github.com/mgechev/revive
 	# Converts to junit for making html reports
 	-go install github.com/jstemmer/go-junit-report
+	# Catches misspelling
+	-go install github.com/client9/misspell/cmd/misspell
 	# Converts junit reports into pretty html
 	-npm i -g xunit-viewer
 

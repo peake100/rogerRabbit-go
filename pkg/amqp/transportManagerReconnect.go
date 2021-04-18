@@ -2,6 +2,7 @@ package amqp
 
 import (
 	"context"
+	"github.com/peake100/rogerRabbit-go/pkg/amqp/amqpmiddleware"
 	streadway "github.com/streadway/amqp"
 	"sync/atomic"
 	"time"
@@ -9,7 +10,7 @@ import (
 
 // reconnectRedialOnce attempts to reconnect the livesOnce a single time.
 func (manager *transportManager) reconnectRedialOnce(ctx context.Context, attempt int) error {
-	opCtx := context.WithValue(ctx, "opAttempt", attempt)
+	opCtx := context.WithValue(ctx, amqpmiddleware.MetadataKey("opAttempt"), attempt)
 
 	// Make the connection.
 	err := manager.transport.tryReconnect(

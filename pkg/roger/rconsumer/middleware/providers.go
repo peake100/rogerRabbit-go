@@ -1,13 +1,14 @@
 package middleware
 
-type ProviderTypeId string
+// ProviderTypeID identifies a ProvidesMiddleware type for catching duplicate providers.
+type ProviderTypeID string
 
 // ProvidesMiddleware is the base interface that must be implemented by any middleware
 // provider.
 type ProvidesMiddleware interface {
 	// TypeID returns a unique ID for verifying that a provider has not been registered
 	// more than once.
-	TypeID() ProviderTypeId
+	TypeID() ProviderTypeID
 }
 
 // ProvidesSetupChannel provides SetupChannel middleware as a method.

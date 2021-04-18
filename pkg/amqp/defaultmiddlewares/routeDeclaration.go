@@ -137,7 +137,7 @@ func (middleware *RouteDeclarationMiddleware) removeQueueBindings(
 			exchangeName: exchangeName,
 			routingKey:   routingKey,
 
-			// If the queue name is non-emtpy, remove on queue match (will remove all
+			// If the queue name is non-empty, remove on queue match (will remove all
 			// bindings for the queue).
 			removeQueueMatch: queueName != "",
 			// If the exchange name is non-empty, remove on exchange match (will remove
@@ -484,9 +484,9 @@ func (middleware *RouteDeclarationMiddleware) reconnectHandler(
 	return results, nil
 }
 
-// Reconnect is invoked on reconnection of the underlying amqp Channel, and makes sure
-// our queue and exchange topology is re-configured to present a seamless experience
-// to the caller.
+// ChannelReconnect is invoked on reconnection of the underlying amqp Channel, and makes
+// sure our queue and exchange topology is re-configured to present a seamless
+// experience to the caller.
 func (middleware *RouteDeclarationMiddleware) ChannelReconnect(
 	next amqpmiddleware.HandlerChannelReconnect,
 ) (handler amqpmiddleware.HandlerChannelReconnect) {

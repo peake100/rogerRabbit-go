@@ -3,15 +3,17 @@ package middleware
 import (
 	"context"
 	"github.com/peake100/rogerRabbit-go/pkg/amqp"
+	"github.com/peake100/rogerRabbit-go/pkg/amqp/amqpmiddleware"
 	"github.com/rs/zerolog"
 	"time"
 )
 
 // DefaultLoggerKey is the context value key for fetching the logger provided by the
 // DefaultLogging middleware.
-const DefaultLoggerKey = "ConsumerDefaultLogger"
+const DefaultLoggerKey = amqpmiddleware.MetadataKey("ConsumerDefaultLogger")
 
-const DefaultLoggerTypeID ProviderTypeId = "DefaultLogger"
+// DefaultLoggerTypeID is the ProviderTypeID for DefaultLogging.
+const DefaultLoggerTypeID ProviderTypeID = "DefaultLogger"
 
 // ctxWithLogger adds a logger provided by DefaultLogging to a context.
 func ctxWithLogger(ctx context.Context, logger zerolog.Logger) context.Context {
@@ -32,10 +34,11 @@ type DefaultLogging struct {
 }
 
 // TypeID implement ProvidesMiddleware.
-func (middleware DefaultLogging) TypeID() ProviderTypeId {
+func (middleware DefaultLogging) TypeID() ProviderTypeID {
 	return DefaultLoggerTypeID
 }
 
+// SetupChannel implements ProvidesSetupChannel for logging.
 func (middleware DefaultLogging) SetupChannel(next HandlerSetupChannel) HandlerSetupChannel {
 	return func(ctx context.Context, amqpChannel AmqpRouteManager) error {
 		logger := middleware.Logger.With().Str("HANDLER", "SetupChannel").Logger()
@@ -56,8 +59,9 @@ func (middleware DefaultLogging) SetupChannel(next HandlerSetupChannel) HandlerS
 	}
 }
 
+// Delivery implements ProvidesDelivery for logging.
 func (middleware DefaultLogging) Delivery(next HandlerDelivery) HandlerDelivery {
-	return func(ctx context.Context, delivery amqp.Delivery) (err error, requeue bool) {
+	return func(ctx context.Context, delivery amqp.Delivery) (requeue bool, err error) {
 		logger := middleware.Logger.With().
 			Str("HANDLER", "Delivery").
 			Uint64("DELIVERY_TAG", delivery.DeliveryTag).
@@ -65,7 +69,7 @@ func (middleware DefaultLogging) Delivery(next HandlerDelivery) HandlerDelivery 
 		ctx = ctxWithLogger(ctx, logger)
 
 		start := time.Now().UTC()
-		err, requeue = next(ctx, delivery)
+		requeue, err = next(ctx, delivery)
 
 		var event *zerolog.Event
 		var eventLevel zerolog.Level
@@ -78,7 +82,7 @@ func (middleware DefaultLogging) Delivery(next HandlerDelivery) HandlerDelivery 
 		}
 
 		if !event.Enabled() {
-			return err, requeue
+			return requeue, err
 		}
 
 		event.TimeDiff("DURATION", time.Now().UTC(), start).Bool("REQUEUE", requeue)
@@ -92,10 +96,11 @@ func (middleware DefaultLogging) Delivery(next HandlerDelivery) HandlerDelivery 
 			event.Send()
 		}
 
-		return err, requeue
+		return requeue, err
 	}
 }
 
+// CleanupChannel implements ProvidesCleanupChannel for logging.
 func (middleware DefaultLogging) CleanupChannel(next HandlerCleanupChannel) HandlerCleanupChannel {
 	return func(ctx context.Context, amqpChannel AmqpRouteManager) error {
 		logger := middleware.Logger.With().Str("HANDLER", "CleanupChannel").Logger()
@@ -118,7 +123,7 @@ func (middleware DefaultLogging) CleanupChannel(next HandlerCleanupChannel) Hand
 }
 
 // NewDefaultLogging returns a new DefaultLogging as a ProvidesMiddleware interface.
-func NewDefaultLogger(
+func NewDefaultLogging(
 	logger zerolog.Logger,
 	logDeliveryLevel zerolog.Level,
 	successLogLevel zerolog.Level,

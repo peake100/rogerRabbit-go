@@ -70,7 +70,7 @@ func (consumer *BasicTestConsumer) SetupChannel(
 
 func (consumer *BasicTestConsumer) HandleDelivery(
 	ctx context.Context, delivery amqp.Delivery,
-) (err error, requeue bool) {
+) (requeue bool, err error) {
 
 	// Check whether all messages have been received, then signal receipt.
 	consumer.ReceivedLock.Lock()
@@ -80,7 +80,7 @@ func (consumer *BasicTestConsumer) HandleDelivery(
 		close(consumer.AllReceived)
 	}
 
-	return nil, false
+	return false, nil
 }
 
 func (consumer *BasicTestConsumer) CleanupChannel(

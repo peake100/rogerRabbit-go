@@ -1,5 +1,5 @@
 /*
-package amqpMiddleware defines middleware signatures for methods on *amqp.Channel.
+Package amqpmiddleware defines middleware signatures for methods on *amqp.Channel.
 
 Using per-method middleware allows for a general system of configuring behavior across
 reconnection events without each feature needing to be a bespoke bit of logic spanning

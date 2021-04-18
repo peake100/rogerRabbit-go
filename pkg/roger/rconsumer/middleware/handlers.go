@@ -43,8 +43,8 @@ type HandlerSetupChannel = func(ctx context.Context, amqpChannel AmqpRouteManage
 
 // HandlerDelivery defines the handler type for middleware wrapping
 // roger.Consumer.HandleDelivery.
-type HandlerDelivery = func(ctx context.Context, delivery amqp.Delivery) (err error, requeue bool)
+type HandlerDelivery = func(ctx context.Context, delivery amqp.Delivery) (requeue bool, err error)
 
-// HandlerDelivery defines the handler type for middleware wrapping
+// HandlerCleanupChannel defines the handler type for middleware wrapping
 // roger.Consumer.CleanupChannel
 type HandlerCleanupChannel = func(ctx context.Context, amqpChannel AmqpRouteManager) error

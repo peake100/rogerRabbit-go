@@ -83,20 +83,20 @@ func (config *ConnectionMiddlewares) AddNotifyDialEvents(middleware amqpmiddlewa
 	config.notifyDialEvents = append(config.notifyDialEvents, middleware)
 }
 
-// AddNotifyDialEvents adds a new middleware to be invoked on each
+// AddNotifyDisconnectEvents adds a new middleware to be invoked on each
 // Connection.NotifyDial event.
 func (config *ConnectionMiddlewares) AddNotifyDisconnectEvents(middleware amqpmiddleware.NotifyDisconnectEvents) {
 	config.notifyDisconnectEvents = append(config.notifyDisconnectEvents, middleware)
 }
 
-// AddNotifyDialEvents adds a new middleware to be invoked on each
+// AddNotifyCloseEvents adds a new middleware to be invoked on each
 // Connection.NotifyDial event.
 func (config *ConnectionMiddlewares) AddNotifyCloseEvents(middleware amqpmiddleware.NotifyCloseEvents) {
 	config.notifyCloseEvents = append(config.notifyCloseEvents, middleware)
 }
 
-// AddNotifyClose adds a new middleware to be invoked when a connection attempts to
-// re-establish a connection.
+// AddConnectionReconnect adds a new middleware to be invoked when a connection attempts
+// to re-establish a connection.
 func (config *ConnectionMiddlewares) AddConnectionReconnect(middleware amqpmiddleware.ConnectionReconnect) {
 	config.connectionReconnect = append(config.connectionReconnect, middleware)
 }
