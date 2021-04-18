@@ -88,9 +88,9 @@ func (consumer *Consumer) handleDelivery(
 	// Otherwise ack non-error returns and nack error returns.
 	ack := err == nil
 	if ack {
-		err = delivery.Ack(false)
+		_ = delivery.Ack(false)
 	} else {
-		err = delivery.Nack(false, requeueDelivery)
+		_ = delivery.Nack(false, requeueDelivery)
 	}
 }
 
