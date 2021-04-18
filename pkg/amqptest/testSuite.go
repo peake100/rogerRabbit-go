@@ -16,6 +16,8 @@ import (
 	"time"
 )
 
+// InnerSuite is an interface that can be used to embed an existing testing suite or
+// another helper suite inside of AmqpSuite
 type InnerSuite interface {
 	Assertions
 	suite.TestingSuite
@@ -54,12 +56,12 @@ func NewChannelSuiteOpts() *ChannelSuiteOpts {
 		WithDialConfig(config)
 }
 
-// AmqpSuite Embed into other suite types to have a connection and channel
+// AmqpSuite can be embedded into other suite types to have a connection and channel
 // automatically set up for testing on suite start, and closed on suite shutdown, as
 // well as a number of other helper methods for interacting with a test broker and
 // handling test setup / teardown.
 type AmqpSuite struct {
-	// Suite is the embedded suite type.
+	// InnerSuite is the embedded suite type.
 	InnerSuite
 
 	// Opts is our Options object and can be set on suite instantiation or during setup.
@@ -76,6 +78,8 @@ type AmqpSuite struct {
 	channelPublish *amqp.Channel
 }
 
+// SetupTest implements suite.SetupTestSuite and flushes os.Stdout to help reduce race
+// conditions.
 func (amqpSuite *AmqpSuite) SetupTest() {
 	amqpSuite.T().Cleanup(func() {
 		// Flushing Stdout may help with race conditions at the end of a test.
@@ -201,7 +205,7 @@ func (amqpSuite *AmqpSuite) ChannelPublish() *amqp.Channel {
 	return amqpSuite.channelPublish
 }
 
-// ChannelConsumeTester returns *amqp.ChannelTesting object for ChannelConsume with the
+// ChannelPublishTester returns *amqp.ChannelTesting object for ChannelPublish with the
 // current suite.T().
 func (amqpSuite *AmqpSuite) ChannelPublishTester() *amqp.ChannelTesting {
 	return amqpSuite.channelPublish.Test(amqpSuite.T())
@@ -466,6 +470,7 @@ func (amqpSuite *AmqpSuite) GetMessage(queueName string, autoAck bool) amqp.Deli
 	return delivery
 }
 
+// NewAmqpSuite creates a new AmqpSuite for testing with wrapping innerSuite.
 func NewAmqpSuite(innerSuite InnerSuite, opts *ChannelSuiteOpts) AmqpSuite {
 	return AmqpSuite{
 		InnerSuite:     innerSuite,

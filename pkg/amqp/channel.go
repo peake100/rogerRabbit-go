@@ -1212,8 +1212,9 @@ func (channel *Channel) NotifyConfirm(
 }
 
 /*
-As NotifyConfirm, but with a third queue for delivery tags that were orphaned from
-a disconnect, these tags are routed to the nack channel in NotifyConfirm.
+NotifyConfirmOrOrphaned is as NotifyConfirm, but with a third queue for delivery tags
+that were orphaned from disconnect, these tags are routed to the nack channel in
+NotifyConfirm.
 */
 func (channel *Channel) NotifyConfirmOrOrphaned(
 	ack, nack, orphaned chan uint64,

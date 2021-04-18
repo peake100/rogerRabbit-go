@@ -8,7 +8,7 @@ import (
 
 // createEventMetadata creates the amqpmiddleware.EventMetadata for an event
 func createEventMetadata(legNum int, eventNum int64) amqpmiddleware.EventMetadata {
-	return map[string]interface{}{
+	return map[amqpmiddleware.MetadataKey]interface{}{
 		"LegNum":   legNum,
 		"EventNum": eventNum,
 	}

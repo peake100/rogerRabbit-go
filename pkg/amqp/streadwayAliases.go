@@ -67,6 +67,10 @@ const (
 
 // Type Aliases
 type (
+	// Acknowledger notifies the server of successful or failed consumption of
+	// deliveries via identifier found in the Delivery.DeliveryTag field.
+	//
+	// Applications can provide mock implementations in tests of Delivery handlers.
 	Acknowledger = streadway.Acknowledger
 
 	// Authentication interface provides a means for different SASL authentication

@@ -78,7 +78,7 @@ func (consumer *Consumer) handleDelivery(
 	// Create a context for this delivery derived from the consumer context.
 	deliveryCtx, deliveryCancel := context.WithCancel(consumer.ctx)
 	defer deliveryCancel()
-	err, requeueDelivery := handler.HandleDelivery(deliveryCtx, delivery)
+	requeueDelivery, err := handler.HandleDelivery(deliveryCtx, delivery)
 
 	// If we are auto-acking, continue.
 	if args.AutoAck {
@@ -139,6 +139,7 @@ func (consumer *Consumer) runProcessor(
 	}
 }
 
+// processDeliveries uses processor to process amqp deliveries.
 func (consumer *Consumer) processDeliveries(processor deliveryProcessor) {
 	// WaitGroup for workers to close when done.
 	workersComplete := new(sync.WaitGroup)

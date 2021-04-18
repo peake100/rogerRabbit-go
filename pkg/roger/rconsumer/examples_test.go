@@ -46,12 +46,12 @@ func (processor *BasicProcessor) SetupChannel(
 // HandleDelivery is the business logic invoked for each delivery.
 func (processor *BasicProcessor) HandleDelivery(
 	ctx context.Context, delivery amqp.Delivery,
-) (err error, requeue bool) {
+) (requeue bool, err error) {
 	// Print the message
 	fmt.Println("BODY:", delivery.Body)
 
 	// Returning no error will result in an ACK of the message.
-	return nil, false
+	return false, nil
 }
 
 // Cleanup allows the route handler to remove any resources necessary on close.

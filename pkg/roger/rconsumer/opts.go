@@ -98,7 +98,7 @@ func DefaultOpts() Opts {
 	opts := Opts{
 		maxWorkers: 0,
 		middleware: Middleware{
-			providers: make(map[middleware.ProviderTypeId]struct{}),
+			providers: make(map[middleware.ProviderTypeID]struct{}),
 		},
 		noLoggingMiddleware: false,
 		logger:              internal.CreateDefaultLogger(zerolog.InfoLevel),
@@ -123,7 +123,7 @@ type Middleware struct {
 	providerFactories []func() middleware.ProvidesMiddleware
 
 	// providers tracks the type IDs of providers passed to this config.
-	providers map[middleware.ProviderTypeId]struct{}
+	providers map[middleware.ProviderTypeID]struct{}
 }
 
 // AddSetupChannel adds a middleware.SetupChannel to be added to each
