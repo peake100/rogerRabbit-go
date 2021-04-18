@@ -119,6 +119,9 @@ func ExampleChannel_Consume_deliveryTags() {
 		false,              // no wait
 		nil,                // args
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	// We'll close this channel when the consumer is exhausted
 	consumeComplete := new(sync.WaitGroup)
@@ -252,6 +255,9 @@ func ExampleChannel_Consume_orphan() {
 		false, // no wait
 		nil,   // args
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	// publish a message
 	err = channel.Publish(
@@ -444,6 +450,9 @@ func ExampleChannel_QueueDeclare_reDeclare() {
 		false, // noWait
 		nil,   // args
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	// Delete the queue to clean up
 	defer channel.QueueDelete(queueName, false, false, false)
