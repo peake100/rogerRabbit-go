@@ -249,15 +249,15 @@ Without a supplied way to handle reconnections,
 [abound](<https://www.ribice.ba/golang-rabbitmq-client/>).
 
 Most of these solutions are overly-fitted to a specific problem (consumer vs producer or
-involve domain-specific logic), that is prone to data races (can you spot them in the 
-first link?), cumbersome to inject into a production code (do we abort the business 
-logic on an error or try to recover in-place?), and bugs (each solution has its own 
+involve domain-specific logic), are prone to data races (can you spot them in the 
+first link?), are cumbersome to inject into a production code (do we abort the business 
+logic on an error or try to recover in-place?), and have bugs (each solution has its own 
 redial bugs rather than finding them in a single lib where fixes can benefit everyone 
 and community code coverage is high).
 
-Nome of this is meant to disparage the above solutions, they likely work great in the 
-code they were created for, but they point to a need that is not being filled by the
-official driver. The nature of the default `*Channel` API encourages solutions that 
+Nome of this is meant to disparage the above solutions -- they likely work great in the 
+code they were created for -- but they point to a need that is not being filled by the
+sanctioned driver. The nature of the default `*Channel` API encourages solutions that 
 are ill-suited to stateless handlers OR require you to handle retries every place you
 must interact with the broker. Such implementation details can be annoying when writing
 higher-level business logic and can lead to either unnecessary error returns, bespoke 
@@ -267,8 +267,8 @@ an AMQP broker.
 Roger, Rabbit is inspired by [aio-pika's](https://aio-pika.readthedocs.io/en/latest/index.html)
 [robust connections and channels](https://aio-pika.readthedocs.io/en/latest/apidoc.html#aio_pika.connect_robust)
 which abstract away connection management with an identical API to their non-robust
-connection and channel API's, allowing robust AMQP broker interactions with minimal fuss
-and very few limitations.
+counterparts, allowing robust AMQP broker interactions with minimal fuss and very few 
+limitations.
 
 **NOTE:**
 

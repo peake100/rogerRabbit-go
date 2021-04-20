@@ -7,10 +7,10 @@ the amqp package.
 Producer
 ========
 
-The `Producer` type makes it dead-simple to publish messages with broker confirmations
-enabled. It lives in the `roger/amqpproducer` package.
+The ``Producer`` type makes it dead-simple to publish messages with broker confirmations
+enabled. It lives in the ``roger/amqpproducer`` package.
 
-By default, the `Producer.Publish()` method will not return until a confirmation for
+By default, the ``Producer.Publish()`` method will not return until a confirmation for
 the publication has been received from the broker, an error occurs, or the context
 passed to it expires, like so:
 
@@ -117,8 +117,8 @@ passed to it expires, like so:
 Consumer
 ========
 
-The `Consumer` type allows registration of consumer handlers that take in a delivery and
-return error information. It lives in the `roger/amqpconsumer` package.
+The ``Consumer`` type allows registration of consumer handlers that take in a delivery and
+return error information. It lives in the ``roger/amqpconsumer`` package.
 
 Delivery ACK, NACK, requeue and other boilerplate is handled for you behind the scenes.
 Additional options like max concurrent processors are made available for setting up

@@ -32,7 +32,7 @@ covered by these docs.
 
 The `official rabbitMQ documentation <https://www.rabbitmq.com/getstarted.html>`_ has
 an excellent set of tutorials using the streadway library. Simply replacing the import
-statements of the official examples to `"github.com/peake100/rogerRabbit-go/amqp"`
+statements of the official examples to ``"github.com/peake100/rogerRabbit-go/amqp"``
 will result in working code that handles unexpected broker disconnects.
 
 For instance, the hello world receiver example would be simply changed from this:
@@ -210,7 +210,7 @@ In this section, we will examine features unique to Roger, Rabbit.
 Connection Recovery
 -------------------
 
-Both the `Connection` and `Channel` types are robust transport mirrors of the streadway
+Both the ``Connection`` and ``Channel`` types are robust transport mirrors of the streadway
 types by the same names, and will automatically re-connect when a connection is lost:
 
 .. code-block::
@@ -271,8 +271,8 @@ types by the same names, and will automatically re-connect when a connection is 
 Topology Recreation
 -------------------
 
-Roger, Rabbit's `Channel` type remembers all called to `Channel.QueueDeclare()`,
-`Channel.QueueBind()`, `Channel.ExchangeDeclare()` and `Channel.ExchangeBind()`, and
+Roger, Rabbit's ``Channel`` type remembers all called to ``Channel.QueueDeclare()``,
+``Channel.QueueBind()``, ``Channel.ExchangeDeclare()`` and ``Channel.ExchangeBind()``, and
 replays those calls on a reconnection event:
 
 .. code-block: go
@@ -344,8 +344,8 @@ replays those calls on a reconnection event:
 
 .. Note::
 
-  Calling `Channel.QueueDelete()`, `Channel.QueueUnbind()`, `Channel.ExchangeDelete`,
-  and `Channel.ExchangeUnbind()` will remove relevant robust queues and bindings from
+  Calling ``Channel.QueueDelete()``, ``Channel.QueueUnbind()``, ``Channel.ExchangeDelete``,
+  and ``Channel.ExchangeUnbind()`` will remove relevant robust queues and bindings from
   the internally tracked lists. Queues invoked in these methods will NOT be recreated
   on a reconnection event.
 
@@ -726,10 +726,10 @@ disconnection events.
 
 .. note::
 
-  The `Confirmation.DisconnectOrphan` is a new field for the `Confirmation` type and
+  The ``Confirmation.DisconnectOrphan`` is a new field for the ``Confirmation`` type and
   is unique to Roger, Rabbit.
 
-  When `DisconnectOrphan` is true, it means that a Nack occurred not from a broker
+  When ``DisconnectOrphan`` is true, it means that a Nack occurred not from a broker
   response, but because no confirmation positive or negative was received from the
   broker before the connection was disrupted. Orphaned messages may have reached the
   broker -- we have no way of knowing.
@@ -737,12 +737,12 @@ disconnection events.
 Channel Middleware
 ==================
 
-Roger, Rabbit allows the registration of middleware on all `Channel` methods. In fact,
-most of the robust `Channel` features are implemented through middleware defined in
-the `amqp/defaultMiddlewares` package! It is a powerful tool and one of the biggest
+Roger, Rabbit allows the registration of middleware on all ``Channel`` methods. In fact,
+most of the robust ``Channel`` features are implemented through middleware defined in
+the ``amqp/defaultMiddlewares`` package! It is a powerful tool and one of the biggest
 API expansions over streadway/amqp.
 
-Middleware signatures are defined in the `amqp/amqpMiddleware` package.
+Middleware signatures are defined in the ``amqp/amqpMiddleware`` package.
 
 Registering Middleware
 ----------------------
@@ -931,7 +931,7 @@ Testing
 =======
 
 Testing is a first-class citizen of the Roger, Rabbit package. Types expose a robust
-number of testing methods, and the `amqpTest` offers a number of additional testing
+number of testing methods, and the ``amqpTest`` offers a number of additional testing
 utilities.
 
 .. note::
@@ -944,7 +944,7 @@ utilities.
 Test() Methods
 --------------
 
-Both `Connection` and `Channel` expose a `.Test()` method, which returns a testing
+Both ``Connection`` and ``Channel`` expose a ``.Test()`` method, which returns a testing
 harness type with additional methods for running tests on it's parent value.
 
 Most test methods do not return an error, instead opting to report the error and
@@ -990,10 +990,252 @@ Example:
 Testify Suite
 -------------
 
-The `amqpTesting` package makes an `AmqpSuite` type that is an extension of
+The ``amqpTesting`` package makes an ``AmqpSuite`` type that is an extension of
 `testify/suite.Suite <https://godoc.org/github.com/stretchr/testify/suite>`_
 
-`AmqpSuite` adds a number of QoL methods for quickly setting up an tearing down
+``AmqpSuite`` adds a number of QoL methods for quickly setting up an tearing down
 integration tests with a test broker.
 
 See the godoc documentation for more details.
+
+Architecture
+============
+
+Overview
+--------
+
+.. figure:: _static/architecture.svg
+    :align: center
+
+    Schematic of the amqp transport (``Channel`` and ``Connection``) architecture.
+
+Lets dig in to some of the specifics.
+
+.. note::
+
+    When we refer to an amqp.[Type], we are referring to the rogerRabbit-go/pkg/amqp
+    implementation of that type. If we need to refer to underlying types provided by
+    the streadway/amqp package, we will refer to them as streadway.[Type]
+
+.. warning::
+
+    The file organization of the ``amqp`` package is still in flux, though the API and
+    underlying logical structure is likely to remain stable. This architecture guide
+    will refrain from referencing specific files or paths for the time being, until
+    the types and helpers are done playing musical chairs.
+
+Streadway Transport
+-------------------
+
+The ``Streadway Transport`` is our underlying ``streadway.Connection`` or
+``streadway.Channel`` and handles all of our actual communication with the
+``AMQP Broker``.
+
+It is manages with by a ``Robust Transport``.
+
+Robust Transport
+----------------
+
+A Robust Transport is an ``amqp.Channel`` or ``amqp.Connection``. These types manage
+their ``streadway.Channel`` or ``streadway.Connection`` counterparts, and expose
+``Exported Methods`` to the caller that re-implement the methods supplied by the
+``Streadway Transport`` they manage.
+
+Each ``Robust Transport`` implements the ``reconnects`` interface, which in turn is
+referenced by the ``Transport Manager`` and used to redial the underlying broker
+connection.
+
+So why are we talking about the ``Transport Manager`` here if it manages the
+``Robust Transport``? Well, because the ``Transport Manager`` is then embedded into the
+Robust Transport it is managing, and provides some of that transport's methods.
+
+``Close()``, ``NotifyDisconnect()``, and all other methods that are shared between
+``amqp.Channel`` and ``amqp.Connection`` are actually provided by an embedded
+``transportManager`` value which, like an ouroboros, also contains a reference to it's
+parent transport that is used to help manage the lifecycle of that transport's
+underlying streadway transport through the shared ``reconnects`` interface.
+
+Method Handlers
+---------------
+
+Each ``Robust Transport`` (and the ``Transport Manager``) contains a ``handlers`` field
+which holds all the method handlers for that transport. These handlers are comprised of
+the base streadway/amqp type methods wrapped in user-supplied ``Middleware``.
+
+Middleware
+----------
+
+``Middleware`` is a core component of the Roger, Rabbit amqp package. Most of the Roger,
+Rabbit's extended functionality is supplied by middleware, such as continuous Delivery
+Tags over disconnects and auto-redeclaration of broker topology on reconnections.
+
+In the early life of this package, robust features were implemented directly on the
+``Channel``, resulting in features which were hard to isolate and maintain. Topology
+re-declaration, for instance, involves 9 methods manipulating 6 data resources over
+~700 lines of code. Debugging and tracking errors with these features was incredibly
+cumbersome when they were spread out over the main ``Channel`` method calls.
+
+By moving these features into middleware, all off the logic that supports a given
+feature can be housed together, greatly reducing the complexity and increasing
+maintainability.
+
+The current default middleware that ships with Roger, Rabbit is:
+
+- **ConfirmsMiddleware**: Tracks whether ``Channel.Confirms`` has been called, and sets
+  any freshly reconnected streadway Channels into the correct state.
+
+- **DeliveryTagsMiddleware**: Ensures that Delivery tags are continuous for the caller,
+  even over disconnects.
+
+- **FlowMiddleware**: Tracks the Flow state of channel and sets the correct state on
+  Channel reconnections.
+
+- **LoggingMiddlewareConnection**: Facilitates logging for all Connection Operations.
+
+- **LoggingMiddlewareChannel**: Facilitates logging for all Channel Operations.
+
+- **PublishTagsMiddleware**: Ensures that Publish Confirmation tags are continuous for
+  the caller, even over disconnects.
+
+- **QoSMiddleware**: Tracks QoS setting and sets up Channels on reconnect to match.
+
+- **RouteDeclarationMiddleware**: Handles topology recreation on Channel reconnects.
+
+Together these middlewares implement the bulk of our robust feature set.
+
+Transport Lock
+--------------
+
+The ``TransportLock`` is a ``*sync.RWMutex`` contained on the ``transportManager`` used to
+ensure there is no race conditions when a disconnection event occurs.
+
+Any process that wishes to make use of the underlying streadway connection must acquire
+the transport lock for read.
+
+When the transport manager redials the broke, the transport lock is acquired for write,
+and not released until a successful connection occurs. This blocks all other operations
+(like channel and connection method calls) from interacting with the underlying
+streadway transport until we are reconnected.
+
+Transport Manager
+-----------------
+
+The ``Transport Manager`` implements all common functionality between ``Channel`` and
+``Connection``. See the above section for more details.
+
+The ``Transport Manager`` listens for a disconnection event to occur, the  grabs an
+exclusive Write access to the ``Transport Lock``. Only then does it continuously attempt
+to redial the broker using the methods exposed on out ``Robust Connection`` through the
+``reconnects`` interface.
+
+The transport manager also exposes a ``Retry On Disconnected`` method which all of our
+exported ``Channel`` and ``Connection`` ``Exported Methods`` invoke to complete
+requests.
+
+Redial Routine
+--------------
+
+The ``Redial Routine`` is launched by the ``Transport Manager``. The redial routine
+is responsible for reconnecting to the underlying ``Streadway Transport`` on a
+disconnection event.
+
+# Register's a listener with the ``Streadway Transport``'s ``NotifyOnClose`` method.
+
+# Blocks until the listener signals that ``Streadway Connection`` has closed
+  (disconnection event)
+
+# Exits if our ``Robust Transport`` has been closed by the caller.
+
+# Acquires the ``Transport Lock`` for write, blocking ``Exported Method`` calls until
+  a successful reconnection occurs.
+
+# Calls the ``tryReconnect`` method on the ``Robust`` transport until we get a
+  successful result.
+
+# Register's a listener with the new ``Streadway Connection``'s ``NotifyOnClose``
+  method.
+
+# Releases the ``Transport Lock``.
+
+# Restarts at step 2.
+
+Retry On Disconnected
+---------------------
+
+``Retry On Disconnected`` is a method exposed by ``Transport Manager`` that enables
+``Robust Transports`` (``Channel`` and ``Connection``) to automatically retry an
+operation if it failed because we were disconnected from the AMQP broker.
+
+When invoked, ``Retry On Disconnected`` does the following:
+
+# Acquires the ``Transport Lock`` for read (so multiple methods can be called
+  simultaneously).
+
+# Runs the operation handed to it by the ``Exported Method``, usually a
+  ``Method Handler``.
+
+# Releases the ``Transport Lock``.
+
+# If an error occurred because the broker was not reachable, goes back to step 1.
+
+# Passes the result back to up to the caller.
+
+Event Relays
+------------
+
+Many ``Channel`` methods like ``NotifyPublish`` or ``Consume`` involve sending
+events along a provided or returned Go ``chan [Event]`` value to the caller.
+
+When a ``streadway.Channel`` disconnects, it closes all event ``chan [Event]`` values
+it is feeding. Because we want our event ``chan [Event]`` values to survive a
+disconnect, we cannot pass the caller's ``chan [Event]`` directly to a
+``streadway.Channel``. Instead, we need to create our own temporary ``chan [Event]``,
+pass that to the ``Streadway Transport``, then relay the events from our temporary
+``chan [Event]`` to the caller's ``chan [Event]``.
+
+To do this, we launch an ``Event Relay``,
+
+When a reconnection event occurs, the relay creates a new temporary ``chan [Event]``,
+passes that to the new ``Streadway Transport``, and the continues to relay messages to
+the caller as if nothing has happened.
+
+Since ``Channel`` is the only transport that needs event relays, it manages their
+lifecycle. ``Event Relays`` must be kept in careful sync with reconnection events to
+ensure that data or logic races do not occur. That ``Event Relay`` lifecycle is as
+follows:
+
+#. A relay is started by the ``Channel.[Method]`` handler using the
+   ``transportManager.retryOperationOnClosed`` function so it can acquire the
+   ``Transport Lock`` for read when starting up (ensuring the ``streadway.Channel``
+   is not swapped out from under it).
+
+#. The relay runs it's first leg until the undeerlying ``streadway.Channel``
+   disconnects.
+
+#. On ``streadway.Channel`` disconnect, the temporary ``chan [Event]``
+   feeding the relay dries up. The relay waits on a new ``*streadway.Channel`` to be
+   sent by it's ``Channel`` on a successful reconnection.
+
+#  The ``transportManager`` acquires the ``Transport Lock`` for write and calls
+   ``Channel.tryReconnect`` over and over until a new ``streadway.Channel`` is
+   successfully connected.
+
+#. When a new ``streadway.Channel`` is successfully established,
+   ``Channel.tryReconnect`` does not return  until all the remaining steps are
+   completed.
+
+#. ``Channel.tryReconnect`` waits for all ``Event Relays`` to signal that their last
+   leg has been successfully completed.
+
+#. ``Channel.tryReconnect`` sends the new ``*streadway.Channel`` value to each relay
+   for it to run any setup and start relaying events again.
+
+#. ``Channel.tryReconnect`` waits for all relays to signal that their setup on
+   ``*streadway.Channel`` is complete. If we were to return and release the
+   ``Transport Lock`` before this, users might start taking actions that SHOULD generate
+   events before our ``streadway.Channel`` had been set up to send them, resulting in
+   dropped events.
+
+#. `Channel.tryReconnect`` returns with the new, connected `*streadway.Channel`` value,
+   releasing the ``Transport Lock`` so that callers can begin calling ``Channel``
+   methods again.
