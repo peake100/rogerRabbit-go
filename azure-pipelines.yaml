@@ -1,4 +1,4 @@
-name: build_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+  name: build_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 
 resources:
   repositories:
@@ -27,12 +27,12 @@ variables:
   # Link to the variables template.
   - template: V2/variables.yml@templates
 
-jobs:
+extends:
   # Link to the pipeline template.
-  - template: V2/main.yml@templates
-    # Template parameters
-    parameters:
-      testRabbit: true
-      publishDocs: true
-      language: GO
-      buildType: LIBRARY
+  template: V2/main.yml@templates
+  # Template parameters
+  parameters:
+    testRabbit: true
+    publishDocs: true
+    language: GO
+    buildType: LIBRARY
