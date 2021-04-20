@@ -15,23 +15,21 @@ import (
 	"time"
 )
 
-type BasicTestConsumer struct {
-	QueueName            string
-	ExpectedMessageCount int
+type BasicTestProcessor struct {
+	QueueName string
 
 	// We'll keep track of how many messages we have received here.
 	ReceivedMessageCount int
-	ReceivedLock         *sync.Mutex
+	ReceiveCond          *sync.Cond
 
-	// This channel will be closed when ReceivedMessageCount equals
-	// ExpectedMessageCount.
-	AllReceived chan struct{}
+	// Panic will cause the HandleDelivery to panic when called.
+	Panic bool
 
 	// Will be closed when the setup of the processor is complete.
 	SetupComplete chan struct{}
 }
 
-func (consumer *BasicTestConsumer) AmqpArgs() AmqpArgs {
+func (consumer *BasicTestProcessor) AmqpArgs() AmqpArgs {
 	return AmqpArgs{
 		ConsumerName: consumer.QueueName,
 		AutoAck:      false,
@@ -40,7 +38,7 @@ func (consumer *BasicTestConsumer) AmqpArgs() AmqpArgs {
 	}
 }
 
-func (consumer *BasicTestConsumer) SetupChannel(
+func (consumer *BasicTestProcessor) SetupChannel(
 	ctx context.Context, amqpChannel middleware.AmqpRouteManager,
 ) error {
 	defer close(consumer.SetupComplete)
@@ -68,22 +66,26 @@ func (consumer *BasicTestConsumer) SetupChannel(
 	return nil
 }
 
-func (consumer *BasicTestConsumer) HandleDelivery(
+func (consumer *BasicTestProcessor) HandleDelivery(
 	ctx context.Context, delivery amqp.Delivery,
 ) (requeue bool, err error) {
 
 	// Check whether all messages have been received, then signal receipt.
-	consumer.ReceivedLock.Lock()
-	defer consumer.ReceivedLock.Unlock()
-	consumer.ReceivedMessageCount++
-	if consumer.ReceivedMessageCount == consumer.ExpectedMessageCount {
-		close(consumer.AllReceived)
+	consumer.ReceiveCond.L.Lock()
+	defer consumer.ReceiveCond.L.Unlock()
+	defer func() {
+		consumer.ReceivedMessageCount++
+		consumer.ReceiveCond.Broadcast()
+	}()
+
+	if consumer.Panic {
+		panic("mock panic")
 	}
 
 	return false, nil
 }
 
-func (consumer *BasicTestConsumer) CleanupChannel(
+func (consumer *BasicTestProcessor) CleanupChannel(
 	_ context.Context, amqpChannel middleware.AmqpRouteManager,
 ) error {
 	_, err := amqpChannel.QueueDelete(
@@ -105,12 +107,10 @@ func (suite *ConsumerSuite) TestConsumeBasicLifecycle() {
 
 	queueName := "test_consume_basic_lifecycle"
 
-	processor := &BasicTestConsumer{
+	processor := &BasicTestProcessor{
 		QueueName:            queueName,
-		ExpectedMessageCount: 0,
 		ReceivedMessageCount: 0,
-		ReceivedLock:         new(sync.Mutex),
-		AllReceived:          make(chan struct{}),
+		ReceiveCond:          sync.NewCond(new(sync.Mutex)),
 		SetupComplete:        make(chan struct{}),
 	}
 
@@ -173,12 +173,10 @@ func (suite *ConsumerSuite) TestConsumeBasicMessages() {
 
 	messageCount := 500
 
-	processor := &BasicTestConsumer{
+	processor := &BasicTestProcessor{
 		QueueName:            queueName,
-		ExpectedMessageCount: messageCount,
 		ReceivedMessageCount: 0,
-		ReceivedLock:         new(sync.Mutex),
-		AllReceived:          make(chan struct{}),
+		ReceiveCond:          sync.NewCond(new(sync.Mutex)),
 		SetupComplete:        make(chan struct{}),
 	}
 
@@ -199,6 +197,16 @@ func (suite *ConsumerSuite) TestConsumeBasicMessages() {
 		suite.NoError(err, "run consumer")
 	}()
 
+	allReceived := make(chan struct{})
+	go func() {
+		defer close(allReceived)
+		processor.ReceiveCond.L.Lock()
+		defer processor.ReceiveCond.L.Unlock()
+		for processor.ReceivedMessageCount < messageCount {
+			processor.ReceiveCond.Wait()
+		}
+	}()
+
 	// Publish 10 messages
 	suite.PublishMessages(suite.T(), "", queueName, messageCount)
 
@@ -206,7 +214,72 @@ func (suite *ConsumerSuite) TestConsumeBasicMessages() {
 	defer timeout.Stop()
 
 	select {
-	case <-processor.AllReceived:
+	case <-allReceived:
+	case <-timeout.C:
+		suite.T().Error("messages processed timeout")
+		suite.T().FailNow()
+	}
+
+	consumer.StartShutdown()
+
+	select {
+	case <-runComplete:
+	case <-timeout.C:
+		suite.T().Error("shutdown timeout")
+		suite.T().FailNow()
+	}
+}
+
+// TestConsumePanic forces the DeliveryProcessor to panic.
+func (suite *ConsumerSuite) TestConsumePanic() {
+	suite.T().Cleanup(suite.ReplaceChannels)
+
+	queueName := "test_consume_panic"
+
+	suite.CreateTestQueue(queueName, "", "", true)
+
+	processor := &BasicTestProcessor{
+		QueueName:            queueName,
+		ReceivedMessageCount: 0,
+		ReceiveCond:          sync.NewCond(new(sync.Mutex)),
+		SetupComplete:        make(chan struct{}),
+		Panic:                true,
+	}
+
+	consumer := New(suite.ChannelConsume(), DefaultOpts().WithLoggingLevel(zerolog.DebugLevel))
+	suite.T().Cleanup(consumer.StartShutdown)
+
+	err := consumer.RegisterProcessor(processor)
+	if !suite.NoError(err, "register processor") {
+		suite.T().FailNow()
+	}
+
+	runComplete := make(chan struct{})
+
+	go func() {
+		defer close(runComplete)
+		defer consumer.StartShutdown()
+		err := consumer.Run()
+		suite.NoError(err, "run consumer")
+	}()
+
+	allReceived := make(chan struct{})
+	go func() {
+		defer close(allReceived)
+		processor.ReceiveCond.L.Lock()
+		defer processor.ReceiveCond.L.Unlock()
+		for processor.ReceivedMessageCount == 0 {
+			processor.ReceiveCond.Wait()
+		}
+	}()
+
+	suite.PublishMessages(suite.T(), "", queueName, 1)
+
+	timeout := time.NewTimer(15 * time.Second)
+	defer timeout.Stop()
+
+	select {
+	case <-allReceived:
 	case <-timeout.C:
 		suite.T().Error("messages processed timeout")
 		suite.T().FailNow()

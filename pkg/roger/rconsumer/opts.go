@@ -13,7 +13,7 @@ type Opts struct {
 	// The maximum number of workers that can be active at one time.
 	maxWorkers int
 
-	// The middleware we should add to each AmqpDeliveryProcessor.
+	// The middleware we should add to each DeliveryProcessor.
 	middleware Middleware
 
 	// noLoggingMiddleware is true if we should not add logging middleware.
@@ -127,19 +127,19 @@ type Middleware struct {
 }
 
 // AddSetupChannel adds a middleware.SetupChannel to be added to each
-// AmqpDeliveryProcessor.SetupChannel passed to a Consumer.
+// DeliveryProcessor.SetupChannel passed to a Consumer.
 func (config *Middleware) AddSetupChannel(processorMiddleware middleware.SetupChannel) {
 	config.setupChannel = append(config.setupChannel, processorMiddleware)
 }
 
 // AddDelivery adds a middleware.Delivery to be added to each
-// AmqpDeliveryProcessor.HandleDelivery passed to a Consumer.
+// DeliveryProcessor.HandleDelivery passed to a Consumer.
 func (config *Middleware) AddDelivery(processorMiddleware middleware.Delivery) {
 	config.delivery = append(config.delivery, processorMiddleware)
 }
 
 // AddCleanupChannel adds a middleware.CleanupChannel to be added to each
-// AmqpDeliveryProcessor.CleanupChannel passed to a Consumer.
+// DeliveryProcessor.CleanupChannel passed to a Consumer.
 func (config *Middleware) AddCleanupChannel(processorMiddleware middleware.CleanupChannel) {
 	config.cleanupChannel = append(config.cleanupChannel, processorMiddleware)
 }
@@ -150,7 +150,7 @@ func (config *Middleware) AddProvider(provider middleware.ProvidesMiddleware) er
 }
 
 // AddCleanupChannel adds a middleware.CleanupChannel to be added to each
-// AmqpDeliveryProcessor.CleanupChannel passed to a Consumer.
+// DeliveryProcessor.CleanupChannel passed to a Consumer.
 func (config *Middleware) addProviderMethods(provider middleware.ProvidesMiddleware) error {
 	// Check if this provider has already been registered.
 	if _, ok := config.providers[provider.TypeID()]; ok {
