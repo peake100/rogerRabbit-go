@@ -4,10 +4,12 @@ Project
 Motivations
 -----------
 
-`streadway/amqp`_, the official rabbitMQ driver for go is an excellent library with a
-great API, but  limited scope. By design, It offers a full implementation of the AMQP
-spec, but comes with very few quality-of-life featured beyond that. From it's
-documentation:
+`streadway/amqp`_, the sanctioned RabbitMQ driver for
+Go, is an excellent library with a great API but limited scope. It offers a full
+implementation of the AMQP spec, but comes with very few additional quality-of-life
+features.
+
+From it's documentation:
 
 .. code-block:: text
 
@@ -58,9 +60,9 @@ limitations.
 
 .. note::
 
-    This library is not meant to supplant `streadway/amqp`_ (Roger, Rabbit is built on
-    top of it!), but an extension with quality of life features. Roger, Rabbit would not
-    be possible without the amazing groundwork laid down by `streadway/amqp`_.
+    Roger, Rabbit is not meant to supplant `streadway/amqp`_ (We build on top of it!),
+    but an extension with quality-of-life features. Roger, Rabbit would no be possible
+    without the amazing groundwork laid down by `streadway/amqp`_.
 
 Goals
 -----

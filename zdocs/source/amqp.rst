@@ -1139,25 +1139,25 @@ The ``Redial Routine`` is launched by the ``Transport Manager``. The redial rout
 is responsible for reconnecting to the underlying ``Streadway Transport`` on a
 disconnection event.
 
-# Register's a listener with the ``Streadway Transport``'s ``NotifyOnClose`` method.
+#. Register's a listener with the ``Streadway Transport``'s ``NotifyOnClose`` method.
 
-# Blocks until the listener signals that ``Streadway Connection`` has closed
-  (disconnection event)
+#. Blocks until the listener signals that ``Streadway Connection`` has closed
+   (disconnection event)
 
-# Exits if our ``Robust Transport`` has been closed by the caller.
+#. Exits if our ``Robust Transport`` has been closed by the caller.
 
-# Acquires the ``Transport Lock`` for write, blocking ``Exported Method`` calls until
-  a successful reconnection occurs.
+#. Acquires the ``Transport Lock`` for write, blocking ``Exported Method`` calls until
+   a successful reconnection occurs.
 
-# Calls the ``tryReconnect`` method on the ``Robust`` transport until we get a
-  successful result.
+#. Calls the ``tryReconnect`` method on the ``Robust`` transport until we get a
+   successful result.
 
-# Register's a listener with the new ``Streadway Connection``'s ``NotifyOnClose``
-  method.
+#. Register's a listener with the new ``Streadway Connection``'s ``NotifyOnClose``
+   method.
 
-# Releases the ``Transport Lock``.
+#. Releases the ``Transport Lock``.
 
-# Restarts at step 2.
+#. Restarts at step 2.
 
 Retry On Disconnected
 ---------------------
@@ -1168,17 +1168,17 @@ operation if it failed because we were disconnected from the AMQP broker.
 
 When invoked, ``Retry On Disconnected`` does the following:
 
-# Acquires the ``Transport Lock`` for read (so multiple methods can be called
-  simultaneously).
+#. Acquires the ``Transport Lock`` for read (so multiple methods can be called
+   simultaneously).
 
-# Runs the operation handed to it by the ``Exported Method``, usually a
-  ``Method Handler``.
+#. Runs the operation handed to it by the ``Exported Method``, usually a
+   ``Method Handler``.
 
-# Releases the ``Transport Lock``.
+#. Releases the ``Transport Lock``.
 
-# If an error occurred because the broker was not reachable, goes back to step 1.
+#. If an error occurred because the broker was not reachable, goes back to step 1.
 
-# Passes the result back to up to the caller.
+#. Passes the result back to up to the caller.
 
 Event Relays
 ------------
@@ -1216,9 +1216,9 @@ follows:
    feeding the relay dries up. The relay waits on a new ``*streadway.Channel`` to be
    sent by it's ``Channel`` on a successful reconnection.
 
-#  The ``transportManager`` acquires the ``Transport Lock`` for write and calls
-   ``Channel.tryReconnect`` over and over until a new ``streadway.Channel`` is
-   successfully connected.
+#.  The ``transportManager`` acquires the ``Transport Lock`` for write and calls
+    ``Channel.tryReconnect`` over and over until a new ``streadway.Channel`` is
+    successfully connected.
 
 #. When a new ``streadway.Channel`` is successfully established,
    ``Channel.tryReconnect`` does not return  until all the remaining steps are
@@ -1236,6 +1236,6 @@ follows:
    events before our ``streadway.Channel`` had been set up to send them, resulting in
    dropped events.
 
-#. `Channel.tryReconnect`` returns with the new, connected `*streadway.Channel`` value,
-   releasing the ``Transport Lock`` so that callers can begin calling ``Channel``
+#. ``Channel.tryReconnect`` returns with the new, connected ``*streadway.Channel``
+   value releasing the ``Transport Lock`` so that callers can begin calling ``Channel``
    methods again.

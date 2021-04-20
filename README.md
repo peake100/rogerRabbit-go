@@ -27,24 +27,25 @@ Roger, Rabbit is a drop-in replacement for
 enhancements:
 
 - **Automatic Connection Recoveries:** Both Connection and Channel objects will 
-  automatically recover from unexpected broker disconnections, and restore channel and
-  connection states so you don't miss a beat.
-- **Custom Middleware**: For all Channel methods.
-- **Testing utilities**: Force reconnects, and testify methods for common setup.
+  automatically recover from unexpected broker disconnections, and restore their states
+  and settings so you don't miss a beat.
+- **Custom Middleware**: For all methods and events.
+- **Testing utilities**: Force reconnects, and Testify helpers for common setup 
+  requirements.
 - **Convenience Types**: 
     - **Confirmation Producers**: handles broker confirmation on publish before
       returning.
     - **Consumer Framework**: Register http-like handlers to consume from queues, with
-      nack-on-error, max concurrent worker, and other boilerplate
+      nack-on-error, max concurrent worker, and other boilerplate.
       
 Getting Started
 ---------------
 
-For quickstart and guids:
+For quickstart and guides:
 [read the docs](https://peake100.github.io/rogerRabbit-go/).
 
 For full API documentation:
-[pkg.go.dev](https://peake100.github.io/rogerRabbit-go/).
+[pkg.go.dev](https://pkg.go.dev/github.com/peake100/rogerRabbit-go?readme=expanded#section-documentation).
 
 For library development guide,
 [read the docs](https://illuscio-dev.github.io/islelib-go/).
@@ -217,10 +218,10 @@ Demo
 Motivations
 -----------
 
-[streadway/amqp](https://github.com/streadway/amqp), the official rabbitMQ driver for 
-Go, is an excellent library with a great API but limited scope. By design, It offers a 
-full implementation of the AMQP spec, but comes with very few quality-of-life featured
-beyond that. 
+[streadway/amqp](https://github.com/streadway/amqp), the sanctioned RabbitMQ driver for 
+Go, is an excellent library with a great API but limited scope. It offers a full 
+implementation of the AMQP spec, but comes with very few additional quality-of-life 
+features.
 
 From its documentation:
 
@@ -272,16 +273,16 @@ limitations.
 
 **NOTE:**
 
-This library is not meant to supplant streadway/amqp (Roger, Rabbit is built on
-top of it!), but an extension with quality of life features. Roger, Rabbit would not
-be possible without the amazing groundwork laid down by streadway/amqp.
+Roger, Rabbit is not meant to supplant streadway/amqp (We build on  top of it!), but an 
+extension with quality-of-life features. Roger, Rabbit would not be possible without the 
+amazing groundwork laid down by streadway/amqp.
 
 Goals
 -----
 
 The goals of the Roger, Rabbit package are as follows:
 
-- **Offer a Drop-in Replacement for streadway/amqp**: APIs may be extended (adding
+- **Offer a Drop-in Replacement for streadway/amqp**: API's may be extended (adding
   fields to `amqp.Config` or additional methods to `*amqp.Channel`, for instance) but
   must not break existing code unless absolutely necessary.
 
