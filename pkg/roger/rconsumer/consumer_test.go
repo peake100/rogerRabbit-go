@@ -55,14 +55,6 @@ func (consumer *BasicTestProcessor) SetupChannel(
 		return fmt.Errorf("error declaring Queue: %w", err)
 	}
 
-	_, err = amqpChannel.QueuePurge(
-		consumer.QueueName,
-		false,
-	)
-	if err != nil {
-		return fmt.Errorf("error purging Queue: %w", err)
-	}
-
 	return nil
 }
 
