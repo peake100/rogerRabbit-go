@@ -36,10 +36,10 @@ type Consumer struct {
 	opts Opts
 }
 
-// RegisterProcessor registers a AmqpDeliveryProcessor implementation value. Will panic
+// RegisterProcessor registers a DeliveryProcessor implementation value. Will panic
 // if called after consumer start.
 func (consumer *Consumer) RegisterProcessor(
-	processor AmqpDeliveryProcessor,
+	processor DeliveryProcessor,
 ) error {
 	consumer.handlersLock.Lock()
 	defer consumer.handlersLock.Unlock()
@@ -75,23 +75,9 @@ func (consumer *Consumer) handleDelivery(
 		}
 	}()
 
-	// Create a context for this delivery derived from the consumer context.
 	deliveryCtx, deliveryCancel := context.WithCancel(consumer.ctx)
 	defer deliveryCancel()
-	requeueDelivery, err := handler.HandleDelivery(deliveryCtx, delivery)
-
-	// If we are auto-acking, continue.
-	if args.AutoAck {
-		return
-	}
-
-	// Otherwise ack non-error returns and nack error returns.
-	ack := err == nil
-	if ack {
-		_ = delivery.Ack(false)
-	} else {
-		_ = delivery.Nack(false, requeueDelivery)
-	}
+	_, _ = handler.HandleDelivery(deliveryCtx, delivery)
 }
 
 // runProcessor runs an individual consumer pulling from an amqp.Channel.Consume

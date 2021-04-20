@@ -23,9 +23,9 @@ type AmqpArgs struct {
 	Args amqp.Table
 }
 
-// AmqpDeliveryProcessor is an interface for handling consuming from a route.
-// Implementors of this interface will be registered with a consumer.
-type AmqpDeliveryProcessor interface {
+// DeliveryProcessor is an interface for handling consuming from a route. Implementors of this
+// interface will be registered with a consumer.
+type DeliveryProcessor interface {
 	// AmqpArgs returns the args that amqp.Channel.Consume should be called with.
 	AmqpArgs() AmqpArgs
 
@@ -36,6 +36,9 @@ type AmqpDeliveryProcessor interface {
 	// HandleDelivery will be called once per delivery. Returning a non-nil err will
 	// result in it being logged and the delivery being nacked. If requeue is true, the
 	// nacked delivery will be requeued. If err is nil, requeue is ignored.
+	//
+	// NOTE: if this method panics, the delivery will be nacked regardless of requeue's
+	// value
 	HandleDelivery(ctx context.Context, delivery amqp.Delivery) (requeue bool, err error)
 
 	// CleanupChannel is called at shutdown to allow the route handler to clean up any
@@ -46,15 +49,15 @@ type AmqpDeliveryProcessor interface {
 // deliveryProcessor is a delivery processor with middleware-wrapped handlers. This is
 // what we will actually run in the consumer.
 type deliveryProcessor struct {
-	// AmqpArgs is the result of AmqpDeliveryProcessor.AmqpArgs.
+	// AmqpArgs is the result of DeliveryProcessor.AmqpArgs.
 	AmqpArgs AmqpArgs
-	// SetupChannel is the user-provided AmqpDeliveryProcessor.SetupChannel wrapped in
+	// SetupChannel is the user-provided DeliveryProcessor.SetupChannel wrapped in
 	// middleware.
 	SetupChannel middleware.HandlerSetupChannel
-	// HandleDelivery is the user-provided AmqpDeliveryProcessor.HandleDelivery wrapped
+	// HandleDelivery is the user-provided DeliveryProcessor.HandleDelivery wrapped
 	// in middleware.
 	HandleDelivery middleware.HandlerDelivery
-	// CleanupChannel is the user-provided AmqpDeliveryProcessor.CleanupChannel wrapped
+	// CleanupChannel is the user-provided DeliveryProcessor.CleanupChannel wrapped
 	// in middleware.
 	CleanupChannel middleware.HandlerCleanupChannel
 
@@ -63,8 +66,8 @@ type deliveryProcessor struct {
 	consumeChan <-chan amqp.Delivery
 }
 
-// newDeliveryProcessor creates a new deliveryProcessor from a AmqpDeliveryProcessor and the middlewares in opts.
-func newDeliveryProcessor(coreProcessor AmqpDeliveryProcessor, opts Opts) (deliveryProcessor, error) {
+// newDeliveryProcessor creates a new deliveryProcessor from a DeliveryProcessor and the middlewares in opts.
+func newDeliveryProcessor(coreProcessor DeliveryProcessor, opts Opts) (deliveryProcessor, error) {
 	processor := deliveryProcessor{}
 	processor.AmqpArgs = coreProcessor.AmqpArgs()
 
@@ -87,6 +90,11 @@ func newDeliveryProcessor(coreProcessor AmqpDeliveryProcessor, opts Opts) (deliv
 		processor.SetupChannel = thisMiddleware(processor.SetupChannel)
 	}
 
+	// Register the panic recovery middleware.
+	processor.HandleDelivery = recoverPanicMiddleware(processor.HandleDelivery)
+	ackMiddleware := mewAckNackMiddleware(processor.AmqpArgs.AutoAck)
+	// Register the AckNack middleware.
+	processor.HandleDelivery = ackMiddleware(processor.HandleDelivery)
 	for _, thisMiddleware := range opts.middleware.delivery {
 		processor.HandleDelivery = thisMiddleware(processor.HandleDelivery)
 	}

@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"context"
+	"errors"
+	"github.com/peake100/pears-go/pkg/pears"
 	"github.com/peake100/rogerRabbit-go/pkg/amqp"
 	"github.com/peake100/rogerRabbit-go/pkg/amqp/amqpmiddleware"
 	"github.com/rs/zerolog"
@@ -18,12 +20,6 @@ const DefaultLoggerTypeID ProviderTypeID = "DefaultLogger"
 // ctxWithLogger adds a logger provided by DefaultLogging to a context.
 func ctxWithLogger(ctx context.Context, logger zerolog.Logger) context.Context {
 	return context.WithValue(ctx, DefaultLoggerKey, logger)
-}
-
-// GetDefaultLogger fetched the default logger from ctx.
-func GetDefaultLogger(ctx context.Context) (logger zerolog.Logger, ok bool) {
-	logger, ok = ctx.Value(DefaultLoggerKey).(zerolog.Logger)
-	return logger, ok
 }
 
 // DefaultLogging provides logging middleware for roger.Consumer.
@@ -70,33 +66,47 @@ func (middleware DefaultLogging) Delivery(next HandlerDelivery) HandlerDelivery 
 
 		start := time.Now().UTC()
 		requeue, err = next(ctx, delivery)
-
-		var event *zerolog.Event
-		var eventLevel zerolog.Level
-		if err != nil {
-			event = logger.Err(err)
-			eventLevel = zerolog.ErrorLevel
-		} else {
-			event = logger.WithLevel(middleware.SuccessLogLevel)
-			eventLevel = middleware.SuccessLogLevel
-		}
-
-		if !event.Enabled() {
-			return requeue, err
-		}
-
-		event.TimeDiff("DURATION", time.Now().UTC(), start).Bool("REQUEUE", requeue)
-		if middleware.LogDeliveryLevel <= eventLevel {
-			event.Interface("DELIVERY", delivery)
-		}
-
-		if err != nil {
-			event.Msg("delivery processed")
-		} else {
-			event.Send()
-		}
+		middleware.logDeliveryResult(delivery, requeue, err, start, logger)
 
 		return requeue, err
+	}
+}
+
+// logDeliveryResult logs the result of a delivery handler to logger.
+func (middleware DefaultLogging) logDeliveryResult(
+	delivery amqp.Delivery,
+	requeue bool,
+	err error,
+	start time.Time,
+	logger zerolog.Logger,
+) {
+	var event *zerolog.Event
+	var eventLevel zerolog.Level
+	if err != nil {
+		event = logger.Err(err)
+		var errPanic pears.PanicError
+		if errors.As(err, &errPanic) {
+			event.Str("STACKTRACE", errPanic.StackTrace)
+		}
+		eventLevel = zerolog.ErrorLevel
+	} else {
+		event = logger.WithLevel(middleware.SuccessLogLevel)
+		eventLevel = middleware.SuccessLogLevel
+	}
+
+	if !event.Enabled() {
+		return
+	}
+
+	event.TimeDiff("DURATION", time.Now().UTC(), start).Bool("REQUEUE", requeue)
+	if middleware.LogDeliveryLevel <= eventLevel {
+		event.Interface("DELIVERY", delivery)
+	}
+
+	if err != nil {
+		event.Msg("delivery processed")
+	} else {
+		event.Send()
 	}
 }
 
