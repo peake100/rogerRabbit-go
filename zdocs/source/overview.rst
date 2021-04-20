@@ -35,15 +35,15 @@ Without a supplied way to handle reconnections, `bespoke <https://ninefinity.org
 `abound <https://www.ribice.ba/golang-rabbitmq-client/>`_.
 
 Most of these solutions are overly-fitted to a specific problem (consumer vs producer or
-involve domain-specific logic), that is prone to data races (can you spot them in the
-first link?), cumbersome to inject into a production code (do we abort the business
-logic on an error or try to recover in-place?), and bugs (each solution has its own
+involve domain-specific logic), are prone to data races (can you spot them in the
+first link?), are cumbersome to inject into a production code (do we abort the business
+logic on an error or try to recover in-place?), and have bugs (each solution has its own
 redial bugs rather than finding them in a single lib where fixes can benefit everyone
 and community code coverage is high).
 
-Nome of this is meant to disparage the above solutions, they likely work great in the
-code they were created for, but they point to a need that is not being filled by the
-official driver. The nature of the default `*Channel` API encourages solutions that
+Nome of this is meant to disparage the above solutions -- they likely work great in the
+code they were created for -- but they point to a need that is not being filled by the
+sanctioned driver. The nature of the default `*Channel` API encourages solutions that
 are ill-suited to stateless handlers OR require you to handle retries every place you
 must interact with the broker. Such implementation details can be annoying when writing
 higher-level business logic and can lead to either unnecessary error returns, bespoke
@@ -53,7 +53,8 @@ an AMQP broker.
 Roger, Rabbit is inspired by `aio-pika's <https://aio-pika.readthedocs.io/en/latest/index.html>`_
 `robust connections and channels <https://aio-pika.readthedocs.io/en/latest/apidoc.html#aio_pika.connect_robust>`_,
 which abstract away connection management with an identical API to their non-robust
-connection and channel API's.
+counterparts, allowing robust AMQP broker interactions with minimal fuss and very few
+limitations.
 
 .. note::
 
@@ -67,12 +68,12 @@ Goals
 The goals of the Roger, Rabbit package are as follows:
 
 - **Offer a Drop-in Replacement for streadway/amqp**: APIs may be extended (adding
-  fields to `amqp.Config` or additional methods to `*amqp.Channel`, for instance) but
+  fields to ``amqp.Config`` or additional methods to ``*amqp.Channel``, for instance) but
   must not break existing code unless absolutely necessary.
 
 - **Add as few Additional Error Paths as Possible**: Errors may be *extended* with
   additional information concerning disconnect scenarios, but new error type returns
-  from `*Connection` or `*amqp.Channel` should be an absolute last resort.
+  from ``*Connection`` or ``*amqp.Channel`` should be an absolute last resort.
 
 - **Be Highly Extensible**: Roger, Rabbit seeks to offer a high degree of extensibility
   via features like middleware, in an effort to reduce the balkanization of amqp client
@@ -102,7 +103,7 @@ development and flexibility.
 Still, if absolute peak throughput is critical to an application, a less general and
 more tailored approach may be warranted.
 
-Benchmarks can be found in `./amqp/benchmark_test.go`.
+Benchmarks can be found in ``./amqp/benchmark_test.go``.
 
 .. table:: Machine: Intel(R) Core(TM) i9-8950HK CPU @ 2.90GHz || Calculated by taking the fastest of four runs.
 
