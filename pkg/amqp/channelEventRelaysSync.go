@@ -58,6 +58,12 @@ func newSharedSync(transportCtx context.Context) sharedRelaySync {
 type managerRelaySync struct {
 	shared     []sharedRelaySync
 	sharedLock *sync.Mutex
+
+	// legCompleteWaited tracks whether we have waited for the leg to complete already.
+	// WaitOnLegComplete is called every time a reconnect *attempt* occurs, so we need
+	// to track whether we have to wait again, or if we've waited once already since
+	// the last disconnect.
+	legCompleteWaited bool
 }
 
 // AddRelay adds a relay to the manager.
@@ -71,6 +77,7 @@ func (managerSync *managerRelaySync) AddRelay(shared sharedRelaySync) {
 func (managerSync *managerRelaySync) ReleaseRelaysForLeg(newChan *streadway.Channel) {
 	managerSync.sharedLock.Lock()
 	defer managerSync.sharedLock.Unlock()
+	managerSync.legCompleteWaited = false
 
 	timer := time.NewTimer(30 * time.Second)
 	defer timer.Stop()
@@ -132,6 +139,12 @@ func (managerSync *managerRelaySync) WaitOnLegComplete() {
 	managerSync.sharedLock.Lock()
 	defer managerSync.sharedLock.Unlock()
 
+	// If we've already waited on this and have not yet started the setup of the relays,
+	// return right away. We don't need to wait again.
+	if managerSync.legCompleteWaited {
+		return
+	}
+
 	timer := time.NewTimer(30 * time.Second)
 	defer timer.Stop()
 
@@ -151,6 +164,7 @@ func (managerSync *managerRelaySync) WaitOnLegComplete() {
 	}
 
 	managerSync.shared = signaled
+	managerSync.legCompleteWaited = true
 }
 
 // relaySync exposes methods for single eventRelay runner to block on / signal for it's
