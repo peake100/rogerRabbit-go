@@ -41,6 +41,19 @@ enhancements:
 Getting Started
 ---------------
 
+This package assumes you are familiar with [RabbitMQ](https://www.rabbitmq.com/) and
+the [streadway/amqp](https://github.com/streadway/amqp) package. It does not offer a 
+tutorial of basic functionality, instead highlighting what sets it apart from the
+officially sanctioned driver.
+
+The [official tutorials](https://www.rabbitmq.com/getstarted.html) use 
+[streadway/amqp](https://github.com/streadway/amqp) in their Go walkthroughs. Users
+are encouraged to start there. You can still follow along using this package by
+replacing ``"github.com/streadway/amqp"`` import statements to 
+``"github.com/peake100/rogerRabbit-go/pkg/amqp"``.
+
+If you find any examples that do NOT work after such a replacement, please open a PR!
+
 For quickstart and guides:
 [read the docs](https://peake100.github.io/rogerRabbit-go/).
 
@@ -217,6 +230,9 @@ Demo
 
 Motivations
 -----------
+
+AMQP is a messaging protocol most commonly used by 
+[RabbitMQ](https://www.rabbitmq.com/).
 
 [streadway/amqp](https://github.com/streadway/amqp), the sanctioned RabbitMQ driver for 
 Go, is an excellent library with a great API but limited scope. It offers a full 

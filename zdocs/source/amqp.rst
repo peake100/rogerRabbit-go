@@ -32,8 +32,13 @@ covered by these docs.
 
 The `official rabbitMQ documentation <https://www.rabbitmq.com/getstarted.html>`_ has
 an excellent set of tutorials using the streadway library. Simply replacing the import
-statements of the official examples to ``"github.com/peake100/rogerRabbit-go/amqp"``
-will result in working code that handles unexpected broker disconnects.
+statements of the official examples to ``"github.com/peake100/rogerRabbit-go/pkg/amqp"``
+will allow you to follow along as normal using this package.
+
+.. note::
+
+    If you find any examples that do NOT work after such a replacement, please open a
+    PR!
 
 For instance, the hello world receiver example would be simply changed from this:
 
@@ -105,7 +110,7 @@ To this:
     "log"
 
     // ONLY THIS CHANGES
-    "github.com/peake100/rogerRabbit-go/amqp"
+    "github.com/peake100/rogerRabbit-go/pkg/amqp"
   )
 
   func failOnError(err error, msg string) {
