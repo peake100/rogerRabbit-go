@@ -49,7 +49,7 @@ officially sanctioned driver.
 The [official tutorials](https://www.rabbitmq.com/getstarted.html) use 
 [streadway/amqp](https://github.com/streadway/amqp) in their Go walkthroughs. Users
 are encouraged to start there. You can still follow along using this package by
-replacing ``"github.com/streadway/amqp"`` import statements to 
+changing ``"github.com/streadway/amqp"`` import statements to 
 ``"github.com/peake100/rogerRabbit-go/pkg/amqp"``.
 
 If you find any examples that do NOT work after such a replacement, please open a PR!
