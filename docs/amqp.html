@@ -1,0 +1,1331 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>AMQP Package &mdash; rogerRabbit 0.4.17 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Roger Package" href="roger.html" />
+    <link rel="prev" title="Project" href="overview.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> rogerRabbit
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.4.17
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Project</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">AMQP Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#when-to-use-this-library">When To Use This Library</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#unsupported-features">Unsupported Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#robust-features">Robust Features</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#connection-recovery">Connection Recovery</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#topology-recreation">Topology Recreation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#delivery-tag-continuity">Delivery Tag Continuity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#delivery-tag-orphans">Delivery Tag Orphans</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#publishing-tag-continuity">Publishing Tag Continuity</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#channel-middleware">Channel Middleware</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#registering-middleware">Registering Middleware</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#middleware-providers">Middleware Providers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-methods">Test() Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testify-suite">Testify Suite</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#architecture">Architecture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#streadway-transport">Streadway Transport</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#robust-transport">Robust Transport</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#method-handlers">Method Handlers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#middleware">Middleware</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transport-lock">Transport Lock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transport-manager">Transport Manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#redial-routine">Redial Routine</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#retry-on-disconnected">Retry On Disconnected</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#event-relays">Event Relays</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="roger.html">Roger Package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">rogerRabbit</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>AMQP Package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/amqp.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="amqp-package">
+<h1>AMQP Package<a class="headerlink" href="#amqp-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>The amqp package is a wrapper and drop-in replacement for <a class="reference external" href="https://github.com/streadway/amqp">streadway/amqp</a>, and is
+designed to enable automatic redialing to any code using the streadway package with no
+changes.</p>
+<p>To begin using rogerRabbit/amqp, simply change your imports from:</p>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="s">&quot;github.com/streadway/amqp&quot;</span>
+</pre></div>
+</div>
+<p>To:</p>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="s">&quot;github.com/peake100/rogerRabbit-go/amqp&quot;</span>
+</pre></div>
+</div>
+<p>Under the hood, this library is a wrapper around <a class="reference external" href="https://github.com/streadway/amqp">streadway/amqp</a> and would not be
+possible without the amazing development team behind it.</p>
+<p>Roger, Rabbit seeks to expand on the work done by <a class="reference external" href="https://github.com/streadway/amqp">streadway/amqp</a>, not replace it.</p>
+<div class="section" id="basic-usage">
+<h3>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h3>
+<p>As this package is a drop-in replacement for <a class="reference external" href="https://github.com/streadway/amqp">streadway/amqp</a>, basic usage will not be
+covered by these docs.</p>
+<p>The <a class="reference external" href="https://www.rabbitmq.com/getstarted.html">official rabbitMQ documentation</a> has
+an excellent set of tutorials using the streadway library. Simply replacing the import
+statements of the official examples to <code class="docutils literal notranslate"><span class="pre">&quot;github.com/peake100/rogerRabbit-go/pkg/amqp&quot;</span></code>
+will allow you to follow along as normal using this package.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you find any examples that do NOT work after such a replacement, please open a
+PR!</p>
+</div>
+<p>For instance, the hello world receiver example would be simply changed from this:</p>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+  <span class="s">&quot;log&quot;</span>
+
+  <span class="s">&quot;github.com/streadway/amqp&quot;</span>
+<span class="p">)</span>
+
+<span class="kd">func</span> <span class="nx">failOnError</span><span class="p">(</span><span class="nx">err</span> <span class="kt">error</span><span class="p">,</span> <span class="nx">msg</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">&quot;%s: %s&quot;</span><span class="p">,</span> <span class="nx">msg</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">conn</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">amqp</span><span class="p">.</span><span class="nx">Dial</span><span class="p">(</span><span class="s">&quot;amqp://guest:guest@localhost:5672/&quot;</span><span class="p">)</span>
+  <span class="nx">failOnError</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&quot;Failed to connect to RabbitMQ&quot;</span><span class="p">)</span>
+  <span class="k">defer</span> <span class="nx">conn</span><span class="p">.</span><span class="nx">Close</span><span class="p">()</span>
+
+  <span class="nx">ch</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">conn</span><span class="p">.</span><span class="nx">Channel</span><span class="p">()</span>
+  <span class="nx">failOnError</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&quot;Failed to open a channel&quot;</span><span class="p">)</span>
+  <span class="k">defer</span> <span class="nx">ch</span><span class="p">.</span><span class="nx">Close</span><span class="p">()</span>
+
+  <span class="nx">q</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ch</span><span class="p">.</span><span class="nx">QueueDeclare</span><span class="p">(</span>
+    <span class="s">&quot;hello&quot;</span><span class="p">,</span> <span class="c1">// name</span>
+    <span class="kc">false</span><span class="p">,</span>   <span class="c1">// durable</span>
+    <span class="kc">false</span><span class="p">,</span>   <span class="c1">// delete when unused</span>
+    <span class="kc">false</span><span class="p">,</span>   <span class="c1">// exclusive</span>
+    <span class="kc">false</span><span class="p">,</span>   <span class="c1">// no-wait</span>
+    <span class="kc">nil</span><span class="p">,</span>     <span class="c1">// arguments</span>
+  <span class="p">)</span>
+  <span class="nx">failOnError</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&quot;Failed to declare a queue&quot;</span><span class="p">)</span>
+
+  <span class="nx">msgs</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ch</span><span class="p">.</span><span class="nx">Consume</span><span class="p">(</span>
+    <span class="nx">q</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="c1">// queue</span>
+    <span class="s">&quot;&quot;</span><span class="p">,</span>     <span class="c1">// consumer</span>
+    <span class="kc">true</span><span class="p">,</span>   <span class="c1">// auto-ack</span>
+    <span class="kc">false</span><span class="p">,</span>  <span class="c1">// exclusive</span>
+    <span class="kc">false</span><span class="p">,</span>  <span class="c1">// no-local</span>
+    <span class="kc">false</span><span class="p">,</span>  <span class="c1">// no-wait</span>
+    <span class="kc">nil</span><span class="p">,</span>    <span class="c1">// args</span>
+  <span class="p">)</span>
+  <span class="nx">failOnError</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&quot;Failed to register a consumer&quot;</span><span class="p">)</span>
+
+  <span class="nx">forever</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kt">bool</span><span class="p">)</span>
+
+  <span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="nx">d</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">msgs</span> <span class="p">{</span>
+      <span class="nx">log</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">&quot;Received a message: %s&quot;</span><span class="p">,</span> <span class="nx">d</span><span class="p">.</span><span class="nx">Body</span><span class="p">)</span>
+    <span class="p">}</span>
+  <span class="p">}()</span>
+
+  <span class="nx">log</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">&quot; [*] Waiting for messages. To exit press CTRL+C&quot;</span><span class="p">)</span>
+  <span class="o">&lt;-</span><span class="nx">forever</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>To this:</p>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+  <span class="s">&quot;log&quot;</span>
+
+  <span class="c1">// ONLY THIS CHANGES</span>
+  <span class="s">&quot;github.com/peake100/rogerRabbit-go/pkg/amqp&quot;</span>
+<span class="p">)</span>
+
+<span class="kd">func</span> <span class="nx">failOnError</span><span class="p">(</span><span class="nx">err</span> <span class="kt">error</span><span class="p">,</span> <span class="nx">msg</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nx">log</span><span class="p">.</span><span class="nx">Fatalf</span><span class="p">(</span><span class="s">&quot;%s: %s&quot;</span><span class="p">,</span> <span class="nx">msg</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">conn</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">amqp</span><span class="p">.</span><span class="nx">Dial</span><span class="p">(</span><span class="s">&quot;amqp://guest:guest@localhost:5672/&quot;</span><span class="p">)</span>
+  <span class="nx">failOnError</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&quot;Failed to connect to RabbitMQ&quot;</span><span class="p">)</span>
+  <span class="k">defer</span> <span class="nx">conn</span><span class="p">.</span><span class="nx">Close</span><span class="p">()</span>
+
+  <span class="nx">ch</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">conn</span><span class="p">.</span><span class="nx">Channel</span><span class="p">()</span>
+  <span class="nx">failOnError</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&quot;Failed to open a channel&quot;</span><span class="p">)</span>
+  <span class="k">defer</span> <span class="nx">ch</span><span class="p">.</span><span class="nx">Close</span><span class="p">()</span>
+
+  <span class="nx">q</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ch</span><span class="p">.</span><span class="nx">QueueDeclare</span><span class="p">(</span>
+    <span class="s">&quot;hello&quot;</span><span class="p">,</span> <span class="c1">// name</span>
+    <span class="kc">false</span><span class="p">,</span>   <span class="c1">// durable</span>
+    <span class="kc">false</span><span class="p">,</span>   <span class="c1">// delete when unused</span>
+    <span class="kc">false</span><span class="p">,</span>   <span class="c1">// exclusive</span>
+    <span class="kc">false</span><span class="p">,</span>   <span class="c1">// no-wait</span>
+    <span class="kc">nil</span><span class="p">,</span>     <span class="c1">// arguments</span>
+  <span class="p">)</span>
+  <span class="nx">failOnError</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&quot;Failed to declare a queue&quot;</span><span class="p">)</span>
+
+  <span class="nx">msgs</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ch</span><span class="p">.</span><span class="nx">Consume</span><span class="p">(</span>
+    <span class="nx">q</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="c1">// queue</span>
+    <span class="s">&quot;&quot;</span><span class="p">,</span>     <span class="c1">// consumer</span>
+    <span class="kc">true</span><span class="p">,</span>   <span class="c1">// auto-ack</span>
+    <span class="kc">false</span><span class="p">,</span>  <span class="c1">// exclusive</span>
+    <span class="kc">false</span><span class="p">,</span>  <span class="c1">// no-local</span>
+    <span class="kc">false</span><span class="p">,</span>  <span class="c1">// no-wait</span>
+    <span class="kc">nil</span><span class="p">,</span>    <span class="c1">// args</span>
+  <span class="p">)</span>
+  <span class="nx">failOnError</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&quot;Failed to register a consumer&quot;</span><span class="p">)</span>
+
+  <span class="nx">forever</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kt">bool</span><span class="p">)</span>
+
+  <span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="nx">d</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">msgs</span> <span class="p">{</span>
+      <span class="nx">log</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">&quot;Received a message: %s&quot;</span><span class="p">,</span> <span class="nx">d</span><span class="p">.</span><span class="nx">Body</span><span class="p">)</span>
+    <span class="p">}</span>
+  <span class="p">}()</span>
+
+  <span class="nx">log</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">&quot; [*] Waiting for messages. To exit press CTRL+C&quot;</span><span class="p">)</span>
+  <span class="o">&lt;-</span><span class="nx">forever</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This documentation will focus on the differences from – and expansion upon – the
+streadway API, rather than retreading a primer on how to work with the basic API.</p>
+<p>It is suggested that users new to amqp who have not used <a class="reference external" href="https://github.com/streadway/amqp">streadway/amqp</a> start with
+the basic RabbitMQ tutorials before continuing this documentation.</p>
+</div>
+<div class="section" id="when-to-use-this-library">
+<h3>When To Use This Library<a class="headerlink" href="#when-to-use-this-library" title="Permalink to this headline">¶</a></h3>
+<p>Roger, Rabbit is designed to remove all the mental overhead involved with managing
+unexpected broker disconnects, it features systems to automatically recreate
+client / server topologies on reconnect, ensure consistent Delivery and Publish tags
+over reconnection events, and more.</p>
+<p>But there are some assumptions that need to be made or such features. In general, this
+library should be used when:</p>
+<ul class="simple">
+<li><p><strong>Basic Client/Server Topology</strong>: All calls on a channel to QueueDeclare, QueueBind,
+ExchangeDeclare and ExchangeUnbind will be re-made every time a channel drops it’s
+connection and has to reconnect. In general, if you are using complex topology where
+Queues and Exchanges are being routinely shifted, deleted, and altered this library’s
+behavior may result in the re-declaration of unwanted Queues and Exchanges.</p></li>
+<li><p><strong>Orphaned Publications Are Nacks</strong>: Failed in-flight Publications on Channels in
+confirmation mode will be exposed to the end user as a Nacked publication. There is
+an additional extension of the streadway API to flag Orphaned publications, but such
+handling will require code tweaks and not be a drop-in replacement.</p></li>
+<li><p><strong>Delivery Acknowledgements do not Mix Per-Message and Multiple</strong>: Roger, Rabbit will
+detect orphaned acknowledgements and return an error when orphans occur (the broker is
+disconnected before a delivery is acknowledged), but mixing Ack with multiple=true and
+multiple=false may confuse the library, and is currently not supported by Roger,
+Rabbit.</p></li>
+</ul>
+</div>
+<div class="section" id="unsupported-features">
+<h3>Unsupported Features<a class="headerlink" href="#unsupported-features" title="Permalink to this headline">¶</a></h3>
+<p>Roger, Rabbit strives to be a complete, drop-in replacement for <a class="reference external" href="https://github.com/streadway/amqp">streadway/amqp</a>, but
+is still under construction. The following features have yet to be implemented:</p>
+<ul class="simple">
+<li><p>Transactions: Calling Channel.Tx(), Channel.TxCommit() and Channel.TxRollback() will
+result in a panic. Transactions are an interesting problem to solve for with robust
+channels and draft PRs for how to handle them are welcome!</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="robust-features">
+<h2>Robust Features<a class="headerlink" href="#robust-features" title="Permalink to this headline">¶</a></h2>
+<p>In this section, we will examine features unique to Roger, Rabbit.</p>
+<div class="section" id="connection-recovery">
+<h3>Connection Recovery<a class="headerlink" href="#connection-recovery" title="Permalink to this headline">¶</a></h3>
+<p>Both the <code class="docutils literal notranslate"><span class="pre">Connection</span></code> and <code class="docutils literal notranslate"><span class="pre">Channel</span></code> types are robust transport mirrors of the streadway
+types by the same names, and will automatically re-connect when a connection is lost:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Get</span> <span class="n">a</span> <span class="n">new</span> <span class="n">connection</span> <span class="n">to</span> <span class="n">our</span> <span class="n">test</span> <span class="n">broker</span><span class="o">.</span>
+<span class="n">connection</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">amqp</span><span class="o">.</span><span class="n">Dial</span><span class="p">(</span><span class="n">amqpTest</span><span class="o">.</span><span class="n">TestDialAddress</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+  <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">Get</span> <span class="n">a</span> <span class="n">new</span> <span class="n">channel</span> <span class="kn">from</span> <span class="nn">our</span> <span class="n">robust</span> <span class="n">connection</span><span class="o">.</span>
+<span class="n">channel</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">connection</span><span class="o">.</span><span class="n">Channel</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+  <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">We</span> <span class="n">can</span> <span class="n">use</span> <span class="n">the</span> <span class="n">test</span> <span class="n">method</span> <span class="n">to</span> <span class="k">return</span> <span class="n">an</span> <span class="n">testing</span> <span class="nb">object</span> <span class="k">with</span> <span class="n">some</span> <span class="n">additional</span>
+<span class="o">//</span> <span class="n">methods</span><span class="o">.</span> <span class="n">ForceReconnect</span> <span class="n">force</span><span class="o">-</span><span class="n">closes</span> <span class="n">the</span> <span class="n">underlying</span> <span class="n">transport</span><span class="p">,</span> <span class="n">causing</span> <span class="n">the</span>
+<span class="o">//</span> <span class="n">robust</span> <span class="n">connection</span> <span class="n">to</span> <span class="n">reconnect</span><span class="o">.</span>
+<span class="o">//</span>
+<span class="o">//</span> <span class="n">We</span><span class="s1">&#39;ll use a dummy *testing.T object here. These methods are designed for tests</span>
+<span class="o">//</span> <span class="n">only</span> <span class="ow">and</span> <span class="n">should</span> <span class="ow">not</span> <span class="n">be</span> <span class="n">used</span> <span class="ow">in</span> <span class="n">production</span> <span class="n">code</span><span class="o">.</span>
+<span class="n">channel</span><span class="o">.</span><span class="n">Test</span><span class="p">(</span><span class="n">new</span><span class="p">(</span><span class="n">testing</span><span class="o">.</span><span class="n">T</span><span class="p">))</span><span class="o">.</span><span class="n">ForceReconnect</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">Background</span><span class="p">())</span>
+
+<span class="o">//</span> <span class="n">We</span> <span class="n">can</span> <span class="n">see</span> <span class="n">here</span> <span class="n">our</span> <span class="n">channel</span> <span class="ow">is</span> <span class="n">still</span> <span class="nb">open</span><span class="o">.</span>
+<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="s2">&quot;IS CLOSED:&quot;</span><span class="p">,</span> <span class="n">channel</span><span class="o">.</span><span class="n">IsClosed</span><span class="p">())</span>
+
+<span class="o">//</span> <span class="n">We</span> <span class="n">can</span> <span class="n">even</span> <span class="n">declare</span> <span class="n">a</span> <span class="n">queue</span> <span class="n">on</span> <span class="n">it</span>
+<span class="n">queue</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">channel</span><span class="o">.</span><span class="n">QueueDeclare</span><span class="p">(</span>
+  <span class="s2">&quot;example_channel_reconnect&quot;</span><span class="p">,</span> <span class="o">//</span> <span class="n">name</span>
+  <span class="n">false</span><span class="p">,</span> <span class="o">//</span> <span class="n">durable</span>
+  <span class="n">true</span><span class="p">,</span> <span class="o">//</span> <span class="n">autoDelete</span>
+  <span class="n">false</span><span class="p">,</span> <span class="o">//</span> <span class="n">exclusive</span>
+  <span class="n">false</span><span class="p">,</span> <span class="o">//</span> <span class="n">noWait</span>
+  <span class="n">nil</span><span class="p">,</span> <span class="o">//</span> <span class="n">args</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+  <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">Here</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">result</span>
+<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s2">&quot;QUEUE    : %+v</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">queue</span><span class="p">)</span>
+
+<span class="o">//</span> <span class="n">Explicitly</span> <span class="n">close</span> <span class="n">the</span> <span class="n">connection</span><span class="o">.</span> <span class="n">This</span> <span class="n">will</span> <span class="n">also</span> <span class="n">close</span> <span class="nb">all</span> <span class="n">child</span> <span class="n">channels</span><span class="o">.</span>
+<span class="n">err</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">Close</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+  <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">Now</span> <span class="n">that</span> <span class="n">we</span> <span class="n">have</span> <span class="n">explicitly</span> <span class="n">closed</span> <span class="n">the</span> <span class="n">connection</span><span class="p">,</span> <span class="n">the</span> <span class="n">channel</span> <span class="n">will</span> <span class="n">be</span> <span class="n">closed</span><span class="o">.</span>
+<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="s2">&quot;IS CLOSED:&quot;</span><span class="p">,</span> <span class="n">channel</span><span class="o">.</span><span class="n">IsClosed</span><span class="p">())</span>
+
+<span class="o">//</span> <span class="n">Output</span><span class="p">:</span>
+<span class="o">//</span> <span class="n">IS</span> <span class="n">CLOSED</span><span class="p">:</span> <span class="n">false</span>
+<span class="o">//</span> <span class="n">QUEUE</span>    <span class="p">:</span> <span class="p">{</span><span class="n">Name</span><span class="p">:</span><span class="n">example_channel_reconnect</span> <span class="n">Messages</span><span class="p">:</span><span class="mi">0</span> <span class="n">Consumers</span><span class="p">:</span><span class="mi">0</span><span class="p">}</span>
+<span class="o">//</span> <span class="n">IS</span> <span class="n">CLOSED</span><span class="p">:</span> <span class="n">true</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="topology-recreation">
+<h3>Topology Recreation<a class="headerlink" href="#topology-recreation" title="Permalink to this headline">¶</a></h3>
+<p>Roger, Rabbit’s <code class="docutils literal notranslate"><span class="pre">Channel</span></code> type remembers all called to <code class="docutils literal notranslate"><span class="pre">Channel.QueueDeclare()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Channel.QueueBind()</span></code>, <code class="docutils literal notranslate"><span class="pre">Channel.ExchangeDeclare()</span></code> and <code class="docutils literal notranslate"><span class="pre">Channel.ExchangeBind()</span></code>, and
+replays those calls on a reconnection event:</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Calling <code class="docutils literal notranslate"><span class="pre">Channel.QueueDelete()</span></code>, <code class="docutils literal notranslate"><span class="pre">Channel.QueueUnbind()</span></code>, <code class="docutils literal notranslate"><span class="pre">Channel.ExchangeDelete</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">Channel.ExchangeUnbind()</span></code> will remove relevant robust queues and bindings from
+the internally tracked lists. Queues invoked in these methods will NOT be recreated
+on a reconnection event.</p>
+</div>
+</div>
+<div class="section" id="delivery-tag-continuity">
+<h3>Delivery Tag Continuity<a class="headerlink" href="#delivery-tag-continuity" title="Permalink to this headline">¶</a></h3>
+<p>Delivery tags remain continuous, even across unexpected disconnects. Roger, rabbit takes
+care of all the internal logic of lining up the caller-facing delivery tag with the
+actual delivery tag relative to the current underlying channel:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Get</span> <span class="n">a</span> <span class="n">new</span> <span class="n">connection</span> <span class="n">to</span> <span class="n">our</span> <span class="n">test</span> <span class="n">broker</span><span class="o">.</span>
+<span class="n">connection</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">amqp</span><span class="o">.</span><span class="n">DialCtx</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">Background</span><span class="p">(),</span> <span class="n">amqpTest</span><span class="o">.</span><span class="n">TestDialAddress</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+  <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">Get</span> <span class="n">a</span> <span class="n">new</span> <span class="n">channel</span> <span class="kn">from</span> <span class="nn">our</span> <span class="n">robust</span> <span class="n">connection</span> <span class="k">for</span> <span class="n">consuming</span><span class="o">.</span>
+<span class="n">consumeChannel</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">connection</span><span class="o">.</span><span class="n">Channel</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+  <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">Get</span> <span class="n">a</span> <span class="n">new</span> <span class="n">channel</span> <span class="kn">from</span> <span class="nn">our</span> <span class="n">robust</span> <span class="n">connection</span> <span class="k">for</span> <span class="n">publishing</span><span class="o">.</span>
+<span class="n">publishChannel</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">connection</span><span class="o">.</span><span class="n">Channel</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+  <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n">queueName</span> <span class="o">:=</span> <span class="s2">&quot;example_delivery_tag_continuity&quot;</span>
+
+<span class="o">//</span> <span class="n">Declare</span> <span class="n">the</span> <span class="n">queue</span> <span class="n">we</span> <span class="n">are</span> <span class="n">going</span> <span class="n">to</span> <span class="n">use</span><span class="o">.</span>
+<span class="n">queue</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">consumeChannel</span><span class="o">.</span><span class="n">QueueDeclare</span><span class="p">(</span>
+  <span class="n">queueName</span><span class="p">,</span> <span class="o">//</span> <span class="n">name</span>
+  <span class="n">false</span><span class="p">,</span> <span class="o">//</span> <span class="n">durable</span>
+  <span class="n">false</span><span class="p">,</span> <span class="o">//</span> <span class="n">autoDelete</span>
+  <span class="n">false</span><span class="p">,</span> <span class="o">//</span> <span class="n">exclusive</span>
+  <span class="n">false</span><span class="p">,</span> <span class="o">//</span> <span class="n">noWait</span>
+  <span class="n">nil</span><span class="p">,</span> <span class="o">//</span> <span class="n">args</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+  <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">Clean</span> <span class="n">up</span> <span class="n">the</span> <span class="n">queue</span> <span class="n">on</span> <span class="n">exit</span><span class="p">,</span>
+<span class="n">defer</span> <span class="n">consumeChannel</span><span class="o">.</span><span class="n">QueueDelete</span><span class="p">(</span>
+  <span class="n">queue</span><span class="o">.</span><span class="n">Name</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span> <span class="n">false</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="o">//</span> <span class="n">Set</span> <span class="n">the</span> <span class="n">prefetch</span> <span class="n">count</span> <span class="n">to</span> <span class="mi">1</span><span class="p">,</span> <span class="n">that</span> <span class="n">way</span> <span class="n">we</span> <span class="n">are</span> <span class="n">less</span> <span class="n">likely</span> <span class="n">to</span> <span class="n">lose</span> <span class="n">a</span> <span class="n">message</span>
+<span class="o">//</span> <span class="n">that</span> <span class="ow">in</span> <span class="ow">in</span><span class="o">-</span><span class="n">flight</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">broker</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">example</span><span class="o">.</span>
+<span class="n">err</span> <span class="o">=</span> <span class="n">consumeChannel</span><span class="o">.</span><span class="n">Qos</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">false</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+  <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">Start</span> <span class="n">consuming</span> <span class="n">the</span> <span class="n">channel</span>
+<span class="n">consume</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">consumeChannel</span><span class="o">.</span><span class="n">Consume</span><span class="p">(</span>
+  <span class="n">queue</span><span class="o">.</span><span class="n">Name</span><span class="p">,</span>
+  <span class="s2">&quot;example consumer&quot;</span><span class="p">,</span> <span class="o">//</span> <span class="n">consumer</span> <span class="n">name</span>
+  <span class="n">false</span><span class="p">,</span>              <span class="o">//</span> <span class="n">autoAck</span>
+  <span class="n">false</span><span class="p">,</span>              <span class="o">//</span> <span class="n">exclusive</span>
+  <span class="n">false</span><span class="p">,</span>              <span class="o">//</span> <span class="n">no</span> <span class="n">local</span>
+  <span class="n">false</span><span class="p">,</span>              <span class="o">//</span> <span class="n">no</span> <span class="n">wait</span>
+  <span class="n">nil</span><span class="p">,</span>                <span class="o">//</span> <span class="n">args</span>
+<span class="p">)</span>
+
+<span class="o">//</span> <span class="n">We</span><span class="s1">&#39;ll close this channel when the consumer is exhausted</span>
+<span class="n">consumeComplete</span> <span class="o">:=</span> <span class="n">new</span><span class="p">(</span><span class="n">sync</span><span class="o">.</span><span class="n">WaitGroup</span><span class="p">)</span>
+<span class="n">consumerClosed</span> <span class="o">:=</span> <span class="n">make</span><span class="p">(</span><span class="n">chan</span> <span class="n">struct</span><span class="p">{})</span>
+
+<span class="o">//</span> <span class="n">Launch</span> <span class="n">a</span> <span class="n">consumer</span>
+<span class="n">go</span> <span class="n">func</span><span class="p">()</span> <span class="p">{</span>
+  <span class="o">//</span> <span class="n">Close</span> <span class="n">the</span> <span class="n">consumeComplete</span> <span class="n">to</span> <span class="n">signal</span> <span class="n">exit</span>
+  <span class="n">defer</span> <span class="n">close</span><span class="p">(</span><span class="n">consumerClosed</span><span class="p">)</span>
+
+  <span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="s2">&quot;STARTING CONSUMER&quot;</span><span class="p">)</span>
+
+  <span class="o">//</span> <span class="n">Range</span> <span class="n">over</span> <span class="n">the</span> <span class="n">consume</span> <span class="n">channel</span>
+  <span class="k">for</span> <span class="n">delivery</span> <span class="o">:=</span> <span class="nb">range</span> <span class="n">consume</span> <span class="p">{</span>
+                      <span class="o">//</span> <span class="n">Ack</span> <span class="n">the</span> <span class="n">delivery</span><span class="o">.</span>
+                      <span class="n">err</span> <span class="o">=</span> <span class="n">delivery</span><span class="o">.</span><span class="n">Ack</span><span class="p">(</span><span class="n">false</span><span class="p">)</span>
+                      <span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+                              <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+                      <span class="p">}</span>
+
+    <span class="o">//</span> <span class="n">Force</span><span class="o">-</span><span class="n">reconnect</span> <span class="n">the</span> <span class="n">channel</span> <span class="n">after</span> <span class="n">each</span> <span class="n">delivery</span><span class="o">.</span>
+    <span class="n">consumeChannel</span><span class="o">.</span><span class="n">Test</span><span class="p">(</span><span class="n">new</span><span class="p">(</span><span class="n">testing</span><span class="o">.</span><span class="n">T</span><span class="p">))</span><span class="o">.</span><span class="n">ForceReconnect</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">Background</span><span class="p">())</span>
+
+    <span class="o">//</span> <span class="n">Tick</span> <span class="n">down</span> <span class="n">the</span> <span class="n">consumeComplete</span> <span class="n">waitgroup</span>
+    <span class="n">consumeComplete</span><span class="o">.</span><span class="n">Done</span><span class="p">()</span>
+
+    <span class="o">//</span> <span class="n">Print</span> <span class="n">the</span> <span class="n">delivery</span><span class="o">.</span> <span class="n">Even</span> <span class="n">though</span> <span class="n">we</span> <span class="n">are</span> <span class="n">forcing</span> <span class="n">a</span> <span class="n">new</span> <span class="n">underlying</span> <span class="n">channel</span>
+    <span class="o">//</span> <span class="n">to</span> <span class="n">be</span> <span class="n">connected</span> <span class="n">each</span> <span class="n">time</span><span class="p">,</span> <span class="n">the</span> <span class="n">delivery</span> <span class="n">tags</span> <span class="n">will</span> <span class="n">still</span> <span class="n">be</span> <span class="n">continuous</span><span class="o">.</span>
+    <span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span>
+      <span class="s2">&quot;DELIVERY %v: %v</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">delivery</span><span class="o">.</span><span class="n">DeliveryTag</span><span class="p">,</span> <span class="n">string</span><span class="p">(</span><span class="n">delivery</span><span class="o">.</span><span class="n">Body</span><span class="p">),</span>
+    <span class="p">)</span>
+  <span class="p">}</span>
+
+  <span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="s2">&quot;DELIVERIES EXHAUSTED&quot;</span><span class="p">)</span>
+<span class="p">}()</span>
+
+<span class="o">//</span> <span class="n">We</span><span class="s1">&#39;ll publish 10 test messages.</span>
+<span class="k">for</span> <span class="n">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span> <span class="p">{</span>
+  <span class="o">//</span> <span class="n">Add</span> <span class="n">one</span> <span class="n">to</span> <span class="n">the</span> <span class="n">consumeComplete</span> <span class="n">WaitGroup</span><span class="o">.</span>
+  <span class="n">consumeComplete</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+  <span class="o">//</span> <span class="n">Publish</span> <span class="n">a</span> <span class="n">message</span><span class="o">.</span> <span class="n">Even</span> <span class="n">though</span> <span class="n">the</span> <span class="n">consumer</span> <span class="n">may</span> <span class="n">be</span> <span class="n">force</span> <span class="n">re</span><span class="o">-</span><span class="n">connecting</span> <span class="n">the</span>
+  <span class="o">//</span> <span class="n">connection</span> <span class="n">each</span> <span class="n">time</span><span class="p">,</span> <span class="n">we</span> <span class="n">can</span> <span class="n">keep</span> <span class="n">using</span> <span class="n">the</span> <span class="n">channel</span><span class="o">.</span>
+  <span class="o">//</span>
+  <span class="o">//</span> <span class="n">NOTE</span><span class="p">:</span> <span class="n">it</span> <span class="ow">is</span> <span class="n">possible</span> <span class="n">that</span> <span class="n">we</span> <span class="n">will</span> <span class="n">drop</span> <span class="n">a</span> <span class="n">message</span> <span class="n">here</span> <span class="n">during</span> <span class="n">a</span> <span class="n">reconnection</span>
+  <span class="o">//</span> <span class="n">event</span><span class="o">.</span> <span class="n">If</span> <span class="n">we</span> <span class="n">want</span> <span class="n">to</span> <span class="n">be</span> <span class="n">sure</span> <span class="nb">all</span> <span class="n">messages</span> <span class="n">reach</span> <span class="n">the</span> <span class="n">broker</span><span class="p">,</span> <span class="n">we</span><span class="s1">&#39;ll need to</span>
+  <span class="o">//</span> <span class="n">publish</span> <span class="n">messages</span> <span class="k">with</span> <span class="n">the</span> <span class="n">Channel</span> <span class="ow">in</span> <span class="n">confirmation</span> <span class="n">mode</span><span class="p">,</span> <span class="n">which</span> <span class="n">we</span> <span class="n">will</span>
+  <span class="o">//</span> <span class="n">show</span> <span class="ow">in</span> <span class="n">another</span> <span class="n">example</span><span class="o">.</span>
+  <span class="n">err</span> <span class="o">=</span> <span class="n">publishChannel</span><span class="o">.</span><span class="n">Publish</span><span class="p">(</span>
+    <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">queue</span><span class="o">.</span><span class="n">Name</span><span class="p">,</span>
+    <span class="n">false</span><span class="p">,</span>
+    <span class="n">false</span><span class="p">,</span>
+    <span class="n">amqp</span><span class="o">.</span><span class="n">Publishing</span><span class="p">{</span>
+      <span class="n">Body</span><span class="p">:</span> <span class="p">[]</span><span class="n">byte</span><span class="p">(</span><span class="n">fmt</span><span class="o">.</span><span class="n">Sprintf</span><span class="p">(</span><span class="s2">&quot;message %v&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">)),</span>
+    <span class="p">},</span>
+  <span class="p">)</span>
+  <span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+    <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">Wait</span> <span class="k">for</span> <span class="nb">all</span> <span class="n">messages</span> <span class="n">to</span> <span class="n">be</span> <span class="n">received</span>
+<span class="n">consumeComplete</span><span class="o">.</span><span class="n">Wait</span><span class="p">()</span>
+
+<span class="o">//</span> <span class="n">Close</span> <span class="n">the</span> <span class="n">connection</span>
+<span class="n">err</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">Close</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">nil</span> <span class="p">{</span>
+  <span class="n">panic</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="o">//</span> <span class="n">Wait</span> <span class="k">for</span> <span class="n">the</span> <span class="n">consumer</span> <span class="n">to</span> <span class="n">exit</span>
+<span class="o">&lt;-</span><span class="n">consumerClosed</span>
+
+<span class="o">//</span> <span class="n">exit</span>
+
+<span class="o">//</span> <span class="n">Output</span><span class="p">:</span>
+<span class="o">//</span> <span class="n">STARTING</span> <span class="n">CONSUMER</span>
+<span class="o">//</span> <span class="n">DELIVERY</span> <span class="mi">1</span><span class="p">:</span> <span class="n">message</span> <span class="mi">0</span>
+<span class="o">//</span> <span class="n">DELIVERY</span> <span class="mi">2</span><span class="p">:</span> <span class="n">message</span> <span class="mi">1</span>
+<span class="o">//</span> <span class="n">DELIVERY</span> <span class="mi">3</span><span class="p">:</span> <span class="n">message</span> <span class="mi">2</span>
+<span class="o">//</span> <span class="n">DELIVERY</span> <span class="mi">4</span><span class="p">:</span> <span class="n">message</span> <span class="mi">3</span>
+<span class="o">//</span> <span class="n">DELIVERY</span> <span class="mi">5</span><span class="p">:</span> <span class="n">message</span> <span class="mi">4</span>
+<span class="o">//</span> <span class="n">DELIVERY</span> <span class="mi">6</span><span class="p">:</span> <span class="n">message</span> <span class="mi">5</span>
+<span class="o">//</span> <span class="n">DELIVERY</span> <span class="mi">7</span><span class="p">:</span> <span class="n">message</span> <span class="mi">6</span>
+<span class="o">//</span> <span class="n">DELIVERY</span> <span class="mi">8</span><span class="p">:</span> <span class="n">message</span> <span class="mi">7</span>
+<span class="o">//</span> <span class="n">DELIVERY</span> <span class="mi">9</span><span class="p">:</span> <span class="n">message</span> <span class="mi">8</span>
+<span class="o">//</span> <span class="n">DELIVERY</span> <span class="mi">10</span><span class="p">:</span> <span class="n">message</span> <span class="mi">9</span>
+<span class="o">//</span> <span class="n">DELIVERIES</span> <span class="n">EXHAUSTED</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>In the above example, is possible that we will drop the publishing of message during a
+reconnection event. If we want to be sure all messages reach the broker, we’ll need to
+publish messages with the Channel in confirmation mode, which we will
+show in the next example.</p>
+</div>
+</div>
+<div class="section" id="delivery-tag-orphans">
+<h3>Delivery Tag Orphans<a class="headerlink" href="#delivery-tag-orphans" title="Permalink to this headline">¶</a></h3>
+<p>When manually acking Deliveries, it is possible that between the time we get a Delivery,
+and the time that we ack it, a disconnection of the underlying channel has occurred and
+the delivery is no longer acknowledgable. In such cases, an error will be returned
+indicating this delivery has been orphaned:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>// Get a new connection to our test broker.
+connection, err := amqp.Dial(amqpTest.TestDialAddress)
+if err != nil {
+  panic(err)
+}
+
+// Get a new channel from our robust connection for consuming.
+channel, err := connection.Channel()
+if err != nil {
+  panic(err)
+}
+
+queueName := &quot;example_delivery_ack_orphan&quot;
+
+// Declare the queue we are going to use.
+_, err = channel.QueueDeclare(
+  queueName, // name
+  false, // durable
+  true, // autoDelete
+  false, // exclusive
+  false,  // noWait
+  nil, // args
+)
+if err != nil {
+  panic(err)
+}
+
+// Cleanup channel on exit.
+defer channel.QueueDelete(queueName, false, false, false)
+
+// Start consuming the channel
+consume, err := channel.Consume(
+  queueName,
+  &quot;example consumer&quot;, // consumer name
+  // Auto-ack is set to false
+  false, // autoAck
+  false, // exclusive
+  false, // no local
+  false, // no wait
+  nil, // args
+)
+
+// publish a message
+err = channel.Publish(
+  &quot;&quot;, // exchange
+  queueName,
+  false,
+  false,
+  amqp.Publishing{
+    Body: []byte(&quot;test message&quot;),
+  },
+)
+if err != nil {
+  panic(err)
+}
+
+// get the delivery of our published message
+delivery := &lt;- consume
+fmt.Println(&quot;DELIVERY:&quot;, string(delivery.Body))
+
+// Force-close the channel.
+channel.Test(new(testing.T)).ForceReconnect(context.Background())
+
+// Now that the original underlying channel is closed, it is impossible to ack
+// the delivery. We will get an error when we try.
+err = delivery.Ack(false)
+fmt.Println(&quot;ACK ERROR:&quot;, err)
+
+// This error is an orphan error
+var orphanErr amqp.ErrCantAcknowledgeOrphans
+if !errors.As(err, &amp;orphanErr) {
+  panic(&quot;error not orphan error&quot;)
+}
+
+fmt.Println(&quot;FIRST ORPHAN TAG:&quot;, orphanErr.OrphanTagFirst)
+fmt.Println(&quot;LAST ORPHAN TAG :&quot;, orphanErr.OrphanTagLast)
+
+// Output:
+// DELIVERY: test message
+// ACK ERROR: 1 tags orphaned (1 - 1), 0 tags successfully acknowledged
+// FIRST ORPHAN TAG: 1
+// LAST ORPHAN TAG : 1
+</pre></div>
+</div>
+</div>
+<div class="section" id="publishing-tag-continuity">
+<h3>Publishing Tag Continuity<a class="headerlink" href="#publishing-tag-continuity" title="Permalink to this headline">¶</a></h3>
+<p>Just like with Delivery Tags, publishing tag continuity is maintained, even across
+disconnection events.</p>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="c1">// Get a new connection to our test broker.</span>
+<span class="nx">connection</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">amqp</span><span class="p">.</span><span class="nx">Dial</span><span class="p">(</span><span class="nx">amqpTest</span><span class="p">.</span><span class="nx">TestDialAddress</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+  <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// Get a new channel from our robust connection for publishing.</span>
+<span class="nx">publishChannel</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">connection</span><span class="p">.</span><span class="nx">Channel</span><span class="p">()</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+  <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// Put the channel into confirmation mode</span>
+<span class="nx">err</span> <span class="p">=</span> <span class="nx">publishChannel</span><span class="p">.</span><span class="nx">Confirm</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+  <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="nx">confirmationsReceived</span> <span class="o">:=</span> <span class="nb">new</span><span class="p">(</span><span class="nx">sync</span><span class="p">.</span><span class="nx">WaitGroup</span><span class="p">)</span>
+<span class="nx">confirmationsComplete</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span>
+
+<span class="c1">// Create a channel to consume publication confirmations.</span>
+<span class="nx">publishEvents</span> <span class="o">:=</span> <span class="nx">publishChannel</span><span class="p">.</span><span class="nx">NotifyPublish</span><span class="p">(</span><span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="nx">amqp</span><span class="p">.</span><span class="nx">Confirmation</span><span class="p">))</span>
+<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+  <span class="c1">// Close to signal exit.</span>
+  <span class="k">defer</span> <span class="nb">close</span><span class="p">(</span><span class="nx">confirmationsComplete</span><span class="p">)</span>
+
+  <span class="c1">// Range over the confirmation channel.</span>
+  <span class="k">for</span> <span class="nx">confirmation</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">publishEvents</span> <span class="p">{</span>
+    <span class="c1">// Mark 1 confirmation as done.</span>
+    <span class="nx">confirmationsReceived</span><span class="p">.</span><span class="nx">Done</span><span class="p">()</span>
+
+    <span class="c1">// Print confirmation.</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span>
+      <span class="s">&quot;CONFIRMATION TAG %02d: ACK: %v ORPHAN: %v\n&quot;</span><span class="p">,</span>
+      <span class="nx">confirmation</span><span class="p">.</span><span class="nx">DeliveryTag</span><span class="p">,</span>
+      <span class="nx">confirmation</span><span class="p">.</span><span class="nx">Ack</span><span class="p">,</span>
+      <span class="c1">// If the confirmation was never received because the channel was</span>
+      <span class="c1">// disconnected, then confirmation.Ack will be false, and</span>
+      <span class="c1">// confirmation.DisconnectOrphan will be true.</span>
+      <span class="nx">confirmation</span><span class="p">.</span><span class="nx">DisconnectOrphan</span><span class="p">,</span>
+    <span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}()</span>
+
+<span class="c1">// Declare the message queue</span>
+<span class="nx">queueName</span> <span class="o">:=</span> <span class="s">&quot;example_delivery_tag_continuity&quot;</span>
+<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">publishChannel</span><span class="p">.</span><span class="nx">QueueDeclare</span><span class="p">(</span>
+  <span class="nx">queueName</span><span class="p">,</span>
+  <span class="kc">false</span><span class="p">,</span>
+  <span class="kc">true</span><span class="p">,</span>
+  <span class="kc">false</span><span class="p">,</span>
+  <span class="kc">false</span><span class="p">,</span>
+  <span class="kc">nil</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+  <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// We&#39;ll publish 10 test messages.</span>
+<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span> <span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="mi">10</span> <span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+  <span class="c1">// We want to wait here to make sure we got the confirmation from the last</span>
+  <span class="c1">// publication before force-closing the connection to show we can handle it.</span>
+  <span class="nx">confirmationsReceived</span><span class="p">.</span><span class="nx">Wait</span><span class="p">()</span>
+
+  <span class="c1">// Force a reconnection of the underlying channel.</span>
+  <span class="nx">publishChannel</span><span class="p">.</span><span class="nx">Test</span><span class="p">(</span><span class="nb">new</span><span class="p">(</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)).</span><span class="nx">ForceReconnect</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">())</span>
+
+  <span class="c1">// Increment the confirmation WaitGroup</span>
+  <span class="nx">confirmationsReceived</span><span class="p">.</span><span class="nx">Add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+  <span class="c1">// Publish a message. Even though the consumer may be force re-connecting the</span>
+  <span class="c1">// connection each time, we can keep using the channel.</span>
+  <span class="nx">err</span> <span class="p">=</span> <span class="nx">publishChannel</span><span class="p">.</span><span class="nx">Publish</span><span class="p">(</span>
+    <span class="s">&quot;&quot;</span><span class="p">,</span>
+    <span class="nx">queueName</span><span class="p">,</span>
+    <span class="kc">false</span><span class="p">,</span>
+    <span class="kc">false</span><span class="p">,</span>
+    <span class="nx">amqp</span><span class="p">.</span><span class="nx">Publishing</span><span class="p">{</span>
+      <span class="nx">Body</span><span class="p">:</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Sprintf</span><span class="p">(</span><span class="s">&quot;message %v&quot;</span><span class="p">,</span> <span class="nx">i</span><span class="p">)),</span>
+    <span class="p">},</span>
+  <span class="p">)</span>
+  <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Wait for all confirmations to be received.</span>
+<span class="nx">confirmationsReceived</span><span class="p">.</span><span class="nx">Wait</span><span class="p">()</span>
+
+<span class="c1">// Close the connection.</span>
+<span class="nx">err</span> <span class="p">=</span> <span class="nx">connection</span><span class="p">.</span><span class="nx">Close</span><span class="p">()</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+  <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// Wait for the confirmation routine to exit.</span>
+<span class="o">&lt;-</span><span class="nx">confirmationsComplete</span>
+
+<span class="c1">// Exit.</span>
+
+<span class="c1">// Output:</span>
+<span class="c1">// CONFIRMATION TAG 01: ACK: true ORPHAN: false</span>
+<span class="c1">// CONFIRMATION TAG 02: ACK: true ORPHAN: false</span>
+<span class="c1">// CONFIRMATION TAG 03: ACK: true ORPHAN: false</span>
+<span class="c1">// CONFIRMATION TAG 04: ACK: true ORPHAN: false</span>
+<span class="c1">// CONFIRMATION TAG 05: ACK: true ORPHAN: false</span>
+<span class="c1">// CONFIRMATION TAG 06: ACK: true ORPHAN: false</span>
+<span class="c1">// CONFIRMATION TAG 07: ACK: true ORPHAN: false</span>
+<span class="c1">// CONFIRMATION TAG 08: ACK: true ORPHAN: false</span>
+<span class="c1">// CONFIRMATION TAG 09: ACK: true ORPHAN: false</span>
+<span class="c1">// CONFIRMATION TAG 10: ACK: true ORPHAN: false</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Confirmation.DisconnectOrphan</span></code> is a new field for the <code class="docutils literal notranslate"><span class="pre">Confirmation</span></code> type and
+is unique to Roger, Rabbit.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">DisconnectOrphan</span></code> is true, it means that a Nack occurred not from a broker
+response, but because no confirmation positive or negative was received from the
+broker before the connection was disrupted. Orphaned messages may have reached the
+broker – we have no way of knowing.</p>
+</div>
+</div>
+</div>
+<div class="section" id="channel-middleware">
+<h2>Channel Middleware<a class="headerlink" href="#channel-middleware" title="Permalink to this headline">¶</a></h2>
+<p>Roger, Rabbit allows the registration of middleware on all <code class="docutils literal notranslate"><span class="pre">Channel</span></code> methods. In fact,
+most of the robust <code class="docutils literal notranslate"><span class="pre">Channel</span></code> features are implemented through middleware defined in
+the <code class="docutils literal notranslate"><span class="pre">amqp/defaultMiddlewares</span></code> package! It is a powerful tool and one of the biggest
+API expansions over streadway/amqp.</p>
+<p>Middleware signatures are defined in the <code class="docutils literal notranslate"><span class="pre">amqp/amqpMiddleware</span></code> package.</p>
+<div class="section" id="registering-middleware">
+<h3>Registering Middleware<a class="headerlink" href="#registering-middleware" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="c1">// define our new middleware</span>
+<span class="nx">queueDeclareMiddleware</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span>
+    <span class="nx">next</span> <span class="nx">amqpmiddleware</span><span class="p">.</span><span class="nx">HandlerQueueDeclare</span><span class="p">,</span>
+<span class="p">)</span> <span class="nx">amqpmiddleware</span><span class="p">.</span><span class="nx">HandlerQueueDeclare</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kd">func</span><span class="p">(</span><span class="nx">args</span> <span class="nx">amqpmiddleware</span><span class="p">.</span><span class="nx">ArgsQueueDeclare</span><span class="p">)</span> <span class="p">(</span><span class="nx">streadway</span><span class="p">.</span><span class="nx">Queue</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="s">&quot;MIDDLEWARE INVOKED FOR QUEUE&quot;</span><span class="p">)</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="s">&quot;QUEUE NAME :&quot;</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">Name</span><span class="p">)</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="s">&quot;AUTO-DELETE:&quot;</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">AutoDelete</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nx">next</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Create a config and add our middleware to it.</span>
+<span class="nx">config</span> <span class="o">:=</span> <span class="nx">amqp</span><span class="p">.</span><span class="nx">DefaultConfig</span><span class="p">()</span>
+<span class="nx">config</span><span class="p">.</span><span class="nx">ChannelMiddleware</span><span class="p">.</span><span class="nx">AddQueueDeclare</span><span class="p">(</span><span class="nx">queueDeclareMiddleware</span><span class="p">)</span>
+
+<span class="c1">// Get a new connection to our test broker.</span>
+<span class="nx">connection</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">amqp</span><span class="p">.</span><span class="nx">DialConfigCtx</span><span class="p">(</span>
+    <span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span> <span class="nx">amqptest</span><span class="p">.</span><span class="nx">TestDialAddress</span><span class="p">,</span> <span class="nx">config</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="k">defer</span> <span class="nx">connection</span><span class="p">.</span><span class="nx">Close</span><span class="p">()</span>
+
+<span class="c1">// Get a new channel from our robust connection for publishing. The channel is</span>
+<span class="c1">// created with our default middleware.</span>
+<span class="nx">channel</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">connection</span><span class="p">.</span><span class="nx">Channel</span><span class="p">()</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// Declare our queue, our middleware will be invoked and print a message.</span>
+<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">channel</span><span class="p">.</span><span class="nx">QueueDeclare</span><span class="p">(</span>
+    <span class="s">&quot;example_middleware&quot;</span><span class="p">,</span>
+    <span class="kc">false</span><span class="p">,</span>
+    <span class="kc">true</span><span class="p">,</span>
+    <span class="kc">false</span><span class="p">,</span>
+    <span class="kc">false</span><span class="p">,</span>
+    <span class="kc">nil</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// MIDDLEWARE INVOKED FOR QUEUE</span>
+<span class="c1">// QUEUE NAME : example_middleware</span>
+<span class="c1">// AUTO-DELETE: true</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="middleware-providers">
+<h3>Middleware Providers<a class="headerlink" href="#middleware-providers" title="Permalink to this headline">¶</a></h3>
+<p>For more complex middleware, you can implement middleware providers, which expose
+methods that implement middleware. You can then register a factory method that will
+generate a new provider value whenever a new Connection or Channel is created, and
+the middleware methods will be automatically registered for you.</p>
+<p>This can help build complex middlewares. Let’s define a custom middleware provider and
+factory method:</p>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="c1">// CustomMiddlewareProvider exposes methods for middlewares that need to coordinate.</span>
+<span class="kd">type</span> <span class="nx">CustomMiddlewareProvider</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">InvocationCount</span> <span class="kt">int</span>
+<span class="p">}</span>
+
+<span class="c1">// TypeID implements amqpmiddleware.ProvidesMiddleware and returns a unique type ID</span>
+<span class="c1">// that can be used to fetch middleware values when testing.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">middleware</span> <span class="o">*</span><span class="nx">CustomMiddlewareProvider</span><span class="p">)</span> <span class="nx">TypeID</span><span class="p">()</span> <span class="nx">amqpmiddleware</span><span class="p">.</span><span class="nx">ProviderTypeID</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="s">&quot;CustomMiddleware&quot;</span>
+<span class="p">}</span>
+
+<span class="c1">// QueueDeclare implements amqpmiddleware.ProvidesQueueDeclare.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">middleware</span> <span class="o">*</span><span class="nx">CustomMiddlewareProvider</span><span class="p">)</span> <span class="nx">QueueDeclare</span><span class="p">(</span>
+    <span class="nx">next</span> <span class="nx">amqpmiddleware</span><span class="p">.</span><span class="nx">HandlerQueueDeclare</span><span class="p">,</span>
+<span class="p">)</span> <span class="nx">amqpmiddleware</span><span class="p">.</span><span class="nx">HandlerQueueDeclare</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kd">func</span><span class="p">(</span><span class="nx">args</span> <span class="nx">amqpmiddleware</span><span class="p">.</span><span class="nx">ArgsQueueDeclare</span><span class="p">)</span> <span class="p">(</span><span class="nx">streadway</span><span class="p">.</span><span class="nx">Queue</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">middleware</span><span class="p">.</span><span class="nx">InvocationCount</span><span class="o">++</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span>
+            <span class="s">&quot;DECLARED: %v, TOTAL: %v\n&quot;</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">middleware</span><span class="p">.</span><span class="nx">InvocationCount</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="nx">next</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// QueueDelete implements amqpmiddleware.ProvidesQueueDelete.</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">middleware</span> <span class="o">*</span><span class="nx">CustomMiddlewareProvider</span><span class="p">)</span> <span class="nx">QueueDelete</span><span class="p">(</span>
+    <span class="nx">next</span> <span class="nx">amqpmiddleware</span><span class="p">.</span><span class="nx">HandlerQueueDeclare</span><span class="p">,</span>
+<span class="p">)</span> <span class="nx">amqpmiddleware</span><span class="p">.</span><span class="nx">HandlerQueueDeclare</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kd">func</span><span class="p">(</span><span class="nx">args</span> <span class="nx">amqpmiddleware</span><span class="p">.</span><span class="nx">ArgsQueueDeclare</span><span class="p">)</span> <span class="p">(</span><span class="nx">streadway</span><span class="p">.</span><span class="nx">Queue</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">middleware</span><span class="p">.</span><span class="nx">InvocationCount</span><span class="o">++</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span>
+            <span class="s">&quot;DELETED: %v, TOTAL: %v\n&quot;</span><span class="p">,</span> <span class="nx">args</span><span class="p">.</span><span class="nx">Name</span><span class="p">,</span> <span class="nx">middleware</span><span class="p">.</span><span class="nx">InvocationCount</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="nx">next</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// NewCustomMiddlewareProvider creates a new CustomMiddlewareProvider.</span>
+<span class="kd">func</span> <span class="nx">NewCustomMiddlewareProvider</span><span class="p">()</span> <span class="nx">amqpmiddleware</span><span class="p">.</span><span class="nx">ProvidesMiddleware</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nb">new</span><span class="p">(</span><span class="nx">CustomMiddlewareProvider</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>We can register it on our Config so that every channel created from a connection
+gets a fresh instance of our provider:</p>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="c1">// Create a config and add our middleware provider factory to it.</span>
+<span class="nx">config</span> <span class="o">:=</span> <span class="nx">amqp</span><span class="p">.</span><span class="nx">DefaultConfig</span><span class="p">()</span>
+<span class="nx">config</span><span class="p">.</span><span class="nx">ChannelMiddleware</span><span class="p">.</span><span class="nx">AddProviderFactory</span><span class="p">(</span><span class="nx">NewCustomMiddlewareProvider</span><span class="p">)</span>
+
+<span class="c1">// Get a new connection to our test broker.</span>
+<span class="nx">connection</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">amqp</span><span class="p">.</span><span class="nx">DialConfigCtx</span><span class="p">(</span>
+    <span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span> <span class="nx">amqptest</span><span class="p">.</span><span class="nx">TestDialAddress</span><span class="p">,</span> <span class="nx">config</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="k">defer</span> <span class="nx">connection</span><span class="p">.</span><span class="nx">Close</span><span class="p">()</span>
+
+<span class="c1">// Get a new channel from our robust connection for publishing. The channel is</span>
+<span class="c1">// created with our default middleware.</span>
+<span class="nx">channel</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">connection</span><span class="p">.</span><span class="nx">Channel</span><span class="p">()</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// Declare our queue, our middleware will be invoked and print a message.</span>
+<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">channel</span><span class="p">.</span><span class="nx">QueueDeclare</span><span class="p">(</span>
+    <span class="s">&quot;example_middleware&quot;</span><span class="p">,</span>
+    <span class="kc">false</span><span class="p">,</span> <span class="c1">// durable</span>
+    <span class="kc">true</span><span class="p">,</span> <span class="c1">// autoDelete</span>
+    <span class="kc">false</span><span class="p">,</span> <span class="c1">// exclusive</span>
+    <span class="kc">false</span><span class="p">,</span> <span class="c1">// noWait</span>
+    <span class="kc">nil</span><span class="p">,</span> <span class="c1">// args</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// Delete our queue, our middleware will be invoked and print a message.</span>
+<span class="nx">_</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">channel</span><span class="p">.</span><span class="nx">QueueDelete</span><span class="p">(</span>
+    <span class="s">&quot;example_middleware&quot;</span><span class="p">,</span>
+    <span class="kc">false</span><span class="p">,</span> <span class="c1">// ifUnused</span>
+    <span class="kc">false</span><span class="p">,</span> <span class="c1">// ifEmpty</span>
+    <span class="kc">false</span><span class="p">,</span> <span class="c1">// noWait</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// MIDDLEWARE INVOKED FOR QUEUE</span>
+<span class="c1">// DECLARED: example_middleware, TOTAL: 1</span>
+<span class="c1">// DELETED: example_middleware, TOTAL: 2</span>
+<span class="c1">// AUTO-DELETE: true</span>
+</pre></div>
+</div>
+<p>if, for some reason, we wanted every Channel to share the <em>same</em> instance of the
+provider, we could make the following adjustment:</p>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="c1">// Create an instance of our provider:</span>
+<span class="nx">provider</span> <span class="o">:=</span> <span class="nx">NewCustomMiddlewareProvider</span><span class="p">()</span>
+
+<span class="nx">config</span> <span class="o">:=</span> <span class="nx">amqp</span><span class="p">.</span><span class="nx">DefaultConfig</span><span class="p">()</span>
+<span class="nx">config</span><span class="p">.</span><span class="nx">ChannelMiddleware</span><span class="p">.</span><span class="nx">AddProviderMethods</span><span class="p">(</span><span class="nx">provider</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will add the methods once and re-use them for all Channels rather than making a
+fresh provider every time a channel is generated.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Many of rogerRabbit’s more complex features are implemented through middleware
+providers. Check the <code class="docutils literal notranslate"><span class="pre">defaultmiddlewares</span></code> package to see practical examples of
+middleware providers used in this library.</p>
+</div>
+</div>
+</div>
+<div class="section" id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h2>
+<p>Testing is a first-class citizen of the Roger, Rabbit package. Types expose a robust
+number of testing methods, and the <code class="docutils literal notranslate"><span class="pre">amqpTest</span></code> offers a number of additional testing
+utilities.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Testing methods and utilities are heavily integrated with
+<a class="reference external" href="https://godoc.org/github.com/stretchr/testify">testify</a>. Testify is somewhat
+divisive within the Go community, but as the maintainers of this repository heavily
+leverage it, so does Roger, Rabbit’s testing utilities.</p>
+</div>
+<div class="section" id="test-methods">
+<h3>Test() Methods<a class="headerlink" href="#test-methods" title="Permalink to this headline">¶</a></h3>
+<p>Both <code class="docutils literal notranslate"><span class="pre">Connection</span></code> and <code class="docutils literal notranslate"><span class="pre">Channel</span></code> expose a <code class="docutils literal notranslate"><span class="pre">.Test()</span></code> method, which returns a testing
+harness type with additional methods for running tests on it’s parent value.</p>
+<p>Most test methods do not return an error, instead opting to report the error and
+immediately fail the test.</p>
+<p>Example:</p>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="c1">// Get a new connection to our test broker.</span>
+<span class="nx">connection</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">amqp</span><span class="p">.</span><span class="nx">Dial</span><span class="p">(</span><span class="nx">amqpTest</span><span class="p">.</span><span class="nx">TestDialAddress</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+  <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="k">defer</span> <span class="nx">connection</span><span class="p">.</span><span class="nx">Close</span><span class="p">()</span>
+
+<span class="c1">// Get a new channel from our robust connection for publishing. The channel is</span>
+<span class="c1">// created with our default middleware.</span>
+<span class="nx">channel</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">connection</span><span class="p">.</span><span class="nx">Channel</span><span class="p">()</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+  <span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// Get a channel testing harness. In a real test function, you would pass the</span>
+<span class="c1">// test&#39;s *testing.T value. Here, we will just pass a dummy one.</span>
+<span class="nx">testHarness</span> <span class="o">:=</span> <span class="nx">channel</span><span class="p">.</span><span class="nx">Test</span><span class="p">(</span><span class="nb">new</span><span class="p">(</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">))</span>
+
+<span class="c1">// We can use the test harness to force the channel to reconnect. If a reconnection</span>
+<span class="c1">// does not occur before the passed context expires, the test will be failed.</span>
+<span class="nx">ctx</span><span class="p">,</span> <span class="nx">cancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">WithTimeout</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span> <span class="mi">5</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+<span class="k">defer</span> <span class="nx">cancel</span><span class="p">()</span>
+<span class="nx">testHarness</span><span class="p">.</span><span class="nx">ForceReconnect</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+
+<span class="c1">// We can check how many times a reconnection has occurred. The first time we</span>
+<span class="c1">// connect to the broker is counted, so we should get &#39;2&#39;:</span>
+<span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="s">&quot;RECONNECTION COUNT:&quot;</span><span class="p">,</span> <span class="nx">testHarness</span><span class="p">.</span><span class="nx">ReconnectionCount</span><span class="p">())</span>
+
+<span class="c1">// exit.</span>
+
+<span class="c1">// Output:</span>
+<span class="c1">// RECONNECTION COUNT: 2</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="testify-suite">
+<h3>Testify Suite<a class="headerlink" href="#testify-suite" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">amqpTesting</span></code> package makes an <code class="docutils literal notranslate"><span class="pre">AmqpSuite</span></code> type that is an extension of
+<a class="reference external" href="https://godoc.org/github.com/stretchr/testify/suite">testify/suite.Suite</a></p>
+<p><code class="docutils literal notranslate"><span class="pre">AmqpSuite</span></code> adds a number of QoL methods for quickly setting up an tearing down
+integration tests with a test broker.</p>
+<p>See the godoc documentation for more details.</p>
+</div>
+</div>
+<div class="section" id="architecture">
+<h2>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="overview">
+<h3>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h3>
+<div class="figure align-center" id="id1">
+<img alt="_images/architecture.svg" src="_images/architecture.svg" /><p class="caption"><span class="caption-text">Schematic of the amqp transport (<code class="docutils literal notranslate"><span class="pre">Channel</span></code> and <code class="docutils literal notranslate"><span class="pre">Connection</span></code>) architecture.</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<p>Lets dig in to some of the specifics.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When we refer to an amqp.[Type], we are referring to the rogerRabbit-go/pkg/amqp
+implementation of that type. If we need to refer to underlying types provided by
+the streadway/amqp package, we will refer to them as streadway.[Type]</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The file organization of the <code class="docutils literal notranslate"><span class="pre">amqp</span></code> package is still in flux, though the API and
+underlying logical structure is likely to remain stable. This architecture guide
+will refrain from referencing specific files or paths for the time being, until
+the types and helpers are done playing musical chairs.</p>
+</div>
+</div>
+<div class="section" id="streadway-transport">
+<h3>Streadway Transport<a class="headerlink" href="#streadway-transport" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">Streadway</span> <span class="pre">Transport</span></code> is our underlying <code class="docutils literal notranslate"><span class="pre">streadway.Connection</span></code> or
+<code class="docutils literal notranslate"><span class="pre">streadway.Channel</span></code> and handles all of our actual communication with the
+<code class="docutils literal notranslate"><span class="pre">AMQP</span> <span class="pre">Broker</span></code>.</p>
+<p>It is manages with by a <code class="docutils literal notranslate"><span class="pre">Robust</span> <span class="pre">Transport</span></code>.</p>
+</div>
+<div class="section" id="robust-transport">
+<h3>Robust Transport<a class="headerlink" href="#robust-transport" title="Permalink to this headline">¶</a></h3>
+<p>A Robust Transport is an <code class="docutils literal notranslate"><span class="pre">amqp.Channel</span></code> or <code class="docutils literal notranslate"><span class="pre">amqp.Connection</span></code>. These types manage
+their <code class="docutils literal notranslate"><span class="pre">streadway.Channel</span></code> or <code class="docutils literal notranslate"><span class="pre">streadway.Connection</span></code> counterparts, and expose
+<code class="docutils literal notranslate"><span class="pre">Exported</span> <span class="pre">Methods</span></code> to the caller that re-implement the methods supplied by the
+<code class="docutils literal notranslate"><span class="pre">Streadway</span> <span class="pre">Transport</span></code> they manage.</p>
+<p>Each <code class="docutils literal notranslate"><span class="pre">Robust</span> <span class="pre">Transport</span></code> implements the <code class="docutils literal notranslate"><span class="pre">reconnects</span></code> interface, which in turn is
+referenced by the <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Manager</span></code> and used to redial the underlying broker
+connection.</p>
+<p>So why are we talking about the <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Manager</span></code> here if it manages the
+<code class="docutils literal notranslate"><span class="pre">Robust</span> <span class="pre">Transport</span></code>? Well, because the <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Manager</span></code> is then embedded into the
+Robust Transport it is managing, and provides some of that transport’s methods.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Close()</span></code>, <code class="docutils literal notranslate"><span class="pre">NotifyDisconnect()</span></code>, and all other methods that are shared between
+<code class="docutils literal notranslate"><span class="pre">amqp.Channel</span></code> and <code class="docutils literal notranslate"><span class="pre">amqp.Connection</span></code> are actually provided by an embedded
+<code class="docutils literal notranslate"><span class="pre">transportManager</span></code> value which, like an ouroboros, also contains a reference to it’s
+parent transport that is used to help manage the lifecycle of that transport’s
+underlying streadway transport through the shared <code class="docutils literal notranslate"><span class="pre">reconnects</span></code> interface.</p>
+</div>
+<div class="section" id="method-handlers">
+<h3>Method Handlers<a class="headerlink" href="#method-handlers" title="Permalink to this headline">¶</a></h3>
+<p>Each <code class="docutils literal notranslate"><span class="pre">Robust</span> <span class="pre">Transport</span></code> (and the <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Manager</span></code>) contains a <code class="docutils literal notranslate"><span class="pre">handlers</span></code> field
+which holds all the method handlers for that transport. These handlers are comprised of
+the base streadway/amqp type methods wrapped in user-supplied <code class="docutils literal notranslate"><span class="pre">Middleware</span></code>.</p>
+</div>
+<div class="section" id="middleware">
+<h3>Middleware<a class="headerlink" href="#middleware" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Middleware</span></code> is a core component of the Roger, Rabbit amqp package. Most of the Roger,
+Rabbit’s extended functionality is supplied by middleware, such as continuous Delivery
+Tags over disconnects and auto-redeclaration of broker topology on reconnections.</p>
+<p>In the early life of this package, robust features were implemented directly on the
+<code class="docutils literal notranslate"><span class="pre">Channel</span></code>, resulting in features which were hard to isolate and maintain. Topology
+re-declaration, for instance, involves 9 methods manipulating 6 data resources over
+~700 lines of code. Debugging and tracking errors with these features was incredibly
+cumbersome when they were spread out over the main <code class="docutils literal notranslate"><span class="pre">Channel</span></code> method calls.</p>
+<p>By moving these features into middleware, all off the logic that supports a given
+feature can be housed together, greatly reducing the complexity and increasing
+maintainability.</p>
+<p>The current default middleware that ships with Roger, Rabbit is:</p>
+<ul class="simple">
+<li><p><strong>ConfirmsMiddleware</strong>: Tracks whether <code class="docutils literal notranslate"><span class="pre">Channel.Confirms</span></code> has been called, and sets
+any freshly reconnected streadway Channels into the correct state.</p></li>
+<li><p><strong>DeliveryTagsMiddleware</strong>: Ensures that Delivery tags are continuous for the caller,
+even over disconnects.</p></li>
+<li><p><strong>FlowMiddleware</strong>: Tracks the Flow state of channel and sets the correct state on
+Channel reconnections.</p></li>
+<li><p><strong>LoggingMiddlewareConnection</strong>: Facilitates logging for all Connection Operations.</p></li>
+<li><p><strong>LoggingMiddlewareChannel</strong>: Facilitates logging for all Channel Operations.</p></li>
+<li><p><strong>PublishTagsMiddleware</strong>: Ensures that Publish Confirmation tags are continuous for
+the caller, even over disconnects.</p></li>
+<li><p><strong>QoSMiddleware</strong>: Tracks QoS setting and sets up Channels on reconnect to match.</p></li>
+<li><p><strong>RouteDeclarationMiddleware</strong>: Handles topology recreation on Channel reconnects.</p></li>
+</ul>
+<p>Together these middlewares implement the bulk of our robust feature set.</p>
+</div>
+<div class="section" id="transport-lock">
+<h3>Transport Lock<a class="headerlink" href="#transport-lock" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">TransportLock</span></code> is a <code class="docutils literal notranslate"><span class="pre">*sync.RWMutex</span></code> contained on the <code class="docutils literal notranslate"><span class="pre">transportManager</span></code> used to
+ensure there is no race conditions when a disconnection event occurs.</p>
+<p>Any process that wishes to make use of the underlying streadway connection must acquire
+the transport lock for read.</p>
+<p>When the transport manager redials the broke, the transport lock is acquired for write,
+and not released until a successful connection occurs. This blocks all other operations
+(like channel and connection method calls) from interacting with the underlying
+streadway transport until we are reconnected.</p>
+</div>
+<div class="section" id="transport-manager">
+<h3>Transport Manager<a class="headerlink" href="#transport-manager" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Manager</span></code> implements all common functionality between <code class="docutils literal notranslate"><span class="pre">Channel</span></code> and
+<code class="docutils literal notranslate"><span class="pre">Connection</span></code>. See the above section for more details.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Manager</span></code> listens for a disconnection event to occur, the  grabs an
+exclusive Write access to the <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Lock</span></code>. Only then does it continuously attempt
+to redial the broker using the methods exposed on out <code class="docutils literal notranslate"><span class="pre">Robust</span> <span class="pre">Connection</span></code> through the
+<code class="docutils literal notranslate"><span class="pre">reconnects</span></code> interface.</p>
+<p>The transport manager also exposes a <code class="docutils literal notranslate"><span class="pre">Retry</span> <span class="pre">On</span> <span class="pre">Disconnected</span></code> method which all of our
+exported <code class="docutils literal notranslate"><span class="pre">Channel</span></code> and <code class="docutils literal notranslate"><span class="pre">Connection</span></code> <code class="docutils literal notranslate"><span class="pre">Exported</span> <span class="pre">Methods</span></code> invoke to complete
+requests.</p>
+</div>
+<div class="section" id="redial-routine">
+<h3>Redial Routine<a class="headerlink" href="#redial-routine" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">Redial</span> <span class="pre">Routine</span></code> is launched by the <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Manager</span></code>. The redial routine
+is responsible for reconnecting to the underlying <code class="docutils literal notranslate"><span class="pre">Streadway</span> <span class="pre">Transport</span></code> on a
+disconnection event.</p>
+<ol class="arabic simple">
+<li><p>Register’s a listener with the <code class="docutils literal notranslate"><span class="pre">Streadway</span> <span class="pre">Transport</span></code>’s <code class="docutils literal notranslate"><span class="pre">NotifyOnClose</span></code> method.</p></li>
+<li><p>Blocks until the listener signals that <code class="docutils literal notranslate"><span class="pre">Streadway</span> <span class="pre">Connection</span></code> has closed
+(disconnection event)</p></li>
+<li><p>Exits if our <code class="docutils literal notranslate"><span class="pre">Robust</span> <span class="pre">Transport</span></code> has been closed by the caller.</p></li>
+<li><p>Acquires the <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Lock</span></code> for write, blocking <code class="docutils literal notranslate"><span class="pre">Exported</span> <span class="pre">Method</span></code> calls until
+a successful reconnection occurs.</p></li>
+<li><p>Calls the <code class="docutils literal notranslate"><span class="pre">tryReconnect</span></code> method on the <code class="docutils literal notranslate"><span class="pre">Robust</span></code> transport until we get a
+successful result.</p></li>
+<li><p>Register’s a listener with the new <code class="docutils literal notranslate"><span class="pre">Streadway</span> <span class="pre">Connection</span></code>’s <code class="docutils literal notranslate"><span class="pre">NotifyOnClose</span></code>
+method.</p></li>
+<li><p>Releases the <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Lock</span></code>.</p></li>
+<li><p>Restarts at step 2.</p></li>
+</ol>
+</div>
+<div class="section" id="retry-on-disconnected">
+<h3>Retry On Disconnected<a class="headerlink" href="#retry-on-disconnected" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Retry</span> <span class="pre">On</span> <span class="pre">Disconnected</span></code> is a method exposed by <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Manager</span></code> that enables
+<code class="docutils literal notranslate"><span class="pre">Robust</span> <span class="pre">Transports</span></code> (<code class="docutils literal notranslate"><span class="pre">Channel</span></code> and <code class="docutils literal notranslate"><span class="pre">Connection</span></code>) to automatically retry an
+operation if it failed because we were disconnected from the AMQP broker.</p>
+<p>When invoked, <code class="docutils literal notranslate"><span class="pre">Retry</span> <span class="pre">On</span> <span class="pre">Disconnected</span></code> does the following:</p>
+<ol class="arabic simple">
+<li><p>Acquires the <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Lock</span></code> for read (so multiple methods can be called
+simultaneously).</p></li>
+<li><p>Runs the operation handed to it by the <code class="docutils literal notranslate"><span class="pre">Exported</span> <span class="pre">Method</span></code>, usually a
+<code class="docutils literal notranslate"><span class="pre">Method</span> <span class="pre">Handler</span></code>.</p></li>
+<li><p>Releases the <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Lock</span></code>.</p></li>
+<li><p>If an error occurred because the broker was not reachable, goes back to step 1.</p></li>
+<li><p>Passes the result back to up to the caller.</p></li>
+</ol>
+</div>
+<div class="section" id="event-relays">
+<h3>Event Relays<a class="headerlink" href="#event-relays" title="Permalink to this headline">¶</a></h3>
+<p>Many <code class="docutils literal notranslate"><span class="pre">Channel</span></code> methods like <code class="docutils literal notranslate"><span class="pre">NotifyPublish</span></code> or <code class="docutils literal notranslate"><span class="pre">Consume</span></code> involve sending
+events along a provided or returned Go <code class="docutils literal notranslate"><span class="pre">chan</span> <span class="pre">[Event]</span></code> value to the caller.</p>
+<p>When a <code class="docutils literal notranslate"><span class="pre">streadway.Channel</span></code> disconnects, it closes all event <code class="docutils literal notranslate"><span class="pre">chan</span> <span class="pre">[Event]</span></code> values
+it is feeding. Because we want our event <code class="docutils literal notranslate"><span class="pre">chan</span> <span class="pre">[Event]</span></code> values to survive a
+disconnect, we cannot pass the caller’s <code class="docutils literal notranslate"><span class="pre">chan</span> <span class="pre">[Event]</span></code> directly to a
+<code class="docutils literal notranslate"><span class="pre">streadway.Channel</span></code>. Instead, we need to create our own temporary <code class="docutils literal notranslate"><span class="pre">chan</span> <span class="pre">[Event]</span></code>,
+pass that to the <code class="docutils literal notranslate"><span class="pre">Streadway</span> <span class="pre">Transport</span></code>, then relay the events from our temporary
+<code class="docutils literal notranslate"><span class="pre">chan</span> <span class="pre">[Event]</span></code> to the caller’s <code class="docutils literal notranslate"><span class="pre">chan</span> <span class="pre">[Event]</span></code>.</p>
+<p>To do this, we launch an <code class="docutils literal notranslate"><span class="pre">Event</span> <span class="pre">Relay</span></code>,</p>
+<p>When a reconnection event occurs, the relay creates a new temporary <code class="docutils literal notranslate"><span class="pre">chan</span> <span class="pre">[Event]</span></code>,
+passes that to the new <code class="docutils literal notranslate"><span class="pre">Streadway</span> <span class="pre">Transport</span></code>, and the continues to relay messages to
+the caller as if nothing has happened.</p>
+<p>Since <code class="docutils literal notranslate"><span class="pre">Channel</span></code> is the only transport that needs event relays, it manages their
+lifecycle. <code class="docutils literal notranslate"><span class="pre">Event</span> <span class="pre">Relays</span></code> must be kept in careful sync with reconnection events to
+ensure that data or logic races do not occur. That <code class="docutils literal notranslate"><span class="pre">Event</span> <span class="pre">Relay</span></code> lifecycle is as
+follows:</p>
+<ol class="arabic simple">
+<li><p>A relay is started by the <code class="docutils literal notranslate"><span class="pre">Channel.[Method]</span></code> handler using the
+<code class="docutils literal notranslate"><span class="pre">transportManager.retryOperationOnClosed</span></code> function so it can acquire the
+<code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Lock</span></code> for read when starting up (ensuring the <code class="docutils literal notranslate"><span class="pre">streadway.Channel</span></code>
+is not swapped out from under it).</p></li>
+<li><p>The relay runs it’s first leg until the undeerlying <code class="docutils literal notranslate"><span class="pre">streadway.Channel</span></code>
+disconnects.</p></li>
+<li><p>On <code class="docutils literal notranslate"><span class="pre">streadway.Channel</span></code> disconnect, the temporary <code class="docutils literal notranslate"><span class="pre">chan</span> <span class="pre">[Event]</span></code>
+feeding the relay dries up. The relay waits on a new <code class="docutils literal notranslate"><span class="pre">*streadway.Channel</span></code> to be
+sent by it’s <code class="docutils literal notranslate"><span class="pre">Channel</span></code> on a successful reconnection.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">transportManager</span></code> acquires the <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Lock</span></code> for write and calls
+<code class="docutils literal notranslate"><span class="pre">Channel.tryReconnect</span></code> over and over until a new <code class="docutils literal notranslate"><span class="pre">streadway.Channel</span></code> is
+successfully connected.</p></li>
+<li><p>When a new <code class="docutils literal notranslate"><span class="pre">streadway.Channel</span></code> is successfully established,
+<code class="docutils literal notranslate"><span class="pre">Channel.tryReconnect</span></code> does not return  until all the remaining steps are
+completed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Channel.tryReconnect</span></code> waits for all <code class="docutils literal notranslate"><span class="pre">Event</span> <span class="pre">Relays</span></code> to signal that their last
+leg has been successfully completed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Channel.tryReconnect</span></code> sends the new <code class="docutils literal notranslate"><span class="pre">*streadway.Channel</span></code> value to each relay
+for it to run any setup and start relaying events again.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Channel.tryReconnect</span></code> waits for all relays to signal that their setup on
+<code class="docutils literal notranslate"><span class="pre">*streadway.Channel</span></code> is complete. If we were to return and release the
+<code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Lock</span></code> before this, users might start taking actions that SHOULD generate
+events before our <code class="docutils literal notranslate"><span class="pre">streadway.Channel</span></code> had been set up to send them, resulting in
+dropped events.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Channel.tryReconnect</span></code> returns with the new, connected <code class="docutils literal notranslate"><span class="pre">*streadway.Channel</span></code>
+value releasing the <code class="docutils literal notranslate"><span class="pre">Transport</span> <span class="pre">Lock</span></code> so that callers can begin calling <code class="docutils literal notranslate"><span class="pre">Channel</span></code>
+methods again.</p></li>
+</ol>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="roger.html" class="btn btn-neutral float-right" title="Roger Package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="overview.html" class="btn btn-neutral float-left" title="Project" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright &#39;2020, Billy Peake&#39;.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
