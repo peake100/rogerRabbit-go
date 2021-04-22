@@ -4,7 +4,7 @@ AMQP Package
 Introduction
 ============
 
-The amqp package is awrapper and drop-in replacement for `streadway/amqp`_, and is
+The amqp package is a wrapper and drop-in replacement for `streadway/amqp`_, and is
 designed to enable automatic redialing to any code using the streadway package with no
 changes.
 
