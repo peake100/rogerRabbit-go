@@ -1,0 +1,386 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Project &mdash; rogerRabbit 0.4.18 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="AMQP Package" href="amqp.html" />
+    <link rel="prev" title="Roger, Rabbit" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> rogerRabbit
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.4.18
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Project</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#motivations">Motivations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#goals">Goals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#current-limitations-warnings">Current Limitations &amp; Warnings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#benchmarks">Benchmarks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="amqp.html">AMQP Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roger.html">Roger Package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">rogerRabbit</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Project</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/overview.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="project">
+<h1>Project<a class="headerlink" href="#project" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="motivations">
+<h2>Motivations<a class="headerlink" href="#motivations" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://github.com/streadway/amqp">streadway/amqp</a>, the sanctioned RabbitMQ driver for
+Go, is an excellent library with a great API but limited scope. It offers a full
+implementation of the AMQP spec, but comes with very few additional quality-of-life
+features.</p>
+<p>From it’s documentation:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Goals
+
+    Provide a functional interface that closely represents the AMQP 0.9.1 model
+    targeted to RabbitMQ as a server. This includes the minimum necessary to
+    interact the semantics of the protocol.
+
+Things not intended to be supported:
+
+    Auto reconnect and re-synchronization of client and server topologies.
+
+    Reconnection would require understanding the error paths when the topology
+    cannot be declared on reconnect. This would require a new set of types and code
+    paths that are best suited at the call-site of this package. AMQP has a dynamic
+    topology that needs all peers to agree. If this doesn&#39;t happen, the behavior
+    is undefined. Instead of producing a possible interface with undefined
+    behavior, this package is designed to be simple for the caller to implement the
+    necessary connection-time topology declaration so that reconnection is trivial
+    and encapsulated in the caller&#39;s application code.
+</pre></div>
+</div>
+<p>Without a supplied way to handle reconnections, <a class="reference external" href="https://ninefinity.org/post/ensuring-rabbitmq-connection-in-golang/">bespoke</a>
+<a class="reference external" href="https://medium.com/&#64;dhanushgopinath/automatically-recovering-rabbitmq-connections-in-go-applications-7795a605ca59">solutions</a>
+<a class="reference external" href="https://www.ribice.ba/golang-rabbitmq-client/">abound</a>.</p>
+<p>Most of these solutions are overly-fitted to a specific problem (consumer vs producer or
+involve domain-specific logic), are prone to data races (can you spot them in the
+first link?), are cumbersome to inject into a production code (do we abort the business
+logic on an error or try to recover in-place?), and have bugs (each solution has its own
+redial bugs rather than finding them in a single lib where fixes can benefit everyone
+and community code coverage is high).</p>
+<p>Nome of this is meant to disparage the above solutions – they likely work great in the
+code they were created for – but they point to a need that is not being filled by the
+sanctioned driver. The nature of the default <cite>*Channel</cite> API encourages solutions that
+are ill-suited to stateless handlers OR require you to handle retries every place you
+must interact with the broker. Such implementation details can be annoying when writing
+higher-level business logic and can lead to either unnecessary error returns, bespoke
+solutions in every project, or messy calling code at sites which need to interact with
+an AMQP broker.</p>
+<p>Roger, Rabbit is inspired by <a class="reference external" href="https://aio-pika.readthedocs.io/en/latest/index.html">aio-pika’s</a>
+<a class="reference external" href="https://aio-pika.readthedocs.io/en/latest/apidoc.html#aio_pika.connect_robust">robust connections and channels</a>,
+which abstract away connection management with an identical API to their non-robust
+counterparts, allowing robust AMQP broker interactions with minimal fuss and very few
+limitations.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Roger, Rabbit is not meant to supplant <a class="reference external" href="https://github.com/streadway/amqp">streadway/amqp</a> (We build on top of it!),
+but an extension with quality-of-life features. Roger, Rabbit would no be possible
+without the amazing groundwork laid down by <a class="reference external" href="https://github.com/streadway/amqp">streadway/amqp</a>.</p>
+</div>
+</div>
+<div class="section" id="goals">
+<h2>Goals<a class="headerlink" href="#goals" title="Permalink to this headline">¶</a></h2>
+<p>The goals of the Roger, Rabbit package are as follows:</p>
+<ul class="simple">
+<li><p><strong>Offer a Drop-in Replacement for streadway/amqp</strong>: APIs may be extended (adding
+fields to <code class="docutils literal notranslate"><span class="pre">amqp.Config</span></code> or additional methods to <code class="docutils literal notranslate"><span class="pre">*amqp.Channel</span></code>, for instance) but
+must not break existing code unless absolutely necessary.</p></li>
+<li><p><strong>Add as few Additional Error Paths as Possible</strong>: Errors may be <em>extended</em> with
+additional information concerning disconnect scenarios, but new error type returns
+from <code class="docutils literal notranslate"><span class="pre">*Connection</span></code> or <code class="docutils literal notranslate"><span class="pre">*amqp.Channel</span></code> should be an absolute last resort.</p></li>
+<li><p><strong>Be Highly Extensible</strong>: Roger, Rabbit seeks to offer a high degree of extensibility
+via features like middleware, in an effort to reduce the balkanization of amqp client
+solutions.</p></li>
+</ul>
+</div>
+<div class="section" id="current-limitations-warnings">
+<h2>Current Limitations &amp; Warnings<a class="headerlink" href="#current-limitations-warnings" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><strong>Performance</strong>: Roger, Rabbit has not been extensively benchmarked against
+<a class="reference external" href="https://github.com/streadway/amqp">streadway/amqp</a>. To see preliminary benchmarks, take a look at the next section.</p></li>
+<li><p><strong>Transaction Support</strong>: Roger, Rabbit does not currently support amqp Transactions,
+as the author does not use them. Draft PR’s with possible implementations are welcome!</p></li>
+<li><p><strong>Reliability</strong>: While the author uses this library in production, it is still early
+days, and more battle-testing will be needed before this library is promoted to
+version 1.0. PR’s are welcome for Bug Fixes, code coverage, or new features.</p></li>
+</ul>
+</div>
+<div class="section" id="benchmarks">
+<h2>Benchmarks<a class="headerlink" href="#benchmarks" title="Permalink to this headline">¶</a></h2>
+<p>Because of Roger, Rabbit’s middleware-driven design, some overhead is expected vs
+streadway proper. However, initial benchmarks are promising, and show only minimal
+impact. For most applications, the overhead cost is likely worth the cost for ease of
+development and flexibility.</p>
+<p>Still, if absolute peak throughput is critical to an application, a less general and
+more tailored approach may be warranted.</p>
+<p>Benchmarks can be found in <code class="docutils literal notranslate"><span class="pre">./amqp/benchmark_test.go</span></code>.</p>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Machine: Intel(R) Core(TM) i9-8950HK CPU &#64; 2.90GHz || Calculated by taking the fastest of four runs.</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 8%" />
+<col style="width: 21%" />
+<col style="width: 19%" />
+<col style="width: 21%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>OPERATION</p></th>
+<th class="head"><p>LIB</p></th>
+<th class="head"><p>EXECUTIONS</p></th>
+<th class="head"><p>NS/OP</p></th>
+<th class="head"><p>COMPARISON</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>QueueInspect</p></td>
+<td><p>sw</p></td>
+<td><p>2,838</p></td>
+<td><p>812,594</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>–</p></td>
+<td><p>rr</p></td>
+<td><p>2,470</p></td>
+<td><p>813,269</p></td>
+<td><p>+0.1%</p></td>
+</tr>
+<tr class="row-even"><td><p>Publish</p></td>
+<td><p>sw</p></td>
+<td><p>7,4559</p></td>
+<td><p>28,882</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>–</p></td>
+<td><p>rr</p></td>
+<td><p>7,0665</p></td>
+<td><p>30,031</p></td>
+<td><p>+4.0%</p></td>
+</tr>
+<tr class="row-even"><td><p>Publish &amp; Confirm</p></td>
+<td><p>sw</p></td>
+<td><p>3,4528</p></td>
+<td><p>59,703</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>–</p></td>
+<td><p>rr</p></td>
+<td><p>3,5481</p></td>
+<td><p>62,198</p></td>
+<td><p>+4.2%</p></td>
+</tr>
+<tr class="row-even"><td><p>Consume (QoS 100)</p></td>
+<td><p>sw</p></td>
+<td><p>75,433</p></td>
+<td><p>27,206</p></td>
+<td><p>–</p></td>
+</tr>
+<tr class="row-odd"><td><p>–</p></td>
+<td><p>rr</p></td>
+<td><p>73,957</p></td>
+<td><p>29,846</p></td>
+<td><p>+9.7%</p></td>
+</tr>
+</tbody>
+</table>
+<p>Run with the following command:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>go <span class="nb">test</span> -p <span class="m">1</span> -count <span class="m">4</span> -bench<span class="o">=</span>Comparison -run<span class="o">=</span>NoTests -benchtime<span class="o">=</span>2s ./...
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="amqp.html" class="btn btn-neutral float-right" title="AMQP Package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Roger, Rabbit" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright &#39;2020, Billy Peake&#39;.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
