@@ -29,6 +29,9 @@ func (builder channelHandlerBuilder) createChannelReconnect() amqpmiddleware.Han
 		if err != nil {
 			return results, err
 		}
+		results.CloseNotifications = make(chan *streadway.Error, 1)
+		results.Channel.NotifyClose(results.CloseNotifications)
+
 		return results, nil
 	}
 

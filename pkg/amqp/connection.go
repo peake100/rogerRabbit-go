@@ -77,21 +77,21 @@ func (conn *Connection) cleanup() error {
 }
 
 // tryReconnect implements reconnects and tries to re-dial the broker one time.
-func (conn *Connection) tryReconnect(ctx context.Context, attempt uint64) error {
+func (conn *Connection) tryReconnect(ctx context.Context, attempt uint64) (chan *streadway.Error, error) {
 	args := amqpmiddleware.ArgsConnectionReconnect{
 		Ctx:     ctx,
 		Attempt: attempt,
 	}
 	results, err := conn.handlerReconnect(conn.ctx, args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Grab the lock before swapping it out.
 	conn.underlyingConnLock.Lock()
 	defer conn.underlyingConnLock.Unlock()
 	conn.underlyingConn = results.Connection
-	return nil
+	return results.CloseNotifications, nil
 }
 
 // basicReconnectHandler is the innermost reconnection handler for the
@@ -101,6 +101,10 @@ func (conn *Connection) basicReconnectHandler(
 ) (amqpmiddleware.ResultsConnectionReconnect, error) {
 	basicConn, err := streadway.DialConfig(conn.dialURL, conn.streadwayConfig)
 	results := amqpmiddleware.ResultsConnectionReconnect{Connection: basicConn}
+	if err == nil {
+		// Set up the close notification channel.
+		results.CloseNotifications = basicConn.NotifyClose(make(chan *streadway.Error, 1))
+	}
 	return results, err
 }
 

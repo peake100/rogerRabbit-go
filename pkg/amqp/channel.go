@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/peake100/rogerRabbit-go/pkg/amqp/amqpmiddleware"
 	"github.com/peake100/rogerRabbit-go/pkg/amqp/internal"
+	streadway "github.com/streadway/amqp"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -87,12 +88,13 @@ func (channel *Channel) cleanup() error {
 // underlying channel connection.
 func (channel *Channel) tryReconnect(
 	ctx context.Context, attempt uint64,
-) (err error) {
+) (closeNotifications chan *streadway.Error, err error) {
 	// Wait for all event processors processing events from the previous channel to be
 	// ready.
 	channel.relaySync.WaitOnLegComplete()
 
 	// Set up the new channel
+	var result amqpmiddleware.ResultsChannelReconnect
 	func() {
 		// Grab the channel lock so that while we are getting a new channel nothing
 		// can inspect the channel. This is important because we have context
@@ -107,22 +109,25 @@ func (channel *Channel) tryReconnect(
 			Attempt: attempt,
 		}
 
-		var result amqpmiddleware.ResultsChannelReconnect
+		// Use the handler to get a new channel.
 		result, err = channel.handlers.channelReconnect(ctx, ags)
-		if err != nil {
-			return
+		if err == nil {
+			// Set the new underlying channel before we release the lock if there
+			// was no error.
+			channel.underlyingChannel = result.Channel
 		}
-		channel.underlyingChannel = result.Channel
 	}()
+	// on an error return to the user.
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Synchronize the relays.
 	channel.relaySync.ReleaseRelaysForLeg(channel.underlyingChannel)
 	channel.relaySync.WaitOnSetupComplete()
 
-	return nil
+	// Return the notification channel.
+	return result.CloseNotifications, nil
 }
 
 /*
