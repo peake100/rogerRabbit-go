@@ -369,7 +369,7 @@ would not be possible without such an amazing foundation.
 Prerequisites
 -------------
 
-Golang 1.6+, Python 3.6+
+Golang 1.6+
 
 Attributions
 ------------
