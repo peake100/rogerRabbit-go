@@ -33,7 +33,7 @@ type reconnects interface {
 
 	// tryReconnect is needed for both Connection and Channel. This method
 	// attempts to re-establish a connection for the underlying object exactly once.
-	tryReconnect(ctx context.Context, attempt uint64) error
+	tryReconnect(ctx context.Context, attempt uint64) (chan *streadway.Error, error)
 
 	// cleanup releases any resources. Called on final close AFTER the main context is
 	// cancelled but before the current underlying connection is closed. NOTE:
@@ -60,6 +60,9 @@ type transportManager struct {
 	reconnectCount *uint64
 	// sync.Cond that broadcasts whenever a connection is successfully re-established
 	reconnectCond *sync.Cond
+	// opErrorEncountered should be signaled (but not blocked on) when an op hit's an
+	// error.
+	opErrorEncountered chan error
 
 	// handlers are the underlying method and event handlers for this transport's
 	// methods, in order to allow user-defined middleware on both channels and
@@ -133,22 +136,25 @@ func (manager *transportManager) retryOperationOnClosedSingle(
 		return fmt.Errorf("operation context closed: %w", opCtx.Err())
 	}
 
-	// Run the operation in a closure so we can acquire and release the
-	// transportLock using defer.
-	var err error
-	func() {
-		// Acquire the transportLock for read. This allow multiple operation to
-		// occur at the same time, but blocks the connection from being switched
-		// out until the operations resolve.
-		//
-		// We don'tb need to worry about lock contention, as once the livesOnce
-		// reconnection routine requests the lock, and new read acquisitions will
-		// be blocked until the lock is acquired and released for write.
-		manager.transportLock.RLock()
-		defer manager.transportLock.RUnlock()
+	// Acquire the transportLock for read. This allow multiple operation to
+	// occur at the same time, but blocks the connection from being switched
+	// out until the operations resolve.
+	//
+	// We don't need to worry about lock contention, as once the livesOnce
+	// reconnection routine requests the lock, and new read acquisitions will
+	// be blocked until the lock is acquired and released for write.
+	manager.transportLock.RLock()
+	defer manager.transportLock.RUnlock()
 
-		err = operation(opCtx)
-	}()
+	err := operation(opCtx)
+	// If there was an error, alert the redial routine in case streadway fails to.
+	if err != nil {
+		select {
+		case manager.opErrorEncountered <- err:
+		default:
+		}
+	}
+
 	return err
 }
 
@@ -216,9 +222,7 @@ func (manager *transportManager) sendDialNotifications(err error) {
 
 // sendDisconnectNotifications sends the error from NotifyClose of the underlying
 // connection when a disconnect occurs to all NotifyOnDisconnect subscribers.
-func (manager *transportManager) sendDisconnectNotifications(
-	streadwayErr *streadway.Error,
-) {
+func (manager *transportManager) sendDisconnectNotifications(streadwayErr error) {
 	manager.notificationSubscriberLock.Lock()
 	defer manager.notificationSubscriberLock.Unlock()
 
@@ -375,6 +379,7 @@ func (manager *transportManager) setup(
 	manager.notificationSubscriberLock = new(sync.Mutex)
 	manager.reconnectCond = sync.NewCond(manager.transportLock)
 	manager.reconnectCount = &reconnectCount
+	manager.opErrorEncountered = make(chan error, 1)
 
 	// Create the base method handlers.
 	manager.handlers = newTransportManagerHandlers(manager, middleware)

@@ -14,13 +14,21 @@ type ResultsNotifyClose struct {
 // ResultsConnectionReconnect are the result values from a Connection reconnection event
 // for middleware to inspect.
 type ResultsConnectionReconnect struct {
+	// Connection is the newly connected underlying connection.
 	Connection *streadway.Connection
+	// CloseNotifications is the channel that the transport manager will listen to
+	// closure events on.
+	CloseNotifications chan *streadway.Error
 }
 
 // ResultsChannelReconnect are the result values from a Channel reconnection event for
 // middleware to inspect.
 type ResultsChannelReconnect struct {
+	// Channel is the newly connected underlying channel.
 	Channel *streadway.Channel
+	// CloseNotifications is the channel that the transport manager will listen to
+	// closure events on.
+	CloseNotifications chan *streadway.Error
 }
 
 // ResultsQueueDeclare are the result values from a Channel.QueuePurge call for

@@ -22,7 +22,7 @@
 Basic Overview
 --------------
 
-Roger, Rabbit is a drop-in replacement for 
+Roger, Rabbit is a wrapper and drop-in replacement for 
 [streadway/amqp](https://github.com/streadway/amqp) that offers the following
 enhancements:
 

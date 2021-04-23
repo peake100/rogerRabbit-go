@@ -4,8 +4,9 @@ AMQP Package
 Introduction
 ============
 
-The amqp package is a drop-in replacement for `streadway/amqp`_, and is designed to
-enable automatic redialing to any code using the streadway package with no changes.
+The amqp package is a wrapper and drop-in replacement for `streadway/amqp`_, and is
+designed to enable automatic redialing to any code using the streadway package with no
+changes.
 
 To begin using rogerRabbit/amqp, simply change your imports from:
 
